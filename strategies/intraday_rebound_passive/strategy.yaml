@@ -1,5 +1,5 @@
 name: intraday_rebound_passive
-status: hypothesis
+status: parked            # tick study 2026-11-15: positive but not established; see REPORT.md
 engine: tick study on a quote sample (not the minute simulator)
 universe: the intraday_rebound event study's quote sample
 cost_calibration: ibkr_pro_tiered
