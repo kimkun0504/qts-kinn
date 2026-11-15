@@ -38,6 +38,13 @@ def _data_build(args: argparse.Namespace) -> int:
     return 0 if not pending else 3
 
 
+def _data_audit(_args: argparse.Namespace) -> int:
+    from kinn.data import audit
+
+    print(f"audit written to {audit.write(load_settings())}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -60,6 +67,10 @@ def main(argv: list[str] | None = None) -> int:
     tables = data.add_parser("build", help="build the security master and daily panel (resumable)")
     tables.add_argument("--budget", type=float, default=3600.0)
     tables.set_defaults(func=_data_build)
+
+    data.add_parser("audit", help="write the audit report for the current build").set_defaults(
+        func=_data_audit
+    )
 
     args = parser.parse_args(argv)
     return args.func(args)

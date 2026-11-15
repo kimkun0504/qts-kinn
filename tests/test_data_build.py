@@ -108,7 +108,6 @@ def test_prior_close_is_split_adjusted_and_lags_are_strictly_prior(built):
     assert first["prev_close"] is None and first["sessions_prior"] == 0
     assert second["adv20_prev"] == pytest.approx(first["dollar_volume"])
     assert second["marketcap_prev"] == pytest.approx(100.0e6)
-    assert second["marketcap_date"] == days[0]
     # The rename does not reset the company's history.
     assert rows[("NEW", syn.RENAME_DAY)]["sessions_prior"] == days.index(syn.RENAME_DAY)
 
@@ -173,3 +172,15 @@ def test_build_id_is_stable_and_changes_with_the_raw_data(built, build_synthetic
     assert DataStore(built).build_id == build.paths(built).build_id
     other = build_synthetic("other", last=date(2023, 10, 24), with_holdout=False)
     assert build.paths(other).build_id != build.paths(built).build_id
+
+
+def test_audit_runs_and_reports_full_matching_on_the_synthetic_data(built):
+    from kinn.data import audit
+
+    result = audit.run(built)
+    assert result["files"]["minute_files_converted"] == len(syn.sessions())
+    assert result["match_by_year"][0]["matched_pct"] == 100.0
+    assert result["early_closes"] == [str(syn.EARLY_CLOSE_DAY)]
+    assert result["symbol_conflicts"]["overlapping_pairs"] == 0
+    text = audit.render(result)
+    assert "Identity match" in text and "POISON" not in text

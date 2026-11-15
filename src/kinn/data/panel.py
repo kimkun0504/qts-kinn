@@ -4,6 +4,10 @@ Columns ending in ``_prev`` (and ``sessions_prior``) use only earlier sessions, 
 available before the open of ``date``. Universes may filter on those and on static labels only.
 The same-day columns (open .. dollar_volume) are outcomes of ``date`` and are not available
 until its close.
+
+Built one year at a time, each with the previous calendar year as lookback, so it fits in a
+small machine. ``adv20_prev`` is the median dollar volume of the company's last 20 sessions
+with a bar, looking back no further than the start of the previous calendar year.
 """
 
 from __future__ import annotations
@@ -17,7 +21,7 @@ import duckdb
 ADV_WINDOW = 20
 
 
-def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "2GB") -> dict:
+def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500MB") -> dict:
     """Write ``panel/year=YYYY.parquet`` under ``build_root``. Returns match statistics."""
     master = build_root / "master"
     shar = build_root / "sharadar"
@@ -39,68 +43,69 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "2GB")
                 from '{shar}/daily.parquet' m join sec s using (ticker)
                 where m.marketcap is not null"""
         )
-        # 1. Attach a company to each bar. A (date, symbol) claimed by two companies, or a
-        #    company seen under two symbols on one date, is ambiguous and dropped.
+        # 1. Which company each (date, symbol) is, over the whole history but narrow.
+        #    A symbol claimed by two companies on one date, or a company seen under two
+        #    symbols on one date, is ambiguous and dropped.
         con.execute(
-            """create table matched as
-               select d.date, h.permaticker, d.symbol, d.open, d.high, d.low, d.close, d.volume,
-                      d.close * d.volume as dollar_volume
+            """create table claim as
+               select d.date, d.symbol, min(h.permaticker) as permaticker
                from daily d join hist h
                  on d.symbol = h.symbol and d.date >= h.valid_from and d.date < h.valid_to
-               qualify count(*) over (partition by d.date, d.symbol) = 1
-                   and count(*) over (partition by d.date, h.permaticker) = 1"""
+               group by d.date, d.symbol having count(*) = 1"""
         )
-        stats = dict(
-            zip(
-                ("daily_rows", "matched_rows"),
-                con.execute(
-                    "select (select count(*) from daily), (select count(*) from matched)"
-                ).fetchone(),
-                strict=True,
-            )
-        )
-        # 2. Lagged columns, per company (so they survive ticker changes).
         con.execute(
-            f"""create table lagged as
-                select m.*,
-                       lag(m.close) over w as prev_close_raw,
-                       lag(m.date) over w as prev_date,
-                       median(m.dollar_volume) over (
-                           partition by m.permaticker order by m.date
-                           rows between {ADV_WINDOW} preceding and 1 preceding) as adv20_prev,
-                       count(*) over (
-                           partition by m.permaticker order by m.date
-                           rows between unbounded preceding and 1 preceding) as sessions_prior
-                from matched m
-                window w as (partition by m.permaticker order by m.date)"""
+            """create table ident as
+               select date, min(symbol) as symbol, permaticker,
+                      (row_number() over (partition by permaticker order by date) - 1)::integer
+                        as sessions_prior
+               from claim group by date, permaticker having count(*) = 1"""
         )
-        con.execute("drop table matched")
-        # 3. Split-adjust the prior close to today's share basis; attach the latest market cap
-        #    dated strictly before today, and the static labels.
-        con.execute(
-            """create table panel as
-               select l.date, l.permaticker, l.symbol, s.ticker, s.category, s.exchange,
-                      l.open, l.high, l.low, l.close, l.volume, l.dollar_volume,
-                      l.prev_close_raw / coalesce(sp.ratio, 1) as prev_close,
-                      l.prev_date, coalesce(sp.ratio, 1) as split_ratio,
-                      l.adv20_prev, l.sessions_prior,
-                      mc.marketcap as marketcap_prev, mc.date as marketcap_date
-               from lagged l
-               join sec s using (permaticker)
-               left join splits sp on sp.permaticker = l.permaticker and sp.date = l.date
-               asof left join mcap mc on mc.permaticker = l.permaticker and mc.date < l.date"""
-        )
-        con.execute("drop table lagged")
+        daily_rows, claimed = con.execute(
+            "select (select count(*) from daily), (select count(*) from claim)"
+        ).fetchone()
+        con.execute("drop table claim")
+        panel_rows = con.execute("select count(*) from ident").fetchone()[0]
         years = [
-            r[0] for r in con.execute("select distinct year(date) from panel order by 1").fetchall()
+            r[0] for r in con.execute("select distinct year(date) from ident order by 1").fetchall()
         ]
+        # 2. Per year: lagged columns per company (so they survive ticker changes), the prior
+        #    close split-adjusted to today's share basis, and the previous session's market cap.
         for year in years:
             tmp = out / f"year={year}.tmp"
             con.execute(
-                f"""copy (select * from panel where year(date) = {year} order by date, symbol)
+                f"""copy (
+                    with bars as (
+                        select i.permaticker, i.sessions_prior, d.*, d.close * d.volume
+                                 as dollar_volume
+                        from ident i join daily d using (date, symbol)
+                        where year(i.date) in ({year - 1}, {year})
+                          and year(d.date) in ({year - 1}, {year})),
+                    lagged as (
+                        select *, lag(close) over w as prev_close_raw, lag(date) over w
+                                 as prev_date,
+                               median(dollar_volume) over (
+                                   partition by permaticker order by date
+                                   rows between {ADV_WINDOW} preceding and 1 preceding)
+                                 as adv20_prev
+                        from bars window w as (partition by permaticker order by date))
+                    select l.date, l.permaticker, l.symbol, s.ticker, s.category, s.exchange,
+                           l.open, l.high, l.low, l.close, l.volume, l.dollar_volume,
+                           l.prev_close_raw / coalesce(sp.ratio, 1) as prev_close,
+                           l.prev_date, coalesce(sp.ratio, 1) as split_ratio,
+                           l.adv20_prev, l.sessions_prior, mc.marketcap as marketcap_prev
+                    from lagged l
+                    join sec s using (permaticker)
+                    left join splits sp on sp.permaticker = l.permaticker and sp.date = l.date
+                    left join mcap mc on mc.permaticker = l.permaticker and mc.date = l.prev_date
+                    where year(l.date) = {year}
+                    order by l.date, l.symbol)
                     to '{tmp}' (format parquet, compression zstd)"""
             )
             os.replace(tmp, out / f"year={year}.parquet")
-        stats["panel_rows"] = con.execute("select count(*) from panel").fetchone()[0]
         con.close()
-    return stats
+    return {
+        "daily_rows": daily_rows,
+        "claimed_rows": claimed,
+        "panel_rows": panel_rows,
+        "years": [years[0], years[-1]] if years else [],
+    }
