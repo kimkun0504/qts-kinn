@@ -1,0 +1,14 @@
+# One month, used to show that two agents can run at the same time (Phase 5).
+params:
+  entries_per_session: 10
+  hold_minutes: 60
+  seed: 1
+risk:
+  equity: 10000
+  position_dollars: 500
+  buying_power: 10000
+period:
+  start: 2019-01-02
+  end: 2019-01-31
+lookahead_check_rate: 1.0
+seed: 1

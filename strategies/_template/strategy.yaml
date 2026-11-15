@@ -5,4 +5,4 @@ engine: intraday
 universe: ""              # a named point-in-time universe from kinn.data
 cost_calibration: ibkr_pro_tiered
 owner: ""                 # claude | gpt (must match docs/OWNERS.md)
-family: ""                # trial-counting family; runs in one family share a trial count
+family: _template         # trial-counting family; runs in one family share a trial count
