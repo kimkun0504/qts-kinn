@@ -46,6 +46,7 @@ uv run pytest                # unit tests, canaries, repo rules
 uv run lint-imports          # import rules
 uv run ruff check . && uv run ruff format .
 uv run kinn paths            # where Kinn reads and writes
+uv run python -m apps.workbench   # the research UI, http://127.0.0.1:8321
 ```
 
 Data: `uv run kinn data bars`, `kinn data build`, `kinn data audit` (resumable; see docs/data/).
@@ -81,6 +82,7 @@ them. A long run can pause (`--budget <seconds>`) and continue (`--resume <run_i
 
 ## Research discipline
 
+- Starting a strategy: [docs/NEW_STRATEGY.md](docs/NEW_STRATEGY.md).
 - Write `HYPOTHESIS.md` before the first test: rationale, universe, event definition, risks.
 - Log every run through `kinn run`. A number that is not in the run store does not exist.
 - End every strategy with a `REPORT.md` that gives a verdict: develop, park or retire.
