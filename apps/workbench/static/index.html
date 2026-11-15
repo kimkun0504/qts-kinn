@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kinn workbench</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="viz-root">
+<header>
+  <h1>Kinn workbench</h1>
+  <p id="store"></p>
+  <button id="refresh" type="button">Reload runs</button>
+</header>
+<div class="shell">
+  <nav id="families" aria-label="Strategy families"></nav>
+  <main>
+    <section id="runs" aria-label="Runs"></section>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="run" aria-selected="true">Run</button>
+      <button role="tab" data-tab="compare">Compare</button>
+      <button role="tab" data-tab="heatmap">Parameters</button>
+      <button role="tab" data-tab="trials">Trials and overfitting</button>
+    </div>
+    <section id="panel" aria-live="polite"></section>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

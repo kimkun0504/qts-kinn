@@ -1,0 +1,14 @@
+# Part of a 3x3 sweep used as Workbench test data (canary family; every run is counted).
+params:
+  entries_per_session: 10
+  hold_minutes: 60
+  seed: 1
+risk:
+  equity: 10000
+  position_dollars: 500
+  buying_power: 10000
+period:
+  start: 2019-01-02
+  end: 2019-12-31
+lookahead_check_rate: 0.1
+seed: 1

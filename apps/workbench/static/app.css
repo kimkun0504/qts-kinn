@@ -1,0 +1,61 @@
+/* Kinn workbench. A research ledger: dense, quiet, numbers first. Slate-blue ground rather
+   than black; the one loud element is the trial count in the left rail. */
+.viz-root{color-scheme:dark;--ground:#14202b;--panel:#1b2a37;--raise:#223445;--line:#2e4254;
+--ink:#e6edf2;--ink2:#b3c2ce;--muted:#8198aa;--mark:#f0b429;
+--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--neg:#e66767;--pos:#3987e5;
+font:13px/1.45 "IBM Plex Sans","Inter",system-ui,sans-serif;background:var(--ground);
+color:var(--ink);margin:0;font-variant-numeric:tabular-nums}
+@media (prefers-color-scheme:light){.viz-root{color-scheme:light;--ground:#eef2f5;--panel:#fcfcfb;
+--raise:#e4eaef;--line:#cfd9e1;--ink:#14202b;--ink2:#41525f;--muted:#6b7f8e;--mark:#a86a00;
+--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--neg:#e34948;--pos:#2a78d6}}
+*{box-sizing:border-box}
+header{display:flex;align-items:baseline;gap:18px;padding:10px 18px;border-bottom:1px solid var(--line)}
+header h1{font-size:15px;font-weight:600;margin:0}
+header p{margin:0;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button{font:inherit;color:var(--ink);background:var(--raise);border:1px solid var(--line);
+border-radius:4px;padding:3px 10px;cursor:pointer}
+button:focus-visible,tr:focus-visible,a:focus-visible{outline:2px solid var(--mark);outline-offset:1px}
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 44px)}
+nav{border-right:1px solid var(--line);padding:12px 0}
+nav h2,main h2{font-size:12px;font-weight:600;color:var(--ink2);margin:0 0 6px}
+nav h2{padding:0 16px}
+.fam{display:block;width:100%;text-align:left;border:0;border-left:3px solid transparent;
+border-radius:0;background:none;padding:8px 16px 8px 13px}
+.fam[aria-pressed=true]{background:var(--panel);border-left-color:var(--mark)}
+.fam b{display:block;font-weight:500}
+.fam .count{font-size:22px;font-weight:600;color:var(--mark);line-height:1.1}
+.fam small{color:var(--muted)}
+main{padding:12px 18px 40px;min-width:0}
+.tablewrap{max-height:290px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%}
+th,td{padding:3px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{position:sticky;top:0;background:var(--raise);color:var(--ink2);font-weight:500;z-index:1}
+th:first-child,td:first-child,td.l,th.l{text-align:left}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--raise)}
+tr[aria-selected=true]{background:var(--raise);box-shadow:inset 3px 0 0 var(--s1)}
+.neg{color:var(--neg)}.flag{color:var(--mark);font-size:12px}.dim{color:var(--muted)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px}
+.tabs{display:flex;gap:2px;margin:14px 0 0;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;
+color:var(--ink2);padding:6px 12px}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--mark)}
+#panel{padding-top:12px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 26px;margin:0 0 10px}
+.facts div span{display:block;color:var(--muted);font-size:12px}
+.facts div b{font-size:17px;font-weight:600}
+.facts div small{color:var(--ink2);margin-left:6px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;min-width:0}
+.card table th{position:static;background:none}
+svg{display:block;width:100%;height:auto}svg text{fill:var(--ink2);font-size:11px}
+.chart{position:relative}.tip{position:absolute;top:6px;pointer-events:none;display:none;
+background:var(--raise);border:1px solid var(--line);border-radius:4px;padding:5px 8px;font-size:12px;white-space:nowrap}
+.legend{color:var(--ink2);font-size:12px;margin:0 0 4px}
+.key{display:inline-block;width:16px;border-top:2px solid;vertical-align:middle;margin:0 5px 0 12px}
+.key:first-child{margin-left:0}
+.note{color:var(--ink2);max-width:74ch;margin:8px 0}
+.empty{color:var(--ink2);padding:22px 0;max-width:60ch}
+select{font:inherit;color:var(--ink);background:var(--raise);border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+.hm td{text-align:center;border:2px solid var(--panel);padding:8px 10px;min-width:74px}
+.hm th{position:static;background:none}
+@media (max-width:860px){.shell{grid-template-columns:1fr}nav{border-right:0;border-bottom:1px solid var(--line)}.grid2{grid-template-columns:1fr}}
