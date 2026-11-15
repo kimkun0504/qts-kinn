@@ -113,7 +113,37 @@ def rebuild_index(runs_dir: Path) -> Path:
     return path
 
 
+def counts_as_trial(manifest: dict) -> bool:
+    """Scratch runs and runs abandoned before producing any result are not trials."""
+    return not manifest["scratch"] and manifest.get("status") != "abandoned"
+
+
 def trial_count(runs_dir: Path, family: str, *, prior_trials: int = 0) -> int:
-    """Trials to charge a family: every non-scratch run by anyone, plus declared prior looks."""
-    own = sum(1 for m in read_manifests(runs_dir) if m.get("family") == family and not m["scratch"])
+    """Trials to charge a family: every counted run by anyone, plus declared prior looks."""
+    own = sum(
+        1 for m in read_manifests(runs_dir) if m.get("family") == family and counts_as_trial(m)
+    )
     return own + prior_trials
+
+
+def abandon(runs_dir: Path, run_id: str, reason: str) -> None:
+    """Mark an unfinished run as abandoned so it is not charged as a trial.
+
+    Only a run that never produced results can be abandoned: once metrics or a study exist,
+    someone may have looked, and the run stays counted for good.
+    """
+    run_dir = runs_dir / run_id
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    produced = [
+        n
+        for n in ("metrics.json", "study.json", "tick_study.json", "trades.parquet")
+        if (run_dir / n).exists()
+    ]
+    if manifest["status"] == "complete" or produced:
+        raise ValueError(f"{run_id} has results ({produced or 'complete'}); it stays a trial")
+    manifest.update(
+        status="abandoned",
+        abandoned_reason=reason,
+        abandoned_at=datetime.now(UTC).isoformat(timespec="seconds"),
+    )
+    write_json(run_dir / "manifest.json", manifest)
