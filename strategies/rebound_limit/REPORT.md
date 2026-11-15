@@ -137,3 +137,75 @@ fitting to 2022. The honest options are a smaller position size (drawdown scales
 regime condition stated as a new hypothesis, or leaving the strategy as "developing, not tradable".
 
 The family now carries 37 trials.
+
+## Entry depth, exits and price, 2026-11-15 (plan in HYPOTHESIS.md, third addendum)
+
+**Verdict: a deeper limit is a clear improvement and passed validation on all four bars. Every
+exit other than the close made results worse. Still not ready to trade: the fills are simulated
+from minute bars and need checking against real trades.**
+
+Ten variants on the development period (2003–2016), sweep `20261115T232205Z_rebound_limit_10`,
+data build `6453bd3ec8` (corrected dividends and split dates), $20,000 account, $2,000 positions.
+
+| Variant | Trades | Net/trade 1× | Net/trade 2× | t at 2× | Total net 1× | Worst drawdown | Qualifies |
+|---|---|---|---|---|---|---|---|
+| `x_ref` (limit 2% below, hold to close) | 7,268 | +0.66% | +0.56% | 2.94 | $66,187 | −$10,467 | yes |
+| `x_o3` (limit 3% below) | 4,786 | +0.96% | +0.86% | 4.05 | $72,176 | −$7,033 | yes |
+| **`x_o4` (limit 4% below)** | 3,200 | **+1.34%** | **+1.24%** | **4.55** | $68,085 | −$5,561 | yes, chosen |
+| `x_o3_tp5` (3% below, sell 5% up) | 4,998 | +0.63% | +0.59% | 3.98 | $50,241 | −$9,663 | yes |
+| `x_p5` (stocks of $5 or more) | 4,831 | +0.66% | +0.56% | 2.49 | $46,496 | −$8,853 | yes |
+| `x_tp5` (sell 5% up) | 7,813 | +0.46% | +0.41% | 3.22 | $52,495 | −$12,947 | no |
+| `x_tp3` (sell 3% up) | 8,059 | +0.04% | +0.01% | −0.50 | −$1,875 | −$25,113 | no |
+| `x_t120` (sell after 120 minutes) | 7,899 | +0.30% | +0.01% | −0.40 | $32,014 | −$20,550 | no |
+| `x_t60` (sell after 60 minutes) | 8,230 | +0.05% | −0.27% | −3.35 | $184 | −$27,339 | no |
+| `x_sl7` (stop 7% down) | 7,787 | +0.11% | −0.10% | −1.87 | $969 | −$34,510 | no |
+
+- **The corrected data changed nothing here:** `x_ref` matches the earlier `base_o2` to the dollar
+  level (7,268 trades against 7,269, +0.66% both).
+- **Depth of the limit is the lever.** 0%, 1%, 2%, 3%, 4% below the event bar's close gave
+  +0.26%, +0.41%, +0.66%, +0.96%, +1.34% net per trade. Fewer orders fill, at better prices, and
+  the drawdown halves.
+- **Exits:** the rebound takes the rest of the day. Selling early by the clock pays the spread
+  for nothing; a stop sells exactly the trades that recover; a profit target caps the winners
+  while the losers run to the close.
+- **A minimum price of $5** lowers costs (19 bps a round trip against 32) but does not raise the
+  return per trade.
+
+**Validation, one run** (`20261115T233007Z_claude_rebound_limit_eec4a69e`, 2017-01-03 to
+2023-11-08, `x_o4`):
+
+| Bar set in advance | Result | |
+|---|---|---|
+| Net per trade at 1× at least +0.5% | **+1.30%** | passed |
+| Daily-P&L t-statistic at 1× at least 2 | **3.74** | passed |
+| Net per trade at 2× above zero | **+1.20%** | passed |
+| Worst drawdown at 1× at most $10,000 | **−$8,925** | passed |
+
+1,789 trades (about 260 a year), total net +$38,133 on $20,000, Sharpe 1.43, 61% winners.
+
+| Year | Trades | Net/trade | Net $ |
+|---|---|---|---|
+| 2017 | 156 | +1.48% | +$3,454 |
+| 2018 | 275 | +2.10% | +$9,387 |
+| 2019 | 219 | +1.37% | +$6,368 |
+| 2020 | 395 | +2.85% | +$19,050 |
+| 2021 | 225 | +1.21% | +$4,311 |
+| 2022 | 305 | −0.80% | −$5,997 |
+| 2023 | 214 | +0.31% | +$1,560 |
+
+**What to hold against this result**
+
+1. **The fill rule is the weak point.** Only 4% of orders fill (1,789 of about 38,700 placed),
+   and each fill is inferred from a minute bar trading at least one tick through the limit. A
+   resting order 4% below a falling stock fills on the sharpest prints; whether those prints
+   were real, sized trades has not been checked against tick data.
+2. **The validation years have now been used three times** in this family (48 trials in all).
+   The pass is real but weaker evidence than a first look.
+3. **2022 still lost** (−$5,997) and 2013–2015 lost in development. The edge is absent in some
+   years; the deeper limit shrinks the damage and does not remove it.
+4. **The trend continued past the tested range** (4% was the deepest variant and the best). The
+   tempting next step, 5% and 6%, is a new search and must be registered as one.
+
+**Next, in order:** check 4%-below fills against real trades on a tick sample of the events that
+filled; then paper trading with the daily loss limit left off (it hurt in testing) and a smaller
+position; the holdout stays sealed until then.

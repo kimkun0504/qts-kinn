@@ -1,5 +1,5 @@
 name: rebound_limit
-status: developing        # validation passed 2026-11-15; not ready to trade; see REPORT.md
+status: developing        # x_o4 passed validation 2026-11-15; fills unverified; see REPORT.md
 engine: intraday
 universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
