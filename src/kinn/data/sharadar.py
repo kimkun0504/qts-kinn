@@ -21,7 +21,15 @@ from kinn.core.settings import HOLDOUT_START
 # table -> (date column, columns kept with their types)
 DATED_TABLES: dict[str, tuple[str, dict[str, pa.DataType]]] = {
     "DAILY": ("date", {"ticker": pa.string(), "date": pa.date32(), "marketcap": pa.float64()}),
-    "SEP": ("date", {"ticker": pa.string(), "date": pa.date32(), "closeunadj": pa.float64()}),
+    "SEP": (
+        "date",
+        {
+            "ticker": pa.string(),
+            "date": pa.date32(),
+            "close": pa.float64(),  # snapshot-adjusted; replaced by `unadjust` below
+            "closeunadj": pa.float64(),
+        },
+    ),
     "EVENTS": ("date", {"ticker": pa.string(), "date": pa.date32(), "eventcodes": pa.string()}),
     "ACTIONS": (
         "date",
@@ -97,6 +105,20 @@ def _replace(writer_path: Path, dst: Path) -> None:
     os.replace(writer_path, dst)
 
 
+def _sep_unadjust(table: pa.Table) -> pa.Table:
+    """Replace the snapshot's split-adjusted close by ``unadjust`` = unadjusted / adjusted.
+
+    Sharadar states dividend amounts on today's share basis (adjusted for every later split,
+    including splits after the seal). Multiplying an amount by ``unadjust`` on its ex-date gives
+    the amount actually paid per share then. That is the column's only use (decision 0015); the
+    adjusted close itself, which describes the future, is not kept.
+    """
+    close, raw = table["close"], table["closeunadj"]
+    ok = pc.and_(pc.greater(close, 0), pc.greater(raw, 0))
+    factor = pc.if_else(ok, pc.divide(raw, close), pa.scalar(None, pa.float64()))
+    return table.drop_columns(["close"]).append_column("unadjust", factor)
+
+
 def ingest_dated(zip_path: Path, table: str, dst: Path) -> int:
     """Stream ``table`` to Parquet, keeping only rows dated before the holdout. Returns rows."""
     date_column, columns = DATED_TABLES[table]
@@ -110,6 +132,8 @@ def ingest_dated(zip_path: Path, table: str, dst: Path) -> int:
         if table in ROW_FILTERS:
             column, allowed = ROW_FILTERS[table]
             kept = kept.filter(pc.is_in(kept[column], value_set=pa.array(allowed)))
+        if table == "SEP":
+            kept = _sep_unadjust(kept)
         if writer is None:
             writer = pq.ParquetWriter(tmp, kept.schema, compression="zstd")
         writer.write_table(kept)

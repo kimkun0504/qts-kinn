@@ -22,6 +22,12 @@ EARLY_CLOSE_DAY = date(2023, 10, 27)
 RENAME_DAY, SPLIT_DAY = date(2023, 10, 16), date(2023, 10, 23)
 DEAD_LAST, REUSE_FIRST = date(2023, 10, 20), date(2023, 10, 30)
 DIVIDEND_DAY = date(2023, 10, 18)
+# LATE's split is listed two sessions before its price changes; GONE's never shows in prices.
+LATE_SPLIT_LISTED, LATE_SPLIT_REAL, PHANTOM_SPLIT = (
+    date(2023, 10, 24),
+    date(2023, 10, 26),
+    date(2023, 10, 11),
+)
 
 
 SF1_HEADER = ["ticker", "dimension", "calendardate", "datekey", "reportperiod", "equityusd",
@@ -58,6 +64,7 @@ def daily_rows(day: date, index: int) -> list[tuple[str, int, float]]:
     if day >= REUSE_FIRST:
         rows.append(("DEAD", 400, 50.0))
     rows.append(("SPLT", 600, 40.0) if day < SPLIT_DAY else ("SPLT", 1200, 20.0))
+    rows.append(("LATE", 600, 60.0) if day < LATE_SPLIT_REAL else ("LATE", 1200, 30.0))
     return rows
 
 
@@ -156,6 +163,7 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
             tick(1006, "SPLT"),
             tick(1007, "FUT", first="2024-01-05"),
             tick(1008, "GONE", last_price="2025-05-05", delisted="Y"),
+            tick(1009, "LATE"),
             tick(1001, "AAA", table="SF1"),
         ],
     )
@@ -169,7 +177,10 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
             ["2024-03-01", "tickerchangefrom", "POST", "POST INC", "", "PRE", "N/A"],
             [DEAD_LAST.isoformat(), "tickerchangefrom", "DEAD1", "DEAD1 INC", "", "DEAD", "N/A"],
             [SPLIT_DAY.isoformat(), "split", "SPLT", "SPLT INC", "2.0", "", ""],
-            [DIVIDEND_DAY.isoformat(), "dividend", "NEW", "NEW INC", "0.5", "", ""],
+            # Stated on the snapshot's share basis (half the shares after a later 2-for-1).
+            [DIVIDEND_DAY.isoformat(), "dividend", "NEW", "NEW INC", "0.25", "", ""],
+            [LATE_SPLIT_LISTED.isoformat(), "split", "LATE", "LATE INC", "2.0", "", ""],
+            [PHANTOM_SPLIT.isoformat(), "split", "GONE", "GONE INC", "2.0", "", ""],
             ["2025-01-10", "split", "AAA", "AAA INC", "3.0", "", ""],
             ["2025-05-05", "delisted", "GONE", "GONE INC", "", "", ""],
         ],
@@ -189,7 +200,8 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
         snapshot,
         "SEP",
         ["ticker", "date", "open", "close", "closeunadj", "lastupdated"],
-        [["AAA", d.isoformat(), 10, 10, 10, still] for d in dated],
+        [["AAA", d.isoformat(), 10, 10, 10, still] for d in dated]
+        + [["NEW", d.isoformat(), 10, 10, 20, still] for d in dated],
     )
     _zip(
         snapshot,
@@ -290,8 +302,8 @@ def make_random_walk_raw(root: Path, *, symbols: int = 20, days: int = 40, seed:
     _zip(
         snapshot,
         "SEP",
-        ["ticker", "date", "closeunadj"],
-        [[n, d.isoformat(), 20.0] for d in all_days for n in names],
+        ["ticker", "date", "close", "closeunadj"],
+        [[n, d.isoformat(), 20.0, 20.0] for d in all_days for n in names],
     )
     _zip(snapshot, "EVENTS", ["ticker", "date", "eventcodes"], [[names[0], "2021-01-04", "22"]])
     _zip(snapshot, "SF1", SF1_HEADER, [sf1_row(names[0], "ART", "2020-12-31", "2021-01-04", 1.0)])

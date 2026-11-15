@@ -159,15 +159,11 @@ class DataStore:
         )
 
     def dividends(self, start: date, end: date) -> pa.Table:
-        """Cash dividends per share by company and ex-date (Sharadar ACTIONS)."""
+        """Cash per share by company and ex-date: dividends and the cash value of spinoffs."""
         self._check(start, end, "dividends")
         return self._query(
-            f"""select s.permaticker, a.date, sum(a.value) as amount
-                from '{self.root}/sharadar/actions.parquet' a
-                join '{self.root}/master/security_master.parquet' s using (ticker)
-                where a.action = 'dividend' and a.value > 0
-                  and a.date between ? and ? and {self._date_guard("a.date")}
-                group by 1, 2""",
+            f"""select permaticker, date, amount from '{self.root}/master/dividends.parquet'
+                where date between ? and ? and {self._date_guard()}""",
             [start, end],
         )
 

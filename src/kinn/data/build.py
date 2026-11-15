@@ -24,7 +24,7 @@ import pyarrow.parquet as pq
 from kinn.core.settings import HOLDOUT_START, Settings
 from kinn.data import bars, master, panel, raw, sharadar
 
-DATA_VERSION = "data-3"  # data-3: as-reported fundamentals (SF1)
+DATA_VERSION = "data-4"  # data-4: fundamentals (SF1), dividends, split dates checked on price
 SHARADAR_TABLES = ("TICKERS", "ACTIONS", "DAILY", "SEP", "EVENTS")
 
 
@@ -92,6 +92,20 @@ def _write_master(p: BuildPaths) -> None:
             to '{tmp}' (format parquet, compression zstd)"""
     )
     os.replace(tmp, out / "splits.parquet")
+    # Cash paid per share on the ex-date: dividends plus the cash value of spun-off shares,
+    # converted from the snapshot's share basis to the basis of the day (see sharadar.py).
+    tmp = out / "dividends.tmp"
+    con.execute(
+        f"""copy (select s.permaticker, a.date, sum(a.value * p.unadjust) as amount
+                  from '{shar}/actions.parquet' a
+                  join '{shar}/tickers.parquet' s using (ticker)
+                  asof join '{shar}/sep.parquet' p on a.ticker = p.ticker and a.date >= p.date
+                  where a.action in ('dividend', 'spinoffdividend') and a.value > 0
+                    and p.unadjust is not null and a.date - p.date <= 7
+                  group by 1, 2 order by 1, 2)
+            to '{tmp}' (format parquet, compression zstd)"""
+    )
+    os.replace(tmp, out / "dividends.parquet")
     con.close()
     history = master.symbol_history(
         pq.read_table(shar / "tickers.parquet"),

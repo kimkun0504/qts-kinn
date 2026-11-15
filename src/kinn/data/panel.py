@@ -21,6 +21,12 @@ from pathlib import Path
 import duckdb
 
 ADV_WINDOW = 20
+SPLIT_VISIBLE = 0.18  # |ln ratio|: splits this large can be checked against the price
+SPLIT_WINDOW = 20  # calendar days either side of the listed date
+SPLIT_TOLERANCE = 0.12  # allowed |ln| gap between the price change and the ratio ...
+SPLIT_TOLERANCE_SHARE = 0.25  # ... or this share of |ln ratio|, whichever is larger
+
+_FITS = f"miss <= greatest({SPLIT_TOLERANCE}, {SPLIT_TOLERANCE_SHARE} * abs(ln(ratio)))"
 
 
 def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500MB") -> dict:
@@ -38,7 +44,7 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
         )
         con.execute(f"create view hist as select * from '{master}/symbol_history.parquet'")
         con.execute(f"create view sec as select * from '{master}/security_master.parquet'")
-        con.execute(f"create view splits as select * from '{master}/splits.parquet'")
+        con.execute(f"create view listed_splits as select * from '{master}/splits.parquet'")
         con.execute(
             f"""create view filings as
                 select s.permaticker, e.date from '{shar}/events.parquet' e
@@ -71,6 +77,7 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
             "select (select count(*) from daily), (select count(*) from claim)"
         ).fetchone()
         con.execute("drop table claim")
+        split_stats = _align_splits(con, master)
         panel_rows = con.execute("select count(*) from ident").fetchone()[0]
         years = [
             r[0] for r in con.execute("select distinct year(date) from ident order by 1").fetchall()
@@ -126,4 +133,62 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
         "claimed_rows": claimed,
         "panel_rows": panel_rows,
         "years": [years[0], years[-1]] if years else [],
+        "splits": split_stats,
     }
+
+
+def _align_splits(con: duckdb.DuckDBPyConnection, master: Path) -> dict:
+    """Create table ``splits``: each listed split on the session the price actually changed.
+
+    Sharadar sometimes dates a split by its record or pay date, days away from the session the
+    price changed. Left alone, that puts a false jump on one day and a false crash on another.
+    For splits large enough to see (18% or more), the effective session is the
+    one within 20 days whose close-to-close change best matches the ratio. A large
+    split with no matching change is dropped (and counted): the prices show no split. Smaller
+    ones cannot be checked against daily noise and keep their listed date.
+    """
+    con.execute(
+        f"""create table near as
+            select s.permaticker, s.date as listed, s.ratio, i.date, d.close
+            from listed_splits s
+            join ident i on i.permaticker = s.permaticker
+             and i.date between s.date - {SPLIT_WINDOW + 7} and s.date + {SPLIT_WINDOW}
+            join daily d on d.date = i.date and d.symbol = i.symbol
+            where abs(ln(s.ratio)) >= {SPLIT_VISIBLE}"""
+    )
+    con.execute(
+        f"""create table matched as
+            with moves as (
+                select *, abs(ln(close / lag(close) over (
+                    partition by permaticker, listed order by date) * ratio)) as miss
+                from near)
+            select permaticker, listed, ratio, arg_min(date, miss) as date, min(miss) as miss
+            from moves
+            where miss is not null
+              and date between listed - {SPLIT_WINDOW} and listed + {SPLIT_WINDOW}
+            group by 1, 2, 3"""
+    )
+    con.execute(
+        f"""create table splits as
+            select permaticker, date, exp(sum(ln(ratio))) as ratio from (
+                select permaticker, date, ratio from listed_splits
+                where abs(ln(ratio)) < {SPLIT_VISIBLE}
+                union all
+                select permaticker, date, ratio from matched where {_FITS})
+            group by 1, 2"""
+    )
+    tmp = master / "splits_effective.tmp"
+    con.execute(f"copy (select * from splits order by 1, 2) to '{tmp}' (format parquet)")
+    os.replace(tmp, master / "splits_effective.parquet")
+    listed, small, moved, dropped, unseen = con.execute(
+        f"""select (select count(*) from listed_splits),
+                   (select count(*) from listed_splits where abs(ln(ratio)) < {SPLIT_VISIBLE}),
+                   (select count(*) from matched where {_FITS} and date <> listed),
+                   (select count(*) from matched where not ({_FITS})),
+                   (select count(*) from listed_splits s where abs(ln(s.ratio)) >= {SPLIT_VISIBLE}
+                      and not exists (select 1 from matched m
+                                      where m.permaticker = s.permaticker and m.listed = s.date))"""
+    ).fetchone()
+    con.execute("drop table near")
+    return {"listed": listed, "too_small_to_check": small, "date_moved": moved,
+            "dropped_no_price_change": dropped, "no_bars_nearby": unseen}  # fmt: skip

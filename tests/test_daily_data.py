@@ -37,6 +37,17 @@ def test_a_dividend_is_part_of_the_return_on_its_ex_date_only(data):
     assert np.nansum(np.abs(data.ret)) == pytest.approx(0.5 / 20.0)  # prices are flat otherwise
 
 
+def test_a_split_listed_on_the_wrong_day_is_moved_to_the_day_the_price_changed(data):
+    assert at(data, "split", raw.LATE_SPLIT_REAL, "LATE") == 2.0
+    assert at(data, "split", raw.LATE_SPLIT_LISTED, "LATE") == 1.0
+    assert np.nanmax(np.abs(data.ret[:, data.symbols.index("LATE")])) == 0.0
+
+
+def test_a_listed_split_that_never_shows_in_prices_is_dropped(data):
+    column = data.symbols.index("GONE")
+    assert (data.split[:, column] == 1.0).all() and np.nanmax(np.abs(data.ret[:, column])) == 0.0
+
+
 def test_companies_follow_their_permaticker_through_a_rename(data):
     column = data.symbols.index("NEW")
     assert np.isfinite(data.close[:, column]).all()  # traded as OLD, then NEW: one company
