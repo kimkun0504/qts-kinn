@@ -82,3 +82,16 @@ forbidden_modules = [
     "kinn.reporting",
     "kinn.cli",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Platform layers: lower layers never import higher ones"
+type = "layers"
+layers = [
+    "kinn.cli",
+    "kinn.run",
+    "kinn.reporting | kinn.registry | kinn.validation",
+    "kinn.engine",
+    "kinn.features | kinn.costs | kinn.risk",
+    "kinn.data",
+    "kinn.core",
+]

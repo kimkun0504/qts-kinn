@@ -55,7 +55,7 @@ for (const box of document.querySelectorAll('.chart[data-points]')) {
 
 
 def _pct(value, digits=2):
-    return "–" if value is None else f"{100 * value:+.{digits}f}%"
+    return "–" if value is None else f"{100 * value:+.{digits}f}%".replace("-", "−")
 
 
 def _money(value):
@@ -63,7 +63,7 @@ def _money(value):
 
 
 def _num(value, digits=2):
-    return "–" if value is None else f"{value:,.{digits}f}"
+    return "–" if value is None else f"{value:,.{digits}f}".replace("-", "−")
 
 
 def _table(head: list[str], rows: list[list[str]]) -> str:
@@ -105,12 +105,14 @@ def _equity_chart(dates: list, one: list[float], two: list[float]) -> str:
             f"text-anchor='end'>{value:,.0f}</text>"
         )
     years = ""
-    seen = set()
-    for i in idx:
+    year_count = len({str(d)[:4] for d in dates})
+    every = 1 if year_count <= 12 else 2
+    seen: list[str] = []
+    for i in range(n):
         year = str(dates[i])[:4]
         if year not in seen:
-            seen.add(year)
-            if len(seen) % max(1, len({str(d)[:4] for d in dates}) // 10 + 1) == 1 or n < 400:
+            seen.append(year)
+            if (len(seen) - 1) % every == 0:
                 years += f"<text x='{x(i):.1f}' y='{height - 6}'>{year}</text>"
     points = [
         {
@@ -244,7 +246,7 @@ agent {html.escape(manifest["agent"])} · commit <span class="mono">{git["commit
 <div class="tiles">{tile_html}</div>
 <h2>Cumulative net profit, dollars</h2>{_equity_chart(equity["date"], equity["cum_net"], equity["cum_net_2x"])}
 <h2>By year</h2>{_table(["Year", "Trades", "Net / trade, 1×", "Net / trade, 2×", "Net $, 1×"], years)}
-<div class="cols"><div><h2>Costs, bps of traded notional (one way basis: entry notional)</h2>{_table(["Cost", "bps"], cost_rows)}</div>
+<div class="cols"><div><h2>Round-trip costs, bps of entry notional</h2>{_table(["Cost", "bps"], cost_rows)}</div>
 <div><h2>From signal to trade</h2>{_table(["Stage", "Count"], funnel)}</div>
 <div><h2>Exits</h2>{_table(["Reason", "Trades"], exits)}</div></div>
 <h2>Distribution</h2>{_histogram(returns)}
@@ -259,7 +261,7 @@ agent {html.escape(manifest["agent"])} · commit <span class="mono">{git["commit
             "| | 1× slippage | 2× slippage |",
             "|---|---|---|",
             f"| Net return per trade | {_pct(one['mean_return'])} | {_pct(two['mean_return'])} |",
-            f"| Win rate | {_pct(one['win_rate'], 1)} | {_pct(two['win_rate'], 1)} |",
+            f"| Win rate | {_pct(one['win_rate'], 1).lstrip('+')} | {_pct(two['win_rate'], 1).lstrip('+')} |",
             f"| Total net | {_money(one['total_net'])} | {_money(two['total_net'])} |",
             f"| Sharpe (daily) | {_num(one['sharpe'])} | {_num(two['sharpe'])} |",
             f"| t-stat (daily P&L) | {_num(one['t_stat_daily'])} | {_num(two['t_stat_daily'])} |",
