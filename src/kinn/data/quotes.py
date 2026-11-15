@@ -195,3 +195,37 @@ def render(result: dict, name: str) -> str:
     lines += [row(label, s) for label, s in result["by_bucket"].items()]
     lines += [row(label, s) for label, s in result["by_period"].items()]
     return "\n".join(lines) + "\n"
+
+
+def passive_orders(windows: list[dict], raw_sample_dir: Path) -> list[dict]:
+    """One row per event for a buy limit resting at the bid for the window after the entry.
+
+    ``filled_strict``: a trade printed strictly below the limit (the price traded through).
+    ``filled_lenient``: a trade printed at or below it. Prices only; costs are applied later.
+    """
+    rows = []
+    for w in windows:
+        seal.check_range(w["day"], w["day"], source="quote sample")
+        quote_path = sample_file(raw_sample_dir, "quotes", w["day"], w["symbol"])
+        trade_path = sample_file(raw_sample_dir, "trades", w["day"], w["symbol"])
+        if not quote_path.exists() or not trade_path.exists():
+            continue
+        valid = [q for q in _read(quote_path) if q.get("bid_price", 0) > 0
+                 and q.get("ask_price", 0) >= q.get("bid_price", 0)
+                 and q["sip_timestamp"] <= w["entry_ns"]]  # fmt: skip
+        if not valid:
+            continue
+        bid, ask = valid[-1]["bid_price"], valid[-1]["ask_price"]
+        prices = [
+            t["price"]
+            for t in _read(trade_path)
+            if w["entry_ns"] <= t["sip_timestamp"] < w["end_ns"] and t.get("price", 0) > 0
+        ]
+        rows.append({
+            "day": w["day"], "symbol": w["symbol"], "bucket": w["bucket"], "period": w["period"],
+            "adv20_prev": w["adv20_prev"], "bid": bid, "ask": ask,
+            "trades_in_window": len(prices),
+            "filled_strict": any(p < bid for p in prices),
+            "filled_lenient": any(p <= bid for p in prices),
+        })  # fmt: skip
+    return rows

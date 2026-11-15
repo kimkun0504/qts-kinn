@@ -132,6 +132,20 @@ def _quotes_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _quotes_passive(args: argparse.Namespace) -> int:
+    from kinn import tick_study
+    from kinn.registry import runs as registry
+
+    try:
+        run_dir = tick_study.passive_entry(
+            load_settings(), strategy=args.strategy, source_run=args.run, scratch=args.scratch
+        )
+    except registry.DirtyTreeError as error:
+        raise SystemExit(f"refused: {error}") from error
+    print((run_dir / "tick_study.md").read_text())
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -163,6 +177,12 @@ def main(argv: list[str] | None = None) -> int:
     q_report.add_argument("--run", required=True)
     q_report.add_argument("--costs", default="ibkr_pro_tiered")
     q_report.set_defaults(func=_quotes_report)
+
+    q_passive = quote.add_parser("passive", help="test a resting bid on the quote sample")
+    q_passive.add_argument("--run", required=True, help="the event-study run the sample is from")
+    q_passive.add_argument("--strategy", default="intraday_rebound_passive")
+    q_passive.add_argument("--scratch", action="store_true")
+    q_passive.set_defaults(func=_quotes_passive)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True

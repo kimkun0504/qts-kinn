@@ -71,3 +71,47 @@ def test_holdout_events_cannot_be_planned(tmp_path):
     path = events_file(tmp_path, [(date(2024, 1, 5), "AAA", 640, 641, 10.0, 5e6)])
     with pytest.raises(seal.HoldoutError):
         quotes.plan(path, tmp_path / "plan")
+
+
+def test_passive_orders_fill_only_on_a_trade_through(tmp_path):
+    day = date(2019, 6, 3)
+    base = {
+        "day": day,
+        "bucket": "ADV $1–10M",
+        "period": "2017–2023",
+        "adv20_prev": 5e6,
+        "entry_price": 10.0,
+        "signal_minute": 640,
+        "entry_minute": 641,
+        "start_ns": quotes.minute_ns(day, 640),
+        "entry_ns": quotes.minute_ns(day, 641),
+        "end_ns": quotes.minute_ns(day, 651),
+    }
+    cases = {"THRU": [9.89], "TOUCH": [9.90], "ABOVE": [9.95], "LATE": []}
+    windows = []
+    for symbol, prices in cases.items():
+        w = {**base, "symbol": symbol}
+        windows.append(w)
+        for kind, rows in (
+            (
+                "quotes",
+                [
+                    {"sip_timestamp": w["entry_ns"] - 5, "bid_price": 9.90, "ask_price": 10.0},
+                    {"sip_timestamp": w["entry_ns"] + 5, "bid_price": 5.0, "ask_price": 6.0},
+                ],
+            ),
+            (
+                "trades",
+                [{"sip_timestamp": w["entry_ns"] + 60, "price": p} for p in prices]
+                + [{"sip_timestamp": w["end_ns"] + 1, "price": 1.0}],
+            ),  # after the order is cancelled
+        ):
+            file = quotes.sample_file(tmp_path, kind, day, symbol)
+            file.parent.mkdir(parents=True, exist_ok=True)
+            with gzip.open(file, "wt") as handle:
+                for row in rows:
+                    handle.write(json.dumps(row) + "\n")
+    got = {o["symbol"]: o for o in quotes.passive_orders(windows, tmp_path)}
+    assert all(o["bid"] == 9.90 and o["ask"] == 10.0 for o in got.values())
+    assert [got[s]["filled_strict"] for s in cases] == [True, False, False, False]
+    assert [got[s]["filled_lenient"] for s in cases] == [True, True, False, False]
