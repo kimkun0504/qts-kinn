@@ -125,7 +125,7 @@ def families(runs_dir: Path) -> list[dict]:
     out = []
     for family in sorted({m.get("family") or m["strategy"] for m in manifests}):
         members = [m for m in manifests if (m.get("family") or m["strategy"]) == family]
-        counted = [m for m in members if not m["scratch"]]
+        counted = [m for m in members if registry.counts_as_trial(m)]
         prior = max((int(m.get("prior_trials", 0)) for m in members), default=0)
         trials = len(counted) + prior
         row = {

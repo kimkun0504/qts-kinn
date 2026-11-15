@@ -117,6 +117,16 @@ def _sweep(args: argparse.Namespace) -> int:
     return 0 if done else 3
 
 
+def _abandon(args: argparse.Namespace) -> int:
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    for run_id in args.run_ids:
+        registry.abandon(settings.runs_dir, run_id, args.reason)
+        print(f"abandoned (not a trial): {run_id}")
+    return 0
+
+
 def _runs(args: argparse.Namespace) -> int:
     import duckdb
 
@@ -133,7 +143,8 @@ def _runs(args: argparse.Namespace) -> int:
     for row in rows:
         print(" | ".join("" if v is None else str(v) for v in row))
     families = con.execute(
-        "select family, count(*) from runs where not scratch group by 1 order by 1"
+        "select family, count(*) from runs where not scratch and status <> 'abandoned' "
+        "group by 1 order by 1"
     ).fetchall()
     for family, count in families:
         print(f"family {family}: {count} counted runs (plus any declared prior looks)")
@@ -212,6 +223,10 @@ def main(argv: list[str] | None = None) -> int:
     sweep.add_argument("--budget", type=float, default=float("inf"))
     sweep.add_argument("--workers", type=int, default=1)
     sweep.set_defaults(func=_sweep)
+    drop = sub.add_parser("abandon", help="mark unfinished runs as abandoned (never finished ones)")
+    drop.add_argument("run_ids", nargs="+")
+    drop.add_argument("--reason", required=True)
+    drop.set_defaults(func=_abandon)
     sub.add_parser("runs", help="rebuild the run index and list runs").set_defaults(func=_runs)
 
     quote = sub.add_parser("quotes", help="quote sample around a study's events").add_subparsers(

@@ -70,3 +70,12 @@ information; **fast** drops look like one seller; **early** events have the most
 3. **Auction exit** in thin names is modelled, not measured.
 4. **Capital**: on selloff days there are hundreds of events and $10,000 runs out; the backtest
    takes orders in time order, which is what would happen live.
+
+## Addendum, 2026-11-15 15:30 ET: sizing changed by the owner before any result
+
+The owner set the account to **$20,000** and positions to **$2,000** (was $10,000 and $500). The
+17 runs already started at the old sizing were stopped after 35 of 160 months and marked
+abandoned; none had produced a result and none was read. The same 17 variants now run at the new
+sizing. Expected effect: the $0.35 minimum commission matters less (about 2 bps a side instead of
+7), while the 5% participation cap and market impact matter more, and at most ten positions or
+resting orders fit at once.

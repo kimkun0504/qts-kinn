@@ -216,3 +216,19 @@ def test_a_sweep_gives_each_config_the_same_result_as_running_alone(world, first
     same, different = (pq.read_table(d / "trades.parquet") for d in dirs)
     assert same.equals(pq.read_table(first_run / "trades.parquet"))
     assert not different.equals(same) and different.num_rows > 0
+
+
+def test_only_unfinished_runs_can_be_abandoned(world, first_run, monkeypatch):
+    settings, strategies = world
+    monkeypatch.setenv("KINN_STRATEGIES_DIR", str(strategies))
+    with pytest.raises(ValueError, match="stays a trial"):
+        registry.abandon(settings.runs_dir, first_run.name, "changed my mind")
+    run_dir = runner.start_run(
+        "random_entry", "test", settings=settings, scratch=True, agent="quit"
+    )
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    manifest["scratch"] = False
+    (run_dir / "manifest.json").write_text(json.dumps(manifest))
+    before = registry.trial_count(settings.runs_dir, "canary_random_entry")
+    registry.abandon(settings.runs_dir, run_dir.name, "sizing changed before any result")
+    assert registry.trial_count(settings.runs_dir, "canary_random_entry") == before - 1
