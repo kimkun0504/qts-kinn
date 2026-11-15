@@ -94,3 +94,46 @@ before producing results and are not counted.
   and works once: use it only for the frozen version.
 - **Toward parking:** if 2022–2023 turns out to be the new normal. The cheapest evidence is the
   holdout itself (2023-11 onward), which would settle exactly that question.
+
+## Risk rules, 2026-11-15 (plan in HYPOTHESIS.md, risk addendum)
+
+**Verdict: the risk rules failed validation. No risk rule tested here controls the drawdown.**
+
+Seven risk variants of `base_o2` on the development period (2003–2016), sweep
+`20261115T212122Z_rebound_limit_7`; dollars on a $20,000 account with $2,000 positions.
+
+| Variant | Trades | Net/trade 1× | Total net 2× | Worst drawdown 2× | Net ÷ drawdown | Qualifies (≥ $36,940) |
+|---|---|---|---|---|---|---|
+| `base_o2` (no rule) | 7,269 | +0.66% | $52,772 | −$11,853 | 4.45 | reference |
+| `risk_cap5` | 6,069 | +0.56% | $32,444 | −$10,940 | 2.97 | no |
+| `risk_loss300` | 6,945 | +0.58% | $42,154 | −$15,008 | 2.81 | yes |
+| `risk_loss600` | 7,165 | +0.62% | $46,903 | −$13,897 | 3.38 | yes |
+| `risk_cap5_loss600` | 6,036 | +0.56% | $31,717 | −$11,226 | 2.83 | no |
+| `risk_all` | 5,896 | +0.59% | $34,448 | −$11,226 | 3.07 | no |
+| `risk_brk4000` | 7,029 | +0.71% | $56,726 | −$9,432 | 6.01 | yes |
+| **`risk_brk2000`** | 6,695 | +0.73% | $58,651 | −$9,683 | **6.06** | yes, chosen |
+
+- The entry cap and the daily loss limit **made things worse**: they removed more profit than
+  loss. Days with many events, and entries made while the session was already down, were on
+  average good trades.
+- Only the circuit breaker helped in development, and only modestly.
+
+**Validation, one run** (`20261115T213340Z_claude_rebound_limit_7bab3754`, 2017-01-03 to
+2023-11-08, `risk_brk2000`):
+
+| Bar set in advance | Result | |
+|---|---|---|
+| Worst drawdown at 1× ≤ $8,000 | **−$20,158** | **failed** |
+| Net per trade at 1× ≥ +0.4% | +0.53% (2×: +0.43%) | passed |
+| Daily-P&L t-statistic at 1× ≥ 2 | 2.59 | passed |
+
+4,172 trades, total net +$32,664; 110 sessions paused. 2022: −$12,787; 2023: −$3,919. Without the
+rule the drawdown was −$20,763, so the breaker removed about $600 of it. The 2022–2023 loss was a
+slow decline over many months, never steep enough inside 20 sessions to keep the breaker tripped.
+
+**What this means.** The strategy's problem is not a few bad days that a stop can cut; it is that
+the edge was absent or negative for two years. Further risk-rule tuning on this signal would be
+fitting to 2022. The honest options are a smaller position size (drawdown scales with it), a
+regime condition stated as a new hypothesis, or leaving the strategy as "developing, not tradable".
+
+The family now carries 37 trials.
