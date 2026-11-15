@@ -11,6 +11,7 @@ import pyarrow as pa
 
 from kinn.core.settings import HOLDOUT_START, Settings
 from kinn.data import seal
+from kinn.data.sharadar import SF1_DIMENSIONS, SF1_FIELDS
 from kinn.data.universe import Universe
 
 CURRENT_NAME = "CURRENT"
@@ -112,4 +113,94 @@ class DataStore:
                 where date between ? and ? and {self._date_guard()}
                   and symbol in (select unnest(?)) order by date, symbol""",
             [start, end, symbols],
+        )
+
+    # -- daily research (multi-day books) ------------------------------------------------
+    def _eligibility(self, where: str, top_by_marketcap: int | None) -> str:
+        """SQL for the panel with an ``eligible`` column: the universe filter and, optionally,
+        the largest ``top_by_marketcap`` names by the previous session's market cap."""
+        top = "true" if top_by_marketcap is None else f"rk <= {int(top_by_marketcap)}"
+        return f"""with base as (
+                select date, permaticker, open, close, split_ratio, prev_close, dollar_volume,
+                       adv20_prev, marketcap_prev, coalesce(({where}), false) as ok
+                from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()}),
+            ranked as (
+                select *, row_number() over (partition by date, ok
+                    order by marketcap_prev desc nulls last, permaticker) as rk from base)
+            select * exclude (ok, rk), (ok and {top}) as eligible from ranked"""
+
+    def daily_candidates(
+        self, start: date, end: date, *, universe: Universe, top_by_marketcap: int | None = None
+    ) -> list[int]:
+        """Companies in the universe on at least one session of the period."""
+        self._check(start, end, "panel")
+        sql = self._eligibility(universe.where(), top_by_marketcap)
+        table = self._query(
+            f"select distinct permaticker from ({sql}) where eligible order by 1", [start, end]
+        )
+        return table["permaticker"].to_pylist()
+
+    def daily_long(
+        self,
+        start: date,
+        end: date,
+        *,
+        universe: Universe,
+        permatickers: list[int],
+        top_by_marketcap: int | None = None,
+    ) -> pa.Table:
+        """Panel rows of the given companies, with their eligibility on each session."""
+        self._check(start, end, "panel")
+        sql = self._eligibility(universe.where(), top_by_marketcap)
+        return self._query(
+            f"select * from ({sql}) where permaticker in (select unnest(?))",
+            [start, end, permatickers],
+        )
+
+    def dividends(self, start: date, end: date) -> pa.Table:
+        """Cash dividends per share by company and ex-date (Sharadar ACTIONS)."""
+        self._check(start, end, "dividends")
+        return self._query(
+            f"""select s.permaticker, a.date, sum(a.value) as amount
+                from '{self.root}/sharadar/actions.parquet' a
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where a.action = 'dividend' and a.value > 0
+                  and a.date between ? and ? and {self._date_guard("a.date")}
+                group by 1, 2""",
+            [start, end],
+        )
+
+    def securities(self) -> pa.Table:
+        return self._query(f"select * from '{self.root}/master/security_master.parquet'")
+
+    def last_symbols(self, start: date, end: date, permatickers: list[int]) -> dict[int, str]:
+        self._check(start, end, "panel")
+        table = self._query(
+            f"""select permaticker, arg_max(symbol, date) as symbol
+                from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()}
+                  and permaticker in (select unnest(?)) group by 1""",
+            [start, end, permatickers],
+        )
+        return dict(zip(table["permaticker"].to_pylist(), table["symbol"].to_pylist(), strict=True))
+
+    def fundamentals(
+        self, end: date, *, fields: tuple[str, ...], dimension: str = "ART"
+    ) -> pa.Table:
+        """As-reported fundamentals filed up to ``end``: (permaticker, datekey, fields...).
+
+        ``datekey`` is the filing date. A value is usable from the session *after* it."""
+        self._check(end, end, "fundamentals")
+        unknown = set(fields) - set(SF1_FIELDS)
+        if unknown or dimension not in SF1_DIMENSIONS:
+            raise KeyError(f"unknown fundamentals: {sorted(unknown)} / {dimension}")
+        columns = ", ".join(f"f.{name}" for name in fields)
+        return self._query(
+            f"""select s.permaticker, f.datekey, {columns}
+                from '{self.root}/sharadar/sf1.parquet' f
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where f.dimension = ? and f.datekey <= ? and {self._date_guard("f.datekey")}
+                order by f.datekey, f.calendardate""",
+            [dimension, end],
         )

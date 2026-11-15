@@ -21,6 +21,18 @@ HOLDOUT_DAYS = [date(2023, 11, 9), date(2023, 11, 10)]
 EARLY_CLOSE_DAY = date(2023, 10, 27)
 RENAME_DAY, SPLIT_DAY = date(2023, 10, 16), date(2023, 10, 23)
 DEAD_LAST, REUSE_FIRST = date(2023, 10, 20), date(2023, 10, 30)
+DIVIDEND_DAY = date(2023, 10, 18)
+
+
+SF1_HEADER = ["ticker", "dimension", "calendardate", "datekey", "reportperiod", "equityusd",
+              "revenueusd", "gp", "opinc", "ebitusd", "netinccmnusd", "assets", "liabilities",
+              "debtusd", "cashnequsd", "ncfo", "capex", "fcf", "sharesbas", "shareswa", "epsusd",
+              "bvps", "dps"]  # fmt: skip
+FILING_DAY = date(2023, 10, 16)
+
+
+def sf1_row(ticker, dimension, period, filed, equity):
+    return [ticker, dimension, period, filed, period, equity] + [1.0] * (len(SF1_HEADER) - 6)
 
 
 def sessions(last: date = LAST_OPEN) -> list[date]:
@@ -157,6 +169,7 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
             ["2024-03-01", "tickerchangefrom", "POST", "POST INC", "", "PRE", "N/A"],
             [DEAD_LAST.isoformat(), "tickerchangefrom", "DEAD1", "DEAD1 INC", "", "DEAD", "N/A"],
             [SPLIT_DAY.isoformat(), "split", "SPLT", "SPLT INC", "2.0", "", ""],
+            [DIVIDEND_DAY.isoformat(), "dividend", "NEW", "NEW INC", "0.5", "", ""],
             ["2025-01-10", "split", "AAA", "AAA INC", "3.0", "", ""],
             ["2025-05-05", "delisted", "GONE", "GONE INC", "", "", ""],
         ],
@@ -183,6 +196,17 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
         "EVENTS",
         ["ticker", "date", "eventcodes"],
         [["AAA", "2023-10-10", "22|91"]] + ([["AAA", "2024-02-02", "13"]] if with_holdout else []),
+    )
+    _zip(
+        snapshot,
+        "SF1",
+        SF1_HEADER,
+        [
+            sf1_row("AAA", "ART", "2023-06-30", "2023-08-10", 400.0),
+            sf1_row("AAA", "ART", "2023-09-30", FILING_DAY.isoformat(), 500.0),
+            sf1_row("AAA", "MRT", "2023-09-30", "2023-09-30", 999.0),  # restated: never kept
+        ]
+        + ([sf1_row("AAA", "ART", "2023-12-31", "2023-11-09", 777.0)] if with_holdout else []),
     )
     return root
 
@@ -270,4 +294,5 @@ def make_random_walk_raw(root: Path, *, symbols: int = 20, days: int = 40, seed:
         [[n, d.isoformat(), 20.0] for d in all_days for n in names],
     )
     _zip(snapshot, "EVENTS", ["ticker", "date", "eventcodes"], [[names[0], "2021-01-04", "22"]])
+    _zip(snapshot, "SF1", SF1_HEADER, [sf1_row(names[0], "ART", "2020-12-31", "2021-01-04", 1.0)])
     return root

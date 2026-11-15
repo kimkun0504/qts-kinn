@@ -24,7 +24,7 @@ import pyarrow.parquet as pq
 from kinn.core.settings import HOLDOUT_START, Settings
 from kinn.data import bars, master, panel, raw, sharadar
 
-DATA_VERSION = "data-2"  # data-2: panel gains filings_prev, filings_today
+DATA_VERSION = "data-3"  # data-3: as-reported fundamentals (SF1)
 SHARADAR_TABLES = ("TICKERS", "ACTIONS", "DAILY", "SEP", "EVENTS")
 
 
@@ -118,7 +118,7 @@ def build_tables(settings: Settings, *, budget_seconds: float = 3600.0) -> tuple
             ),
         )
     ]
-    for table in ("ACTIONS", "DAILY", "SEP", "EVENTS"):
+    for table in ("ACTIONS", "DAILY", "SEP", "EVENTS", "SF1"):
         dst = shar / f"{table.lower()}.parquet"
         steps.append(
             (

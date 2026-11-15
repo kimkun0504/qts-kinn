@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Kinn: a research platform for intraday equity strategies."
 requires-python = ">=3.12"
 dependencies = [
+    "cvxpy>=1.6",
     "duckdb>=2.0.0",
     "numpy>=2.5.4",
     "pyarrow>=26.0.1",
@@ -77,6 +78,9 @@ forbidden_modules = [
     "kinn.features",
     "kinn.costs",
     "kinn.risk",
+    "kinn.alpha",
+    "kinn.portfolio",
+    "kinn.execution",
     "kinn.engine",
     "kinn.validation",
     "kinn.registry",
@@ -90,10 +94,11 @@ type = "layers"
 layers = [
     "kinn.cli",
     "kinn.tick_study",
-    "kinn.run",
+    "kinn.run | kinn.book_run",
     "kinn.reporting | kinn.registry | kinn.validation",
     "kinn.engine",
-    "kinn.features | kinn.costs | kinn.risk",
+    "kinn.portfolio | kinn.execution",
+    "kinn.alpha | kinn.features | kinn.costs | kinn.risk",
     "kinn.data",
     "kinn.core",
 ]

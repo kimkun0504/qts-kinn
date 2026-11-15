@@ -92,3 +92,19 @@ class Trade:
     net: float
     net_2x: float
     tag: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class BookFill:
+    """One auction fill in a multi-day book. ``shares`` is signed: negative sells or shorts."""
+
+    day: date
+    permaticker: int
+    symbol: str
+    shares: float
+    price: float
+    value: float
+    commission: float
+    fees: float
+    slippage: float
+    reason: str  # rebalance | delisted

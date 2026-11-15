@@ -37,6 +37,29 @@ DATED_TABLES: dict[str, tuple[str, dict[str, pa.DataType]]] = {
     ),
 }
 
+# Fundamentals. Only the as-reported dimensions are kept: ARQ (quarterly) and ART (trailing
+# twelve months), each row dated by ``datekey``, the day the filing reached the SEC. The "MR"
+# dimensions are restated with later knowledge and are dropped here. Price-based columns
+# (marketcap, pe, ev ...) are not read: they belong to the snapshot's price history.
+SF1_FIELDS = (
+    "revenueusd", "gp", "opinc", "ebitusd", "netinccmnusd", "equityusd", "assets",
+    "liabilities", "debtusd", "cashnequsd", "ncfo", "capex", "fcf", "sharesbas", "shareswa",
+    "epsusd", "bvps", "dps",
+)  # fmt: skip
+SF1_DIMENSIONS = ("ARQ", "ART")
+DATED_TABLES["SF1"] = (
+    "datekey",
+    {
+        "ticker": pa.string(),
+        "dimension": pa.string(),
+        "calendardate": pa.date32(),
+        "datekey": pa.date32(),
+        "reportperiod": pa.date32(),
+        **dict.fromkeys(SF1_FIELDS, pa.float64()),
+    },
+)
+ROW_FILTERS: dict[str, tuple[str, tuple[str, ...]]] = {"SF1": ("dimension", SF1_DIMENSIONS)}
+
 TICKER_COLUMNS = {
     "table": pa.string(),
     "permaticker": pa.int64(),
@@ -84,6 +107,9 @@ def ingest_dated(zip_path: Path, table: str, dst: Path) -> int:
     writer = None
     for batch in _reader(zip_path, columns):
         kept = pa.Table.from_batches([batch]).filter(pc.less(batch[date_column], seal))
+        if table in ROW_FILTERS:
+            column, allowed = ROW_FILTERS[table]
+            kept = kept.filter(pc.is_in(kept[column], value_set=pa.array(allowed)))
         if writer is None:
             writer = pq.ParquetWriter(tmp, kept.schema, compression="zstd")
         writer.write_table(kept)

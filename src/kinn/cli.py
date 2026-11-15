@@ -77,6 +77,36 @@ def _run(args: argparse.Namespace) -> int:
     return 0 if done else 3
 
 
+def _book(args: argparse.Namespace) -> int:
+    import json
+
+    from kinn import book_run
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    if args.resume:
+        run_dir = settings.runs_dir / args.resume
+    else:
+        if not args.config:
+            raise SystemExit("kinn book needs <config> (a file in books/), or --resume <run_id>")
+        try:
+            run_dir = book_run.start_run(args.config, settings=settings, scratch=args.scratch)
+        except registry.DirtyTreeError as error:
+            raise SystemExit(f"refused: {error}") from error
+    done = book_run.continue_run(run_dir, settings=settings, budget_seconds=args.budget)
+    print(f"run {run_dir.name}: " + ("complete" if done else "paused; continue with --resume"))
+    if done:
+        m = json.loads((run_dir / "metrics.json").read_text())
+        for label in ("slippage_1x", "slippage_2x"):
+            s = m[label]
+            print(
+                f"{label}: total {s['total_return']:+.1%}, a year {s['annual_return']:+.1%}, "
+                f"Sharpe {s['sharpe']:.2f}, t {s['t_stat_daily']:.2f}, "
+                f"worst drawdown {s['max_drawdown_pct']:.1%}"
+            )
+    return 0 if done else 3
+
+
 def _sweep(args: argparse.Namespace) -> int:
     import json
     from pathlib import Path
@@ -215,6 +245,12 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--budget", type=float, default=float("inf"), help="seconds before pausing")
     run.add_argument("--workers", type=int, default=1)
     run.set_defaults(func=_run)
+    book = sub.add_parser("book", help="run a multi-day book: kinn book <config in books/>")
+    book.add_argument("config", nargs="?")
+    book.add_argument("--scratch", action="store_true")
+    book.add_argument("--resume", metavar="RUN_ID")
+    book.add_argument("--budget", type=float, default=float("inf"), help="seconds, then pause")
+    book.set_defaults(func=_book)
     sweep = sub.add_parser("sweep", help="run several configs of one strategy together")
     sweep.add_argument("strategy", nargs="?")
     sweep.add_argument("--configs", help="comma-separated config names (default: all)")
