@@ -1,0 +1,3 @@
+# Validation period, one run. The variant chosen on development by the pre-set rule.
+extends: momentum_base
+period: {start: 2017-01-03, end: 2023-11-08}
