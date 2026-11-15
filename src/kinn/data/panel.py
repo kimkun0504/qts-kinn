@@ -24,7 +24,7 @@ ADV_WINDOW = 20
 SPLIT_VISIBLE = 0.18  # |ln ratio|: splits this large can be checked against the price
 SPLIT_WINDOW = 20  # calendar days either side of the listed date
 SPLIT_TOLERANCE = 0.12  # allowed |ln| gap between the price change and the ratio ...
-SPLIT_TOLERANCE_SHARE = 0.25  # ... or this share of |ln ratio|, whichever is larger
+SPLIT_TOLERANCE_SHARE = 0.35  # ... or this share of |ln ratio|, whichever is larger
 
 _FITS = f"miss <= greatest({SPLIT_TOLERANCE}, {SPLIT_TOLERANCE_SHARE} * abs(ln(ratio)))"
 
@@ -143,23 +143,27 @@ def _align_splits(con: duckdb.DuckDBPyConnection, master: Path) -> dict:
     Sharadar sometimes dates a split by its record or pay date, days away from the session the
     price changed. Left alone, that puts a false jump on one day and a false crash on another.
     For splits large enough to see (18% or more), the effective session is the
-    one within 20 days whose close-to-close change best matches the ratio. A large
+    one within 20 days whose close-to-close change best matches the ratio (counting any cash or
+    spun-off shares paid that day, since breakups often come with a reverse split). A large
     split with no matching change is dropped (and counted): the prices show no split. Smaller
     ones cannot be checked against daily noise and keep their listed date.
     """
     con.execute(
         f"""create table near as
-            select s.permaticker, s.date as listed, s.ratio, i.date, d.close
+            select s.permaticker, s.date as listed, s.ratio, i.date, d.close,
+                   coalesce(v.amount, 0) as paid
             from listed_splits s
             join ident i on i.permaticker = s.permaticker
              and i.date between s.date - {SPLIT_WINDOW + 7} and s.date + {SPLIT_WINDOW}
             join daily d on d.date = i.date and d.symbol = i.symbol
+            left join '{master}/dividends.parquet' v
+              on v.permaticker = i.permaticker and v.date = i.date
             where abs(ln(s.ratio)) >= {SPLIT_VISIBLE}"""
     )
     con.execute(
         f"""create table matched as
             with moves as (
-                select *, abs(ln(close / lag(close) over (
+                select *, abs(ln((close + paid) / lag(close) over (
                     partition by permaticker, listed order by date) * ratio)) as miss
                 from near)
             select permaticker, listed, ratio, arg_min(date, miss) as date, min(miss) as miss
