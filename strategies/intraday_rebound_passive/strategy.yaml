@@ -1,0 +1,8 @@
+name: intraday_rebound_passive
+status: hypothesis
+engine: tick study on a quote sample (not the minute simulator)
+universe: the intraday_rebound event study's quote sample
+cost_calibration: ibkr_pro_tiered
+owner: claude
+family: intraday_rebound
+prior_trials: 9
