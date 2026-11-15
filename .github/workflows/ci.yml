@@ -1,0 +1,27 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - name: Lint and format
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Import rules
+        run: uv run lint-imports
+      - name: Unit tests
+        run: uv run pytest --ignore=tests/canary
+      - name: Canaries (lookahead, random entries, determinism)
+        run: uv run pytest tests/canary
+      - name: Secrets, data files and other pre-commit hooks
+        run: SKIP=no-commit-to-branch,ruff-check,ruff-format,import-linter uv run pre-commit run --all-files

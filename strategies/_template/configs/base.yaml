@@ -1,0 +1,13 @@
+params:
+  threshold: 0.05
+risk:
+  equity: 10000
+  position_dollars: 500
+  buying_power: 10000
+fills:
+  participation: 0.05
+period:
+  start: 2010-01-04
+  end: 2023-11-08
+lookahead_check_rate: 1.0   # check every session with signals until the strategy is trusted
+seed: 0
