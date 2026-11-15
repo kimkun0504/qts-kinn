@@ -63,6 +63,23 @@ rest is the intended direction and gets a contract when the modules exist (Phase
    `sealed` folder and refuse writing inside the raw folder.
 10. **Workbench.** Reads only the run store, through the schemas. Never imports strategy code.
 
+## Daily books (multi-day holding)
+
+A second engine, beside the intraday one, for books that hold positions overnight. Five models
+with one job each (design and "as built" notes: `docs/design/five-models.md`):
+
+```
+alphas ──scores──▶ portfolio construction ──target weights──▶ execution ──fills──▶ book
+ kinn.alpha          kinn.portfolio  ▲  ▲                     kinn.execution
+                     kinn.risk.model ┘  └ kinn.costs
+```
+
+- An **alpha** is `strategies/<name>/alpha.py`: one score per company per session, from a
+  `DailyView` that cannot read that session's prices.
+- A **book** is `books/<config>.yaml`: which alphas and weights, the universe, risk model,
+  constructor, limits, execution and rebalance rhythm. `kinn book <config>` runs it.
+- Adding an alpha is adding a folder and naming it in a book. Nothing in `kinn` changes.
+
 ## Where things live on disk
 
 | What | Where | In git |

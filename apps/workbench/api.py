@@ -69,6 +69,15 @@ def list_runs(runs_dir: Path) -> list[dict]:
                 trades=strict.get("n"), net_1x=strict.get("mean"), net_2x=None, gross=None,
                 sharpe=None, total_net=None, t_stat_2x=None,
             )  # fmt: skip
+        elif kind == "book":
+            # A book has no round trips: its headline is the return a year, and "trades" are fills.
+            m = _load(run_dir / "metrics.json") or {}
+            one, two = m.get("slippage_1x", {}), m.get("slippage_2x", {})
+            row.update(
+                trades=m.get("fills"), net_1x=one.get("annual_return"),
+                net_2x=two.get("annual_return"), gross=None, sharpe=one.get("sharpe"),
+                total_net=one.get("total_net"), t_stat_2x=two.get("t_stat_daily"),
+            )  # fmt: skip
         else:
             m = _load(run_dir / "metrics.json") or {}
             one, two = m.get("slippage_1x", {}), m.get("slippage_2x", {})
@@ -112,6 +121,8 @@ def run_detail(runs_dir: Path, run_id: str) -> dict | None:
             "cum_net": [equity["cum_net"][i] for i in index],
             "cum_net_2x": [equity["cum_net_2x"][i] for i in index],
         }
+    if manifest.get("kind") == "book":
+        out.update(_book_detail(run_dir))
     if (run_dir / "trades.parquet").exists():
         trades = pq.read_table(run_dir / "trades.parquet", columns=["net", "notional"]).to_pydict()
         returns = np.array(trades["net"]) / np.array(trades["notional"]) if trades["net"] else []
@@ -120,6 +131,31 @@ def run_detail(runs_dir: Path, run_id: str) -> dict | None:
             if high > low:
                 counts, edges = np.histogram(np.clip(returns, low, high), bins=40)
                 out["histogram"] = {"counts": counts.tolist(), "edges": edges.tolist()}
+    return out
+
+
+def _book_detail(run_dir: Path) -> dict:
+    """Exposure through time and the latest holdings of a multi-day book."""
+    out: dict = {}
+    if (run_dir / "daily.parquet").exists():
+        columns = ["date", "equity", "long_value", "short_value", "n_long", "n_short"]
+        daily = pq.read_table(run_dir / "daily.parquet", columns=columns).to_pydict()
+        index = _thin(len(daily["date"]))
+        out["exposure"] = {
+            k: [str(daily[k][i]) if k == "date" else daily[k][i] for i in index] for k in columns
+        }
+    if (run_dir / "positions.parquet").exists():
+        positions = pq.read_table(run_dir / "positions.parquet").to_pylist()
+        if positions:
+            last = max(p["date"] for p in positions)
+            held = sorted(
+                (p for p in positions if p["date"] == last), key=lambda p: -abs(p["weight"])
+            )
+            out["positions"] = {
+                "date": str(last),
+                "rows": [{k: v for k, v in p.items() if k != "date"} for p in held[:60]],
+                "count": len(held),
+            }
     return out
 
 
@@ -151,7 +187,7 @@ def families(runs_dir: Path) -> list[dict]:
             row["by_agent"][m["agent"]] = row["by_agent"].get(m["agent"], 0) + 1
         series = {}
         for m in counted:
-            if m.get("kind", "backtest") == "backtest" and m["status"] == "complete":
+            if m.get("kind", "backtest") in ("backtest", "book") and m["status"] == "complete":
                 daily = _daily_net(runs_dir / m["run_id"])
                 if daily is not None and len(daily[1]) > 20:
                     series[m["run_id"]] = daily

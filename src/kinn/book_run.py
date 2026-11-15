@@ -98,6 +98,7 @@ def parts_of(cfg: dict) -> dict:
             borrow_rate=float(short.get("borrow_rate", 0.01)),
             short_min_marketcap=float(short.get("min_marketcap", 1e9)),
             short_min_price=float(short.get("min_price", 5.0)),
+            rebalance_if_gross_above=cfg.get("rebalance_if_gross_above"),
             lookahead_check_rate=float(cfg.get("lookahead_check_rate", 0.25)),
             seed=int(cfg.get("seed", 0)),
         ),
@@ -247,12 +248,23 @@ def finalize(run_dir: Path) -> None:
             counts[key] = counts.get(key, 0) + value
     daily = _concat(parts, "daily")
     pq.write_table(daily, run_dir / "daily.parquet")
+    # The same daily series every run kind has, so comparisons and trial statistics work.
+    net, net_2x = daily["pnl"].to_numpy(), daily["pnl_2x"].to_numpy()
+    pq.write_table(
+        pa.table({
+            "date": daily["date"], "net": net, "net_2x": net_2x,
+            "cum_net": net.cumsum(), "cum_net_2x": net_2x.cumsum(),
+        }),
+        run_dir / "equity.parquet",
+    )  # fmt: skip
     for kind in ("fills", "positions"):
         table = _concat(parts, kind)
         if table is not None:
             pq.write_table(table, run_dir / f"{kind}.parquet")
     account = float(manifest["resolved_config"].get("account", 25_000))
     summary = book_metrics.summarize(daily.to_pydict(), account=account, counts=counts)
+    fills = _concat(parts, "fills")
+    summary["fills"] = fills.num_rows if fills is not None else 0
     summary["schema"] = BOOK_METRICS_SCHEMA
     registry.write_json(run_dir / "metrics.json", summary)
     manifest["status"] = "complete"

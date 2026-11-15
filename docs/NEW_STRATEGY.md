@@ -27,3 +27,17 @@
 10. **Never** touch the holdout. Unsealing is the owner's decision, once, for a frozen strategy.
 
 Before trusting any number, go through the bias checklist in [AGENTS.md](../AGENTS.md).
+
+## A daily alpha (multi-day holding)
+
+1. Create `strategies/<name>/` with `strategy.yaml` (`kind: forecast`, a `family`) and
+   `HYPOTHESIS.md`, written and committed before any run: signal, universe, periods, the
+   variants, the selection rule and the validation bars.
+2. Write `alpha.py`: a class with `name`, `lookback` and `scores(view)`, and `build(params)`.
+   Read history with `view.history("ret", n)`; pre-open values with `view.today(...)`;
+   fundamentals with `view.fundamental(...)` after declaring `fundamentals = (...)`.
+3. Write the book configs in `books/` (`extends:` shares settings between them).
+4. `uv run kinn book <config>`. Each counted run is a trial for the book's family.
+5. Write `REPORT.md` with the verdict against the bars set in step 1.
+
+`strategies/momentum_12_1/` is the worked example.

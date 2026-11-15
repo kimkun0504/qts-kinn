@@ -110,3 +110,28 @@ sessions), `marketcap_prev` (Sharadar market cap of the previous session), `sess
 - **`category` is the latest label**, see above.
 - **Daily `adv20_prev` uses the full-day volume**, which includes extended hours and auctions.
 - Sharadar tables with fundamentals, insiders and institutions are not ingested.
+
+## Daily research data (build `data-5`, 2026-11-15)
+
+Found while testing the daily engine on a known signal. All fixed in the build; the panel used by
+intraday strategies changed too (`prev_close` and `split_ratio` on the affected days).
+
+| Problem at the source | Size | What Kinn does |
+|---|---|---|
+| Dividend and spinoff amounts are on today's share basis | every company with a later split | Restored to the day's basis with `unadjust` (decision 0015). `master/dividends.parquet` |
+| Spinoffs were ignored, so a breakup looked like a crash | 489 `spinoffdividend` rows | The cash value of spun-off shares counts as a payout on its date |
+| A split dated by its record or pay date, days from the price change | 142 of 3,686 checkable splits | Moved to the session whose price change matches the ratio (`master/splits_effective.parquet`) |
+| A listed split with no matching price change within 20 days | 744 | Dropped. Mostly ADR ratio changes and pre-listing splits that never showed in traded prices |
+| A hole in a company's bars (a halt, or a ticker change dated wrongly, e.g. Willis in 2015) | 165 company-days above $2 billion | For daily research: no return that day and not in any universe (`MAX_GAP_DAYS`) |
+| A payout above 25% of the price with no matching price drop | 2 in the largest 1,000 names over 20 years | Cut to the size of the drop (`limit_suspect_distributions`) |
+
+After these, of 5.0 million company-days in the largest 1,000 names, 361 have a one-day total
+return beyond ±40%, and those checked are real (buyouts, trial results, March 2020, GameStop).
+
+Not fixed: 1,474 small splits (under 18%) cannot be checked against daily noise and keep their
+listed date; ticker-change dates are not checked against the symbols in the bars; 3,969 listed
+splits have no bars nearby (before 2003-09 or never in the SIP data).
+
+**Fundamentals (SF1).** Only the as-reported dimensions (ARQ, ART) are kept, dated by `datekey`,
+the day the filing reached the SEC. A value is usable from the session after that day. The
+restated dimensions and the price-based columns are not read.

@@ -38,6 +38,9 @@ class BookConfig:
     borrow_rate: float = 0.01  # a year, on the market value of shorts
     short_min_marketcap: float = 1e9
     short_min_price: float = 5.0
+    # Rebalance early when gross exposure at the last close is above this (a multiple of
+    # equity). Prices move between rebalances; a falling book's exposure rises. None = never.
+    rebalance_if_gross_above: float | None = None
     stale_sessions: int = 5
     lookahead_check_rate: float = 0.25
     seed: int = 0
@@ -96,7 +99,14 @@ class SessionsResult:
     positions: list[dict] = field(default_factory=list)
     counts: dict[str, int] = field(
         default_factory=lambda: dict.fromkeys(
-            ("rebalances", "no_portfolio", "lookahead_checks", "forced_exits"), 0
+            (
+                "rebalances",
+                "early_rebalances",
+                "no_portfolio",
+                "lookahead_checks",
+                "forced_exits",
+            ),
+            0,
         )
     )
 
@@ -166,7 +176,16 @@ class DailyEngine:
             result.counts["forced_exits"] += 1
 
         rebalanced = False
-        if self.is_rebalance(i) and equity_before > 0:
+        over = cfg.rebalance_if_gross_above
+        runaway = (
+            over is not None
+            and equity_before > 0
+            and float(np.abs(state.shares * np.nan_to_num(state.last_price)).sum())
+            > over * equity_before
+        )
+        if runaway:
+            result.counts["early_rebalances"] += 1
+        if (self.is_rebalance(i) or runaway) and equity_before > 0:
             target = self._targets(i, state, equity_before, tradable, result)
             if target is not None:
                 rebalanced = True

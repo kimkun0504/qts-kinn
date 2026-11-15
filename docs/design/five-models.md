@@ -1,6 +1,8 @@
 # Design: five models, many alphas, any holding period
 
-**Status: proposal for the owner's review, 2026-11-15 (claude). Nothing here is built yet.**
+**Status: built 2026-11-15 (claude), after the owner approved it with these choices: long and
+short; $25,000; rebalance rhythm configurable; a published signal first; optimizer from the
+start. The section "As built" at the end lists what differs from the proposal below.**
 
 ## Why
 
@@ -165,3 +167,31 @@ views); the canaries.
 4. **Which long-term alpha first.** The old build's mid-cap machine-learning model was its
    strongest result; a simpler, published signal would be a cleaner first test of the engine.
 5. **Optimizer now or later.** The proposal is later: start with a ranked, volatility-scaled book.
+
+## As built (2026-11-15)
+
+| Model | Code | First version |
+|---|---|---|
+| Alpha | `kinn.alpha`, `strategies/<name>/alpha.py` | `momentum_12_1` |
+| Risk | `kinn.risk.model` | single-index model, 252 sessions |
+| Transaction cost | `kinn.costs` (unchanged) | auction fees and slippage; borrow fee on shorts |
+| Portfolio construction | `kinn.portfolio` | mean-variance optimizer (cvxpy), and the textbook ranked book |
+| Execution | `kinn.execution` | opening or closing auction |
+| Engine and runs | `kinn.engine.daily`, `kinn.book_run`, `kinn book <config>` | resumable by month |
+
+Differences from the proposal, and why:
+
+- **Alphas return an array of scores**, one per company, not a list of `Forecast` objects. It is
+  the same contract and far faster.
+- **The universe belongs to the book**, not to each alpha: alphas in one book must score the
+  same companies. An alpha may still return NaN for names it has no view on.
+- **Execution is in the auction only** (decision 0014). Orders this small are a negligible share
+  of the auction, so slicing through the day on minute bars would add cost and no accuracy.
+- **The risk model is single-index**, with sector limits in the optimizer, not a factor model.
+- **A book is charged to one trial family.** Charging a multi-alpha book to each alpha's family
+  as well is deferred until such a book exists.
+- **Not modelled** (decision 0016): margin calls, interest on cash, hard-to-borrow names,
+  dividends on shorts beyond the cash payment. The borrow fee is an assumed 1% a year.
+- **Fundamentals** are available to alphas (`alpha.fundamentals = ("equityusd", ...)`,
+  `view.fundamental(name)`), as reported and usable from the session after the filing. No alpha
+  uses them yet.

@@ -64,3 +64,16 @@ def test_gitignore_hides_no_source_file():
         )
     ]
     assert not hidden, f"ignored by git: {hidden}"
+
+
+def test_the_snapshot_split_factor_is_used_only_by_the_data_build():
+    """Decision 0015: `unadjust` reveals later splits; only the build may read it."""
+    root = Path(__file__).resolve().parents[1]
+    allowed = {"src/kinn/data/sharadar.py", "src/kinn/data/build.py"}
+    users = {
+        str(path.relative_to(root))
+        for folder in ("src", "apps", "strategies")
+        for path in (root / folder).rglob("*.py")
+        if "node_modules" not in path.parts and "unadjust" in path.read_text()
+    }
+    assert users <= allowed

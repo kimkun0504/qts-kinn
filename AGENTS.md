@@ -51,7 +51,8 @@ uv run python -m apps.workbench   # the research UI, http://127.0.0.1:8321
 
 Data: `uv run kinn data bars`, `kinn data build`, `kinn data audit` (resumable; see docs/data/).
 
-Runs: `uv run kinn run <strategy> --config <name>` is the only entry point. `kinn runs` lists
+Runs: `uv run kinn run <strategy> --config <name>` (intraday) and `uv run kinn book <config>`
+(multi-day books, `books/*.yaml`) are the only entry points. `kinn runs` lists
 them. A long run can pause (`--budget <seconds>`) and continue (`--resume <run_id>`).
 
 - Each run writes `runs/<run_id>/` with `manifest.json`, trades, equity and metrics.

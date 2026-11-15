@@ -72,11 +72,12 @@ def summarize(daily: dict[str, list], *, account: float, counts: dict) -> dict:
         "turnover_annual": traded / float(np.nanmean(safe)) / years if n and traded else 0.0,
         "costs": {**costs, "trading_bps_of_traded": trading / traded * 1e4 if traded else 0.0},
         "attribution": {
+            # Price moves and dividends of the positions held, by side; then what was paid.
             "long_pnl": float(col["long_pnl"].sum()),
             "short_pnl": float(col["short_pnl"].sum()),
-            "dividends": float(col["dividends"].sum()),
             "trading_costs": -trading,
             "borrow": -costs["borrow"],
         },
+        "dividends_net": float(col["dividends"].sum()),  # already inside long_pnl and short_pnl
         "counts": counts,
     }

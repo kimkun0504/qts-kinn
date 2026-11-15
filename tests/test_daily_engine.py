@@ -138,3 +138,17 @@ def test_execution_at_the_open_fills_at_the_open_price():
     _, result = run(engine(data, [1.0, 0.0], at="open"), data)
     assert result.fills[0].price == pytest.approx(99.0)
     assert result.daily[0]["pnl"] > 0  # bought at the open, marked at the close
+
+
+def test_a_runaway_gross_exposure_can_trigger_an_early_rebalance():
+    close = noisy(12, 2)
+    close[6:, 1] = 160.0  # the short runs away: equity falls while the position grows
+    data = make_data(close)
+    quiet = engine(data, [1.0, -1.0], limits=PAIR, borrow_rate=0.0)
+    _, held = run(quiet, data)
+    assert held.counts["early_rebalances"] == 0 and len(held.fills) == 2
+    alert = engine(data, [1.0, -1.0], limits=PAIR, borrow_rate=0.0, rebalance_if_gross_above=1.1)
+    _, cut = run(alert, data)
+    assert cut.counts["early_rebalances"] >= 1 and len(cut.fills) > 2
+    gross = (cut.daily[-1]["long_value"] + cut.daily[-1]["short_value"]) / cut.daily[-1]["equity"]
+    assert gross <= 1.1
