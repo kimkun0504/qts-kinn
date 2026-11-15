@@ -36,7 +36,7 @@ Then in each: `uv sync && uv run pre-commit install`, and set `KINN_AGENT`.
 | 4 Workbench | Run list, comparison, tearsheets, event studies, parameter map, trials and overfitting |
 | 5 Multi-agent, CI | Concurrent runs register cleanly; CI workflow; guide |
 
-86 tests. Five import contracts. Eleven decision records.
+85 tests. Five import contracts. Eleven decision records.
 
 ## Deferred (and where it is recorded)
 
