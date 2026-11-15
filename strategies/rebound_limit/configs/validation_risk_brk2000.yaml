@@ -1,0 +1,25 @@
+# Validation period, one run. base_o2 with the circuit breaker chosen by the pre-set rule (risk addendum).
+params:
+  drop: 0.1
+  limit_offset: 0.02
+  rest_minutes: 10
+  min_adv: 0.0
+  max_prior_events: null
+  min_drop_15m: null
+  last_minute: 900
+risk:
+  equity: 20000
+  position_dollars: 2000
+  buying_power: 20000
+fills:
+  participation: 0.05
+  flatten_before_close: 0   # exit in the closing auction
+breaker:
+  loss: 2000
+  window: 20
+  pause: 10
+period:
+  start: 2017-01-03
+  end: 2023-11-08
+lookahead_check_rate: 0.25
+seed: 3
