@@ -5,10 +5,11 @@ import { type Column, DataTable } from "../components/ui/DataTable";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel, PanelNote } from "../components/ui/Panel";
 import { StatStrip } from "../components/ui/StatStrip";
-import type { Manifest, Metrics, RunDetail as Detail, Study, Three, TickGroup, TickStudy } from "../lib/api";
+import type { BookMetrics, Manifest, Metrics, RunDetail as Detail, Study, Three, TickGroup, TickStudy } from "../lib/api";
 import { DASHES, SERIES } from "../lib/colors";
 import { int, interval, money, num, pct, plainPct } from "../lib/format";
 import { useRun } from "../lib/useRun";
+import { BookView } from "./BookView";
 
 export function RunDetail({ runId }: { runId: string | null }) {
   const { detail, error } = useRun(runId);
@@ -21,14 +22,16 @@ export function RunDetail({ runId }: { runId: string | null }) {
       <RunHeader manifest={manifest} />
       {manifest.status !== "complete" ? (
         <EmptyState title={manifest.status === "abandoned" ? "This run was abandoned before it produced results" : "This run has not finished"}>
-          {manifest.status === "abandoned" ? "It is not counted as a trial." : `Continue it with: uv run kinn run --resume ${manifest.run_id}`}
+          {manifest.status === "abandoned" ? "It is not counted as a trial." : `Continue it with: uv run kinn ${manifest.kind === "book" ? "book" : "run"} --resume ${manifest.run_id}`}
         </EmptyState>
       ) : detail.study ? (
         <StudyView study={detail.study} />
       ) : detail.tick_study ? (
         <TickView tick={detail.tick_study} />
+      ) : manifest.kind === "book" && detail.metrics ? (
+        <BookView detail={detail} metrics={detail.metrics as BookMetrics} />
       ) : detail.metrics ? (
-        <BacktestView detail={detail} metrics={detail.metrics} />
+        <BacktestView detail={detail} metrics={detail.metrics as Metrics} />
       ) : (
         <EmptyState title="No results in this run folder" />
       )}

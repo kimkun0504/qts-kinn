@@ -74,7 +74,8 @@ def list_runs(runs_dir: Path) -> list[dict]:
             m = _load(run_dir / "metrics.json") or {}
             one, two = m.get("slippage_1x", {}), m.get("slippage_2x", {})
             row.update(
-                trades=m.get("fills"), net_1x=one.get("annual_return"),
+                trades=m.get("fills", _rows(run_dir / "fills.parquet")),
+                net_1x=one.get("annual_return"),
                 net_2x=two.get("annual_return"), gross=None, sharpe=one.get("sharpe"),
                 total_net=one.get("total_net"), t_stat_2x=two.get("t_stat_daily"),
             )  # fmt: skip
@@ -89,6 +90,10 @@ def list_runs(runs_dir: Path) -> list[dict]:
             )  # fmt: skip
         rows.append(row)
     return sorted(rows, key=lambda r: r["started_at"], reverse=True)
+
+
+def _rows(path: Path) -> int | None:
+    return pq.read_metadata(path).num_rows if path.exists() else None
 
 
 def _thin(n: int) -> list[int]:
@@ -139,8 +144,17 @@ def _book_detail(run_dir: Path) -> dict:
     out: dict = {}
     if (run_dir / "daily.parquet").exists():
         columns = ["date", "equity", "long_value", "short_value", "n_long", "n_short"]
-        daily = pq.read_table(run_dir / "daily.parquet", columns=columns).to_pydict()
+        daily = pq.read_table(
+            run_dir / "daily.parquet", columns=[*columns, "pnl", "pnl_2x"]
+        ).to_pydict()
         index = _thin(len(daily["date"]))
+        net, net_2x = np.cumsum(daily["pnl"]), np.cumsum(daily["pnl_2x"])
+        out["equity"] = {
+            "date": [str(daily["date"][i]) for i in index],
+            "cum_net": [float(net[i]) for i in index],
+            "cum_net_2x": [float(net_2x[i]) for i in index],
+        }
+        out["fills"] = _rows(run_dir / "fills.parquet")
         out["exposure"] = {
             k: [str(daily[k][i]) if k == "date" else daily[k][i] for i in index] for k in columns
         }
@@ -161,10 +175,14 @@ def _book_detail(run_dir: Path) -> dict:
 
 def _daily_net(run_dir: Path) -> tuple[list, np.ndarray] | None:
     path = run_dir / "equity.parquet"
-    if not path.exists():
-        return None
-    table = pq.read_table(path, columns=["date", "net"]).to_pydict()
-    return table["date"], np.array(table["net"], dtype=float)
+    if path.exists():
+        table = pq.read_table(path, columns=["date", "net"]).to_pydict()
+        return table["date"], np.array(table["net"], dtype=float)
+    book = run_dir / "daily.parquet"  # a book run from before it wrote equity.parquet
+    if book.exists():
+        table = pq.read_table(book, columns=["date", "pnl"]).to_pydict()
+        return table["date"], np.array(table["pnl"], dtype=float)
+    return None
 
 
 def families(runs_dir: Path) -> list[dict]:

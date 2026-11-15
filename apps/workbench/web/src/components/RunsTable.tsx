@@ -2,7 +2,12 @@ import type { RunRow } from "../lib/api";
 import { int, num, pct, shortTime } from "../lib/format";
 import { type Column, DataTable } from "./ui/DataTable";
 
-const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study" };
+const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study", book: "Book" };
+
+/** Backtests and studies report the net return per trade; a book reports its return a year. */
+function net(run: RunRow, value: number | null): string {
+  return run.kind === "book" && value != null ? `${pct(value, 1)} a yr` : pct(value);
+}
 
 function notes(run: RunRow): string {
   return [
@@ -53,8 +58,8 @@ export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, co
   if (!compact) columns.push({ key: "agent", header: "Agent", align: "left", muted: true, render: (run) => run.agent });
   columns.push(
     { key: "trades", header: "Trades", render: (run) => int(run.trades) },
-    { key: "net1", header: "Net 1×", signed: true, strong: true, render: (run) => pct(run.net_1x) },
-    { key: "net2", header: "Net 2×", signed: true, render: (run) => pct(run.net_2x) },
+    { key: "net1", header: "Net 1×", signed: true, strong: true, render: (run) => net(run, run.net_1x) },
+    { key: "net2", header: "Net 2×", signed: true, render: (run) => net(run, run.net_2x) },
   );
   if (!compact) {
     columns.push(

@@ -32,6 +32,7 @@ export function Runs({ runs, selected, onOpen, compare, onToggleCompare, kind, o
               { value: "backtest", label: "Backtests" },
               { value: "event_study", label: "Event studies" },
               { value: "tick_study", label: "Tick studies" },
+              { value: "book", label: "Books" },
             ]}
           />
         }

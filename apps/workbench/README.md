@@ -13,7 +13,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Page | Shows |
 |---|---|
 | Overview | headline numbers, the latest backtest's curve, strategies, recent runs, trials by family |
-| Runs | every run with filters; the selected run's tearsheet, event study or tick study |
+| Runs | every run with filters; the selected run's tearsheet, event study, tick study or book (returns, exposure, where the result came from, holdings) |
 | Compare | up to four backtests overlaid, with a side-by-side table |
 | Parameters | a map of any result across one or two settings that differ between runs |
 | Trials | trial counts by agent, Deflated Sharpe, probability of backtest overfitting |

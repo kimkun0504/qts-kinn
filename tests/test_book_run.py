@@ -106,3 +106,6 @@ def test_the_workbench_reads_a_book_run(run):
     assert {"symbol", "weight", "sector", "shares"} <= set(detail["positions"]["rows"][0])
     (family,) = api.families(settings.runs_dir)
     assert family["family"] == "tiny_family" and family["runs"] == 1
+    (run_dir / "equity.parquet").unlink()  # older book runs have only daily.parquet
+    again = api.run_detail(settings.runs_dir, run_dir.name)
+    assert again["equity"] == detail["equity"] and again["fills"] == row["trades"]

@@ -2,10 +2,13 @@ import { LineChart } from "../components/charts/LineChart";
 import { DataTable } from "../components/ui/DataTable";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel, PanelNote } from "../components/ui/Panel";
-import type { RunRow } from "../lib/api";
+import type { Metrics, RunDetail, RunRow } from "../lib/api";
 import { DASHES, SERIES } from "../lib/colors";
 import { int, money, num, pct } from "../lib/format";
 import { useRuns } from "../lib/useRun";
+
+/** Only backtests can be ticked for comparison, so the metrics here are a backtest's. */
+const metrics = (detail: RunDetail) => detail.metrics as Metrics | null | undefined;
 
 export function Compare({ ids, runs }: { ids: string[]; runs: RunRow[] }) {
   const details = useRuns(ids);
@@ -36,13 +39,13 @@ export function Compare({ ids, runs }: { ids: string[]; runs: RunRow[] }) {
           columns={[
             { key: "config", header: "Config", align: "left", strong: true, render: (r) => r.detail.manifest.config },
             { key: "period", header: "Period", align: "left", muted: true, render: (r) => `${r.detail.manifest.period.start.slice(0, 4)}–${r.detail.manifest.period.end.slice(0, 4)}` },
-            { key: "trades", header: "Trades", render: (r) => int(r.detail.metrics?.trades) },
-            { key: "gross", header: "Gross", signed: true, render: (r) => pct(r.detail.metrics?.gross_mean_return) },
-            { key: "n1", header: "Net 1×", signed: true, strong: true, render: (r) => pct(r.detail.metrics?.slippage_1x.mean_return) },
-            { key: "n2", header: "Net 2×", signed: true, render: (r) => pct(r.detail.metrics?.slippage_2x.mean_return) },
-            { key: "t2", header: "t at 2×", signed: true, render: (r) => num(r.detail.metrics?.slippage_2x.t_stat_daily) },
-            { key: "total", header: "Total net", signed: true, render: (r) => money(r.detail.metrics?.slippage_1x.total_net) },
-            { key: "dd", header: "Worst drawdown", signed: true, render: (r) => money(r.detail.metrics?.slippage_1x.max_drawdown) },
+            { key: "trades", header: "Trades", render: (r) => int(metrics(r.detail)?.trades) },
+            { key: "gross", header: "Gross", signed: true, render: (r) => pct(metrics(r.detail)?.gross_mean_return) },
+            { key: "n1", header: "Net 1×", signed: true, strong: true, render: (r) => pct(metrics(r.detail)?.slippage_1x.mean_return) },
+            { key: "n2", header: "Net 2×", signed: true, render: (r) => pct(metrics(r.detail)?.slippage_2x.mean_return) },
+            { key: "t2", header: "t at 2×", signed: true, render: (r) => num(metrics(r.detail)?.slippage_2x.t_stat_daily) },
+            { key: "total", header: "Total net", signed: true, render: (r) => money(metrics(r.detail)?.slippage_1x.total_net) },
+            { key: "dd", header: "Worst drawdown", signed: true, render: (r) => money(metrics(r.detail)?.slippage_1x.max_drawdown) },
           ]}
         />
       </Panel>

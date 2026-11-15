@@ -1,6 +1,6 @@
 import type { Stat } from "./format";
 
-export type RunKind = "backtest" | "event_study" | "tick_study";
+export type RunKind = "backtest" | "event_study" | "tick_study" | "book";
 
 export interface RunRow {
   run_id: string;
@@ -52,6 +52,42 @@ export interface Metrics {
   by_year: Record<string, { trades: number; mean_return_1x: number; mean_return_2x: number; net_1x: number }>;
   counts: Record<string, number>;
   equity: number;
+}
+
+export interface BookSide {
+  total_net: number;
+  total_return: number;
+  annual_return: number;
+  annual_volatility: number;
+  sharpe: number;
+  t_stat_daily: number;
+  max_drawdown: number;
+  max_drawdown_pct: number;
+}
+
+/** Summary of a multi-day book (metrics schema book-metrics-1). */
+export interface BookMetrics {
+  sessions: number;
+  account: number;
+  fills?: number;
+  slippage_1x: BookSide;
+  slippage_2x: BookSide;
+  by_year: Record<string, { return_1x: number; return_2x: number; net_1x: number }>;
+  exposure: { gross_mean: number; gross_max: number; net_mean: number; long_names_mean: number; short_names_mean: number };
+  turnover_annual: number;
+  costs: { commission: number; fees: number; slippage: number; borrow: number; trading_bps_of_traded: number };
+  attribution: { long_pnl: number; short_pnl: number; trading_costs: number; borrow: number };
+  counts: Record<string, number>;
+}
+
+export interface Position {
+  permaticker: number;
+  symbol: string;
+  sector: string;
+  shares: number;
+  price: number;
+  value: number;
+  weight: number;
 }
 
 export interface Three {
@@ -111,8 +147,11 @@ export interface Manifest {
 
 export interface RunDetail {
   manifest: Manifest;
-  metrics?: Metrics | null;
+  metrics?: Metrics | BookMetrics | null;
   study?: Study | null;
+  exposure?: { date: string[]; equity: number[]; long_value: number[]; short_value: number[]; n_long: number[]; n_short: number[] };
+  positions?: { date: string; count: number; rows: Position[] };
+  fills?: number | null;
   tick_study?: TickStudy | null;
   equity?: { date: string[]; cum_net: number[]; cum_net_2x: number[] };
   histogram?: { counts: number[]; edges: number[] };
