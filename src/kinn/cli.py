@@ -100,6 +100,38 @@ def _runs(args: argparse.Namespace) -> int:
     return 0
 
 
+def _quotes_plan(args: argparse.Namespace) -> int:
+    from kinn.data import quotes
+
+    settings = load_settings()
+    events = settings.runs_dir / args.run / "events.parquet"
+    out = settings.data_dir / "quotes_sample" / args.run
+    path = quotes.plan(events, out, per_cell=args.per_cell)
+    print(f"{len(quotes.read_windows(path))} events planned: {path}")
+    print(f"The owner now runs: uv run python tools/owner/download_quotes.py {path}")
+    return 0
+
+
+def _quotes_report(args: argparse.Namespace) -> int:
+    from kinn.costs import model as cost_model
+    from kinn.data import quotes
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    folder = settings.data_dir / "quotes_sample" / args.run
+    raw = settings.raw_dir / "massive" / "quotes_sample" / args.run
+    result = quotes.measure(
+        quotes.read_windows(folder / "windows.csv"),
+        raw,
+        cost_model.load(args.costs).half_spread_bps,
+    )
+    registry.write_json(folder / "report.json", result)
+    text = quotes.render(result, args.run)
+    (folder / "report.md").write_text(text)
+    print(text)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -119,6 +151,18 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--workers", type=int, default=1)
     run.set_defaults(func=_run)
     sub.add_parser("runs", help="rebuild the run index and list runs").set_defaults(func=_runs)
+
+    quote = sub.add_parser("quotes", help="quote sample around a study's events").add_subparsers(
+        dest="quotes_command", required=True
+    )
+    q_plan = quote.add_parser("plan", help="choose the events and write the windows to fetch")
+    q_plan.add_argument("--run", required=True, help="an event-study run id")
+    q_plan.add_argument("--per-cell", type=int, default=70, help="events per bucket and period")
+    q_plan.set_defaults(func=_quotes_plan)
+    q_report = quote.add_parser("report", help="compare real spreads with the cost model")
+    q_report.add_argument("--run", required=True)
+    q_report.add_argument("--costs", default="ibkr_pro_tiered")
+    q_report.set_defaults(func=_quotes_report)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True
