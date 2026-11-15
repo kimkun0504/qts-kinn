@@ -200,3 +200,19 @@ def test_event_study_measures_forward_returns_from_the_next_bar(world, monkeypat
     ).read_text()
     manifest = json.loads((run_dir / "manifest.json").read_text())
     assert manifest["kind"] == "event_study"
+
+
+def test_a_sweep_gives_each_config_the_same_result_as_running_alone(world, first_run, monkeypatch):
+    settings, strategies = world
+    monkeypatch.setenv("KINN_STRATEGIES_DIR", str(strategies))
+    other = CONFIG.replace("hold_minutes: 60", "hold_minutes: 20")
+    (strategies / "random_entry" / "configs" / "test20.yaml").write_text(other)
+    dirs = [
+        runner.start_run("random_entry", name, settings=settings, scratch=True, agent="sweep")
+        for name in ("test", "test20")
+    ]
+    assert not runner.continue_sweep(dirs, settings=settings, budget_seconds=-1)
+    assert runner.continue_sweep(dirs, settings=settings, workers=2)
+    same, different = (pq.read_table(d / "trades.parquet") for d in dirs)
+    assert same.equals(pq.read_table(first_run / "trades.parquet"))
+    assert not different.equals(same) and different.num_rows > 0

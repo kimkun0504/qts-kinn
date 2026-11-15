@@ -1,0 +1,21 @@
+# Development period. One of the 17 variants in HYPOTHESIS.md.
+params:
+  drop: 0.1
+  limit_offset: 0.0
+  rest_minutes: 10
+  min_adv: 0.0
+  max_prior_events: null
+  min_drop_15m: 0.05
+  last_minute: 900
+risk:
+  equity: 10000
+  position_dollars: 500
+  buying_power: 10000
+fills:
+  participation: 0.05
+  flatten_before_close: 0   # exit in the closing auction
+period:
+  start: 2003-09-10
+  end: 2016-12-30
+lookahead_check_rate: 0.05
+seed: 3

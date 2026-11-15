@@ -28,7 +28,12 @@ from kinn.costs import model as cost_model
 from kinn.data.store import DataStore
 from kinn.engine.intraday.data import load_day
 from kinn.engine.intraday.simulator import FillConfig, simulate_day
-from kinn.engine.intraday.strategy import Strategy, check_no_lookahead, day_signals
+from kinn.engine.intraday.strategy import (
+    Strategy,
+    check_no_lookahead,
+    compute_features,
+    day_signals,
+)
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
 from kinn.risk.sizing import RiskConfig
@@ -68,54 +73,79 @@ def _month_key(day: date) -> str:
 
 
 def run_month(job: dict) -> str:
-    """Simulate one month's sessions and write its part files. Runs in a worker process."""
+    """Simulate one month for one run. Runs in a worker process."""
+    shared = {k: v for k, v in job.items() if k not in ("config", "parts", "kind")}
+    shared["runs"] = [{"config": job["config"], "parts": job["parts"], "kind": job.get("kind")}]
+    return run_month_multi(shared)
+
+
+def run_month_multi(job: dict) -> str:
+    """Simulate one month's sessions for several configs of one strategy, loading each session
+    once. Every config writes its own part files, exactly as if it had run alone."""
     settings = Settings(**{k: Path(v) for k, v in job["settings"].items()})
     store = DataStore(settings, build_id=job["build_id"])
-    cfg = job["config"]
-    strategy = load_strategy(job["strategy"], cfg.get("params", {}))
-    risk = RiskConfig(**cfg.get("risk", {}))
-    fills = FillConfig(**cfg.get("fills", {}))
     costs = cost_model.load(job["cost_calibration"])
-    rate = float(cfg.get("lookahead_check_rate", 0.1))
-    study = job.get("kind") == "event_study"
-    trades: list[Trade] = []
-    events: list[dict] = []
-    counts = dict.fromkeys(COUNT_KEYS, 0)
-    for day in (date.fromisoformat(d) for d in job["sessions"]):
-        data = load_day(store, day, strategy.universe)
-        signals = day_signals(strategy, data.view)
-        rng = random.Random(f"{cfg.get('seed', 0)}:{day.isoformat()}")
-        if signals and rng.random() < rate:
-            cut = rng.randrange(data.view.open_minute, data.view.close_minute)
-            check_no_lookahead(strategy, data.view, signals, [cut])
-            counts["lookahead_checks"] += 1
-        if study:
-            counts["signals"] += len(signals)
-            for signal in signals:
-                row = event_study.measure(
-                    day, data.view.symbols[signal.symbol], signal,
-                    open_minute=data.view.open_minute, close_minute=data.view.close_minute,
-                    official_close=data.official_close.get(signal.symbol), costs=costs,
-                    position_dollars=risk.position_dollars,
-                    no_entry_before_close=fills.no_entry_before_close,
-                )  # fmt: skip
-                if row is None:
-                    counts["unfilled"] += 1
-                else:
-                    events.append(row)
-            continue
-        result = simulate_day(data, signals, risk=risk, config=fills, costs=costs)
-        trades.extend(result.trades)
-        for key in COUNT_KEYS[:4]:
-            counts[key] += getattr(result, key)
-    parts = Path(job["parts"])
-    tmp = parts / f"{job['month']}.parquet.tmp"
-    table = (
-        pa.Table.from_pylist(events, schema=event_study.SCHEMA) if study else _trades_table(trades)
+    runs = []
+    for spec in job["runs"]:
+        cfg = spec["config"]
+        runs.append({
+            "strategy": load_strategy(job["strategy"], cfg.get("params", {})),
+            "risk": RiskConfig(**cfg.get("risk", {})),
+            "fills": FillConfig(**cfg.get("fills", {})),
+            "rate": float(cfg.get("lookahead_check_rate", 0.1)),
+            "seed": cfg.get("seed", 0),
+            "study": spec.get("kind") == "event_study",
+            "parts": Path(spec["parts"]),
+            "trades": [], "events": [], "counts": dict.fromkeys(COUNT_KEYS, 0),
+        })  # fmt: skip
+    first = runs[0]["strategy"]
+    if any(r["strategy"].universe.where() != first.universe.where() for r in runs):
+        raise ValueError("configs run together must share one universe")
+    share_features = all(
+        [f.name for f in r["strategy"].features] == [f.name for f in first.features] for r in runs
     )
-    pq.write_table(table, tmp)
-    os.replace(tmp, parts / f"{job['month']}.parquet")
-    registry.write_json(parts / f"{job['month']}.json", counts)
+    for day in (date.fromisoformat(d) for d in job["sessions"]):
+        data = load_day(store, day, first.universe)
+        shared = compute_features(first, data.view) if share_features and len(runs) > 1 else None
+        for r in runs:
+            strategy, counts = r["strategy"], r["counts"]
+            if shared is None:
+                signals = day_signals(strategy, data.view)
+            else:
+                signals = strategy.signals(data.view, shared)
+            rng = random.Random(f"{r['seed']}:{day.isoformat()}")
+            if signals and rng.random() < r["rate"]:
+                cut = rng.randrange(data.view.open_minute, data.view.close_minute)
+                check_no_lookahead(strategy, data.view, signals, [cut])
+                counts["lookahead_checks"] += 1
+            if r["study"]:
+                counts["signals"] += len(signals)
+                for signal in signals:
+                    row = event_study.measure(
+                        day, data.view.symbols[signal.symbol], signal,
+                        open_minute=data.view.open_minute, close_minute=data.view.close_minute,
+                        official_close=data.official_close.get(signal.symbol), costs=costs,
+                        position_dollars=r["risk"].position_dollars,
+                        no_entry_before_close=r["fills"].no_entry_before_close,
+                    )  # fmt: skip
+                    if row is None:
+                        counts["unfilled"] += 1
+                    else:
+                        r["events"].append(row)
+                continue
+            result = simulate_day(data, signals, risk=r["risk"], config=r["fills"], costs=costs)
+            r["trades"].extend(result.trades)
+            for key in COUNT_KEYS[:4]:
+                counts[key] += getattr(result, key)
+    for r in runs:
+        tmp = r["parts"] / f"{job['month']}.parquet.tmp"
+        if r["study"]:
+            table = pa.Table.from_pylist(r["events"], schema=event_study.SCHEMA)
+        else:
+            table = _trades_table(r["trades"])
+        pq.write_table(table, tmp)
+        os.replace(tmp, r["parts"] / f"{job['month']}.parquet")
+        registry.write_json(r["parts"] / f"{job['month']}.json", r["counts"])
     return job["month"]
 
 
@@ -224,7 +254,59 @@ def _guarded(job: dict) -> str | None:
     """Skip the month if the time budget is already used (it stays pending)."""
     if time.time() > job["deadline"]:
         return None
-    return run_month(job)
+    return run_month_multi(job) if "runs" in job else run_month(job)
+
+
+def continue_sweep(
+    run_dirs: list[Path],
+    *,
+    settings: Settings | None = None,
+    budget_seconds: float = float("inf"),
+    workers: int = 1,
+) -> bool:
+    """Continue several runs of one strategy over the same sessions, sharing the data loading.
+    Returns True when every run is complete."""
+    settings = settings or load_settings()
+    manifests = [json.loads((d / "manifest.json").read_text()) for d in run_dirs]
+    head = manifests[0]
+    for m in manifests:
+        if (m["strategy"], m["sessions"], m["data_build_id"]) != (
+            head["strategy"], head["sessions"], head["data_build_id"]
+        ):  # fmt: skip
+            raise ValueError("a sweep needs one strategy, one period and one data build")
+    months: dict[str, list[str]] = {}
+    for day in head["sessions"]:
+        months.setdefault(day[:7], []).append(day)
+    deadline = time.time() + budget_seconds
+    jobs = []
+    for month, sessions in months.items():
+        todo = [
+            {"config": m["resolved_config"], "parts": str(d / "parts"), "kind": m.get("kind")}
+            for d, m in zip(run_dirs, manifests, strict=True)
+            if not (d / "parts" / f"{month}.json").exists()
+        ]
+        if todo:
+            jobs.append({
+                "settings": {k: str(v) for k, v in dataclasses.asdict(settings).items()},
+                "build_id": head["data_build_id"], "strategy": head["strategy"],
+                "cost_calibration": head["cost_calibration"], "month": month,
+                "sessions": sessions, "runs": todo, "deadline": deadline,
+            })  # fmt: skip
+    if workers <= 1:
+        for job in jobs:
+            _guarded(job)
+    else:
+        with ProcessPoolExecutor(
+            max_workers=workers, mp_context=multiprocessing.get_context("spawn")
+        ) as pool:
+            list(pool.map(_guarded, jobs))
+    done = True
+    for run_dir, manifest in zip(run_dirs, manifests, strict=True):
+        if any(not (run_dir / "parts" / f"{m}.json").exists() for m in months):
+            done = False
+        elif manifest["status"] != "complete":
+            finalize(run_dir, settings=settings)
+    return done
 
 
 def finalize(run_dir: Path, *, settings: Settings) -> None:

@@ -50,3 +50,16 @@ PREMARKET_DOLLAR_VOLUME = Feature(
     "premarket_dollar_volume", Availability.BAR_CLOSE, _premarket_dollar_volume
 )
 SESSION_OPEN = Feature("session_open", Availability.BAR_CLOSE, _session_open)
+
+
+def _return_15m(sd) -> np.ndarray:
+    """Close against the last close at least 15 minutes earlier (NaN if there is none)."""
+    out = np.full(sd.minute.shape, np.nan)
+    if len(sd.minute):
+        earlier = np.searchsorted(sd.minute, sd.minute - 15, side="right") - 1
+        ok = earlier >= 0
+        out[ok] = sd.close[ok] / sd.close[earlier[ok]] - 1.0
+    return out
+
+
+RETURN_15M = Feature("return_15m", Availability.BAR_CLOSE, _return_15m)

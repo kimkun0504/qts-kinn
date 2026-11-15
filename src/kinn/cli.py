@@ -77,6 +77,46 @@ def _run(args: argparse.Namespace) -> int:
     return 0 if done else 3
 
 
+def _sweep(args: argparse.Namespace) -> int:
+    import json
+    from pathlib import Path
+
+    from kinn import run as runner
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    folder = settings.runs_dir / "_sweeps"
+    if args.resume:
+        sweep_id = args.resume
+        run_ids = json.loads((folder / f"{sweep_id}.json").read_text())["runs"]
+    else:
+        if not args.strategy:
+            raise SystemExit("kinn sweep needs <strategy> --configs a,b,... or --resume <id>")
+        configs_dir = runner.strategies_dir() / args.strategy / "configs"
+        names = (
+            args.configs.split(",")
+            if args.configs
+            else sorted(p.stem for p in configs_dir.glob("*.yaml"))
+        )
+        try:
+            run_ids = [
+                runner.start_run(args.strategy, name, settings=settings, scratch=args.scratch).name
+                for name in names
+            ]
+        except registry.DirtyTreeError as error:
+            raise SystemExit(f"refused: {error}") from error
+        sweep_id = run_ids[0].split("_")[0] + f"_{args.strategy}_{len(run_ids)}"
+        folder.mkdir(parents=True, exist_ok=True)
+        registry.write_json(folder / f"{sweep_id}.json", {"runs": run_ids})
+        print(f"sweep {sweep_id}: {len(run_ids)} runs, each a counted trial")
+    done = runner.continue_sweep(
+        [Path(settings.runs_dir / r) for r in run_ids], settings=settings,
+        budget_seconds=args.budget, workers=args.workers,
+    )  # fmt: skip
+    print(f"sweep {sweep_id}: " + ("complete" if done else "paused; continue with --resume"))
+    return 0 if done else 3
+
+
 def _runs(args: argparse.Namespace) -> int:
     import duckdb
 
@@ -164,6 +204,14 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--budget", type=float, default=float("inf"), help="seconds before pausing")
     run.add_argument("--workers", type=int, default=1)
     run.set_defaults(func=_run)
+    sweep = sub.add_parser("sweep", help="run several configs of one strategy together")
+    sweep.add_argument("strategy", nargs="?")
+    sweep.add_argument("--configs", help="comma-separated config names (default: all)")
+    sweep.add_argument("--scratch", action="store_true")
+    sweep.add_argument("--resume", metavar="SWEEP_ID")
+    sweep.add_argument("--budget", type=float, default=float("inf"))
+    sweep.add_argument("--workers", type=int, default=1)
+    sweep.set_defaults(func=_sweep)
     sub.add_parser("runs", help="rebuild the run index and list runs").set_defaults(func=_runs)
 
     quote = sub.add_parser("quotes", help="quote sample around a study's events").add_subparsers(
