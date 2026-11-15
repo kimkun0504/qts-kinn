@@ -195,7 +195,7 @@ data build `6453bd3ec8` (corrected dividends and split dates), $20,000 account, 
 
 **What to hold against this result**
 
-1. **The fill rule is the weak point.** Only 4% of orders fill (1,789 of about 38,700 placed),
+1. **The fill rule is the weak point.** Under 5% of orders fill (1,789 of about 38,650 placed),
    and each fill is inferred from a minute bar trading at least one tick through the limit. A
    resting order 4% below a falling stock fills on the sharpest prints; whether those prints
    were real, sized trades has not been checked against tick data.
