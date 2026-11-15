@@ -1,0 +1,46 @@
+# IBKR Pro, Tiered pricing, US stocks. Rates as published on 2026-11-15, applied to all history
+# (the question is "what would this cost me now", not "what did it cost then").
+name: ibkr_pro_tiered
+verified_on: 2026-11-15
+sources:
+  commissions: https://www.interactivebrokers.com/en/pricing/commissions-stocks.php
+  sec_fee: https://www.sec.gov/rules-regulations/fee-rate-advisories/2026-2
+  finra_taf: https://www.finra.org/rules-guidance/rule-filings/sr-finra-2024-019/fee-adjustment-schedule
+
+commission:
+  per_share: 0.0035            # lowest tier, up to 300,000 shares a month
+  min_per_order: 0.35
+  max_fraction_of_value: 0.01  # if the cap is below the minimum, the cap applies
+
+third_party:
+  clearing_per_share: 0.00020            # NSCC, DTC
+  pass_through_fraction_of_commission: 0.00074   # NYSE 0.000175 + FINRA 0.000565
+  cat_per_share: 0.000003                # FINRA consolidated audit trail
+  # Exchange fees depend on the venue. Conservative: every marketable share pays a typical
+  # remove-liquidity fee and passive shares earn no rebate.
+  exchange_remove_per_share: 0.0030
+  exchange_remove_fraction_under_1: 0.0030   # stocks under $1: fraction of trade value
+  exchange_add_per_share: 0.0
+  auction_per_share: 0.0010
+
+regulatory:                    # on sells only
+  sec_fee_fraction_of_proceeds: 0.0000206   # $20.60 per million since 2026-04-04
+  finra_taf_per_share: 0.000195             # 2026 rate (fee holiday 2026-10-01..12-31 ignored)
+  finra_taf_max_per_trade: 9.79
+
+# Slippage. There are no quotes in the data, so the half-spread is a stated fallback by
+# liquidity, not a measurement. It is meant to be conservative. Replace it when quotes exist.
+slippage:
+  tick: 0.01
+  half_spread_bps_by_adv:      # [minimum 20-day median dollar volume, half-spread in bps]
+    - [50000000, 2]
+    - [10000000, 5]
+    - [2000000, 10]
+    - [500000, 25]
+    - [100000, 50]
+    - [0, 100]
+  half_spread_bps_unknown_adv: 100
+  under_5_multiplier: 1.5      # stocks under $5 pay this multiple of the table value
+  impact_coefficient: 0.5      # impact = coefficient * bar range * sqrt(shares / bar volume)
+  auction_bps: 10              # closing-auction exits
+  forced_exit_bps: 200         # exits with no price to trade at (no bar, no official close)
