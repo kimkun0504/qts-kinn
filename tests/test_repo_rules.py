@@ -42,3 +42,20 @@ def test_no_absolute_user_paths_in_code():
 
 def test_the_research_sandbox_is_not_a_package():
     assert not (REPO / "research" / "__init__.py").exists()
+
+
+def test_gitignore_hides_no_source_file():
+    """A broad ignore pattern once hid src/kinn/data from git."""
+    done = subprocess.run(
+        ["git", "ls-files", "--others", "--ignored", "--exclude-standard", *CODE_DIRS],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    hidden = [
+        line
+        for line in done.stdout.splitlines()
+        if "__pycache__" not in line and ".egg-info" not in line and "_cache" not in line
+    ]
+    assert not hidden, f"ignored by git: {hidden}"
