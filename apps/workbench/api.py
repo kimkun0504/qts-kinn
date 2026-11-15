@@ -60,6 +60,14 @@ def list_runs(runs_dir: Path) -> list[dict]:
                 net_1x=close.get("net_1x", {}).get("mean"),
                 net_2x=close.get("net_2x", {}).get("mean"),
                 gross=close.get("gross", {}).get("mean"), sharpe=None, total_net=None,
+                t_stat_2x=None,
+            )  # fmt: skip
+        elif kind == "tick_study":
+            tick = (_load(run_dir / "tick_study.json") or {}).get("all", {})
+            strict = tick.get("strict", {}).get("net_per_fill", {})
+            row.update(
+                trades=strict.get("n"), net_1x=strict.get("mean"), net_2x=None, gross=None,
+                sharpe=None, total_net=None, t_stat_2x=None,
             )  # fmt: skip
         else:
             m = _load(run_dir / "metrics.json") or {}
@@ -68,6 +76,7 @@ def list_runs(runs_dir: Path) -> list[dict]:
                 trades=m.get("trades"), net_1x=one.get("mean_return"),
                 net_2x=two.get("mean_return"), gross=m.get("gross_mean_return"),
                 sharpe=one.get("sharpe"), total_net=one.get("total_net"),
+                t_stat_2x=two.get("t_stat_daily"),
             )  # fmt: skip
         rows.append(row)
     return sorted(rows, key=lambda r: r["started_at"], reverse=True)
@@ -90,6 +99,9 @@ def run_detail(runs_dir: Path, run_id: str) -> dict | None:
     out: dict = {"manifest": manifest}
     if manifest.get("kind") == "event_study":
         out["study"] = _load(run_dir / "study.json")
+        return out
+    if manifest.get("kind") == "tick_study":
+        out["tick_study"] = _load(run_dir / "tick_study.json")
         return out
     out["metrics"] = _load(run_dir / "metrics.json")
     if (run_dir / "equity.parquet").exists():
@@ -130,7 +142,9 @@ def families(runs_dir: Path) -> list[dict]:
         trials = len(counted) + prior
         row = {
             "family": family, "runs": len(members), "counted": len(counted),
-            "scratch": len(members) - len(counted), "prior_trials": prior, "trials": trials,
+            "scratch": sum(1 for m in members if m["scratch"]),
+            "abandoned": sum(1 for m in members if m.get("status") == "abandoned"),
+            "prior_trials": prior, "trials": trials,
             "by_agent": {}, "overfitting": None,
         }  # fmt: skip
         for m in counted:

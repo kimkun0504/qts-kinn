@@ -12,7 +12,7 @@ from urllib.parse import unquote
 from apps.workbench import api
 from kinn.core.settings import load_settings
 
-STATIC = Path(__file__).parent / "static"
+STATIC = Path(__file__).parent / "web" / "dist"
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -49,6 +49,11 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8321)
     parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args()
+    if not (STATIC / "index.html").exists():
+        raise SystemExit(
+            "The Workbench front end is not built yet. Run once:\n"
+            "  cd apps/workbench/web && npm install && npm run build"
+        )
     Handler.runs_dir = load_settings().runs_dir
     server = ThreadingHTTPServer((args.host, args.port), partial(Handler, directory=str(STATIC)))
     print(f"Workbench on http://{args.host}:{args.port}  (runs: {Handler.runs_dir})")

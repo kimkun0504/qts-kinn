@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* Design tokens. Components use the semantic names below, never raw hex values. */
+:root {
+  color-scheme: dark;
+  --ground: #0e0f11;
+  --surface: #151719;
+  --raised: #1b1d20;
+  --line: #26292e;
+  --line-soft: #1e2124;
+  --ink: #e7e8ea;
+  --ink-2: #9a9fa8;
+  --ink-3: #6f747d;
+  --accent: #4c8dff;
+  --accent-soft: #8ab4ff;
+  --series-2: #8b9099;
+  --series-3: #d4d6da;
+  --series-4: #c98500;
+  --neg: #ef6b63;
+  --pos: #4cc38a;
+  --warn: #e5b567;
+  --chart-grid: #22252a;
+  --chart-axis: #4a4f58;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ground: #f4f5f7;
+  --surface: #ffffff;
+  --raised: #eef0f3;
+  --line: #dcdfe4;
+  --line-soft: #eceef1;
+  --ink: #14171c;
+  --ink-2: #555b66;
+  --ink-3: #7b818c;
+  --accent: #1f5fd6;
+  --accent-soft: #1f5fd6;
+  --series-2: #6b717c;
+  --series-3: #2b3038;
+  --series-4: #a86a00;
+  --neg: #c0392b;
+  --pos: #177a4c;
+  --warn: #8a5a00;
+  --chart-grid: #e6e8ec;
+  --chart-axis: #a3a8b1;
+}
+
+@theme inline {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-neg: var(--neg);
+  --color-pos: var(--pos);
+  --color-warn: var(--warn);
+}
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}

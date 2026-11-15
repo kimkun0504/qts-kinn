@@ -15,3 +15,9 @@ loses 0.26–0.30% a trade and the Deflated Sharpe is 0.
 Not built (decision 0011): launching runs from the UI, authentication, a build chain.
 Known gaps: the parameter map averages runs that share a cell; curves are compared only when
 runs cover the same sessions.
+
+## Update, 2026-11-15: rebuilt in React
+
+The first version's look was rejected by the owner. It was rebuilt as a dashboard with a side
+rail (decision 0013): Overview, Runs, Compare, Parameters, Trials; dark and light themes; tick
+studies and abandoned runs are shown. Checked in a browser against the real run store at 1440 px.

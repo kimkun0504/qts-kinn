@@ -1,0 +1,24 @@
+import { interval, isNegative, money, num, pct, plainPct, shortTime } from "./format";
+
+describe("format", () => {
+  it("writes signed percentages with a real minus sign", () => {
+    expect(pct(0.0052)).toBe("+0.52%");
+    expect(pct(-0.0009)).toBe("−0.09%");
+    expect(pct(null)).toBe("–");
+    expect(isNegative(pct(-0.01))).toBe(true);
+    expect(isNegative(pct(0.01))).toBe(false);
+  });
+  it("formats money, numbers and plain percentages", () => {
+    expect(money(34346.2)).toBe("+$34,346");
+    expect(money(-20762.7)).toBe("−$20,763");
+    expect(num(2.617)).toBe("2.62");
+    expect(num(-0.4, 1)).toBe("−0.4");
+    expect(plainPct(0.62)).toBe("62%");
+    expect(shortTime("2026-11-15T20:41:57+00:00")).toBe("11-15 20:41");
+  });
+  it("shows an interval only when there is one", () => {
+    expect(interval({ n: 10, mean: 0.0056, low: -0.0015, high: 0.0129 })).toBe("+0.56% (−0.15% to +1.29%)");
+    expect(interval({ n: 1, mean: 0.01, low: null, high: null })).toBe("+1.00%");
+    expect(interval({ n: 0, mean: null, low: null, high: null })).toBe("–");
+  });
+});

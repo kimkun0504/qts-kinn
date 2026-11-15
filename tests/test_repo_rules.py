@@ -11,7 +11,9 @@ CODE_DIRS = ("src", "strategies", "apps", "tests")
 
 def _python_files():
     for folder in CODE_DIRS:
-        yield from (REPO / folder).rglob("*.py")
+        for path in (REPO / folder).rglob("*.py"):
+            if "node_modules" not in path.parts:
+                yield path
 
 
 def test_import_rules_hold():
@@ -56,6 +58,9 @@ def test_gitignore_hides_no_source_file():
     hidden = [
         line
         for line in done.stdout.splitlines()
-        if "__pycache__" not in line and ".egg-info" not in line and "_cache" not in line
+        if not any(
+            part in line
+            for part in ("__pycache__", ".egg-info", "_cache", "node_modules/", "web/dist/")
+        )
     ]
     assert not hidden, f"ignored by git: {hidden}"
