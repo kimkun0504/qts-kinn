@@ -74,6 +74,6 @@ def test_the_snapshot_split_factor_is_used_only_by_the_data_build():
         str(path.relative_to(root))
         for folder in ("src", "apps", "strategies")
         for path in (root / folder).rglob("*.py")
-        if "node_modules" not in path.parts and "unadjust" in path.read_text()
+        if "node_modules" not in path.parts and re.search(r"\bunadjust\b", path.read_text())
     }
     assert users <= allowed
