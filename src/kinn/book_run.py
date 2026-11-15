@@ -53,7 +53,8 @@ def _merge(base: dict, over: dict) -> dict:
     out = dict(base)
     for key, value in over.items():
         both = isinstance(value, dict) and isinstance(out.get(key), dict)
-        out[key] = _merge(out[key], value) if both else value
+        same_kind = both and value.get("kind", out[key].get("kind")) == out[key].get("kind")
+        out[key] = _merge(out[key], value) if same_kind else value
     return out
 
 

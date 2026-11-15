@@ -1,0 +1,4 @@
+# Development period, textbook equal-weight book, monthly rebalance.
+extends: momentum_base
+portfolio: {kind: ranked, count: 15}
+period: {start: 2004-10-01, end: 2016-12-30}

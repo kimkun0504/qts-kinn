@@ -1,0 +1,23 @@
+# Shared settings of the momentum book (strategies/momentum_12_1/HYPOTHESIS.md). Not run itself.
+book: momentum_ls
+family: momentum_12_1
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+account: 25000
+universe:
+  min_prev_close: 5
+  min_adv20: 5000000
+  min_sessions_prior: 273
+  top_by_marketcap: 1000
+alphas:
+  - strategy: momentum_12_1
+    weight: 1.0
+    params: {formation: 252, skip: 21, min_obs: 200}
+risk_model: {window: 252, min_obs: 126}
+portfolio: {kind: mean_variance, ic: 0.03, risk_aversion: 10, horizon_days: 21}
+limits: {gross: 1.5, net: 0.0, net_band: 0.02, max_weight: 0.05, min_weight: 0.01, beta: 0.05, sector: 0.10}
+execution: {at: close, max_adv_fraction: 0.01, min_trade: 200}
+short: {borrow_rate: 0.01, min_marketcap: 1000000000, min_price: 5}
+rebalance: monthly
+lookahead_check_rate: 0.25
+seed: 0

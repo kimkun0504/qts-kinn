@@ -1,0 +1,6 @@
+name: momentum_12_1
+kind: forecast            # a daily alpha for multi-day books (alpha.py), not an intraday strategy
+family: momentum_12_1
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+status: testing

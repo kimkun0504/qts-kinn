@@ -1,0 +1,4 @@
+# Development period, optimizer, weekly rebalance.
+extends: momentum_base
+rebalance: weekly
+period: {start: 2004-10-01, end: 2016-12-30}
