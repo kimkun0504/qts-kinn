@@ -1,0 +1,41 @@
+# Install once per clone or worktree: uv run pre-commit install
+default_install_hook_types: [pre-commit]
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.5
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: no-data-or-env-files
+        name: no data files or .env files in git
+        entry: Data, run outputs and .env files never enter git (AGENTS.md).
+        language: fail
+        files: '(\.(parquet|duckdb|feather|h5|pkl|zip|gz)$)|((^|/)\.env($|\.(?!example$)))|(^runs/)'
+      - id: import-linter
+        name: import rules (import-linter)
+        entry: uv run lint-imports
+        language: system
+        pass_filenames: false
+        types: [python]

@@ -1,0 +1,8 @@
+# Copy this folder to strategies/<name>/ and fill in. See docs/ARCHITECTURE.md, rule 4.
+name: _template
+status: template          # proposed | hypothesis | event-study | developing | parked | retired
+engine: intraday
+universe: ""              # a named point-in-time universe from kinn.data
+cost_calibration: ""      # a file in src/kinn/costs/calibrations/
+owner: ""                 # claude | gpt (must match docs/OWNERS.md)
+family: ""                # trial-counting family; runs in one family share a trial count

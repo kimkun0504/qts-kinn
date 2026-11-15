@@ -1,0 +1,7 @@
+name: intraday_rebound
+status: proposed          # HYPOTHESIS.md is written in Phase 3, before any test
+engine: intraday
+universe: ""              # set in Phase 3
+cost_calibration: ""      # set in Phase 2
+owner: claude
+family: intraday_rebound  # inherits prior looks: docs/retired/intraday-rebound-v0.md
