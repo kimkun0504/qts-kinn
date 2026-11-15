@@ -12,7 +12,7 @@ from kinn.core.types import RTH_CLOSE, RTH_OPEN
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
 
-PRIOR_COLUMNS = ("prev_close", "adv20_prev", "marketcap_prev", "sessions_prior")
+PRIOR_COLUMNS = ("prev_close", "adv20_prev", "marketcap_prev", "sessions_prior", "filings_prev")
 _EMPTY_F = np.empty(0, dtype=float)
 _EMPTY_I = np.empty(0, dtype=np.int64)
 

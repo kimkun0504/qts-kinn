@@ -108,6 +108,11 @@ def test_prior_close_is_split_adjusted_and_lags_are_strictly_prior(built):
     assert first["prev_close"] is None and first["sessions_prior"] == 0
     assert second["adv20_prev"] == pytest.approx(first["dollar_volume"])
     assert second["marketcap_prev"] == pytest.approx(100.0e6)
+    # A filing dated 2023-10-10 is known before the open of the next session, not on the day.
+    assert rows[("AAA", date(2023, 10, 10))]["filings_prev"] == 0
+    assert rows[("AAA", date(2023, 10, 10))]["filings_today"] == 1
+    assert rows[("AAA", date(2023, 10, 11))]["filings_prev"] == 1
+    assert rows[("AAA", date(2023, 10, 12))]["filings_prev"] == 0
     # The rename does not reset the company's history.
     assert rows[("NEW", syn.RENAME_DAY)]["sessions_prior"] == days.index(syn.RENAME_DAY)
 

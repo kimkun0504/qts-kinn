@@ -176,3 +176,27 @@ def test_uncommitted_code_is_refused_unless_scratch(tmp_path):
     with pytest.raises(registry.DirtyTreeError):
         registry.check_clean(state, scratch=False)
     registry.check_clean(state, scratch=True)
+
+
+def test_event_study_measures_forward_returns_from_the_next_bar(world, monkeypatch):
+    settings, strategies = world
+    monkeypatch.setenv("KINN_STRATEGIES_DIR", str(strategies))
+    run_dir = runner.start_run(
+        "random_entry", "test", settings=settings, scratch=True, agent="study", kind="event_study"
+    )
+    assert runner.continue_run(run_dir, settings=settings)
+    study = json.loads((run_dir / "study.json").read_text())
+    events = pq.read_table(run_dir / "events.parquet").to_pylist()
+    assert study["events"] == len(events) >= 200
+    first = events[0]
+    assert first["entry_minute"] == first["signal_minute"] + 1  # a bar every minute here
+    # No edge in a random walk: gross about zero, net negative, 2x worse than 1x.
+    close = study["curve"]["r_close"]
+    assert abs(close["gross"]["mean"]) < 0.002
+    assert close["net_2x"]["mean"] < close["net_1x"]["mean"] < 0
+    assert close["net_1x"]["low"] < close["net_1x"]["mean"] < close["net_1x"]["high"]
+    assert (run_dir / "study.html").exists() and "By liquidity" in (
+        run_dir / "study.md"
+    ).read_text()
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    assert manifest["kind"] == "event_study"

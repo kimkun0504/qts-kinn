@@ -59,7 +59,11 @@ def _run(args: argparse.Namespace) -> int:
             raise SystemExit("kinn run needs <strategy> --config <name>, or --resume <run_id>")
         try:
             run_dir = runner.start_run(
-                args.strategy, args.config, settings=settings, scratch=args.scratch
+                args.strategy,
+                args.config,
+                settings=settings,
+                scratch=args.scratch,
+                kind="event_study" if args.study else "backtest",
             )
         except registry.DirtyTreeError as error:
             raise SystemExit(f"refused: {error}") from error
@@ -68,7 +72,8 @@ def _run(args: argparse.Namespace) -> int:
     )
     print(f"run {run_dir.name}: " + ("complete" if done else "paused; continue with --resume"))
     if done:
-        print((run_dir / "tearsheet.md").read_text())
+        report = run_dir / "tearsheet.md"
+        print((report if report.exists() else run_dir / "study.md").read_text())
     return 0 if done else 3
 
 
@@ -108,6 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("strategy", nargs="?")
     run.add_argument("--config")
     run.add_argument("--scratch", action="store_true", help="allow uncommitted code; not counted")
+    run.add_argument("--study", action="store_true", help="event study instead of a backtest")
     run.add_argument("--resume", metavar="RUN_ID", help="continue a paused run")
     run.add_argument("--budget", type=float, default=float("inf"), help="seconds before pausing")
     run.add_argument("--workers", type=int, default=1)

@@ -1,7 +1,9 @@
 """The daily panel: one row per company per session, with what was known before that session.
 
 Columns ending in ``_prev`` (and ``sessions_prior``) use only earlier sessions, so they are
-available before the open of ``date``. Universes may filter on those and on static labels only.
+available before the open of ``date``. ``filings_prev`` counts 8-K filings dated from the prior
+session up to, not including, ``date``. ``filings_today`` is an outcome (a filing later today is
+not knowable during the session). Universes may filter on those and on static labels only.
 The same-day columns (open .. dollar_volume) are outcomes of ``date`` and are not available
 until its close.
 
@@ -37,6 +39,11 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
         con.execute(f"create view hist as select * from '{master}/symbol_history.parquet'")
         con.execute(f"create view sec as select * from '{master}/security_master.parquet'")
         con.execute(f"create view splits as select * from '{master}/splits.parquet'")
+        con.execute(
+            f"""create view filings as
+                select s.permaticker, e.date from '{shar}/events.parquet' e
+                join sec s using (ticker)"""
+        )
         con.execute(
             f"""create view mcap as
                 select s.permaticker, m.date, m.marketcap * 1e6 as marketcap
@@ -87,14 +94,25 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
                                    partition by permaticker order by date
                                    rows between {ADV_WINDOW} preceding and 1 preceding)
                                  as adv20_prev
-                        from bars window w as (partition by permaticker order by date))
+                        from bars window w as (partition by permaticker order by date)),
+                    filed as (
+                        select l.permaticker, l.date,
+                               count(*) filter (f.date < l.date) as filings_prev,
+                               count(*) filter (f.date = l.date) as filings_today
+                        from lagged l join filings f
+                          on f.permaticker = l.permaticker and f.date >= l.prev_date
+                         and f.date <= l.date
+                        group by 1, 2)
                     select l.date, l.permaticker, l.symbol, s.ticker, s.category, s.exchange,
                            l.open, l.high, l.low, l.close, l.volume, l.dollar_volume,
                            l.prev_close_raw / coalesce(sp.ratio, 1) as prev_close,
                            l.prev_date, coalesce(sp.ratio, 1) as split_ratio,
-                           l.adv20_prev, l.sessions_prior, mc.marketcap as marketcap_prev
+                           l.adv20_prev, l.sessions_prior, mc.marketcap as marketcap_prev,
+                           coalesce(fd.filings_prev, 0)::integer as filings_prev,
+                           coalesce(fd.filings_today, 0)::integer as filings_today
                     from lagged l
-                    join sec s using (permaticker)
+                    left join filed fd on fd.permaticker = l.permaticker and fd.date = l.date
+                    join sec s on s.permaticker = l.permaticker
                     left join splits sp on sp.permaticker = l.permaticker and sp.date = l.date
                     left join mcap mc on mc.permaticker = l.permaticker and mc.date = l.prev_date
                     where year(l.date) = {year}

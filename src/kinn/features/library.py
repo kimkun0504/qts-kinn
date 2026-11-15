@@ -30,3 +30,23 @@ LOW_SO_FAR = Feature(
     Availability.BAR_CLOSE,
     lambda sd: np.minimum.accumulate(sd.low) if len(sd.low) else sd.low,
 )
+
+
+def _premarket_dollar_volume(sd) -> np.ndarray:
+    early = sd.minute < 570
+    return np.cumsum(np.where(early, sd.close * sd.volume, 0.0))
+
+
+def _session_open(sd) -> np.ndarray:
+    out = np.full(sd.minute.shape, np.nan)
+    regular = np.flatnonzero(sd.minute >= 570)
+    if len(regular):
+        out[regular[0] :] = sd.open[regular[0]]
+    return out
+
+
+FILINGS_SINCE_PRIOR_SESSION = prior("filings_prev")
+PREMARKET_DOLLAR_VOLUME = Feature(
+    "premarket_dollar_volume", Availability.BAR_CLOSE, _premarket_dollar_volume
+)
+SESSION_OPEN = Feature("session_open", Availability.BAR_CLOSE, _session_open)

@@ -43,6 +43,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/kinn/reporting/tearsheet.py" = ["E501"]  # HTML templates
+"src/kinn/reporting/study_report.py" = ["E501"]
 
 # Import rules (ARCHITECTURE.md, rule 1). Run with `uv run lint-imports`.
 [tool.importlinter]

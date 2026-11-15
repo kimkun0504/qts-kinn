@@ -32,6 +32,7 @@ from kinn.engine.intraday.strategy import Strategy, check_no_lookahead, day_sign
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
 from kinn.risk.sizing import RiskConfig
+from kinn.validation import event_study
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TRADE_FIELDS = [f.name for f in dataclasses.fields(Trade)]
@@ -62,10 +63,6 @@ def _trades_table(trades: list[Trade]) -> pa.Table:
     return pa.table({f: [getattr(t, f) for t in trades] for f in TRADE_FIELDS})
 
 
-def _read_trades(path: Path) -> list[Trade]:
-    return [Trade(**row) for row in pq.read_table(path).to_pylist()]
-
-
 def _month_key(day: date) -> str:
     return f"{day.year}-{day.month:02d}"
 
@@ -80,7 +77,9 @@ def run_month(job: dict) -> str:
     fills = FillConfig(**cfg.get("fills", {}))
     costs = cost_model.load(job["cost_calibration"])
     rate = float(cfg.get("lookahead_check_rate", 0.1))
+    study = job.get("kind") == "event_study"
     trades: list[Trade] = []
+    events: list[dict] = []
     counts = dict.fromkeys(COUNT_KEYS, 0)
     for day in (date.fromisoformat(d) for d in job["sessions"]):
         data = load_day(store, day, strategy.universe)
@@ -90,13 +89,31 @@ def run_month(job: dict) -> str:
             cut = rng.randrange(data.view.open_minute, data.view.close_minute)
             check_no_lookahead(strategy, data.view, signals, [cut])
             counts["lookahead_checks"] += 1
+        if study:
+            counts["signals"] += len(signals)
+            for signal in signals:
+                row = event_study.measure(
+                    day, data.view.symbols[signal.symbol], signal,
+                    open_minute=data.view.open_minute, close_minute=data.view.close_minute,
+                    official_close=data.official_close.get(signal.symbol), costs=costs,
+                    position_dollars=risk.position_dollars,
+                    no_entry_before_close=fills.no_entry_before_close,
+                )  # fmt: skip
+                if row is None:
+                    counts["unfilled"] += 1
+                else:
+                    events.append(row)
+            continue
         result = simulate_day(data, signals, risk=risk, config=fills, costs=costs)
         trades.extend(result.trades)
         for key in COUNT_KEYS[:4]:
             counts[key] += getattr(result, key)
     parts = Path(job["parts"])
     tmp = parts / f"{job['month']}.parquet.tmp"
-    pq.write_table(_trades_table(trades), tmp)
+    table = (
+        pa.Table.from_pylist(events, schema=event_study.SCHEMA) if study else _trades_table(trades)
+    )
+    pq.write_table(table, tmp)
     os.replace(tmp, parts / f"{job['month']}.parquet")
     registry.write_json(parts / f"{job['month']}.json", counts)
     return job["month"]
@@ -110,6 +127,7 @@ def start_run(
     scratch: bool = False,
     agent: str | None = None,
     repo: Path = REPO_ROOT,
+    kind: str = "backtest",
 ) -> Path:
     """Create the run folder and manifest. Refuses uncommitted code unless ``scratch``."""
     settings = settings or load_settings()
@@ -123,7 +141,13 @@ def start_run(
     sessions = store.sessions(start, end)  # raises if the period reaches the holdout
     agent = agent or os.environ.get("KINN_AGENT", "human")
     short = registry.config_hash(
-        {"meta": meta, "config": cfg, "commit": git["commit"], "build": store.build_id}
+        {
+            "meta": meta,
+            "config": cfg,
+            "commit": git["commit"],
+            "build": store.build_id,
+            "kind": kind,
+        }
     )
     run_id = registry.new_run_id(agent, strategy, short)
     run_dir = settings.runs_dir / run_id
@@ -131,6 +155,7 @@ def start_run(
     manifest = {
         "schema": registry.MANIFEST_SCHEMA,
         "run_id": run_id,
+        "kind": kind,  # backtest | event_study
         "strategy": strategy,
         "family": meta.get("family", strategy),
         "prior_trials": int(meta.get("prior_trials", 0)),
@@ -174,6 +199,7 @@ def continue_run(
         "settings": {k: str(v) for k, v in dataclasses.asdict(settings).items()},
         "build_id": manifest["data_build_id"],
         "strategy": manifest["strategy"],
+        "kind": manifest.get("kind", "backtest"),
         "config": manifest["resolved_config"],
         "cost_calibration": manifest["cost_calibration"],
         "parts": str(parts),
@@ -202,26 +228,39 @@ def _guarded(job: dict) -> str | None:
 
 
 def finalize(run_dir: Path, *, settings: Settings) -> None:
-    from kinn.reporting import tearsheet
+    from kinn.reporting import study_report, tearsheet
 
     manifest = json.loads((run_dir / "manifest.json").read_text())
     parts = run_dir / "parts"
-    trades: list[Trade] = []
     counts = dict.fromkeys(COUNT_KEYS, 0)
+    tables = []
     for path in sorted(parts.glob("*.parquet")):
-        trades.extend(_read_trades(path))
+        tables.append(pq.read_table(path))
         for key, value in json.loads(path.with_suffix(".json").read_text()).items():
             counts[key] += value
-    sessions = [date.fromisoformat(d) for d in manifest["sessions"]]
-    equity = float(manifest["resolved_config"].get("risk", {}).get("equity", RiskConfig().equity))
-    pq.write_table(_trades_table(trades), run_dir / "trades.parquet")
-    pq.write_table(
-        pa.table(metrics_module.daily_table(trades, sessions)), run_dir / "equity.parquet"
-    )
-    summary = metrics_module.summarize(trades, sessions, equity=equity, counts=counts)
-    summary["schema"] = registry.METRICS_SCHEMA
-    registry.write_json(run_dir / "metrics.json", summary)
+    if manifest.get("kind") == "event_study":
+        events = pa.concat_tables(tables) if tables else event_study.SCHEMA.empty_table()
+        pq.write_table(events, run_dir / "events.parquet")
+        summary = event_study.summarize(events)
+        summary.update(schema="study-1", counts=counts)
+        registry.write_json(run_dir / "study.json", summary)
+    else:
+        trades = [Trade(**row) for table in tables for row in table.to_pylist()]
+        sessions = [date.fromisoformat(d) for d in manifest["sessions"]]
+        equity = float(
+            manifest["resolved_config"].get("risk", {}).get("equity", RiskConfig().equity)
+        )
+        pq.write_table(_trades_table(trades), run_dir / "trades.parquet")
+        pq.write_table(
+            pa.table(metrics_module.daily_table(trades, sessions)), run_dir / "equity.parquet"
+        )
+        summary = metrics_module.summarize(trades, sessions, equity=equity, counts=counts)
+        summary["schema"] = registry.METRICS_SCHEMA
+        registry.write_json(run_dir / "metrics.json", summary)
     manifest["status"] = "complete"
     manifest["finished_at"] = datetime.now(UTC).isoformat(timespec="seconds")
     registry.write_json(run_dir / "manifest.json", manifest)
-    tearsheet.write(run_dir)
+    if manifest.get("kind") == "event_study":
+        study_report.write(run_dir)
+    else:
+        tearsheet.write(run_dir)

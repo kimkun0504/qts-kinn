@@ -24,7 +24,7 @@ import pyarrow.parquet as pq
 from kinn.core.settings import HOLDOUT_START, Settings
 from kinn.data import bars, master, panel, raw, sharadar
 
-DATA_VERSION = "data-1"
+DATA_VERSION = "data-2"  # data-2: panel gains filings_prev, filings_today
 SHARADAR_TABLES = ("TICKERS", "ACTIONS", "DAILY", "SEP", "EVENTS")
 
 

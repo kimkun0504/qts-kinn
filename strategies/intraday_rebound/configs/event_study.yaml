@@ -1,0 +1,18 @@
+# The single definition from HYPOTHESIS.md. Not a starting point for a search.
+params:
+  drop: 0.10
+  max_gap: 0.05
+  max_premarket_share_of_adv: 0.05
+  first_minute: 575
+  last_minute: 900
+  min_price: 1.0
+  min_adv: 250000
+risk:
+  equity: 10000
+  position_dollars: 500
+  buying_power: 10000
+period:
+  start: 2003-09-10
+  end: 2023-11-08
+lookahead_check_rate: 0.25
+seed: 11

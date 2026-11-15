@@ -11,7 +11,14 @@ COMMON_STOCK = (
 )
 
 # The only panel columns a universe may filter on: known before the open of `date`.
-PRE_OPEN_COLUMNS = ("prev_close", "adv20_prev", "marketcap_prev", "sessions_prior", "category")
+PRE_OPEN_COLUMNS = (
+    "prev_close",
+    "adv20_prev",
+    "marketcap_prev",
+    "sessions_prior",
+    "filings_prev",
+    "category",
+)
 
 
 @dataclass(frozen=True)
