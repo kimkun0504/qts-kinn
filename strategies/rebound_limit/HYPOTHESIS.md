@@ -79,3 +79,11 @@ abandoned; none had produced a result and none was read. The same 17 variants no
 sizing. Expected effect: the $0.35 minimum commission matters less (about 2 bps a side instead of
 7), while the 5% participation cap and market impact matter more, and at most ten positions or
 resting orders fit at once.
+
+## Addendum, 2026-11-15 15:50 ET: variant chosen for validation
+
+Development finished (17 counted runs, sweep `20261115T202957Z_rebound_limit_17`). By rule 4 the
+chosen variant is **`base_o2`**: drop 10%, limit 2% below the event bar's close, resting 10
+minutes, no extra filter (7,269 trades; daily-P&L t-statistic at 2× slippage 2.93, the highest
+among variants with at least 1,500 trades). It is run once on 2017-01-03 to 2023-11-08 as
+`validation_base_o2`, with identical parameters and sizing.
