@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { Family } from "../../lib/api";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -50,7 +50,9 @@ interface AppShellProps {
   subtitle?: string;
   families: Family[];
   family: string | null;
-  onFamily: (family: string | null) => void;
+  strategies: Record<string, { name: string; runs: number }[]>;
+  strategy: string | null;
+  onFamily: (family: string | null, strategy?: string | null) => void;
   counts: Partial<Record<Page, number>>;
   runsDir: string;
   theme: "dark" | "light";
@@ -61,7 +63,7 @@ interface AppShellProps {
 
 /** Side rail, top bar and the page area. Every page renders inside this. */
 export function AppShell(props: AppShellProps) {
-  const { page, onNavigate, families, family, onFamily, counts } = props;
+  const { page, onNavigate, families, family, onFamily, counts, strategies, strategy } = props;
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       <aside className="flex shrink-0 flex-col gap-0.5 border-b border-line bg-surface px-2.5 py-3.5 md:w-[232px] md:border-r md:border-b-0">
@@ -91,7 +93,12 @@ export function AppShell(props: AppShellProps) {
         <div className="px-2.5 pt-4 pb-1.5 text-xs text-ink-3">Strategy families, trials charged</div>
         <FamilyButton label="All families" count={null} active={family === null} onClick={() => onFamily(null)} />
         {families.map((f) => (
-          <FamilyButton key={f.family} label={f.family} count={f.trials} active={family === f.family} onClick={() => onFamily(f.family)} />
+          <Fragment key={f.family}>
+            <FamilyButton label={f.family} count={f.trials} active={family === f.family && strategy === null} onClick={() => onFamily(f.family)} />
+            {(strategies[f.family] ?? []).map((item) => (
+              <FamilyButton key={item.name} nested label={item.name} count={null} active={strategy === item.name} onClick={() => onFamily(f.family, item.name)} />
+            ))}
+          </Fragment>
         ))}
         <div className="mt-auto flex flex-col gap-1.5 border-t border-line px-2.5 pt-3 text-xs text-ink-2">
           <Badge tone="ok">Holdout sealed from 9 Nov 2023</Badge>
@@ -112,13 +119,13 @@ export function AppShell(props: AppShellProps) {
   );
 }
 
-function FamilyButton({ label, count, active, onClick }: { label: string; count: number | null; active: boolean; onClick: () => void }) {
+function FamilyButton({ label, count, active, onClick, nested = false }: { label: string; count: number | null; active: boolean; onClick: () => void; nested?: boolean }) {
   return (
     <button
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 text-left focus-visible:outline-2 focus-visible:outline-accent ${
+      className={`flex cursor-pointer items-center justify-between rounded-md text-left ${nested ? "ml-3 min-h-7 border-l border-line pl-3 pr-2.5 text-[13px]" : "min-h-8 px-2.5"} focus-visible:outline-2 focus-visible:outline-accent ${
         active ? "bg-raised text-ink" : "text-ink-2 hover:text-ink"
       }`}
     >

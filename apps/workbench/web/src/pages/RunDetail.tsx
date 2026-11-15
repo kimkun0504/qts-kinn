@@ -69,7 +69,9 @@ function BacktestView({ detail, metrics: m }: { detail: Detail; metrics: Metrics
     { name: "Signals", value: m.counts.signals },
     { name: "Refused: capital or duplicate", value: m.counts.rejected_capital },
     { name: "Refused: position too small", value: m.counts.rejected_size },
+    ...(m.counts.rejected_risk ? [{ name: "Refused: risk rule", value: m.counts.rejected_risk }] : []),
     { name: "Entry never filled", value: m.counts.unfilled },
+    ...(m.counts.paused_sessions ? [{ name: "Sessions paused by the circuit breaker", value: m.counts.paused_sessions }] : []),
     { name: "Trades", value: m.trades },
     { name: "Lookahead replays passed", value: m.counts.lookahead_checks },
   ];

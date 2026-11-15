@@ -44,27 +44,38 @@ plugin registry: a book's config names the classes it uses.
 
 ```python
 @dataclass(frozen=True)
-class Forecast:                       # kinn.core.types
-    day: date                         # the session it is for
+class Forecast:  # kinn.core.types
+    day: date  # the session it is for
     permaticker: int
-    score: float                      # expected excess return over the horizon, or a rank
+    score: float  # expected excess return over the horizon, or a rank
     horizon_days: int
-    alpha: str                        # which alpha produced it
+    alpha: str  # which alpha produced it
 
-class Alpha(Protocol):                # kinn.alpha
+
+class Alpha(Protocol):  # kinn.alpha
     name: str
     universe: Universe
-    features: Sequence[Feature]       # each declares when it is available
+    features: Sequence[Feature]  # each declares when it is available
+
     def forecasts(self, view: DailyView) -> list[Forecast]: ...
 
-class RiskModel(Protocol):            # kinn.risk
-    def estimate(self, view: DailyView) -> RiskEstimate: ...   # vol per stock, covariance or factors
 
-class PortfolioConstructor(Protocol): # kinn.portfolio
-    def targets(self, forecasts: list[Forecast], book: Book, risk: RiskEstimate,
-                costs: CostModel, limits: Limits) -> list[Target]: ...   # permaticker, shares
+class RiskModel(Protocol):  # kinn.risk
+    def estimate(self, view: DailyView) -> RiskEstimate: ...  # vol per stock, covariance or factors
 
-class ExecutionPolicy(Protocol):      # kinn.execution
+
+class PortfolioConstructor(Protocol):  # kinn.portfolio
+    def targets(
+        self,
+        forecasts: list[Forecast],
+        book: Book,
+        risk: RiskEstimate,
+        costs: CostModel,
+        limits: Limits,
+    ) -> list[Target]: ...  # permaticker, shares
+
+
+class ExecutionPolicy(Protocol):  # kinn.execution
     def orders(self, targets: list[Target], book: Book) -> list[Order]: ...  # when and how
 ```
 

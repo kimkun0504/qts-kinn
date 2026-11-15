@@ -29,6 +29,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<Page>("overview");
   const [family, setFamily] = useState<string | null>(null);
+  const [strategy, setStrategy] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
@@ -56,7 +57,19 @@ export default function App() {
   }, [theme]);
 
   // Abandoned runs never produced results; they stay out of the lists (Trials still reports them).
-  const visible = runs.filter((run) => run.status !== "abandoned" && (!family || run.family === family));
+  const live = runs.filter((run) => run.status !== "abandoned");
+  const visible = live.filter((run) => (!family || run.family === family) && (!strategy || run.strategy === strategy));
+  const strategies: Record<string, { name: string; runs: number }[]> = {};
+  for (const run of live) {
+    const list = (strategies[run.family] ??= []);
+    const entry = list.find((item) => item.name === run.strategy);
+    if (entry) entry.runs += 1;
+    else list.push({ name: run.strategy, runs: 1 });
+  }
+  const pick = (nextFamily: string | null, nextStrategy: string | null = null) => {
+    setFamily(nextFamily);
+    setStrategy(nextStrategy);
+  };
   const visibleFamilies = families.filter((f) => !family || f.family === family);
   const open = (run: RunRow) => {
     setSelected(run.run_id);
@@ -70,10 +83,12 @@ export default function App() {
       page={page}
       onNavigate={setPage}
       title={TITLES[page]}
-      subtitle={family ?? "All families"}
+      subtitle={strategy ?? family ?? "All families"}
       families={families}
       family={family}
-      onFamily={setFamily}
+      strategies={strategies}
+      strategy={strategy}
+      onFamily={pick}
       counts={{ runs: visible.length, compare: compare.length || undefined, trials: visibleFamilies.reduce((sum, f) => sum + f.trials, 0) }}
       runsDir={runsDir}
       theme={theme}
