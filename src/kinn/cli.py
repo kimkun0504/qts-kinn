@@ -45,6 +45,56 @@ def _data_audit(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _run(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from kinn import run as runner
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    if args.resume:
+        run_dir = settings.runs_dir / args.resume
+    else:
+        if not args.strategy or not args.config:
+            raise SystemExit("kinn run needs <strategy> --config <name>, or --resume <run_id>")
+        try:
+            run_dir = runner.start_run(
+                args.strategy, args.config, settings=settings, scratch=args.scratch
+            )
+        except registry.DirtyTreeError as error:
+            raise SystemExit(f"refused: {error}") from error
+    done = runner.continue_run(
+        Path(run_dir), settings=settings, budget_seconds=args.budget, workers=args.workers
+    )
+    print(f"run {run_dir.name}: " + ("complete" if done else "paused; continue with --resume"))
+    if done:
+        print((run_dir / "tearsheet.md").read_text())
+    return 0 if done else 3
+
+
+def _runs(args: argparse.Namespace) -> int:
+    import duckdb
+
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    index = registry.rebuild_index(settings.runs_dir)
+    con = duckdb.connect(str(index), read_only=True)
+    rows = con.execute(
+        """select run_id, status, scratch, trades, round(100 * mean_return_1x, 3),
+                  round(100 * mean_return_2x, 3) from runs order by started_at"""
+    ).fetchall()
+    print("run_id | status | scratch | trades | net/trade 1x % | net/trade 2x %")
+    for row in rows:
+        print(" | ".join("" if v is None else str(v) for v in row))
+    families = con.execute(
+        "select family, count(*) from runs where not scratch group by 1 order by 1"
+    ).fetchall()
+    for family, count in families:
+        print(f"family {family}: {count} counted runs (plus any declared prior looks)")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -53,6 +103,16 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("paths", help="show the folders Kinn uses and the holdout date").set_defaults(
         func=_paths
     )
+
+    run = sub.add_parser("run", help="run a strategy: kinn run <strategy> --config <name>")
+    run.add_argument("strategy", nargs="?")
+    run.add_argument("--config")
+    run.add_argument("--scratch", action="store_true", help="allow uncommitted code; not counted")
+    run.add_argument("--resume", metavar="RUN_ID", help="continue a paused run")
+    run.add_argument("--budget", type=float, default=float("inf"), help="seconds before pausing")
+    run.add_argument("--workers", type=int, default=1)
+    run.set_defaults(func=_run)
+    sub.add_parser("runs", help="rebuild the run index and list runs").set_defaults(func=_runs)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True

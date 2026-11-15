@@ -185,3 +185,89 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
         [["AAA", "2023-10-10", "22|91"]] + ([["AAA", "2024-02-02", "13"]] if with_holdout else []),
     )
     return root
+
+
+def make_random_walk_raw(root: Path, *, symbols: int = 20, days: int = 40, seed: int = 0) -> Path:
+    """Liquid random-walk stocks with a bar every regular-session minute. No edge by design."""
+    import random
+
+    rng = random.Random(seed)
+    names = [f"RW{k:02d}" for k in range(symbols)]
+    all_days = sessions()[:days]
+    price = dict.fromkeys(names, 20.0)
+    base = root / "massive" / "us_stocks_sip"
+    for day in all_days:
+        daily, minute = [], []
+        for name in names:
+            first = price[name]
+            high = low = first
+            for m in range(570, 960):
+                o = price[name]
+                c = round(o * (1 + rng.gauss(0, 0.0002)), 4)
+                minute.append([name, 50_000, o, c, max(o, c), min(o, c), _ns(day, m), 50])
+                price[name] = c
+                high, low = max(high, o, c), min(low, o, c)
+            daily.append([name, 50_000 * 390, first, price[name], high, low, _ns(day, 0), 9000])
+        name = f"{day.year}/{day.month:02d}/{day.isoformat()}.csv.gz"
+        _gz(base / "day_aggs_v1" / name, daily)
+        _gz(base / "minute_aggs_v1" / name, minute)
+    snapshot = root / "sharadar" / "2026-11-09"
+    snapshot.mkdir(parents=True, exist_ok=True)
+    head = [
+        "table",
+        "permaticker",
+        "ticker",
+        "name",
+        "exchange",
+        "category",
+        "siccode",
+        "sector",
+        "industry",
+        "currency",
+        "location",
+        "firstpricedate",
+        "lastpricedate",
+    ]
+    _zip(
+        snapshot,
+        "TICKERS",
+        head,
+        [
+            [
+                "SEP",
+                2000 + k,
+                n,
+                n,
+                "NYSE",
+                "Domestic Common Stock",
+                "1",
+                "S",
+                "I",
+                "USD",
+                "US",
+                "2020-01-02",
+                "2026-11-09",
+            ]
+            for k, n in enumerate(names)
+        ],
+    )
+    _zip(
+        snapshot,
+        "ACTIONS",
+        ["date", "action", "ticker", "name", "value", "contraticker", "contraname"],
+        [["2021-01-04", "dividend", names[0], names[0], "0.1", "", ""]],
+    )
+    _zip(
+        snapshot,
+        "DAILY",
+        ["ticker", "date", "marketcap"],
+        [[n, d.isoformat(), 1000.0] for d in all_days for n in names],
+    )
+    _zip(
+        snapshot,
+        "SEP",
+        ["ticker", "date", "closeunadj"],
+        [[n, d.isoformat(), 20.0] for d in all_days for n in names],
+    )
+    _zip(snapshot, "EVENTS", ["ticker", "date", "eventcodes"], [[names[0], "2021-01-04", "22"]])
+    return root

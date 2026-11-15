@@ -47,15 +47,14 @@ def check_no_lookahead(
     """
     for cut in cut_minutes:
         replay = day_signals(strategy, view.upto(cut))
-        late = [s for s in replay if s.minute > cut]
-        if late:
-            raise LookaheadError(
-                f"{strategy.name} on {view.day}: a signal is stamped minute {late[0].minute} "
-                f"but only bars up to {cut} existed ({late[0].symbol})"
-            )
         expected = {s for s in signals if s.minute <= cut}
-        if set(replay) != expected:
-            changed = sorted(set(replay) ^ expected, key=lambda s: (s.minute, s.symbol))[0]
+        # Signals the replay stamps after the cut are plans made without seeing those bars
+        # (a scheduled entry, say); only the ones up to the cut are compared.
+        if {s for s in replay if s.minute <= cut} != expected:
+            changed = sorted(
+                {s for s in replay if s.minute <= cut} ^ expected,
+                key=lambda s: (s.minute, s.symbol),
+            )[0]
             raise LookaheadError(
                 f"{strategy.name} on {view.day}: signals up to minute {cut} change when later "
                 f"bars are removed (first difference: {changed.symbol} at {changed.minute}). "

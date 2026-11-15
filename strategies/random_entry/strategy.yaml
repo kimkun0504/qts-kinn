@@ -1,0 +1,8 @@
+# Canary, not a strategy: buys at random. It must lose money after costs.
+name: random_entry
+status: canary
+engine: intraday
+universe: liquid common stocks (see strategy.py)
+cost_calibration: ibkr_pro_tiered
+owner: claude
+family: canary_random_entry
