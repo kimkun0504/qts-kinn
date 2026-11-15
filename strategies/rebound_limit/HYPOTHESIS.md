@@ -87,3 +87,36 @@ chosen variant is **`base_o2`**: drop 10%, limit 2% below the event bar's close,
 minutes, no extra filter (7,269 trades; daily-P&L t-statistic at 2× slippage 2.93, the highest
 among variants with at least 1,500 trades). It is run once on 2017-01-03 to 2023-11-08 as
 `validation_base_o2`, with identical parameters and sizing.
+
+## Addendum, 2026-11-15 16:25 ET: risk rules (written before any run of them)
+
+The validated variant `base_o2` lost $20,763 peak to trough on a $20,000 account. The signal is
+unchanged below; only risk rules are added. Three kinds, each using only what is known at the time:
+
+- **Entry cap:** at most N filled entries a session.
+- **Daily loss limit:** no new entries once the session's marked-to-market P&L (closed trades at
+  their net result, open positions at the last traded price) is at or below −L dollars.
+- **Circuit breaker:** after the last 20 sessions' net P&L is at or below −B dollars, stop trading
+  for the next 10 sessions.
+
+**Variants (7), development period only (2003-09-10 to 2016-12-30):**
+
+| Config | Entry cap | Daily loss limit | Circuit breaker |
+|---|---|---|---|
+| `risk_cap5` | 5 | none | none |
+| `risk_loss300` | none | $300 | none |
+| `risk_loss600` | none | $600 | none |
+| `risk_brk2000` | none | none | $2,000 |
+| `risk_brk4000` | none | none | $4,000 |
+| `risk_cap5_loss600` | 5 | $600 | none |
+| `risk_all` | 5 | $600 | $4,000 |
+
+**Selection rule:** among variants whose total net at 2× slippage is at least 70% of `base_o2`'s
+in development ($52,772 × 0.7 = $36,940), the highest ratio of total net to worst drawdown, both
+at 2× slippage. If none qualifies, no risk variant is validated and the finding is reported.
+
+**Validation (one run, 2017-01-03 to 2023-11-08):** the chosen variant passes if its worst
+drawdown at 1× slippage is at most **$8,000** (40% of the account), net per trade at 1× is at
+least **+0.4%**, and the daily-P&L t-statistic at 1× is at least **2**.
+
+Each of the 7 runs and the validation run is a counted trial (family total would reach 37).
