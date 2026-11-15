@@ -120,3 +120,41 @@ drawdown at 1× slippage is at most **$8,000** (40% of the account), net per tra
 least **+0.4%**, and the daily-P&L t-statistic at 1× is at least **2**.
 
 Each of the 7 runs and the validation run is a counted trial (family total would reach 37).
+
+## Addendum, 2026-11-15 18:40 ET: entry depth, exits and price (written before any run)
+
+**Why.** Risk rules did not help (above). Three things have not been tried on the limit-order
+version: a deeper limit (results improved steadily from 0% to 2% below the event bar's close),
+any exit other than the close, and a minimum price (commission is 17.6 bps of a round trip here
+because many events are in stocks under $5, where $2,000 buys many shares).
+
+**Data.** These runs use build `6453bd3ec8`, in which dividend amounts, split dates and spinoffs
+were corrected (docs/data/DATA_NOTES.md). `base_o2` is run again on it as the reference.
+
+**Variants (10), development period only (2003-09-10 to 2016-12-30), $20,000 account, $2,000
+positions.** Each differs from `base_o2` in one setting, except the last.
+
+| Config | Change from `base_o2` |
+|---|---|
+| `x_ref` | none (the reference, on corrected data) |
+| `x_o3` | limit 3% below the event bar's close |
+| `x_o4` | limit 4% below |
+| `x_t60` | sell at the market after 60 minutes |
+| `x_t120` | sell at the market after 120 minutes |
+| `x_tp3` | resting sell 3% above the entry price; otherwise the close |
+| `x_tp5` | resting sell 5% above the entry price; otherwise the close |
+| `x_sl7` | stop 7% below the entry price |
+| `x_p5` | only stocks with a previous close of at least $5 |
+| `x_o3_tp5` | limit 3% below and a resting sell 5% above |
+
+**Selection rule:** among variants with at least 2,000 trades and a net return per trade of at
+least +0.5% at 2× slippage, the highest t-statistic of daily P&L at 2× slippage.
+
+**Validation (one run of the chosen variant, 2017-01-03 to 2023-11-08, corrected data):** passes
+if net per trade at 1× is at least **+0.5%**, the daily-P&L t-statistic at 1× is at least **2**,
+net per trade at 2× is **above zero**, and the worst drawdown at 1× is at most **$10,000**.
+
+The validation years have now been used three times in this family. A pass here is weaker
+evidence than the first pass was; the holdout and paper trading remain the real tests.
+
+Each of the 10 runs and the validation run is a counted trial (family total would reach 48).

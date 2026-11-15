@@ -1,0 +1,22 @@
+# Development period. Entry, exit and price round (HYPOTHESIS.md, third addendum).
+params:
+  drop: 0.1
+  limit_offset: 0.03
+  rest_minutes: 10
+  min_adv: 0.0
+  max_prior_events: null
+  min_drop_15m: null
+  last_minute: 900
+  target_pct: 0.05
+risk:
+  equity: 20000
+  position_dollars: 2000
+  buying_power: 20000
+fills:
+  participation: 0.05
+  flatten_before_close: 0   # exit in the closing auction
+period:
+  start: 2003-09-10
+  end: 2016-12-30
+lookahead_check_rate: 0.05
+seed: 3

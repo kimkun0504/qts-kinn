@@ -31,12 +31,17 @@ class ReboundLimit:
         self.max_prior_events = params.get("max_prior_events")  # None: no calm-session filter
         self.min_drop_15m = params.get("min_drop_15m")  # None: no speed filter
         self.last_minute = int(params.get("last_minute", 900))
+        self.min_price = float(params.get("min_price", 0.0))  # on the previous close
+        self.target_pct = params.get("target_pct")  # None: no resting sell
+        self.stop_pct = params.get("stop_pct")  # None: no stop
+        self.max_hold = params.get("max_hold_minutes")  # None: hold to the close
         self.first_minute = 575
         self.max_gap = 0.05
         self.max_premarket = 0.05
 
-    def _events(self, view, features) -> list[tuple[int, str, float, float]]:
-        """(minute, symbol, bar close, 15-minute return) of every base event, 09:35–15:00."""
+    def _events(self, view, features) -> list[tuple[int, str, float, float, float, float]]:
+        """(minute, symbol, bar close, 15-minute return, ADV, previous close) of every base
+        event, 09:35–15:00."""
         found = []
         for symbol, sd in view.symbols.items():
             values = features[symbol]
@@ -55,21 +60,29 @@ class ReboundLimit:
             if values["premarket_dollar_volume"][i] >= self.max_premarket * values["adv20"]:
                 continue
             found.append((minute, symbol, float(sd.close[i]), float(values["return_15m"][i]),
-                          float(values["adv20"])))  # fmt: skip
+                          float(values["adv20"]), float(values["prev_close"])))  # fmt: skip
         return sorted(found)
 
     def signals(self, view, features):
         out = []
-        for rank, (minute, symbol, close, ret15, adv) in enumerate(self._events(view, features)):
+        events = self._events(view, features)
+        for rank, (minute, symbol, close, ret15, adv, prev_close) in enumerate(events):
             # `rank` counts the session's earlier events (ties broken by symbol): known by then.
             if self.max_prior_events is not None and rank > int(self.max_prior_events):
                 continue
-            if minute > self.last_minute or adv < self.min_adv:
+            if minute > self.last_minute or adv < self.min_adv or prev_close < self.min_price:
                 continue
             if self.min_drop_15m is not None and not ret15 <= -float(self.min_drop_15m):
                 continue
             limit = round(close * (1 - self.offset), 2 if close >= 1 else 4)
-            out.append(Signal(symbol, minute, limit_price=limit, expire_minute=minute + self.rest))
+            out.append(
+                Signal(
+                    symbol, minute, limit_price=limit, expire_minute=minute + self.rest,
+                    target_pct=None if self.target_pct is None else float(self.target_pct),
+                    stop_pct=None if self.stop_pct is None else float(self.stop_pct),
+                    max_hold_minutes=None if self.max_hold is None else int(self.max_hold),
+                )
+            )  # fmt: skip
         return out
 
 
