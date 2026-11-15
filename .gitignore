@@ -30,3 +30,6 @@ build/
 .DS_Store
 .idea/
 .vscode/
+
+# Leftover of the first Workbench (replaced by apps/workbench/web); safe to delete
+/apps/workbench/static/
