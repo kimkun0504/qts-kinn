@@ -1,5 +1,5 @@
 name: rebound_limit
-status: developing        # owner asked for signal development on 2026-11-15; see HYPOTHESIS.md
+status: developing        # validation passed 2026-11-15; not ready to trade; see REPORT.md
 engine: intraday
 universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
