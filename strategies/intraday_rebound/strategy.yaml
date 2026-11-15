@@ -1,7 +1,8 @@
 name: intraday_rebound
-status: proposed          # HYPOTHESIS.md is written in Phase 3, before any test
+status: hypothesis        # proposed | hypothesis | event-study | developing | parked | retired
 engine: intraday
-universe: ""              # set in Phase 3
-cost_calibration: ""      # set in Phase 2
+universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
+cost_calibration: ibkr_pro_tiered
 owner: claude
-family: intraday_rebound  # inherits prior looks: docs/retired/intraday-rebound-v0.md
+family: intraday_rebound
+prior_trials: 9           # looks by the earlier build on the same data; see HYPOTHESIS.md
