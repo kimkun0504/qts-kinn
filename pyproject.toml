@@ -3,7 +3,10 @@ name = "kinn"
 version = "0.1.0"
 description = "Kinn: a research platform for intraday equity strategies."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "duckdb>=2.0.0",
+    "pyarrow>=26.0.1",
+]
 
 [project.scripts]
 kinn = "kinn.cli:main"
