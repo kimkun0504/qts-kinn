@@ -220,3 +220,38 @@ def test_commission_rules():
     assert COSTS.half_spread_bps(100.0, 1e8) == 2
     assert COSTS.half_spread_bps(4.0, 3e5) == pytest.approx(75.0)  # under $5 pays 1.5x
     assert COSTS.half_spread_bps(1.0, None) == pytest.approx(150.0)
+
+
+def _three_symbols(prices_b):
+    flat_bars = [
+        flat(600, 10.0),
+        flat(601, 10.0),
+        flat(621, 10.0),
+        flat(700, 10.0),
+        flat(955, 10.0),
+    ]
+    sds = {
+        "AAA": session(flat_bars, symbol="AAA").view.symbols["AAA"],
+        "BBB": session(prices_b, symbol="BBB").view.symbols["BBB"],
+        "CCC": session(flat_bars, symbol="CCC").view.symbols["CCC"],
+    }
+    return DayData(DayView(DAY, 570, 960, sds), {"AAA": 10.0, "BBB": prices_b[-1][4], "CCC": 10.0})
+
+
+def test_entry_cap_limits_filled_entries_in_a_session():
+    data = _three_symbols([flat(600, 10.0), flat(601, 10.0), flat(955, 10.0)])
+    signals = [Signal("AAA", 600), Signal("BBB", 600), Signal("CCC", 650)]
+    capped = run(data, signals, risk=RiskConfig(position_dollars=1000.0, max_entries_per_session=2))
+    assert len(capped.trades) == 2 and capped.rejected_risk == 1
+    assert len(run(data, signals).trades) == 3
+
+
+def test_daily_loss_limit_stops_new_entries_once_the_session_is_down():
+    falling = [flat(600, 10.0), flat(601, 10.0), flat(640, 9.0), flat(955, 9.0)]  # BBB loses 10%
+    data = _three_symbols(falling)
+    signals = [Signal("BBB", 600), Signal("AAA", 620), Signal("CCC", 650)]
+    limit = RiskConfig(position_dollars=1000.0, daily_loss_limit=50.0)
+    result = run(data, signals, risk=limit)
+    # AAA enters at 621, before BBB has fallen. CCC would enter at 700, with BBB down $100.
+    assert sorted(t.symbol for t in result.trades) == ["AAA", "BBB"] and result.rejected_risk == 1
+    assert len(run(data, signals).trades) == 3

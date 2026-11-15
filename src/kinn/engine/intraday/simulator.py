@@ -47,6 +47,7 @@ class DayResult:
     rejected_capital: int = 0  # not enough buying power, position slots, or a duplicate symbol
     rejected_size: int = 0  # one share costs more than the position size
     unfilled: int = 0  # entry order never filled
+    rejected_risk: int = 0  # refused by the entry cap or the daily loss limit
 
 
 @dataclass
@@ -280,8 +281,12 @@ def simulate_day(
         )  # fmt: skip
 
     power = BuyingPower(risk)
+    admitted: list[tuple[SymbolDay, _Path, Trade]] = []
     paths.sort(key=lambda p: (p[1].live_from, -p[1].signal.weight, p[1].signal.symbol))
     for sd, path in paths:
+        if path.entry and _risk_refuses(risk, admitted, path.entry[0].minute):
+            result.rejected_risk += 1
+            continue
         if not power.try_reserve(
             symbol=sd.symbol, start=path.live_from, release=path.release, dollars=path.reserve
         ):
@@ -289,5 +294,41 @@ def simulate_day(
         elif not path.entry:
             result.unfilled += 1
         else:
-            result.trades.append(_trade(view.day, sd, path, costs))
+            trade = _trade(view.day, sd, path, costs)
+            admitted.append((sd, path, trade))
+            result.trades.append(trade)
     return result
+
+
+def _risk_refuses(
+    risk: RiskConfig, admitted: list[tuple[SymbolDay, _Path, Trade]], minute: int
+) -> bool:
+    """Session-level risk rules, judged at the moment a new entry would fill."""
+    if risk.max_entries_per_session is not None and len(admitted) >= risk.max_entries_per_session:
+        return True
+    if risk.daily_loss_limit is None:
+        return False
+    return _marked_pnl(admitted, minute) <= -risk.daily_loss_limit
+
+
+def _marked_pnl(admitted: list[tuple[SymbolDay, _Path, Trade]], minute: int) -> float:
+    """The session's P&L as it stood before ``minute``: closed trades at their net result, open
+    positions at the last traded price."""
+    total = 0.0
+    for sd, path, trade in admitted:
+        if path.exit[-1].minute < minute:
+            total += trade.net
+            continue
+        bought = [f for f in path.entry if f.minute < minute]
+        if not bought:
+            continue
+        sold = [f for f in path.exit if f.minute < minute]
+        held = sum(f.quantity for f in bought) - sum(f.quantity for f in sold)
+        known = int(np.searchsorted(sd.minute, minute, side="left"))
+        mark = float(sd.close[known - 1]) if known > 0 else bought[-1].price
+        total += (
+            sum(f.quantity * f.price for f in sold)
+            + held * mark
+            - sum(f.quantity * f.price for f in bought)
+        )
+    return total

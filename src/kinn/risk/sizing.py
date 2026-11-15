@@ -16,6 +16,10 @@ class RiskConfig:
     position_dollars: float = 500.0
     buying_power: float = 10_000.0  # cap on open positions plus resting entry orders
     max_positions: int | None = None  # open positions plus resting entry orders
+    max_entries_per_session: int | None = None  # filled entries a session
+    daily_loss_limit: float | None = (
+        None  # dollars; no new entries once the session is down this much
+    )
 
     def shares(self, weight: float, reference_price: float) -> int:
         """Whole shares for one position; zero if one share costs more than the position."""

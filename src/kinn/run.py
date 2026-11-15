@@ -36,12 +36,21 @@ from kinn.engine.intraday.strategy import (
 )
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
+from kinn.risk import overlay
 from kinn.risk.sizing import RiskConfig
 from kinn.validation import event_study
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TRADE_FIELDS = [f.name for f in dataclasses.fields(Trade)]
-COUNT_KEYS = ("signals", "rejected_capital", "rejected_size", "unfilled", "lookahead_checks")
+COUNT_KEYS = (
+    "signals",
+    "rejected_capital",
+    "rejected_size",
+    "unfilled",
+    "lookahead_checks",
+    "rejected_risk",
+    "paused_sessions",
+)
 
 
 def strategies_dir() -> Path:
@@ -135,7 +144,13 @@ def run_month_multi(job: dict) -> str:
                 continue
             result = simulate_day(data, signals, risk=r["risk"], config=r["fills"], costs=costs)
             r["trades"].extend(result.trades)
-            for key in COUNT_KEYS[:4]:
+            for key in (
+                "signals",
+                "rejected_capital",
+                "rejected_size",
+                "unfilled",
+                "rejected_risk",
+            ):
                 counts[key] += getattr(result, key)
     for r in runs:
         tmp = r["parts"] / f"{job['month']}.parquet.tmp"
@@ -329,6 +344,12 @@ def finalize(run_dir: Path, *, settings: Settings) -> None:
     else:
         trades = [Trade(**row) for table in tables for row in table.to_pylist()]
         sessions = [date.fromisoformat(d) for d in manifest["sessions"]]
+        breaker = manifest["resolved_config"].get("breaker")
+        if breaker:
+            trades, counts["paused_sessions"] = overlay.circuit_breaker(
+                sessions, trades, loss=float(breaker["loss"]),
+                window=int(breaker.get("window", 20)), pause=int(breaker.get("pause", 10)),
+            )  # fmt: skip
         equity = float(
             manifest["resolved_config"].get("risk", {}).get("equity", RiskConfig().equity)
         )
