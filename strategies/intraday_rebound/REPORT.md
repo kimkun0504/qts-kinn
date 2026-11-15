@@ -85,3 +85,29 @@ Each of these is a new hypothesis with its own written definition, not a tweak t
 
 Recommendation: do not spend the holdout on this definition. Get quotes first (item 1); it is
 the cheapest way to learn whether items 2 and 3 are worth a pre-registration.
+
+## Addendum, 2026-11-15: the quote sample says the cost model was too kind
+
+The owner downloaded NBBO quotes for 420 of the events (70 from each liquidity bucket in each of
+2003–2016 and 2017–2023; decision 0012). 415 had a quote before the entry. Half-spread at the
+entry, in basis points of the mid price:
+
+| | Events | Quoted, median | Quoted, mean | Quoted, 90th pct | Model's fallback, median | Real spread wider than the model |
+|---|---|---|---|---|---|---|
+| All | 415 | 27 | 53 | 129 | 20 | 71% of events |
+| ADV under $1M | 135 | 75 | 100 | 209 | 50 | 72% |
+| ADV $1–10M | 140 | 26 | 43 | 106 | 16 | 67% |
+| ADV $10M and over | 140 | 11 | 18 | 35 | 5 | 75% |
+| 2003–2016 | 208 | 21 | 45 | 110 | 20 | 64% |
+| 2017–2023 | 207 | 33 | 62 | 143 | 20 | 78% |
+
+- **Real spreads after a 10% drop are wider than the fallback table in every bucket**, and wider
+  in recent years than before. The verdict was not an artefact of harsh costs; it was lenient.
+- **The liquid bucket's +0.32% does not survive.** Its real half-spread is about 11 bps (mean 18)
+  against a modelled 5. Paying that on both sides removes roughly 0.12–0.26% of the +0.32%.
+- The spread is still elevated 10 minutes later (median 23 bps against 27 at entry).
+- This closes the market-order form of the trade. What remains open is a passive entry, which
+  earns this spread instead of paying it. The trades for the same 420 windows are downloaded and
+  can test whether a resting order would have been filled; that needs its own written hypothesis.
+
+Full table: `kinn quotes report --run 20261115T191143Z_claude_intraday_rebound_217e2dd7`.
