@@ -15,6 +15,10 @@ from kinn.data.sharadar import SF1_DIMENSIONS, SF1_FIELDS
 from kinn.data.universe import Universe
 
 CURRENT_NAME = "CURRENT"
+# A company whose previous bar is older than this has a hole in its history (a halt, or a
+# ticker change dated wrongly at the source). Its "previous close" is then stale, so for daily
+# research it has no return that day and is not in any universe.
+MAX_GAP_DAYS = 10
 
 
 class DataStore:
@@ -121,14 +125,16 @@ class DataStore:
         the largest ``top_by_marketcap`` names by the previous session's market cap."""
         top = "true" if top_by_marketcap is None else f"rk <= {int(top_by_marketcap)}"
         return f"""with base as (
-                select date, permaticker, open, close, split_ratio, prev_close, dollar_volume,
-                       adv20_prev, marketcap_prev, coalesce(({where}), false) as ok
-                from read_parquet('{self.root}/panel/*.parquet')
-                where date between ? and ? and {self._date_guard()}),
+                select date, permaticker, open, close, split_ratio, dollar_volume, adv20_prev,
+                       marketcap_prev, fresh, case when fresh then prev_close end as prev_close,
+                       coalesce(({where}), false) and fresh as ok
+                from (select *, coalesce(date - prev_date <= {MAX_GAP_DAYS}, false) as fresh
+                      from read_parquet('{self.root}/panel/*.parquet')
+                      where date between ? and ? and {self._date_guard()})),
             ranked as (
                 select *, row_number() over (partition by date, ok
                     order by marketcap_prev desc nulls last, permaticker) as rk from base)
-            select * exclude (ok, rk), (ok and {top}) as eligible from ranked"""
+            select * exclude (ok, rk, fresh), (ok and {top}) as eligible from ranked"""
 
     def daily_candidates(
         self, start: date, end: date, *, universe: Universe, top_by_marketcap: int | None = None

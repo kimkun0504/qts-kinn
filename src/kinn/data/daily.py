@@ -106,6 +106,20 @@ class DailyView:
         return getattr(self._data, name)[max(0, self._i - sessions) : self._i]
 
 
+def limit_suspect_distributions(
+    dividend: np.ndarray, prev_close: np.ndarray, close: np.ndarray, *, threshold: float = 0.25
+) -> np.ndarray:
+    """A payout worth over a quarter of the price must show as a price drop. Where it does not
+    (the day's total return would exceed the threshold), the source amount is wrong, usually a
+    breakup with a same-day reverse split. It is cut to the size of the drop, so the day's
+    return is zero rather than a windfall."""
+    with np.errstate(invalid="ignore", divide="ignore"):
+        payout = dividend / prev_close
+        total = (close + dividend) / prev_close - 1.0
+    suspect = (payout > threshold) & (total > threshold)
+    return np.where(suspect, np.maximum(prev_close - close, 0.0), dividend).astype(np.float32)
+
+
 def _day_numbers(column: pa.ChunkedArray) -> np.ndarray:
     return column.cast(pa.int32()).to_numpy()
 
@@ -160,6 +174,9 @@ def load_daily(
     cols_ok = np.minimum(cols, len(perma) - 1)
     keep = (days[rows_ok] == day_numbers) & (perma[cols_ok] == table["permaticker"].to_numpy())
     arrays["dividend"][rows[keep], cols[keep]] = table["amount"].to_numpy()[keep]
+    arrays["dividend"] = limit_suspect_distributions(
+        arrays["dividend"], arrays["prev_close"], arrays["close"]
+    )
     with np.errstate(invalid="ignore", divide="ignore"):
         ret = (arrays["close"] + arrays["dividend"]) / arrays["prev_close"] - 1.0
     securities = store.securities()

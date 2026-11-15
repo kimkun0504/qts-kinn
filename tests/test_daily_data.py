@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from kinn.data.daily import load_daily
+from kinn.data.daily import limit_suspect_distributions, load_daily
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
 from tests import synthetic_raw as raw
@@ -81,3 +81,10 @@ def test_canary_a_fundamental_is_not_visible_before_the_session_after_its_filing
     everything = data.fundamentals["equityusd"]
     assert not np.isin(everything, [999.0, 777.0]).any()  # restated and holdout rows never load
     assert np.isnan(np.delete(everything, column, axis=1)).all()
+
+
+def test_a_large_payout_without_a_matching_price_drop_is_cut_to_the_drop():
+    prev = np.array([20.0, 20.0, 20.0, 20.0])
+    close = np.array([12.0, 19.0, 20.5, 19.9])
+    paid = np.array([8.0, 9.0, 9.0, 0.5])  # a real spinoff; two overstated ones; a dividend
+    assert limit_suspect_distributions(paid, prev, close).tolist() == [8.0, 1.0, 0.0, 0.5]
