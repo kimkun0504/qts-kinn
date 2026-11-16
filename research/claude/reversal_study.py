@@ -68,7 +68,7 @@ def signals(ev: dict, b: dict) -> dict[str, tuple[int, int]]:
     known = ~np.isnan(buy) & (v > 0)
     num = np.cumsum(np.where(known, buy * v, 0.0))
     den = np.cumsum(np.where(known, v, 0.0))
-    lag_num, lag_den = np.r_[np.zeros(5), num[:-5]], np.r_[np.zeros(5), den[:-5]]
+    lag_num, lag_den = np.r_[np.zeros(5), num][:n], np.r_[np.zeros(5), den][:n]
     with np.errstate(invalid="ignore", divide="ignore"):
         buy5 = (num - lag_num) / (den - lag_den)  # volume-weighted over the last 5 bars
     prior_high = np.full(n, np.inf)  # highest high of the 5 bars before each bar

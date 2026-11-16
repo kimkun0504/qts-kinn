@@ -504,3 +504,54 @@ What this says about the process, not the strategy:
 
 These breakdowns are a record of the failure. They are holdout results and must not be used to
 design another variant of this family: the holdout is spent for `intraday_rebound`.
+
+## Reversal confirmation, 2026-11-16 (plan in HYPOTHESIS.md, addendum of 2026-11-15 23:50 ET)
+
+**Verdict: no reversal signal passed, and none beat buying without one. Every exit rule was
+worse than holding to the close. One condition on the fall itself, its speed, carries a real
+effect; whether it can be traded depends on a cost that has not been measured.**
+
+Development years only (2003-09-10 to 2016-12-30), 61,387 events, one-minute bars with trade
+counts (`research/claude/reversal_events.py`, `reversal_study.py`). Buys are at the open of the
+bar after the signal. Net is gross minus an assumed 1.0% round trip. No holdout data.
+
+| Entry, sold at the close | Trades | Gross per trade | Net | t (daily) | Years positive |
+|---|---|---|---|---|---|
+| E0 no signal, buy after the event bar | 61,379 | +0.80% | −0.20% | 2.5 | 7 of 14 |
+| E2 climax bar that closes strong | 8,073 | +0.89% | −0.11% | 0.2 | 6 of 14 |
+| E3 higher low, then break of the bounce high | 44,875 | +0.52% | −0.48% | −5.0 | 3 of 14 |
+| E4 close above the last 5 highs | 59,748 | +0.62% | −0.38% | −4.0 | 3 of 14 |
+| E5 estimated buying takes over | 49,529 | +0.62% | −0.38% | −3.2 | 4 of 14 |
+| E6 back above the average price since the event | 48,067 | +0.52% | −0.48% | −3.4 | 4 of 14 |
+| E7 buy 30 minutes before the close | 27,922 | −0.06% | −1.06% | −22.9 | 0 of 14 |
+
+- **Waiting for confirmation costs more than it saves.** Each signal buys later and higher,
+  and the stocks that trigger it do no better afterwards than the ones that do not.
+- **Exits.** On E0, a stop under the low, a trailing stop, an average-price stop and a
+  30-minute failed-bounce rule gave +0.39%, +0.39%, +0.28% and +0.63% gross against +0.80% at
+  the close. The same on every other entry. A one-minute stop in a stock that has just fallen
+  10% is hit by noise; this repeats the earlier result on fixed stops.
+- **Speed of the fall is what separates the events.** Gross return to the close by how far the
+  stock fell in the 15 minutes before the event: 10% or more +3.0%; 7 to 10% +2.0%; 5 to 7%
+  +1.65%; 3 to 5% +1.0%; under 3% +0.09%. Three quarters of events are slow falls with no
+  rebound in them.
+- **Fast falls (5% or more in 15 minutes), no signal:** 13,745 trades, gross +2.02%, median
+  +2.3%, positive gross in all 14 years, similar under $300M and over $2B, under $2 and over
+  $20. Net +1.02% at the assumed cost, t 5.5. **Without the flash crash of 2010-05-06 (457
+  trades at +8.2%) it is +1.81% gross, +0.81% net**, which is under the 1.0% bar.
+- **Other splits:** market direction, trade size and time of day did not separate events
+  reliably across years.
+
+Against the bars set before the study: no signal met any of them. The fast-fall condition was
+registered as a split, not as a candidate, and clears the 1.0% net bar only with one
+exceptional day, so it does not go forward under this plan.
+
+What the fast-fall result is and is not. The speed filter was tried at the start with a resting
+order at the event bar's close and earned little (`fast_o0`, +0.62%, t 2.1). The difference
+here is buying at once: a resting order at the close fills only when the stock comes back
+down, and misses the ones that bounce straight away. So the return belongs to whoever buys in
+the first seconds after a fast flush, and the price paid then (the ask, in a stock whose book
+has just been emptied) is the whole question. The 1.0% cost here is an assumption.
+
+Trials: 35 entry and exit combinations, 63 context cells and about a dozen further cuts
+(years, size, price, speed buckets). `prior_trials` rises from 9 to 107.

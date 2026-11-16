@@ -1,8 +1,8 @@
 name: rebound_limit
-status: developing        # s_l468 failed the holdout 2026-11-15; reversal-confirmation study on development data (owner's request); see HYPOTHESIS.md
+status: developing        # s_l468 failed the holdout; reversal signals did not help (2026-11-16); open question: fast falls bought at once; see REPORT.md
 engine: intraday
 universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_rebound
-prior_trials: 9
+prior_trials: 107    # 9 early + 98 measured offline in the reversal-confirmation study, 2026-11-16
