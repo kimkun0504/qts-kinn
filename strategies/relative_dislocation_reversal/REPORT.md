@@ -630,3 +630,22 @@ not use validation or sealed holdout data.
 | 2014 | 13 | +2.50% | +2.19% | +$654 | +$573 |
 | 2015 | 19 | +4.52% | +4.26% | +$1,708 | +$1,609 |
 | 2016 | 10 | −1.89% | −2.23% | −$399 | −$465 |
+
+## Holding period assigned from the pre-shock range
+
+**Study decision: develop the unchanged entry.** The peer-relative study
+`20261116T164207Z_gpt_relative_dislocation_reversal_a740b270` passed the
+registered event gates at both fixed horizons across 295 events on 199
+dates, with 50 events on 46 dates in 2013–2016. The first hour averaged
++3.28% and +2.82% net at 1× and 2×. Two hours averaged +3.67% and +3.21%.
+These are the previously recorded estimates of the fixed exits.
+
+The separate 12-point quiet study
+`20261116T164732Z_gpt_relative_dislocation_reversal_7bceca33` informed the
+holding rule. It averaged +5.26% and +4.88% at one hour and +7.22% and
++6.83% at two hours. Its narrower sample failed the count bars and its
+entry logic differed. The event-study horizon table cannot evaluate the
+conditional exit. The registered portfolio run will measure that exit
+directly, with entry logic and risk settings preserved. This is a further
+selection look on the same development period. Hypothesis commit
+`c40dd2d` preceded the new run.

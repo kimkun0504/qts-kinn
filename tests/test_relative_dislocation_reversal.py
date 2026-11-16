@@ -298,3 +298,47 @@ def test_size_reference_config_only_changes_the_reference(phase):
     _, variant = runner.load_config(NAME, f"{phase}_liquid_size_peers")
     assert variant["params"].pop("size_peers") is True
     assert variant == base
+
+
+@pytest.mark.parametrize(
+    ("first_close", "duration", "exit_minute"),
+    [(10.0, 120, 721), (9.5, 60, 661), (None, 60, 661)],
+)
+def test_quiet_hold_changes_only_the_holding_period(first_close, duration, exit_minute):
+    meta, config = runner.load_config(NAME, "development_liquid_peer_recovery_quiet_hold")
+    _, base = runner.load_config(NAME, "development_liquid_peer_recovery")
+    strategy = runner.load_strategy(NAME, config["params"])
+    fixed = runner.load_strategy(NAME, base["params"])
+    earlier = [(m, 10.0) for m in range(576, 586)]
+    if first_close is not None:
+        earlier.insert(0, (575, first_close))
+    else:
+        earlier = earlier[2:]
+    target = [*earlier, *TARGET[1:4], (661, 9.1), (721, 9.3), TARGET[-1]]
+    session = view(target, peer_at_599=100)
+    found = day_signals(strategy, session)
+    assert day_signals(fixed, session) == [
+        Signal("ABC", 600, expire_minute=601, max_hold_minutes=60)
+    ]
+    assert found == [
+        Signal("ABC", 600, expire_minute=601, max_hold_minutes=duration, tag=f"hold_{duration}")
+    ]
+    check_no_lookahead(strategy, session, found, [575, 585, 599, 600, 601, 661, 721])
+    result = simulate_day(
+        DayData(session, {"ABC": 14.0}),
+        found,
+        risk=RiskConfig(**config["risk"]),
+        config=FillConfig(**config["fills"]),
+        costs=load(meta["cost_calibration"]),
+    )
+    (trade,) = result.trades
+    assert (trade.entry_minute, trade.exit_minute, trade.exit_reason) == (601, exit_minute, "time")
+    assert trade.tag == f"hold_{duration}"
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_quiet_hold_config_preserves_the_fixed_entry(phase):
+    _, base = runner.load_config(NAME, f"{phase}_liquid_peer_recovery")
+    _, variant = runner.load_config(NAME, f"{phase}_liquid_peer_recovery_quiet_hold")
+    assert variant["params"].pop("quiet_hold") is True
+    assert variant == base

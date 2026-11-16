@@ -53,6 +53,7 @@ class RelativeDislocationReversal:
         two_hour_exit: bool = False,
         min_dislocation_pp: int = 12,
         size_peers: bool = False,
+        quiet_hold: bool = False,
     ):
         self.liquid_cohort = liquid_cohort
         self.max_hold_minutes = 60 if one_hour_exit else None
@@ -62,6 +63,7 @@ class RelativeDislocationReversal:
         self.quiet_baseline = quiet_baseline
         self.min_dislocation_return = min_dislocation_pp / 100
         self.size_peers = size_peers
+        self.quiet_hold = quiet_hold
         min_adv = 10_000_000 if liquid_cohort else 1_000_000
         self.universe = Universe(self.name, min_prev_close=2, min_adv20=min_adv)
 
@@ -118,15 +120,23 @@ class RelativeDislocationReversal:
                 (excess <= -self.min_dislocation_return) & recovered & (turnover >= 40_000)
             )
             for hit in hits:
-                if self.quiet_baseline and not has_quiet_baseline(close, int(current[hit])):
+                quiet = (self.quiet_baseline or self.quiet_hold) and has_quiet_baseline(
+                    close, int(current[hit])
+                )
+                if self.quiet_baseline and not quiet:
                     continue
                 decision = int(minute[hit])
+                hold_minutes, tag = self.max_hold_minutes, ""
+                if self.quiet_hold:
+                    hold_minutes = 120 if quiet else 60
+                    tag = f"hold_{hold_minutes}"
                 found.append(
                     Signal(
                         symbol,
                         decision,
                         expire_minute=decision + 1,
-                        max_hold_minutes=self.max_hold_minutes,
+                        max_hold_minutes=hold_minutes,
+                        tag=tag,
                     )
                 )
                 break
@@ -142,6 +152,7 @@ def build(params: dict) -> RelativeDislocationReversal:
         "two_hour_exit",
         "min_dislocation_pp",
         "size_peers",
+        "quiet_hold",
     }
     if params.keys() - allowed:
         raise ValueError("unrecognised relative_dislocation_reversal parameter")
@@ -152,6 +163,7 @@ def build(params: dict) -> RelativeDislocationReversal:
     two_hour_exit = params.get("two_hour_exit", False)
     min_dislocation_pp = params.get("min_dislocation_pp", 12)
     size_peers = params.get("size_peers", False)
+    quiet_hold = params.get("quiet_hold", False)
     if not all(
         isinstance(p, bool)
         for p in (
@@ -161,6 +173,7 @@ def build(params: dict) -> RelativeDislocationReversal:
             quiet_baseline,
             two_hour_exit,
             size_peers,
+            quiet_hold,
         )
     ):
         raise ValueError("relative dislocation parameters must be booleans")
@@ -178,6 +191,8 @@ def build(params: dict) -> RelativeDislocationReversal:
         raise ValueError("a ten-point dislocation requires the quiet baseline")
     if size_peers and not two_hour_exit:
         raise ValueError("size_peers requires the two-hour peer recovery variant")
+    if quiet_hold and not (peer_recovery and one_hour_exit):
+        raise ValueError("quiet_hold requires the one-hour peer recovery variant")
     return RelativeDislocationReversal(
         liquid_cohort=liquid_cohort,
         one_hour_exit=one_hour_exit,
@@ -186,4 +201,5 @@ def build(params: dict) -> RelativeDislocationReversal:
         two_hour_exit=two_hour_exit,
         min_dislocation_pp=min_dislocation_pp,
         size_peers=size_peers,
+        quiet_hold=quiet_hold,
     )
