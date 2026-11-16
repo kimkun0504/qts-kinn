@@ -176,3 +176,57 @@ The study stage does not establish realized size or costs for a portfolio.
 | 2014 | 29 | +1.45% | +0.81% | +$832 | +$466 |
 | 2015 | 48 | −2.37% | −3.11% | −$2,269 | −$2,983 |
 | 2016 | 41 | +2.48% | +1.72% | +$2,028 | +$1,404 |
+
+### Development portfolio result
+
+**Decision: park the filtered variant.** The joint filter improved mean net per trade
+at both cost levels and cleared the 2× return of `x_o4` (+1.24%) on the same development
+dates. The full gate missed on 2× annualised daily Sharpe (0.45 against a requirement
+above 1). The sample and drawdown bars passed. Both halves were profitable at 2×
+(+$11,077 and +$2,320). Validation and the sealed holdout remain unopened for this variant.
+
+| Development portfolio metric | Original confirmed entry | Volume + momentum |
+|---|---:|---:|
+| Trades / active sessions | 952 / 654 | 579 / 457 |
+| Mean filled notional on $2,000 target | $1,376 | $1,811 |
+| Mean gross per trade | +2.73% | +2.50% |
+| Weighted round-trip cost at 1× | 81 bps | 71 bps |
+| Mean net per trade at 1× | +1.69% | **+1.75%** |
+| Mean net per trade at 2× | +1.13% | **+1.28%** |
+| Total net at 1× / 2× | +$19,993 / +$13,435 | +$18,097 / +$13,397 |
+| Daily P&L t-statistic at 1× / 2× | 2.29 / 1.55 | 2.19 / 1.63 |
+| Daily annualised Sharpe at 1× / 2× | 0.63 / 0.42 | 0.60 / 0.45 |
+| Worst end-of-day drawdown at 1× / 2× | −$2,444 / −$3,197 | −$3,135 / −$3,682 |
+
+The full run `20261116T020902Z_gpt_rebound_confirmed_recovery_255634a3` used clean commit
+`0ceaa476`, build `6453bd3ec8` and the same 3,352 development sessions and risk settings
+as the original. There were 613 signals, 33 capital rejections, one unfilled order and
+579 closing-auction exits. The engine's one-bar expiry applied. The two new runs bring
+the shared `intraday_rebound` trial count from 65 to 67 at reporting.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 8 | +3.97% | +3.43% | +$637 | +$554 |
+| 2004 | 36 | +3.07% | +2.53% | +$2,189 | +$1,870 |
+| 2005 | 35 | −3.25% | −3.74% | −$1,739 | −$2,032 |
+| 2006 | 29 | −2.43% | −2.86% | −$1,349 | −$1,594 |
+| 2007 | 45 | +3.02% | +2.47% | +$2,541 | +$2,154 |
+| 2008 | 143 | +4.98% | +4.58% | +$13,074 | +$12,038 |
+| 2009 | 59 | −0.88% | −1.41% | −$1,420 | −$1,914 |
+| 2010 | 28 | +2.56% | +2.04% | +$579 | +$334 |
+| 2011 | 35 | +0.55% | +0.09% | +$224 | −$39 |
+| 2012 | 24 | +1.32% | +0.89% | +$560 | +$362 |
+| 2013 | 20 | +3.55% | +3.03% | +$1,724 | +$1,542 |
+| 2014 | 29 | +1.72% | +1.30% | +$926 | +$688 |
+| 2015 | 47 | −2.19% | −2.66% | −$2,204 | −$2,575 |
+| 2016 | 41 | +2.82% | +2.35% | +$2,355 | +$2,009 |
+
+The joint filter kept 613 of the original study's stock-days and selected a later
+confirmation on 46 of them. The result estimates the combined effect of both conditions
+and the timing change.
+
+In the full run 2008 supplied $12,038, approximately 90% of total 2× profit. The remaining
+years netted $1,359 at 2×. On the same fills, the annualised daily Sharpe of gross P&L was
+0.84, below 1 even before commissions, fees, and slippage. Improving execution helps the
+trade-level result. A better risk-adjusted strategy would need a more consistent source of
+returns across sessions.
