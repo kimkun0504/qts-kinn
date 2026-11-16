@@ -23,8 +23,8 @@ def lagged_return(close: np.ndarray, minutes: int) -> np.ndarray:
     return result - 1
 
 
-def median_peer_return(returns: np.ndarray) -> np.ndarray:
-    available = np.isfinite(returns).sum(axis=0) >= 30
+def median_peer_return(returns: np.ndarray, minimum_members: int) -> np.ndarray:
+    available = np.isfinite(returns).sum(axis=0) >= minimum_members
     median = np.full(returns.shape[1], np.nan)
     if available.any():
         median[available] = np.nanmedian(returns[:, available], axis=0)
@@ -52,6 +52,7 @@ class RelativeDislocationReversal:
         quiet_baseline: bool = False,
         two_hour_exit: bool = False,
         min_dislocation_pp: int = 12,
+        size_peers: bool = False,
     ):
         self.liquid_cohort = liquid_cohort
         self.max_hold_minutes = 60 if one_hour_exit else None
@@ -60,40 +61,52 @@ class RelativeDislocationReversal:
         self.peer_recovery = peer_recovery
         self.quiet_baseline = quiet_baseline
         self.min_dislocation_return = min_dislocation_pp / 100
+        self.size_peers = size_peers
         min_adv = 10_000_000 if liquid_cohort else 1_000_000
         self.universe = Universe(self.name, min_prev_close=2, min_adv20=min_adv)
 
     def signals(self, view: DayView, features: FeatureValues) -> list[Signal]:
-        peer_closes = []
+        peer_closes: list[list[np.ndarray]] = [[], []]
         candidates = []
         cap_ceiling = 10e9 if self.liquid_cohort else 2e9
         for symbol, bars in view.symbols.items():
             prior = features[symbol]
             cap = prior[f.MARKETCAP.name]
             adv = prior[f.ADV20.name]
-            if cap >= 10e9 and adv >= 20e6:
-                peer_closes.append(observed_closes(view, bars))
+            if not self.size_peers and cap >= 10e9 and adv >= 20e6:
+                peer_closes[0].append(observed_closes(view, bars))
             min_turnover = 10e6 if self.liquid_cohort else 0.01 * cap
             if 0 < cap < cap_ceiling and adv >= min_turnover:
-                candidates.append((symbol, bars))
-        if len(peer_closes) < 30:
-            return []
+                close = observed_closes(view, bars)
+                group = int(self.size_peers and cap >= 2e9)
+                candidates.append((symbol, bars, close, group))
+                if self.size_peers:
+                    peer_closes[group].append(close)
 
-        peers = np.stack(peer_closes)
-        market = median_peer_return(lagged_return(peers, 15))
-        if not np.isfinite(market).any():
-            return []
-        market_recovery = (
-            median_peer_return(lagged_return(peers, 1)) if self.peer_recovery else None
-        )
+        benchmarks = {}
+        minimum = 31 if self.size_peers else 30
+        for group, closes in enumerate(peer_closes):
+            if len(closes) < minimum:
+                continue
+            peers = np.stack(closes)
+            market = median_peer_return(lagged_return(peers, 15), minimum)
+            if np.isfinite(market).any():
+                recovery = (
+                    median_peer_return(lagged_return(peers, 1), minimum)
+                    if self.peer_recovery
+                    else None
+                )
+                benchmarks[group] = (market, recovery)
 
         found = []
-        for symbol, bars in candidates:
+        for symbol, bars, close, group in candidates:
+            if group not in benchmarks:
+                continue
+            market, market_recovery = benchmarks[group]
             in_window = (
                 (bars.minute >= 590) & (bars.minute <= 885) & (bars.minute < view.close_minute)
             )
             minute = bars.minute[in_window]
-            close = observed_closes(view, bars)
             current = minute - view.open_minute
             excess = lagged_return(close, 15)[current] - market[current]
             recovered = close[current] >= 1.01 * close[current - 1]
@@ -128,6 +141,7 @@ def build(params: dict) -> RelativeDislocationReversal:
         "quiet_baseline",
         "two_hour_exit",
         "min_dislocation_pp",
+        "size_peers",
     }
     if params.keys() - allowed:
         raise ValueError("unrecognised relative_dislocation_reversal parameter")
@@ -137,9 +151,17 @@ def build(params: dict) -> RelativeDislocationReversal:
     quiet_baseline = params.get("quiet_baseline", False)
     two_hour_exit = params.get("two_hour_exit", False)
     min_dislocation_pp = params.get("min_dislocation_pp", 12)
+    size_peers = params.get("size_peers", False)
     if not all(
         isinstance(p, bool)
-        for p in (liquid_cohort, one_hour_exit, peer_recovery, quiet_baseline, two_hour_exit)
+        for p in (
+            liquid_cohort,
+            one_hour_exit,
+            peer_recovery,
+            quiet_baseline,
+            two_hour_exit,
+            size_peers,
+        )
     ):
         raise ValueError("relative dislocation parameters must be booleans")
     if one_hour_exit and not liquid_cohort:
@@ -154,6 +176,8 @@ def build(params: dict) -> RelativeDislocationReversal:
         raise ValueError("min_dislocation_pp must be 10 or 12")
     if min_dislocation_pp == 10 and not quiet_baseline:
         raise ValueError("a ten-point dislocation requires the quiet baseline")
+    if size_peers and not two_hour_exit:
+        raise ValueError("size_peers requires the two-hour peer recovery variant")
     return RelativeDislocationReversal(
         liquid_cohort=liquid_cohort,
         one_hour_exit=one_hour_exit,
@@ -161,4 +185,5 @@ def build(params: dict) -> RelativeDislocationReversal:
         quiet_baseline=quiet_baseline,
         two_hour_exit=two_hour_exit,
         min_dislocation_pp=min_dislocation_pp,
+        size_peers=size_peers,
     )

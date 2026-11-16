@@ -252,3 +252,49 @@ def test_ten_point_config_is_otherwise_identical_to_quiet_baseline(phase):
     _, variant = runner.load_config(NAME, f"{phase}_liquid_quiet_ten_point")
     assert variant["params"].pop("min_dislocation_pp") == 10
     assert variant == base
+
+
+@pytest.mark.parametrize(
+    ("count", "previous", "current", "qualifies"),
+    [
+        (30, 100, 100, True),
+        (29, 100, 100, False),
+        (30, 95, 95, False),
+        (30, 99, 100, False),
+        (30, None, 100, False),
+    ],
+)
+def test_size_reference_uses_own_group_at_both_clock_endpoints(count, previous, current, qualifies):
+    _, config = runner.load_config(NAME, "development_liquid_size_peers")
+    strategy = runner.load_strategy(NAME, config["params"])
+    initial = view(peer_at_599=100)
+    rows = [(585, 100), (600, current)]
+    if previous is not None:
+        rows.insert(1, (599, previous))
+    matched = {
+        f"S{i:02d}": stock(f"S{i:02d}", 200 + i, rows, 500e6, 10e6, 10_000) for i in range(count)
+    }
+    midsize = {
+        f"M{i:02d}": stock(
+            f"M{i:02d}", 300 + i, [(585, 100), (599, 90), (600, 90)], 4e9, 10e6, 10_000
+        )
+        for i in range(60)
+    }
+    session = DayView(
+        initial.day,
+        initial.open_minute,
+        initial.close_minute,
+        {**initial.symbols, **matched, **midsize},
+    )
+    found = day_signals(strategy, session)
+    expected = [Signal("ABC", 600, expire_minute=601, max_hold_minutes=120)] if qualifies else []
+    assert found == expected
+    check_no_lookahead(strategy, session, found, [585, 599, 600, 601, 910])
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_size_reference_config_only_changes_the_reference(phase):
+    _, base = runner.load_config(NAME, f"{phase}_liquid_peer_recovery_two_hour")
+    _, variant = runner.load_config(NAME, f"{phase}_liquid_size_peers")
+    assert variant["params"].pop("size_peers") is True
+    assert variant == base
