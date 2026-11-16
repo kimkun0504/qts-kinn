@@ -134,54 +134,6 @@ The horizon choice was informed by the development curve.
 | 2015 | 19 | +5.48% | +5.18% | +$2,073 | +$1,961 |
 | 2016 | 9 | −4.27% | −4.67% | −$763 | −$836 |
 
-### Peer-relative portfolio result
-
-**Decision: park.** The stronger confirmation averaged **+3.42% net per trade at
-1× and +3.03% at 2×** in development. The 50 trades on 46 dates in 2013–2016
-earned +4.04% and +3.73%. The sample, return and drawdown bars passed.
-Annualised daily Sharpe at 2× was **0.93**, below the preregistered
-requirement above 1. Validation was not started.
-
-| Development portfolio | Absolute recovery | Peer-relative confirmation |
-|---|---:|---:|
-| Trades / active dates | 293 / 199 | 288 / 199 |
-| Gross mean per trade | +3.97% | +4.08% |
-| Net/trade at 1× | +3.33% | +3.42% |
-| Net/trade at 2× | +2.93% | +3.03% |
-| Net dollars at 1× / 2× | +$19,296 / +$17,041 | +$19,526 / +$17,298 |
-| Daily P&L t-statistic at 1× / 2× | 3.68 / 3.32 | 3.74 / 3.38 |
-| Annualised daily Sharpe at 1× / 2× | 1.01 / 0.91 | 1.02 / 0.93 |
-| Worst drawdown at 1× / 2× | −$1,473 / −$1,550 | −$1,408 / −$1,474 |
-
-The market-relative rule excluded six stock-days from the original study and
-delayed three of the retained signals. The outcome is a small change on nearly
-the same calendar and does not provide an independent return estimate. In the
-portfolio, 295 signals produced 288 trades with seven capital rejections.
-The mean executed notional was $1,982. At base costs the conditional mean
-winner was +10.81% and the mean loser was −10.05%, with a 35.42% loss rate.
-
-The portfolio run `20261116T164343Z_gpt_relative_dislocation_reversal_87bd5ae1`
-used clean commit `16698363` and build `447e58e098`. The study and portfolio run
-added two trials to `intraday_rebound`. All 199 signal-session replay checks
-passed. The 2022–2023 validation block and the sealed holdout stayed closed.
-
-| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
-|---|---:|---:|---:|---:|
-| 2003 | 1 | +23.61% | +23.46% | +$466 | +$463 |
-| 2004 | 6 | +5.52% | +5.31% | +$659 | +$635 |
-| 2005 | 4 | −0.01% | −0.26% | −$2 | −$22 |
-| 2006 | 10 | +6.03% | +5.79% | +$1,207 | +$1,159 |
-| 2007 | 24 | +3.30% | +2.87% | +$1,584 | +$1,378 |
-| 2008 | 145 | +3.35% | +2.89% | +$9,541 | +$8,235 |
-| 2009 | 22 | +1.65% | +1.32% | +$727 | +$584 |
-| 2010 | 4 | +5.43% | +5.27% | +$434 | +$421 |
-| 2011 | 14 | −0.90% | −1.17% | −$253 | −$329 |
-| 2012 | 8 | +6.97% | +6.48% | +$1,118 | +$1,040 |
-| 2013 | 9 | +6.59% | +6.30% | +$1,182 | +$1,130 |
-| 2014 | 14 | +5.57% | +5.23% | +$1,561 | +$1,465 |
-| 2015 | 18 | +5.53% | +5.26% | +$1,983 | +$1,887 |
-| 2016 | 9 | −3.88% | −4.25% | −$682 | −$747 |
-
 ### One-hour portfolio result
 
 **Decision: park.** The portfolio earned **+3.33% net per trade at 1× and +2.93% at
@@ -326,3 +278,51 @@ Portfolio restrictions and actual exit-bar participation apply in the next test.
 | 2014 | 14 | +5.38% | +5.04% | +$1,506 | +$1,411 |
 | 2015 | 18 | +5.43% | +5.12% | +$1,946 | +$1,837 |
 | 2016 | 9 | −4.27% | −4.67% | −$763 | −$836 |
+
+### Peer-relative portfolio result
+
+**Decision: park.** The stronger confirmation averaged **+3.42% net per trade at
+1× and +3.03% at 2×** in development. The 50 trades on 46 dates in 2013–2016
+earned +4.04% and +3.73%. The sample, return and drawdown bars passed.
+Annualised daily Sharpe at 2× was **0.93**, below the preregistered
+requirement above 1. Validation was not started.
+
+| Development portfolio | Absolute recovery | Peer-relative confirmation |
+|---|---:|---:|
+| Trades / active dates | 293 / 199 | 288 / 199 |
+| Gross mean per trade | +3.97% | +4.08% |
+| Net/trade at 1× | +3.33% | +3.42% |
+| Net/trade at 2× | +2.93% | +3.03% |
+| Net dollars at 1× / 2× | +$19,296 / +$17,041 | +$19,526 / +$17,298 |
+| Daily P&L t-statistic at 1× / 2× | 3.68 / 3.32 | 3.74 / 3.38 |
+| Annualised daily Sharpe at 1× / 2× | 1.01 / 0.91 | 1.02 / 0.93 |
+| Worst drawdown at 1× / 2× | −$1,473 / −$1,550 | −$1,408 / −$1,474 |
+
+The market-relative rule excluded six stock-days from the original study and
+delayed three of the retained signals. The outcome is a small change on nearly
+the same calendar and does not provide an independent return estimate. In the
+portfolio, 295 signals produced 288 trades with seven capital rejections.
+The mean executed notional was $1,982. At base costs the conditional mean
+winner was +10.81% and the mean loser was −10.05%, with a 35.42% loss rate.
+
+The portfolio run `20261116T164343Z_gpt_relative_dislocation_reversal_87bd5ae1`
+used clean commit `16698363` and build `447e58e098`. The study and portfolio run
+added two trials to `intraday_rebound`. All 199 signal-session replay checks
+passed. The 2022–2023 validation block and the sealed holdout stayed closed.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|
+| 2003 | 1 | +23.61% | +23.46% | +$466 | +$463 |
+| 2004 | 6 | +5.52% | +5.31% | +$659 | +$635 |
+| 2005 | 4 | −0.01% | −0.26% | −$2 | −$22 |
+| 2006 | 10 | +6.03% | +5.79% | +$1,207 | +$1,159 |
+| 2007 | 24 | +3.30% | +2.87% | +$1,584 | +$1,378 |
+| 2008 | 145 | +3.35% | +2.89% | +$9,541 | +$8,235 |
+| 2009 | 22 | +1.65% | +1.32% | +$727 | +$584 |
+| 2010 | 4 | +5.43% | +5.27% | +$434 | +$421 |
+| 2011 | 14 | −0.90% | −1.17% | −$253 | −$329 |
+| 2012 | 8 | +6.97% | +6.48% | +$1,118 | +$1,040 |
+| 2013 | 9 | +6.59% | +6.30% | +$1,182 | +$1,130 |
+| 2014 | 14 | +5.57% | +5.23% | +$1,561 | +$1,465 |
+| 2015 | 18 | +5.53% | +5.26% | +$1,983 | +$1,887 |
+| 2016 | 9 | −3.88% | −4.25% | −$682 | −$747 |
