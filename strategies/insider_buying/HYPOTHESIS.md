@@ -58,3 +58,17 @@ check on 2023 (signals to 29 September): above zero is "not contradicted".
 
 From 2023-11-09, untouched for this family. It needs the later SEC files and one run by the
 owner, for one frozen rule, only if a rule passes everything above.
+
+## Addendum, 2026-11-16 18:36 ET: the rule taken forward, and the book question
+
+Five cells were chosen on 2010 to 2017; three passed the test on 2006 to 2009 and 2018 to
+2022, all in companies of $50M to $300M with $100,000 or more bought. The one with the
+highest pooled t (3.84) is taken forward as **rule I**: any insider, hold 15 sessions. Its
+2023 check has been read once (1.73% a trade, not contradicted).
+
+Before any more is made of it, one question, set here: does adding rule I to the earnings
+rule's book make the book better? On signals of 2006 to October 2023, 10 positions of $2,000:
+the earnings rule alone; rule I alone; and both, the earnings rule taking a slot first and
+rule I filling what is left, the largest purchase first. Measured by profit a year, Sharpe
+ratio, worst drawdown and the number of losing years, on the auction basis and with the
+spread crossed. Rule C was dropped at this step for making the book worse.
