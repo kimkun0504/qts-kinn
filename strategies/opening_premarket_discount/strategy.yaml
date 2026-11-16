@@ -1,0 +1,8 @@
+name: opening_premarket_discount
+status: parked
+engine: intraday
+universe: opening_premarket_discount
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
