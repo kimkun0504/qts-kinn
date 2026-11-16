@@ -1,0 +1,8 @@
+name: distress_gap_reclaim
+status: parked
+engine: intraday
+universe: distress_gap_reclaim
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: opening_gap_continuation
+prior_trials: 0
