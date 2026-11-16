@@ -1,0 +1,15 @@
+params:
+  volume_momentum: true
+risk:
+  equity: 20000
+  position_dollars: 2000
+  buying_power: 20000
+fills:
+  participation: 0.05
+  flatten_before_close: 0
+  no_entry_before_close: 10
+period:
+  start: 2017-01-03
+  end: 2023-11-08
+lookahead_check_rate: 1.0
+seed: 0

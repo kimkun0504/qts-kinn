@@ -22,6 +22,9 @@ class ReboundConfirmedRecovery:
         f.FILINGS_SINCE_PRIOR_SESSION,
     )
 
+    def __init__(self, *, volume_momentum: bool = False):
+        self.volume_momentum = volume_momentum
+
     def signals(self, view: DayView, features: FeatureValues) -> list[Signal]:
         signals = []
         for symbol, bars in view.symbols.items():
@@ -49,15 +52,26 @@ class ReboundConfirmedRecovery:
             low_close = inf
             for i in range(event + 1, end):
                 close = float(bars.close[i])
-                if 1.01 * low_close <= close <= reference:
-                    confirmation = int(bars.minute[i])
-                    signals.append(Signal(symbol, confirmation, expire_minute=confirmation + 1))
-                    break
+                recovered = 1.01 * low_close <= close <= reference
                 low_close = min(low_close, close)
+                if not recovered:
+                    continue
+                confirmation = int(bars.minute[i])
+                if self.volume_momentum and (
+                    int(bars.minute[i - 1]) != confirmation - 1
+                    or close <= bars.close[i - 1]
+                    or close * bars.volume[i] < 40_000
+                ):
+                    continue
+                signals.append(Signal(symbol, confirmation, expire_minute=confirmation + 1))
+                break
         return signals
 
 
 def build(params: dict) -> ReboundConfirmedRecovery:
-    if params:
-        raise ValueError("rebound_confirmed_recovery accepts no parameters")
-    return ReboundConfirmedRecovery()
+    if params.keys() - {"volume_momentum"}:
+        raise ValueError("rebound_confirmed_recovery only accepts volume_momentum")
+    volume_momentum = params.get("volume_momentum", False)
+    if not isinstance(volume_momentum, bool):
+        raise ValueError("volume_momentum must be a boolean")
+    return ReboundConfirmedRecovery(volume_momentum=volume_momentum)
