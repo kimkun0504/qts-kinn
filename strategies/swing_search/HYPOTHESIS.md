@@ -235,3 +235,29 @@ only to about ±3%. Set before reading:
 
 A book of 20 positions of $1,000 is also shown for 2005 to 2022 (same signals; it takes the
 trades the 10-position book skips). No other change to the rule is made before the check.
+
+## Addendum, 2026-11-16 14:11 ET: the 2023 check, and family 18 (jumps on news, under $300M)
+
+**The 2023 check of rule A:** 68 trades, 4.81% a trade on the auction basis (3.74% with the
+spread crossed; 4.40% at 30-minute prices). Not contradicted. Results are in REPORT.md.
+
+Rule A uses about a third of a $20,000 account on average. Family 18 looks for a second rule
+of the same kind: a small company that jumps on heavy volume when there is news.
+
+- **Grid, 180 cells.** Kind of news: earnings 8-K read the same day (that day's return and
+  volume); earnings 8-K read the session after (rule A's reading; two-day return, larger of
+  two days' volume); another 8-K, read the session after; another filing but no 8-K; no
+  filing at all. Jump of at least 10%, 15% or 25%. Volume at least 2×, 5× or 10× normal.
+  Market value under $300M, or $50M to $300M. Hold 10 or 15 sessions.
+  The $50M floor is in the grid because rule A lost on companies under $50M in every period,
+  which I know from periods that are test periods here; the floor is therefore hindsight and
+  any cell that needs it is marked so.
+- **Chosen on 2010 to 2017 only:** every cell with 300 or more trades, a mean of 2% or more on
+  the auction basis and a weekly t of 3 or more, up to the five highest t.
+- **Tested on 2005 to 2009 and 2018 to 2022 together,** which the choice does not read (for
+  cells that are rule A or contain it these years are already known, and that is said): a
+  mean of 1% or more on the auction basis in each period, and a weekly t of 3 or more over
+  the two together (3, not 2.5, because up to five cells are tested).
+- A cell that passes is a second candidate under the same conditions as rule A: fills
+  unmeasured, holdout sealed. The 2023 check has been read for rule A; for a new cell it is
+  a second look at those months and is reported as such.
