@@ -72,3 +72,19 @@ the earnings rule alone; rule I alone; and both, the earnings rule taking a slot
 rule I filling what is left, the largest purchase first. Measured by profit a year, Sharpe
 ratio, worst drawdown and the number of losing years, on the auction basis and with the
 spread crossed. Rule C was dropped at this step for making the book worse.
+
+## Addendum, 2026-11-16 18:37 ET: the book result, and a hedged reading
+
+**Book result:** rule I adds profit and fills some of the earnings rule's weak years, but both
+rules are long small stocks and fall together. As two sleeves of 10 positions of $1,000, the
+auction-basis book earns $5,954 a year against $4,965 for the earnings rule alone, with the
+same Sharpe ratio (1.08 against 1.04), a larger drawdown and a loss in 2008; with the spread
+crossed it earns the same as the earnings rule alone with a worse drawdown.
+
+**A hedged reading, set before it is measured.** Both rules beat other stocks in nearly every
+year; what makes years flat or losing is the market. So each trade is re-read with an equal
+dollar amount of the small-stock index fund (IWM) sold short from the entry open to the exit
+close, at a cost of 0.10% a trade for the fund's commission, spread and borrow. Reported: the
+mean a trade by year for each rule, and the two-sleeve book's profit, Sharpe ratio, drawdown
+and losing years, hedged and not. This is a measurement. Selling an index fund short needs
+the owner's decision (the brief is long only) and a margin account.
