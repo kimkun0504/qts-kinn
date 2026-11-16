@@ -22,7 +22,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/recent_search` | claude | 2026-11-16 | parked: 2,689 cells on 2018–2022 incl. timed news, no long candidate; see its REPORT.md |
 | `strategies/swing_search` | claude | 2026-11-16 | event-study: rule A50 (earnings drift, $50M–$300M) passed its tests on 2005–2009, 2018–2022 and 2023; auction fills not yet measured |
 | `strategies/earnings_drift` | claude | 2026-11-16 | developing: rule A50 passed its one holdout run (owner, 2026-11-16); fills measured from ticks; not yet traded |
-| `strategies/insider_buying` | claude | 2026-11-16 | hypothesis: buying after open-market purchases by officers and directors |
+| `strategies/insider_buying` | claude | 2026-11-16 | event-study: rule I passed its pre-holdout tests; about 1.5% a trade since 2018; holdout untouched |
 | `strategies/intraday_rebound_passive` | claude | 2026-11-15 | tick study; not established |
 | `strategies/momentum_12_1` | claude | 2026-11-15 | daily; parked |
 | `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |
