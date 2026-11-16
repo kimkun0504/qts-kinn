@@ -41,8 +41,10 @@ def main() -> None:
         print(f"\n## {label}  ({run}; {n} trades, {matched} matched to the panel)")
         for title, expr in (("market cap", CAP), ("market cap, finer", FINE), ("price", PRICE)):
             print(f"\nby {title} (previous session)")
-            print("group | trades | share | net/trade 1x | net/trade 2x | win | total net 1x"
-                  " | total net 2x | mean notional | cost bps")
+            print(
+                "group | trades | share | net/trade 1x | net/trade 2x | win | total net 1x"
+                " | total net 2x | mean notional | cost bps"
+            )
             rows = con.execute(
                 f"""select {expr} g, count(*), avg(net / notional), avg(net_2x / notional),
                            avg((net > 0)::int), sum(net), sum(net_2x), avg(notional),
@@ -50,9 +52,11 @@ def main() -> None:
                     from t group by rollup(g) order by g nulls last"""
             ).fetchall()
             for g, k, r1, r2, win, net, net2, notional, cost in rows:
-                print(f"{g or 'all'} | {k} | {100 * k / n:.0f}% | {100 * r1:+.2f}% | "
-                      f"{100 * r2:+.2f}% | {100 * win:.0f}% | {net:+,.0f} | {net2:+,.0f} | "
-                      f"{notional:,.0f} | {cost:.0f}")
+                print(
+                    f"{g or 'all'} | {k} | {100 * k / n:.0f}% | {100 * r1:+.2f}% | "
+                    f"{100 * r2:+.2f}% | {100 * win:.0f}% | {net:+,.0f} | {net2:+,.0f} | "
+                    f"{notional:,.0f} | {cost:.0f}"
+                )
         print("\nby market cap and year: trades, net/trade 2x, total net 1x")
         rows = con.execute(
             f"""select year(day) y, {CAP} g, count(*), avg(net_2x / notional), sum(net)
