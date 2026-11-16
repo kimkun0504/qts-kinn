@@ -296,3 +296,31 @@ October 2023), not a new search and not a change to the frozen rule.
 2. **Market cycles.** A50's trades grouped by named stretches of the market (the 2005–2007
    rise, the 2007–2009 fall, the 2009–2010 recovery, and so on to 2023), with the mean, the
    share of winners and the number of trades in each.
+
+## Addendum, 2026-11-16 16:32 ET: entries and exits (owner's question), before any is measured
+
+The rule's signal is specific; its entry (the next open) and its exit (the close 15 sessions
+later) are the simplest possible and were never compared with alternatives beyond holds of 5,
+10 and 15 sessions. This study compares them, on A50's signals of 2005 to October 2023.
+
+**Exits** (entry at the next open): holds of 5, 10, 15, 20 and 30 sessions; a stop 8%, 12% or
+20% under the entry price, and one at the signal day's low; a target 15%, 25% or 40% above; a
+stop with a target (12% and 25%); a trailing stop 15%, 20% or 25% under the highest close
+since entry, to 30 sessions; an exit when the close falls under its 9- or 20-day exponential
+average, to 30 sessions. A stop or target is checked against each day's range (the stop first
+if both are inside it); a gap through the level fills at the open. Rules read at a close exit
+at the next open.
+
+**Entries** (exit at the close 15 sessions after the signal): the next open; only if that
+open gaps no more than 5% up; only if it does not gap down; a limit 3% or 5% under the signal
+close, good for three sessions; the next close.
+
+**Costs:** the auction allowance for fills at an open or close; the modelled half-spread
+instead for a stop filled inside the day; the allowance for a limit fill.
+
+**How it is read:** each variant on 2010 to 2017, then on 2005 to 2009 and on 2018 to October
+2023 apart. A variant is better only if it beats the plain rule in all three, in the mean a
+trade and in a 10-position book's Sharpe ratio and drawdown. About 30 variants, so one that
+wins in one period only is noise. The holdout is spent: nothing here can be confirmed on it,
+and the frozen rule stays the reference. A variant that wins everywhere would go to the paper
+ledger beside it.
