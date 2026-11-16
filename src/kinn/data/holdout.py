@@ -24,6 +24,9 @@ from kinn.core.settings import HOLDOUT_START, Settings
 from kinn.data import bars, build, raw, seal
 
 FOLDER = "holdout"
+UNSEALED_VERSION = "unsealed-2"  # bump when the unsealed tables must be rebuilt
+TOLERANCE = 1e-9  # relative; see ``compare_panels``
+CHECK_NAME = "check.json"
 
 
 def authorise(settings: Settings, source: str) -> None:
@@ -43,7 +46,7 @@ def identifiers(settings: Settings, sealed_dir: Path) -> dict:
     zips = [raw.sharadar_zip(opened.snapshot, t) for t in build.SHARADAR_TABLES]
     build_id = raw.fingerprint(
         [(z.name, z.stat().st_size) for z in zips],
-        opened.bars_id, sealed_bars, build.DATA_VERSION, "unsealed",
+        opened.bars_id, sealed_bars, build.DATA_VERSION, UNSEALED_VERSION,
     )  # fmt: skip
     return {
         "build_id": build_id, "bars_id": opened.bars_id, "sealed_bars_id": sealed_bars,
@@ -86,64 +89,252 @@ def build_unsealed(
     return ids["build_id"], pending
 
 
-def check(settings: Settings) -> dict:
-    """Facts about the unsealed build that say nothing about any strategy: how many sessions it
-    adds, how far each source reaches, and whether it reproduces the research build on every
-    date before the seal."""
+def reach(settings: Settings) -> dict:
+    """How far the unsealed build goes: sessions added and the last date of each source."""
     authorise(settings, "unsealed build check")
-    builds = folder(settings) / "builds"
-    build_id = (builds / "CURRENT").read_text().strip()
-    root = builds / build_id
-    info = json.loads((root / "build.json").read_text())
-    research = settings.data_dir / "builds" / info["research_build_id"]
+    root, info = current(settings)
     sealed_bars = folder(settings) / "bars" / info["sealed_bars_id"]
-    seal_sql = f"DATE '{HOLDOUT_START.isoformat()}'"
     con = duckdb.connect()
     try:
         sessions, first, last = con.execute(
             f"select count(*), min(date), max(date) from "
             f"read_parquet('{sealed_bars}/calendar/*.parquet')"
         ).fetchone()
-        reach = {}
-        for table, column in (("events", "date"), ("actions", "date"), ("daily", "date")):
-            reach[table] = con.execute(
-                f"select max({column}) from '{root}/sharadar/{table}.parquet'"
+        sources = {
+            table: con.execute(
+                f"select max(date) from '{root}/sharadar/{table}.parquet'"
             ).fetchone()[0]
+            for table in ("events", "actions", "daily")
+        }
         new_rows = con.execute(
-            f"select count(*) from read_parquet('{root}/panel/*.parquet') where date >= {seal_sql}"
+            f"select count(*) from read_parquet('{root}/panel/*.parquet') "
+            f"where date >= DATE '{HOLDOUT_START.isoformat()}'"
         ).fetchone()[0]
-        shared = [
-            r[0]
-            for r in con.execute(
-                f"describe select * from read_parquet('{research}/panel/*.parquet')"
-            ).fetchall()
-        ]
-        columns = ", ".join(shared)
-        before = (
-            f"(select {columns} from read_parquet('{{}}/panel/*.parquet') where date < {seal_sql})"
-        )
-        mine, theirs = before.format(root), before.format(research)
-        only_research, only_unsealed, rows = con.execute(
-            f"""select (select count(*) from ({theirs} except {mine})),
-                       (select count(*) from ({mine} except {theirs})),
-                       (select count(*) from {theirs})"""
-        ).fetchone()
     finally:
         con.close()
     return {
-        "build_id": build_id, "research_build_id": info["research_build_id"],
+        "build_id": info["build_id"], "research_build_id": info["research_build_id"],
         "holdout_sessions": sessions, "first_session": first, "last_session": last,
-        "panel_rows_in_holdout": new_rows, "sharadar_reaches": reach,
-        "rows_before_seal": rows, "rows_only_in_research_build": only_research,
-        "rows_only_in_unsealed_build": only_unsealed,
-        "same_before_seal": only_research == 0 and only_unsealed == 0,
+        "panel_rows_in_holdout": new_rows, "sharadar_reaches": sources,
     }  # fmt: skip
+
+
+def current(settings: Settings) -> tuple[Path, dict]:
+    builds = folder(settings) / "builds"
+    root = builds / (builds / "CURRENT").read_text().strip()
+    return root, json.loads((root / "build.json").read_text())
+
+
+def compare_panels(research: Path, unsealed: Path, *, before: date = HOLDOUT_START) -> dict:
+    """Compare two builds' panels on every date before ``before``, row by row and column by
+    column. Counts and a few company names only; nothing dated on or after ``before`` is read
+    into the result.
+
+    Rows are matched on (date, permaticker). A decimal column counts as the same within
+    ``TOLERANCE``: the 60-session return is a running sum of logarithms, and its last digits
+    depend on which other companies were computed beside it and on the machine, so two correct
+    builds differ there by about one part in 10^16. Every other difference is a real one.
+    """
+    con = duckdb.connect()
+    try:
+        cutoff = f"DATE '{before.isoformat()}'"
+        described = {
+            which: {
+                r[0]: r[1]
+                for r in con.execute(
+                    f"describe select * from read_parquet('{root}/panel/*.parquet')"
+                ).fetchall()
+            }
+            for which, root in (("r", research), ("u", unsealed))
+        }
+        keys = ("date", "permaticker")
+        columns = [c for c in described["r"] if c in described["u"] and c not in keys]
+        decimal = {c for c in columns if described["r"][c] in ("DOUBLE", "FLOAT")}
+        years = sorted(
+            int(p.stem.split("=")[1])
+            for p in (research / "panel").glob("year=*.parquet")
+            if int(p.stem.split("=")[1]) <= before.year
+        )
+        con.execute("create table gained (permaticker bigint, date date)")
+        con.execute("create table lost (permaticker bigint, date date)")
+        totals = dict.fromkeys(("rows", "common"), 0)
+        differs = dict.fromkeys(columns, 0)
+        beyond = dict.fromkeys(columns, 0)
+        largest = dict.fromkeys(decimal, 0.0)
+        for year in years:
+            mine = unsealed / "panel" / f"year={year}.parquet"
+            source = f"(select *, true as present from '{{}}' where date < {cutoff})"
+            r = source.format(research / "panel" / f"year={year}.parquet")
+            u = source.format(mine) if mine.exists() else f"(select * from {r} where false)"
+            parts = ["count(*) filter (r.present)", "count(*) filter (r.present and u.present)"]
+            for c in columns:
+                differ = f"r.present and u.present and r.{c} is distinct from u.{c}"
+                parts.append(f"count(*) filter ({differ})")
+                if c in decimal:
+                    close = (
+                        f"coalesce(abs(r.{c} - u.{c}) <= {TOLERANCE} * "
+                        f"greatest(1, abs(r.{c}), abs(u.{c})), false)"
+                    )
+                    parts.append(f"count(*) filter ({differ} and not {close})")
+                    parts.append(f"coalesce(max(abs(r.{c} - u.{c})), 0)")
+            row = con.execute(
+                f"select {', '.join(parts)} from {r} r full join {u} u "
+                f"on r.date = u.date and r.permaticker = u.permaticker"
+            ).fetchone()
+            totals["rows"] += row[0]
+            totals["common"] += row[1]
+            at = 2
+            for c in columns:
+                differs[c] += row[at]
+                at += 1
+                if c in decimal:
+                    beyond[c] += row[at]
+                    largest[c] = max(largest[c], float(row[at + 1]))
+                    at += 2
+                else:
+                    beyond[c] = differs[c]
+            con.execute(
+                f"insert into gained select u.permaticker, u.date from {u} u anti join {r} r "
+                f"on r.date = u.date and r.permaticker = u.permaticker"
+            )
+            con.execute(
+                f"insert into lost select r.permaticker, r.date from {r} r anti join {u} u "
+                f"on r.date = u.date and r.permaticker = u.permaticker"
+            )
+        for which, root in (("r", research), ("u", unsealed)):
+            con.execute(
+                f"create view sec_{which} as select * from '{root}/master/security_master.parquet'"
+            )
+        why = """case when r.permaticker is null then 'left out of the research build'
+                      when not r.delisted and u.delisted
+                           and regexp_matches(u.ticker, '^[A-Z.]+?[0-9]+$')
+                        then 'delisted after the seal; ticker reused since'
+                      else 'unexplained' end"""
+        gained = _groups(con, "gained", why)
+        lost = _groups(con, "lost", "'unexplained'")
+    finally:
+        con.close()
+    out = {
+        "rows_before_seal": totals["rows"],
+        "rows_in_both": totals["common"],
+        "rows_missing_from_unsealed": lost,
+        "rows_only_in_unsealed": gained,
+        "columns_that_differ": {c: n for c, n in differs.items() if n},
+        "columns_beyond_tolerance": {c: n for c, n in beyond.items() if n},
+        "largest_decimal_gap": {c: v for c, v in largest.items() if v},
+    }
+    out["exact"] = not (lost or gained or out["columns_that_differ"])
+    out["same_before_seal"] = not (
+        lost or out["columns_beyond_tolerance"] or "unexplained" in gained
+    )
+    return out
+
+
+def _groups(con: duckdb.DuckDBPyConnection, table: str, why: str) -> dict:
+    """``table`` (permaticker, date) summed by reason, with five example companies each."""
+    rows = con.execute(
+        f"""with per as (
+                select t.permaticker, any_value(u.ticker) as ticker, count(*) as n,
+                       min(t.date) as first, max(t.date) as last, any_value({why}) as why
+                from {table} t
+                left join sec_u u on u.permaticker = t.permaticker
+                left join sec_r r on r.permaticker = t.permaticker
+                group by 1)
+            select why, sum(n), count(*),
+                   list({{'ticker': ticker, 'rows': n, 'first': first, 'last': last}}
+                        order by n desc)[1:5]
+            from per group by 1 order by 2 desc"""
+    ).fetchall()
+    return {
+        why: {"rows": int(n), "companies": companies, "largest": examples}
+        for why, n, companies, examples in rows
+    }
+
+
+def check(settings: Settings) -> dict:
+    """Facts about the unsealed build that say nothing about any strategy: how many sessions it
+    adds, how far each source reaches, and whether it reproduces the research build on every
+    date before the seal. The verdict is saved beside the build; the holdout run reads it."""
+    report = reach(settings)
+    root, info = current(settings)
+    research = settings.data_dir / "builds" / info["research_build_id"]
+    report.update(compare_panels(research, root))
+    (root / CHECK_NAME).write_text(json.dumps(report, indent=2, default=str) + "\n")
+    return report
+
+
+def checked(settings: Settings) -> bool:
+    """Has the current unsealed build passed ``check``?"""
+    root, _ = current(settings)
+    path = root / CHECK_NAME
+    return path.exists() and bool(json.loads(path.read_text())["same_before_seal"])
 
 
 def covers(report: dict, end: date, *, slack_days: int = 7) -> bool:
     """Do the bars reach ``end``, and the filings and corporate actions to within a week of it?"""
-    reach = report["sharadar_reaches"]
+    sources = report["sharadar_reaches"]
     floor = end - timedelta(days=slack_days)
     return report["last_session"] >= end and all(
-        reach[t] is not None and reach[t] >= floor for t in ("events", "actions")
+        sources[t] is not None and sources[t] >= floor for t in ("events", "actions")
     )
+
+
+TRADE_KEY = ("day", "symbol", "tag", "quantity", "signal_minute", "entry_minute", "exit_minute")
+TRADE_MONEY = ("entry_price", "exit_price", "net", "net_2x")
+
+
+def explained_additions(settings: Settings) -> list[int]:
+    """Companies the unsealed build can match before the seal and the research build cannot:
+    delisted after the seal, with the ticker reused since (see ``compare_panels``)."""
+    root, info = current(settings)
+    research = settings.data_dir / "builds" / info["research_build_id"]
+    rows = duckdb.sql(
+        f"""select u.permaticker from '{root}/master/security_master.parquet' u
+            join '{research}/master/security_master.parquet' r using (permaticker)
+            where u.delisted and not r.delisted
+              and regexp_matches(u.ticker, '^[A-Z.]+?[0-9]+$')"""
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
+def compare_trades(reference: Path, candidate: Path, *, explained: list[int] = ()) -> dict:
+    """Trade-for-trade comparison of two runs of one config. ``explained`` are companies whose
+    extra trades in ``candidate`` are expected (``explained_additions``)."""
+    con = duckdb.connect()
+    try:
+        ref, new = (f"'{d}/trades.parquet'" for d in (reference, candidate))
+        on = " and ".join(f"a.{k} = b.{k}" for k in TRADE_KEY)
+        near = " and ".join(
+            f"abs(a.{c} - b.{c}) <= 1e-6 * greatest(1, abs(a.{c}))" for c in TRADE_MONEY
+        )
+        known = ", ".join(str(int(p)) for p in explained) or "null"
+        n_ref, n_new, net_ref, net_new = con.execute(
+            f"""select (select count(*) from {ref}), (select count(*) from {new}),
+                       (select sum(net) from {ref}), (select sum(net) from {new})"""
+        ).fetchone()
+        matched, same_money = con.execute(
+            f"select count(*), count(*) filter ({near}) from {ref} a join {new} b on {on}"
+        ).fetchone()
+        shown = "day, symbol, tag, quantity, entry_minute"
+        missing = con.execute(
+            f"select {shown} from {ref} a anti join {new} b on {on} order by 1, 2, 3"
+        ).fetchall()
+        extra = con.execute(
+            f"""select {shown}, permaticker in ({known}) from {new} a anti join {ref} b
+                on {on}
+                order by 1, 2, 3"""
+        ).fetchall()
+    finally:
+        con.close()
+    unexplained = [row[:-1] for row in extra if not row[-1]]
+    return {
+        "research_trades": n_ref, "unsealed_trades": n_new, "matched": matched,
+        "matched_with_same_prices_and_profit": same_money,
+        "research_net": round(net_ref or 0.0, 2), "unsealed_net": round(net_new or 0.0, 2),
+        "missing_from_unsealed": len(missing), "extra_in_unsealed": len(extra),
+        "extra_unexplained": len(unexplained),
+        "examples_missing": [list(map(str, r)) for r in missing[:10]],
+        "examples_extra_unexplained": [list(map(str, r)) for r in unexplained[:10]],
+        "identical": n_ref == n_new == matched == same_money,
+        "passed": not missing and matched == same_money and not unexplained,
+    }  # fmt: skip

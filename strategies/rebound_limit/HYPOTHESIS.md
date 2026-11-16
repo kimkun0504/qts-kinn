@@ -485,3 +485,32 @@ every date before 2023-11-09, checked by the build itself.
 
 **After the unseal.** The holdout is spent for this family. No later variant of the rebound can
 be judged on it. The run is a counted trial.
+
+## Addendum, 2026-11-15 22:55 ET: the holdout data check, before the run
+
+The owner built the unsealed data. No strategy has been run on it. The first check compared
+whole rows exactly and reported 4.75 million of 26.4 million pre-seal rows as different, with
+6,062 more rows in the unsealed build. I have not read the unsealed build; what follows is from
+the code and from a test on open data.
+
+- **Cause of most of it (shown on open data):** `ret60_prev` is a running sum of logarithms.
+  Recomputing it for 2021-2022 with 1% of companies removed changed the last digits of 8% of
+  the remaining rows, by about 1e-16. The unsealed build holds a slightly different set of
+  companies and was built on another machine. `s_l468` does not use this column.
+- **One real inconsistency, fixed:** the unsealed build kept names with no first price date,
+  which the research build drops. It now drops them too, and is rebuilt.
+- **Expected extra rows:** companies delisted after the seal whose ticker was reused. The
+  research build cannot match them (it does not know they were delisted); the unsealed build
+  can. That is the unsealed build being right, not a fault in it.
+
+**The check is replaced, before any run, by a stricter and more specific one:**
+
+1. Row by row and column by column on every date before the seal. No research row may be
+   missing. Every column must be equal, decimals within one part in 10^9. Extra rows are
+   allowed only for the delisted-and-reused reason; anything unexplained fails.
+2. **Rehearsal:** the validation config `validation_s_l468` is run through the unsealed data
+   (a scratch run, not a trial, dates before the seal only) and must reproduce the research
+   validation run trade for trade: same trades, prices and profit.
+
+The holdout run starts only if both pass. The rule for the result (Pass / Fail / Not proven)
+is unchanged.

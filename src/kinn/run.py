@@ -22,9 +22,10 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import yaml
 
-from kinn.core.settings import Settings, load_settings
+from kinn.core.settings import HOLDOUT_START, Settings, load_settings
 from kinn.core.types import Trade
 from kinn.costs import model as cost_model
+from kinn.data import holdout
 from kinn.data.store import DataStore
 from kinn.engine.intraday.data import load_day
 from kinn.engine.intraday.simulator import FillConfig, simulate_day
@@ -270,6 +271,32 @@ def continue_run(
         return False
     finalize(run_dir, settings=settings)
     return True
+
+
+def rehearse(
+    settings: Settings, strategy: str, config: str, *, workers: int = 4, against: str | None = None
+) -> dict:
+    """Run a config whose period is before the seal through the unsealed build, as a scratch
+    run (not a trial), and compare its trades with the research run of the same config. The
+    one holdout run uses this same path, so equal trades here mean the path is sound."""
+    _, cfg = load_config(strategy, config)
+    if date.fromisoformat(str(cfg["period"]["end"])) >= HOLDOUT_START:
+        raise ValueError("a rehearsal uses a period that ends before the seal")
+    if against is None:
+        earlier = [
+            m["run_id"]
+            for m in registry.read_manifests(settings.runs_dir)
+            if m.get("strategy") == strategy and m.get("config") == config
+            and m.get("status") == "complete" and not m.get("scratch") and not m.get("unsealed")
+        ]  # fmt: skip
+        if not earlier:
+            raise ValueError(f"no finished research run of {strategy} {config} to compare with")
+        against = earlier[-1]
+    run_dir = start_run(strategy, config, settings=settings, scratch=True, unseal=True)
+    continue_run(run_dir, settings=settings, workers=workers)
+    return {"run": run_dir.name, "against": against,
+            **holdout.compare_trades(settings.runs_dir / against, run_dir,
+                                    explained=holdout.explained_additions(settings))}  # fmt: skip
 
 
 def _guarded(job: dict) -> str | None:

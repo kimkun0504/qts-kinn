@@ -165,6 +165,9 @@ def ingest_tickers(zip_path: Path, dst: Path, *, seal_date: date | None = HOLDOU
     table = table.filter(pc.equal(table["table"], "SEP"))
     if seal_date is None:
         cutoff = pc.max(table["lastpricedate"])
+        # The sealed build drops a name with no first price date (the comparison below is
+        # null for it); the unsealed build must make the same choice.
+        table = table.filter(pc.is_valid(table["firstpricedate"]))
     else:
         cutoff = pa.scalar(seal_date, pa.date32())
         table = table.filter(pc.less(table["firstpricedate"], cutoff))

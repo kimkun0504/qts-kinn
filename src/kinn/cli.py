@@ -92,11 +92,15 @@ def _check_holdout_reach(settings, strategy: str, config: str) -> None:
 
     _, cfg = runner.load_config(strategy, config)
     end = date.fromisoformat(str(cfg.get("period", {}).get("end")))
-    report = holdout.check(settings)
+    report = holdout.reach(settings)
     if not holdout.covers(report, end):
         raise SystemExit(
             f"refused: the unsealed data does not reach {end}. Bars end {report['last_session']}; "
             f"Sharadar reaches {report['sharadar_reaches']}. Nothing was run."
+        )
+    if not holdout.checked(settings):
+        raise SystemExit(
+            "refused: the unsealed build has not passed `kinn holdout check`. Nothing was run."
         )
 
 
@@ -326,16 +330,45 @@ def _holdout_build(args: argparse.Namespace) -> int:
     if pending:
         print(f"unsealed build {build_id}: pending {', '.join(pending)}; run the command again")
         return 3
-    report = holdout.check(settings)
     print(f"unsealed build {build_id}: complete")
-    for key, value in report.items():
-        print(f"  {key}: {value}")
-    if not report["same_before_seal"]:
-        print(
-            "  note: the unsealed build differs from the research build before the seal;"
-            " show this output to the agent before running anything"
-        )
-    return 0
+    return _holdout_check(args)
+
+
+def _holdout_check(args: argparse.Namespace) -> int:
+    import json
+
+    from kinn.data import holdout
+    from kinn.data.seal import HoldoutError
+
+    try:
+        report = holdout.check(load_settings())
+    except HoldoutError as error:
+        raise SystemExit(f"refused: {error}") from error
+    print(json.dumps(report, indent=2, default=str))
+    if report["same_before_seal"]:
+        print("check passed: the unsealed build matches the research build before the seal")
+        return 0
+    print("check FAILED: do not run anything on the holdout; show this output to the agent")
+    return 1
+
+
+def _holdout_rehearse(args: argparse.Namespace) -> int:
+    import json
+
+    from kinn import run as runner
+    from kinn.data.seal import HoldoutError
+
+    settings = load_settings()
+    try:
+        result = runner.rehearse(settings, args.strategy, args.config, workers=args.workers)
+    except (HoldoutError, ValueError) as error:
+        raise SystemExit(f"refused: {error}") from error
+    print(json.dumps(result, indent=2))
+    if result["passed"]:
+        print("rehearsal passed: the unsealed path reproduces the research run's trades")
+        return 0
+    print("rehearsal FAILED: do not run the holdout; show this output to the agent")
+    return 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -438,6 +471,15 @@ def main(argv: list[str] | None = None) -> int:
     h_build.add_argument("--budget", type=float, default=float("inf"))
     h_build.add_argument("--workers", type=int, default=4)
     h_build.set_defaults(func=_holdout_build)
+    h_check = hold.add_parser("check", help="compare the unsealed build with the research build")
+    h_check.set_defaults(func=_holdout_check)
+    h_try = hold.add_parser(
+        "rehearse", help="re-run a pre-seal config through the unsealed build and compare trades"
+    )
+    h_try.add_argument("strategy")
+    h_try.add_argument("--config", required=True)
+    h_try.add_argument("--workers", type=int, default=4)
+    h_try.set_defaults(func=_holdout_rehearse)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True
