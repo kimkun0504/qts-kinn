@@ -65,3 +65,50 @@ for the book that results. Nothing is called found on the search years alone.
 
 Many cells; delisting in losers; signals crowd into bad weeks, when the account cannot take
 them all; 2020 flatters anything that buys falls.
+
+## Addendum, 2026-11-16 13:40 ET: wider features, more families, a second test
+
+Written after families 1 to 6 and 8 were measured (2,289 cells, none passing; the large
+returns sit in falls during market sell-offs, 2020 and 2022, and are not steady across weeks)
+and before anything below is built or measured.
+
+**A wider table.** `research/claude/swing_wide.py` rebuilds the daily table with: distance
+from the 20-, 50- and 200-day averages; a 2-day and a 14-day strength index; 2-, 3- and 10-day
+returns; the largest and smallest daily return of 20 days; overnight and daytime return summed
+over 20 days; 5-day volume against normal; the average daily range; the return of the same 20
+sessions a year earlier; sessions since the last earnings release and to the next one as
+predicted from a year earlier; the industry; the latest filed fundamentals as of each day
+(profit or loss, earnings, free cash flow, book value and net cash against price, revenue
+growth, gross profit to assets, debt to assets, share issuance, asset growth, accruals); and
+short interest (2018 on).
+
+**More families.**
+
+10. **Market state with the fall:** the market's own 5- and 20-day move and volatility,
+    crossed with the stock's fall (buying falls only in a market sell-off).
+11. **Technical state:** the averages, strength index, range-scaled falls, overnight against
+    daytime return, the largest daily return.
+12. **Calendar:** turn of the month, month, December losers into January, weekday, the stock's
+    own return in the same season a year earlier, the days before a predicted earnings date.
+13. **Fundamental state** with the price signals: profitability, value, net cash, dilution,
+    asset growth, accruals.
+14. **8-K items other than earnings:** the drift after each item.
+15. **Industry:** industry momentum and a stock's move against its industry.
+16. **A combined model:** one cross-sectional model of the 10-day return on all the features,
+    fitted walk-forward (on the years before Y, applied to year Y, Y = 2014 to 2022), buying
+    the top-ranked stocks each day. It is judged only on years it was not fitted on, which is
+    its own guard against the number of cells above.
+
+**A second test, reported beside the first.** A long trade carries the market's own noise, so
+the weekly t-statistic of a long-only rule is low even when it beats other stocks every week.
+Each cell now also shows the t-statistic of its weekly mean return over the all-stock mean of
+the same days and hold. A cell with rules 1, 2 and 4 and an excess t of at least 4 (raw t
+below 4) is shortlisted as "beats the market" and labelled so; this is a looser rule than the
+first and is said wherever it is used. Such a rule still loses money when the market falls
+further than its edge, so its book is shown with its losing years.
+
+**Fills.** A buy at the open and a sale at the close can be sent as on-open and on-close
+orders, which fill at the auction price without crossing a spread. Selection stays on the
+costs above (spread crossed, doubled); the gross column shows what auction fills would leave
+before commission. Whether the auction price is the bar's open is to be checked on minute
+bars before any claim rests on it.
