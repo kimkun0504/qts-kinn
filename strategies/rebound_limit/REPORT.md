@@ -245,4 +245,4 @@ Net per trade is at 2× slippage; totals are at 1× and add up to the runs' tota
 whole loss was in stocks that had already fallen over the previous 60 sessions (−$11,462 on 282
 trades); stocks that had risen made +$6,750 on 221 trades and were profitable in all 14
 development years. Tables, the hypothesis that follows and the reasons to distrust it are in
-HYPOTHESIS.md (addendum of 20:40 ET). **Not tested on any period.**
+HYPOTHESIS.md (addendum of 20:10 ET). **Not tested on any period.**

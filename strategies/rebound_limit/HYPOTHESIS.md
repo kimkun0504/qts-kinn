@@ -261,7 +261,7 @@ The universe has no market-cap floor. For the under-$300M group alone:
 The tick study is recorded in the run store and charged as one trial (family total 49). It
 selects nothing: one variant, fixed. The order listing and the unfilled sample add none.
 
-## Addendum, 2026-11-15 20:40 ET: the losing development years, and a hypothesis from them
+## Addendum, 2026-11-15 20:10 ET: the losing development years, and a hypothesis from them
 
 Development period only (2003–2016). Nothing below was computed on, or checked against, any
 date after 2016-12-30. Script: `research/claude/losing_years.py`, on the 3,200 trades of the
