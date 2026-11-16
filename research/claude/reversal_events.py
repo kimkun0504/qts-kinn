@@ -15,6 +15,7 @@ from datetime import date
 from pathlib import Path
 
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 
 from kinn.core.settings import Settings, load_settings
@@ -46,17 +47,18 @@ def month_job(job: dict) -> str | None:
         features = {s: compute(strategy.features, sd) for s, sd in view.symbols.items()}
         found = strategy._events(view, features)
         names = [e[1] for e in found]
-        table = store.minute(day, symbols=[*names, "SPY"], columns=BAR_COLUMNS).to_pylist()
-        for row in table:
-            if not view.open_minute <= row["minute_et"] < view.close_minute:
-                continue
-            if row["symbol"] == "SPY" and "SPY" not in names:
-                market.append({"day": day, "minute": row["minute_et"], "close": row["close"]})
-                continue
-            if row["symbol"] == "SPY":
-                market.append({"day": day, "minute": row["minute_et"], "close": row["close"]})
-            bars.append({"day": day, **{("minute" if k == "minute_et" else k): v
-                                        for k, v in row.items()}})  # fmt: skip
+        table = store.minute(day, symbols=[*names, "SPY"], columns=BAR_COLUMNS)
+        minute_et = table["minute_et"]
+        regular = pc.and_(
+            pc.greater_equal(minute_et, view.open_minute), pc.less(minute_et, view.close_minute)
+        )
+        table = table.filter(regular).rename_columns(
+            ["symbol", "minute", "open", "high", "low", "close", "volume", "transactions"]
+        )
+        table = table.append_column("day", pa.array([day] * table.num_rows, pa.date32()))
+        is_spy = pc.equal(table["symbol"], "SPY")
+        market.append(table.filter(is_spy).select(["day", "minute", "close"]))
+        bars.append(table if "SPY" in names else table.filter(pc.invert(is_spy)))
         for minute, symbol, close, ret15, adv, prev_close, cap, _ in found:
             events.append(
                 {
@@ -75,9 +77,14 @@ def month_job(job: dict) -> str | None:
             )
     base = out_dir(settings)
     base.mkdir(parents=True, exist_ok=True)
-    for name, rows in (("bars", bars), ("spy", market), ("events", events)):  # events last
+    tables = {
+        "bars": pa.concat_tables(bars) if bars else pa.table({}),
+        "spy": pa.concat_tables(market) if market else pa.table({}),
+        "events": pa.Table.from_pylist(events) if events else pa.table({}),
+    }
+    for name, table in tables.items():  # events last: its file marks the month as done
         tmp = base / f"{job['month']}.{name}.tmp"
-        pq.write_table(pa.Table.from_pylist(rows) if rows else pa.table({}), tmp)
+        pq.write_table(table, tmp, compression="zstd")
         tmp.replace(base / f"{job['month']}.{name}.parquet")
     return job["month"]
 
