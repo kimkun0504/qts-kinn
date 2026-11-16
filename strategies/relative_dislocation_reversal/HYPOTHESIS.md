@@ -282,3 +282,46 @@ Only if qualified, run `validation_liquid_quiet_ten_point` once from
 2023-11-08, while meeting the original sample and 2× stress requirements.
 Report this as another development look motivated by a prior result.
 Count each run in `intraday_rebound`. The later holdout stays sealed.
+
+## Addendum, 2026-11-16: compare shocks within size groups
+
+The two-hour peer-relative portfolio used large caps as the market reference
+for the 15-minute shock and one-minute recovery. Small and midsize companies
+can sell off together while large caps hold up. The large-cap benchmark can
+then classify a group move as an individual dislocation. A reference drawn
+from the tradable cohort could reduce common exposure and identify abrupt
+moves relative to the stocks the strategy actually trades. A narrower
+benchmark may also be noisier, especially early in the sample.
+
+Freeze one change to the two-hour peer-relative portfolio. Divide the
+pre-open liquid tradable cohort at the existing $2 billion size breakpoint.
+Use one group with prior cap below $2 billion and one from $2 billion to below
+$10 billion. Compute each group's synchronous median exact 15-minute and
+one-minute close-to-close returns. Each median uses only observed prices at
+both clock endpoints and requires at least 31 members with valid returns.
+The candidate can be included in the median, so qualifying bars have at
+least 30 other observations. Including a sharp mover in its own benchmark
+can attenuate its apparent deviation. No future bars contribute.
+
+Use only the candidate's own group for both calculations. Keep the 12-point
+relative shock, 1% absolute and one-point relative recovery, $40,000 signal
+bar turnover, minute window, first eligible bar, one-minute expiry, two-hour
+exit with auction fallback, $2,000 target, ten slots and volume participation.
+Keep the existing universe and costs. There is no preset quiet baseline and
+no change to entry or exit pricing. Size groups come from prior caps. They
+do not establish industry similarity or control for every common shock.
+
+Run `development_liquid_size_peers --study` on 2003-09-10 through 2016-12-30.
+Use `r_120`, with the original full and 2013–2016 study gates and the
+next-clock-minute sensitivity if needed. Compare dates and events with the
+saved large-cap study `20261116T164207Z_gpt_relative_dislocation_reversal_a740b270`.
+The comparison is descriptive. Only after a committed develop verdict, run
+the `development_liquid_size_peers` portfolio on the same dates. Apply the
+original portfolio gates at both costs and a 2× daily Sharpe above 1.
+
+If and only if the portfolio qualifies, run `validation_liquid_size_peers`
+once on 2017-01-03 through 2023-11-08 and apply the original gates. Require
+at least +3% net over all completed trades at base costs overall and
+separately from 2022 through 2023-11-08. Keep the recency sample and 2×
+stress requirements. Count each run in `intraday_rebound`. This is one
+data-informed development look and the sealed holdout remains excluded.
