@@ -167,3 +167,21 @@ The owner downloads them; development years only.
   owner has confirmed the bars for this family.
 - 8 or more: parked.
 - In between: marginal; the owner decides.
+
+## Addendum, 2026-11-16 01:40 ET: which stocks, and four positions at a time (owner's question)
+
+The owner's idea: the choice of stock may matter, and the book could be limited to four
+positions. If the return per trade is concentrated in the most active names, taking only
+those would lift it clear of the slippage that sinks the 20-name version.
+
+Cuts declared before looking, on the development trades already simulated (no new data):
+
+1. By the paper's own ordering, relative volume rank: 1 to 4, 5 to 10, 11 to 20.
+2. The four highest ranks as a strategy: $5,000 a position (no leverage) and $20,000 (four
+   times the account), fixed stop and VWAP exit, both sides and long only.
+3. By the level of relative volume: at least 3, 5 and 10 times normal.
+
+About 12 more measurements, counted against the family. The reading is the return per trade
+before slippage and the slippage at which each breaks even, beside the 20-name figures (0.17%
+a trade, break-even 7 to 9 bp). Picking individual tickers by their past results is not
+tested: that is fitting to history unless done walk-forward.
