@@ -364,3 +364,11 @@ drawdown at 2× **under $10,000** (half the account).
 
 **Trials.** 12 development runs and at most one validation run: the family total goes from 49
 to 61 or 62.
+
+## Addendum, 2026-11-15 20:40 ET: variant chosen for validation
+
+Development finished (12 counted runs, sweep `20261116T013106Z_rebound_limit_12`). Eligible by
+the rule: all but `s_o8`, `s_o6_m` and `s_o8_m` (under 1,000 trades). The highest daily-P&L
+t-statistic at 2× slippage among the eligible is **`s_l468`** (5.30): all stocks, a third of the
+position each 4%, 6% and 8% below the event bar's close. It is run once on 2017-01-03 to
+2023-11-08 as `validation_s_l468`, with identical parameters and sizing.
