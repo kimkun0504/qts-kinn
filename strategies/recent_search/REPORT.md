@@ -45,14 +45,14 @@ result in every year 2018 to 2022.
   volume lose another 1.7%.
 - **Those are short trades.** After costs at 2× the best of them nets about 3% a trade to a
   short seller, and less each year: the fade of the largest premarket runners earned about 8%
-  before costs in 2018 and about 1% in 2022. Shares of such stocks are often unavailable to
+  before costs in 2018 and 1% or less in 2022. Shares of such stocks are often unavailable to
   borrow or cost a great deal, a short sale cannot hit the bid once a stock is down 10%, and a
   short can lose more than its size. None of that is in the figures.
 
 ## What it means for the target
 
 Within one session, long only, in these data, 3% a trade is not there to be found by
-conditioning on price, volume, trade size, size, sector-free news type or time of day. The
+conditioning on price, volume, trade size, company size, news type or time of day. The
 ways left to reach it change the brief: sell short (the engine and the cost model would need
 borrow and locate), hold longer than a day, or accept a smaller edge on many trades (the
 opening range breakout in `strategies/intraday_momentum`).
