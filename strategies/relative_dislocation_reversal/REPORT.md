@@ -326,3 +326,53 @@ passed. The 2022–2023 validation block and the sealed holdout stayed closed.
 | 2014 | 14 | +5.57% | +5.23% | +$1,561 | +$1,465 |
 | 2015 | 18 | +5.53% | +5.26% | +$1,983 | +$1,887 |
 | 2016 | 9 | −3.88% | −4.25% | −$682 | −$747 |
+
+## Quiet baseline before the dislocation
+
+**Decision: park.** The one-hour study averaged **+5.26% net at 1×** and **+4.88%
+at 2×** across 106 events on 89 sessions. The gross mean was +5.87%, with a
+day-clustered 95% interval of +3.11% to +8.76%. In 2013–2016, the 24 events
+averaged +4.30% gross, +3.88% at 1× and +3.61% at 2×. This missed all three
+sample minima (150 events, 90 sessions and 40 events in 2013–2016). The
+portfolio and validation runs were skipped under the preregistered rules.
+
+Run `20261116T164732Z_gpt_relative_dislocation_reversal_7bceca33` used clean
+commit `7f1b6442`, data build `447e58e098` and development dates 2003-09-10
+through 2016-12-30. Preregistration commit `9eb39c8` preceded the run. This
+adds one trial to `intraday_rebound`. All entry timestamps are one clock
+minute after the signal, and all 89 signal-session lookahead replays passed.
+The strategy tests also check that the baseline rejects thin observations
+and a wide range. Validation and the sealed holdout stayed closed.
+
+| One-hour study | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net per event | +5.26% | +4.88% |
+| 95% day-clustered interval | +2.55% to +8.13% | +2.18% to +7.73% |
+| Summed event P&L | +$11,114 | +$10,296 |
+| Daily event P&L t-statistic | 3.34 | 3.14 |
+| Worst drawdown of summed events | −$869 | −$964 |
+
+Event P&L sums the saved hypothetical notionals and applies the stored fee
+and slippage estimates. Daily statistics include all 3,352 development
+sessions. The original liquid one-hour study had 301 events. The tighter
+rule's mean comes from a smaller selected sample, with 44 of 106 events
+from 2008. The gain per event does not establish dependable returns across
+regimes. Actual quote depth and tradability around sudden breaks remain
+unverified.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +23.51% | +23.40% | +$464 | +$462 |
+| 2004 | 5 | +7.19% | +6.95% | +$718 | +$693 |
+| 2005 | 2 | +9.04% | +8.85% | +$358 | +$351 |
+| 2006 | 2 | +13.06% | +12.91% | +$520 | +$514 |
+| 2007 | 8 | +10.62% | +10.23% | +$1,693 | +$1,631 |
+| 2008 | 44 | +6.10% | +5.55% | +$5,353 | +$4,864 |
+| 2009 | 6 | −4.61% | −4.85% | −$549 | −$579 |
+| 2010 | 3 | +3.07% | +2.87% | +$180 | +$168 |
+| 2011 | 7 | −0.76% | −0.99% | −$108 | −$139 |
+| 2012 | 4 | +7.88% | +7.54% | +$628 | +$601 |
+| 2013 | 5 | +7.08% | +6.75% | +$706 | +$673 |
+| 2014 | 6 | +5.74% | +5.49% | +$685 | +$655 |
+| 2015 | 8 | +6.50% | +6.29% | +$1,036 | +$1,003 |
+| 2016 | 5 | −5.76% | −6.06% | −$571 | −$601 |
