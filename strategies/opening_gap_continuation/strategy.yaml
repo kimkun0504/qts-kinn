@@ -1,0 +1,8 @@
+name: opening_gap_continuation
+status: parked
+engine: intraday
+universe: opening_gap_continuation
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: opening_gap_continuation
+prior_trials: 0
