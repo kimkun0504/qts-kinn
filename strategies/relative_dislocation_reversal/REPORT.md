@@ -91,3 +91,45 @@ approximate exit costs from the entry bar. The 2× result remained dominated by 
 | 2014 | 14 | +3.20% | +2.86% | +$895 | +$800 |
 | 2015 | 19 | +4.79% | +4.49% | +$1,807 | +$1,695 |
 | 2016 | 9 | −4.96% | −5.37% | −$890 | −$963 |
+
+## Fixed one-hour exit
+
+### Study decision
+
+**Decision: develop the one-hour exit.** The frozen horizon choice in commit
+`1980491` applies `r_60` from the saved liquid-cohort study
+`20261116T062029Z_gpt_relative_dislocation_reversal_56620f46`. The event count,
+dates and eligibility are identical. The 301 events on 199 dates had +3.89%
+mean gross (day-clustered 95% interval +2.42% to +5.28%). The 51 events on 46
+dates in 2013–2016 had +4.48% gross, +3.91% at 1× and +3.58% at 2×. The study
+gates passed and all entries were on time.
+
+| One-hour study, full development | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net per event | +3.17% | +2.71% |
+| 95% day-clustered interval | +1.73% to +4.58% | +1.25% to +4.11% |
+| Summed event P&L | +$19,022 | +$16,243 |
+| Daily event P&L t-statistic | 3.94 | 3.47 |
+| Worst end-of-day drawdown of summed events | −$1,481 | −$1,568 |
+
+The dollar series is the same unconstrained event estimator at the one-hour
+horizon. The study estimates both sides' costs from the entry bar. The portfolio
+test prices its timed sale separately and models its volume and market open.
+The horizon choice was informed by the development curve.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +23.51% | +23.40% | +$464 | +$462 |
+| 2004 | 6 | +5.44% | +5.21% | +$652 | +$624 |
+| 2005 | 4 | +0.08% | −0.19% | +$3 | −$18 |
+| 2006 | 10 | +5.87% | +5.59% | +$1,171 | +$1,115 |
+| 2007 | 24 | +3.28% | +2.77% | +$1,566 | +$1,325 |
+| 2008 | 157 | +2.92% | +2.35% | +$9,128 | +$7,367 |
+| 2009 | 22 | +1.47% | +1.12% | +$646 | +$493 |
+| 2010 | 4 | +5.45% | +5.26% | +$431 | +$415 |
+| 2011 | 14 | −0.95% | −1.25% | −$267 | −$353 |
+| 2012 | 8 | +7.78% | +7.30% | +$1,245 | +$1,169 |
+| 2013 | 9 | +6.50% | +6.17% | +$1,168 | +$1,108 |
+| 2014 | 14 | +5.38% | +5.04% | +$1,506 | +$1,411 |
+| 2015 | 19 | +5.48% | +5.18% | +$2,073 | +$1,961 |
+| 2016 | 9 | −4.27% | −4.67% | −$763 | −$836 |

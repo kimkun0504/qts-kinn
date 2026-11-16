@@ -26,8 +26,9 @@ class RelativeDislocationReversal:
     name = "relative_dislocation_reversal"
     features = (f.MARKETCAP, f.ADV20)
 
-    def __init__(self, *, liquid_cohort: bool = False):
+    def __init__(self, *, liquid_cohort: bool = False, one_hour_exit: bool = False):
         self.liquid_cohort = liquid_cohort
+        self.max_hold_minutes = 60 if one_hour_exit else None
         min_adv = 10_000_000 if liquid_cohort else 1_000_000
         self.universe = Universe(self.name, min_prev_close=2, min_adv20=min_adv)
 
@@ -68,14 +69,24 @@ class RelativeDislocationReversal:
             hits = np.flatnonzero((excess <= -0.12) & recovered & (turnover >= 40_000))
             if len(hits):
                 decision = int(minute[hits[0]])
-                found.append(Signal(symbol, decision, expire_minute=decision + 1))
+                found.append(
+                    Signal(
+                        symbol,
+                        decision,
+                        expire_minute=decision + 1,
+                        max_hold_minutes=self.max_hold_minutes,
+                    )
+                )
         return found
 
 
 def build(params: dict) -> RelativeDislocationReversal:
-    if params.keys() - {"liquid_cohort"}:
-        raise ValueError("relative_dislocation_reversal only accepts liquid_cohort")
+    if params.keys() - {"liquid_cohort", "one_hour_exit"}:
+        raise ValueError("relative_dislocation_reversal accepts liquid_cohort and one_hour_exit")
     liquid_cohort = params.get("liquid_cohort", False)
-    if not isinstance(liquid_cohort, bool):
-        raise ValueError("liquid_cohort must be a boolean")
-    return RelativeDislocationReversal(liquid_cohort=liquid_cohort)
+    one_hour_exit = params.get("one_hour_exit", False)
+    if not isinstance(liquid_cohort, bool) or not isinstance(one_hour_exit, bool):
+        raise ValueError("liquid_cohort and one_hour_exit must be booleans")
+    if one_hour_exit and not liquid_cohort:
+        raise ValueError("one_hour_exit requires the liquid cohort")
+    return RelativeDislocationReversal(liquid_cohort=liquid_cohort, one_hour_exit=one_hour_exit)

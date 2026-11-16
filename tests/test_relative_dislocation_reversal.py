@@ -6,8 +6,11 @@ import pytest
 
 from kinn import run as runner
 from kinn.core.types import Signal
-from kinn.engine.intraday.data import DayView, make_symbol_day
+from kinn.costs.model import load
+from kinn.engine.intraday.data import DayData, DayView, make_symbol_day
+from kinn.engine.intraday.simulator import FillConfig, simulate_day
 from kinn.engine.intraday.strategy import check_no_lookahead, day_signals
+from kinn.risk.sizing import RiskConfig
 
 NAME = "relative_dislocation_reversal"
 TARGET = [(585, 10), (599, 8.5), (600, 8.6), (601, 8.0), (910, 14.0)]
@@ -107,3 +110,30 @@ def test_liquid_variant_only_changes_the_cohort(phase):
     _, liquid = runner.load_config(NAME, f"{phase}_liquid")
     assert liquid.pop("params") == {"liquid_cohort": True}
     assert liquid == original
+
+
+def test_one_hour_exit_uses_the_first_fill_clock():
+    meta, config = runner.load_config(NAME, "development_liquid_one_hour")
+    strategy = runner.load_strategy(NAME, config["params"])
+    session = view(target=[*TARGET[:-1], (660, 9.0), (661, 9.1), TARGET[-1]])
+    found = day_signals(strategy, session)
+    assert found == [Signal("ABC", 600, expire_minute=601, max_hold_minutes=60)]
+    check_no_lookahead(strategy, session, found, [599, 600, 601, 660, 661])
+    result = simulate_day(
+        DayData(session, {"ABC": 14.0}),
+        found,
+        risk=RiskConfig(**config["risk"]),
+        config=FillConfig(**config["fills"]),
+        costs=load(meta["cost_calibration"]),
+    )
+    (trade,) = result.trades
+    assert (trade.entry_minute, trade.exit_minute, trade.exit_reason) == (601, 661, "time")
+    assert trade.exit_price == pytest.approx(9.1)
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_one_hour_config_only_changes_the_exit(phase):
+    _, close_variant = runner.load_config(NAME, f"{phase}_liquid")
+    _, one_hour = runner.load_config(NAME, f"{phase}_liquid_one_hour")
+    assert one_hour["params"].pop("one_hour_exit") is True
+    assert one_hour == close_variant
