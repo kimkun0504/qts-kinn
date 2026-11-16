@@ -1,6 +1,26 @@
 import type { Stat } from "./format";
 
-export type RunKind = "backtest" | "event_study" | "tick_study" | "book";
+export type RunKind = "backtest" | "event_study" | "tick_study" | "book" | "fill_check";
+/** Which research period a run covers. Searches happen on development; validation is run once. */
+export type Phase = "development" | "validation" | "full";
+
+export interface TargetItem {
+  key: string;
+  label: string;
+  value: number | null;
+  bar: number;
+  met: boolean;
+}
+
+/** The owner's four targets for one out-of-sample backtest (decision 0017). */
+export interface Targets {
+  items: TargetItem[];
+  fills: "confirmed" | "failed" | "not checked";
+  fills_run: string | null;
+  met: number;
+  of: number;
+  all_met: boolean;
+}
 
 export interface RunRow {
   run_id: string;
@@ -26,6 +46,85 @@ export interface RunRow {
   sharpe: number | null;
   total_net: number | null;
   t_stat_2x: number | null;
+  phase: Phase | null;
+  targets: Targets | null;
+  sharpe_2x: number | null;
+  drawdown_2x: number | null;
+  total_net_2x: number | null;
+  fill_check_passed: boolean | null;
+}
+
+/** One strategy folder: what its strategy.yaml declares and how its candidate did. */
+export interface StrategyInfo {
+  strategy: string;
+  status: string;
+  state: string;
+  owner: string | null;
+  family: string;
+  runs: number;
+  candidate_config: string | null;
+  candidate_run: RunRow | null;
+  validation_run: RunRow | null;
+  ready_for_paper: boolean;
+}
+
+export interface FillResult {
+  trades: number;
+  net_per_trade_1x: number | null;
+  net_per_trade_2x: number | null;
+  total_net_1x: number;
+  total_net_2x: number;
+  share_of_simulated_net_2x?: number | null;
+}
+
+export interface FillGroup {
+  orders: number;
+  covered: number;
+  coverage: number | null;
+  confirmed?: number | null;
+  confirmed_after_5s?: number | null;
+  in_full_size?: number | null;
+  through_volume_multiple_median?: number;
+  bid_fell_below_limit?: number | null;
+  simulated?: FillResult;
+  tick_rule_0s?: FillResult;
+  tick_rule_5s?: FillResult;
+  tick_rule_30s?: FillResult;
+}
+
+export interface UnfilledGroup {
+  orders: number;
+  covered: number;
+  rule_missed_a_fill?: number | null;
+  printed_at_the_limit_only?: number | null;
+  at_the_limit_in_full_size?: number | null;
+  if_touches_filled?: FillResult;
+}
+
+export interface FillPeriod {
+  run: string;
+  all: FillGroup;
+  by_cap: Record<string, FillGroup>;
+  by_rung?: Record<string, FillGroup>;
+  before_2007: FillGroup;
+  from_2007: FillGroup;
+  unfilled: Record<string, { all: UnfilledGroup; by_cap: Record<string, UnfilledGroup> }>;
+}
+
+/** A fill check: a run's minute-bar fills compared with real trades (schema fill-check-1). */
+export interface FillCheck {
+  plan: string;
+  main_delay_seconds: number;
+  conditions_source: string;
+  periods: Record<string, FillPeriod>;
+  all_traded: FillGroup;
+  verdict: {
+    passed: boolean;
+    bars: Record<string, boolean>;
+    coverage: number;
+    validation_net_per_trade_2x: number | null;
+    share_of_simulated_net_2x: Record<string, number | null>;
+  };
 }
 
 export interface Side {
@@ -153,6 +252,9 @@ export interface RunDetail {
   positions?: { date: string; count: number; rows: Position[] };
   fills?: number | null;
   tick_study?: TickStudy | null;
+  fill_check?: FillCheck | null;
+  phase?: Phase | null;
+  targets?: Targets | null;
   equity?: { date: string[]; cum_net: number[]; cum_net_2x: number[] };
   histogram?: { counts: number[]; edges: number[] };
 }
@@ -189,6 +291,7 @@ async function get<T>(url: string): Promise<T> {
 export const api = {
   runs: () => get<RunRow[]>("/api/runs"),
   families: () => get<Family[]>("/api/families"),
+  strategies: () => get<StrategyInfo[]>("/api/strategies"),
   info: () => get<{ runs_dir: string }>("/api/info"),
   run: (id: string) => get<RunDetail>(`/api/runs/${encodeURIComponent(id)}`),
 };

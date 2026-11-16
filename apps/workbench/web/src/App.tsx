@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppShell, type Page } from "./components/layout/AppShell";
 import { EmptyState } from "./components/ui/EmptyState";
-import { api, type Family, type RunRow } from "./lib/api";
+import { api, type Family, type RunRow, type StrategyInfo } from "./lib/api";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
 import { Overview } from "./pages/Overview";
@@ -25,6 +25,7 @@ function initialTheme(): Theme {
 export default function App() {
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [families, setFamilies] = useState<Family[]>([]);
+  const [strategyInfo, setStrategyInfo] = useState<StrategyInfo[]>([]);
   const [runsDir, setRunsDir] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<Page>("overview");
@@ -37,10 +38,11 @@ export default function App() {
 
   const load = useCallback(() => {
     clearRunCache();
-    Promise.all([api.runs(), api.families(), api.info()])
-      .then(([r, f, info]) => {
+    Promise.all([api.runs(), api.families(), api.info(), api.strategies()])
+      .then(([r, f, info, s]) => {
         setRuns(r);
         setFamilies(f);
+        setStrategyInfo(s);
         setRunsDir(info.runs_dir);
         setError(null);
       })
@@ -98,7 +100,12 @@ export default function App() {
       {error ? (
         <EmptyState title="Could not load runs">{error}</EmptyState>
       ) : page === "overview" ? (
-        <Overview runs={visible} families={visibleFamilies} onOpen={open} />
+        <Overview
+          runs={visible}
+          families={visibleFamilies}
+          strategies={strategyInfo.filter((s) => (!family || s.family === family) && (!strategy || s.strategy === strategy))}
+          onOpen={open}
+        />
       ) : page === "runs" ? (
         <Runs runs={visible} selected={selected} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
       ) : page === "compare" ? (

@@ -6,3 +6,5 @@ cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_rebound
 prior_trials: 9
+# The config whose validation run is the candidate for paper trading (shown in the Workbench).
+candidate: validation_s_l468

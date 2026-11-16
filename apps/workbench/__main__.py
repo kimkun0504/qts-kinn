@@ -11,6 +11,7 @@ from urllib.parse import unquote
 
 from apps.workbench import api
 from kinn.core.settings import load_settings
+from kinn.run import strategies_dir
 
 STATIC = Path(__file__).parent / "web" / "dist"
 
@@ -24,6 +25,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(api.list_runs(self.runs_dir))
         if path == "/api/families":
             return self._json(api.families(self.runs_dir))
+        if path == "/api/strategies":
+            return self._json(api.strategies(self.runs_dir, strategies_dir()))
         if path.startswith("/api/runs/"):
             detail = api.run_detail(self.runs_dir, path.rsplit("/", 1)[1])
             return self._json(detail, 200 if detail else 404)

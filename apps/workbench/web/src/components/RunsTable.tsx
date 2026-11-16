@@ -1,8 +1,9 @@
 import type { RunRow } from "../lib/api";
 import { int, num, pct, shortTime } from "../lib/format";
 import { type Column, DataTable } from "./ui/DataTable";
+import { PHASE, ResultBadge } from "./Verdict";
 
-const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study", book: "Book" };
+const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study", book: "Book", fill_check: "Fill check" };
 
 /** Backtests and studies report the net return per trade; a book reports its return a year. */
 function net(run: RunRow, value: number | null): string {
@@ -54,12 +55,14 @@ export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, co
     { key: "strategy", header: "Strategy", align: "left", strong: true, render: (run) => run.strategy },
     { key: "config", header: "Config", align: "left", muted: true, render: (run) => run.config },
     { key: "kind", header: "Kind", align: "left", render: (run) => KIND[run.kind] ?? run.kind },
+    { key: "phase", header: "Period", align: "left", muted: true, render: (run) => (run.phase ? PHASE[run.phase] : "–") },
   );
   if (!compact) columns.push({ key: "agent", header: "Agent", align: "left", muted: true, render: (run) => run.agent });
   columns.push(
     { key: "trades", header: "Trades", render: (run) => int(run.trades) },
     { key: "net1", header: "Net 1×", signed: true, strong: true, render: (run) => net(run, run.net_1x) },
     { key: "net2", header: "Net 2×", signed: true, render: (run) => net(run, run.net_2x) },
+    { key: "result", header: "Result", align: "left", render: (run) => <ResultBadge run={run} /> },
   );
   if (!compact) {
     columns.push(
@@ -75,7 +78,7 @@ export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, co
       rowKey={(run) => run.run_id}
       onRowClick={onOpen}
       selectedKey={selected}
-      minWidth={compact ? 620 : 980}
+      minWidth={compact ? 800 : 1160}
       empty="No runs yet. Start one with: uv run kinn run <strategy> --config <name>"
     />
   );

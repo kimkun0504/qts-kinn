@@ -5,11 +5,13 @@ import { type Column, DataTable } from "../components/ui/DataTable";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel, PanelNote } from "../components/ui/Panel";
 import { StatStrip } from "../components/ui/StatStrip";
-import type { BookMetrics, Manifest, Metrics, RunDetail as Detail, Study, Three, TickGroup, TickStudy } from "../lib/api";
+import { PHASE } from "../components/Verdict";
+import type { BookMetrics, Manifest, Metrics, Phase, RunDetail as Detail, Study, Targets, Three, TickGroup, TickStudy } from "../lib/api";
 import { DASHES, SERIES } from "../lib/colors";
 import { int, interval, money, num, pct, plainPct } from "../lib/format";
 import { useRun } from "../lib/useRun";
 import { BookView } from "./BookView";
+import { FillCheckView } from "./FillCheckView";
 
 export function RunDetail({ runId }: { runId: string | null }) {
   const { detail, error } = useRun(runId);
@@ -19,7 +21,7 @@ export function RunDetail({ runId }: { runId: string | null }) {
   const { manifest } = detail;
   return (
     <>
-      <RunHeader manifest={manifest} />
+      <RunHeader manifest={manifest} phase={detail.phase ?? null} />
       {manifest.status !== "complete" ? (
         <EmptyState title={manifest.status === "abandoned" ? "This run was abandoned before it produced results" : "This run has not finished"}>
           {manifest.status === "abandoned" ? "It is not counted as a trial." : `Continue it with: uv run kinn ${manifest.kind === "book" ? "book" : "run"} --resume ${manifest.run_id}`}
@@ -28,10 +30,15 @@ export function RunDetail({ runId }: { runId: string | null }) {
         <StudyView study={detail.study} />
       ) : detail.tick_study ? (
         <TickView tick={detail.tick_study} />
+      ) : detail.fill_check ? (
+        <FillCheckView check={detail.fill_check} />
       ) : manifest.kind === "book" && detail.metrics ? (
         <BookView detail={detail} metrics={detail.metrics as BookMetrics} />
       ) : detail.metrics ? (
-        <BacktestView detail={detail} metrics={detail.metrics as Metrics} />
+        <>
+          {detail.targets && <TargetsPanel targets={detail.targets} />}
+          <BacktestView detail={detail} metrics={detail.metrics as Metrics} />
+        </>
       ) : (
         <EmptyState title="No results in this run folder" />
       )}
@@ -39,7 +46,43 @@ export function RunDetail({ runId }: { runId: string | null }) {
   );
 }
 
-function RunHeader({ manifest }: { manifest: Manifest }) {
+/** The owner's four targets against this out-of-sample run. */
+function TargetsPanel({ targets }: { targets: Targets }) {
+  const show = (key: string, value: number | null) => (key === "sharpe" ? num(value) : key === "drawdown" ? plainPct(value, 1) : pct(value));
+  const bar = (key: string, value: number) => (key === "sharpe" ? `above ${num(value)}` : key === "drawdown" ? `under ${plainPct(value)}` : `at least ${pct(value)}`);
+  const rows = [
+    ...targets.items.map((item) => ({ key: item.key, label: item.label, bar: bar(item.key, item.bar), value: show(item.key, item.value), met: item.met as boolean | null })),
+    {
+      key: "fills",
+      label: "Fills confirmed against real trades",
+      bar: "a passed fill check",
+      value: targets.fills === "not checked" ? "not checked yet" : targets.fills,
+      met: targets.fills === "confirmed" ? true : targets.fills === "failed" ? false : null,
+    },
+  ];
+  return (
+    <Panel title="Targets for paper trading" aside={`${targets.met} of ${targets.of} met`}>
+      <DataTable
+        rows={rows}
+        rowKey={(r) => r.key}
+        columns={[
+          { key: "label", header: "Target", align: "left", render: (r) => r.label },
+          { key: "bar", header: "Bar", align: "left", muted: true, render: (r) => r.bar },
+          { key: "value", header: "This run", align: "left", strong: true, render: (r) => r.value },
+          {
+            key: "met",
+            header: "Result",
+            align: "left",
+            render: (r) => <Badge tone={r.met == null ? "warn" : r.met ? "ok" : "bad"}>{r.met == null ? "Open" : r.met ? "Met" : "Missed"}</Badge>,
+          },
+        ]}
+      />
+      {targets.fills_run && <PanelNote>Fill check: {targets.fills_run}</PanelNote>}
+    </Panel>
+  );
+}
+
+function RunHeader({ manifest, phase }: { manifest: Manifest; phase: Phase | null }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -50,6 +93,7 @@ function RunHeader({ manifest }: { manifest: Manifest }) {
           <Badge tone={manifest.scratch || manifest.status === "abandoned" ? "muted" : "info"}>
             {manifest.scratch ? "Scratch, not counted" : manifest.status === "abandoned" ? "Abandoned, not counted" : "Counted trial"}
           </Badge>
+          {phase && <Badge tone={phase === "validation" ? "info" : "muted"}>{phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : PHASE[phase]}</Badge>}
           {manifest.git.dirty && <Badge tone="warn">Uncommitted code</Badge>}
         </div>
         <div className="text-xs text-ink-3">{manifest.run_id}</div>

@@ -83,3 +83,86 @@ def test_families_count_trials_and_score_overfitting(runs_dir):
     over = family["overfitting"]
     assert over["backtests"] == 2 and over["best_sharpe_annual"] < 0
     assert over["deflated_sharpe"] < 0.05 and 0 <= over["pbo"]["pbo"] <= 1
+
+
+def test_runs_carry_their_period_and_targets_only_out_of_sample(runs_dir, tmp_path):
+    rows = api.list_runs(runs_dir)
+    # The synthetic world sits inside the validation years, so its backtests are judged.
+    backtests = [r for r in rows if r["kind"] == "backtest"]
+    assert backtests and all(r["phase"] == "validation" for r in rows)
+    for row in backtests:
+        judged = row["targets"]
+        assert judged["of"] == 4 and judged["fills"] == "not checked" and not judged["all_met"]
+        assert [i["key"] for i in judged["items"]] == ["net_per_trade", "sharpe", "drawdown"]
+        assert judged["met"] == sum(i["met"] for i in judged["items"])
+    assert all(r["targets"] is None for r in rows if r["kind"] != "backtest")
+    detail = api.run_detail(runs_dir, backtests[0]["run_id"])
+    assert detail["phase"] == "validation" and detail["targets"] == backtests[0]["targets"]
+
+
+def test_targets_and_periods_follow_decision_0017():
+    from datetime import date
+
+    from kinn.validation import targets
+
+    assert targets.phase(date(2003, 9, 10), date(2016, 12, 30)) == "development"
+    assert targets.phase(date(2017, 1, 3), date(2023, 11, 8)) == "validation"
+    assert targets.phase(date(2003, 9, 10), date(2023, 11, 8)) == "full"
+
+    def metrics(net, sharpe, drawdown):
+        side = {"mean_return": net, "sharpe": sharpe, "max_drawdown": drawdown}
+        return {"slippage_2x": side, "equity": 20_000.0}
+
+    assert [i["met"] for i in targets.check(metrics(0.0156, 1.37, -4485.0))] == [True, True, True]
+    assert [i["met"] for i in targets.check(metrics(0.0122, 0.94, -4913.0))] == [True, False, True]
+    assert [i["met"] for i in targets.check(metrics(0.0099, 1.0, -10_000.0))] == [False] * 3
+
+
+def test_a_passed_fill_check_confirms_the_fills_of_the_runs_it_covers(runs_dir, tmp_path):
+    store = tmp_path / "runs"
+    shutil.copytree(runs_dir, store)
+    rows = [r for r in api.list_runs(store) if r["kind"] == "backtest" and not r["scratch"]]
+    covered, other = rows[0]["run_id"], rows[1]["run_id"]
+    check = store / "20990101T000000Z_t_random_entry_fillcheck"
+    check.mkdir()
+    manifest = json.loads((store / covered / "manifest.json").read_text())
+    manifest.update(
+        run_id=check.name, kind="fill_check", config="fill_check:plan", scratch=False,
+        resolved_config={"plan": "plan", "source_runs": {covered: "validation"}},
+    )  # fmt: skip
+    (check / "manifest.json").write_text(json.dumps(manifest))
+    result = {"verdict": {"passed": True, "validation_net_per_trade_2x": 0.012},
+              "all_traded": {"orders": 77}, "periods": {}}  # fmt: skip
+    (check / "fill_check.json").write_text(json.dumps(result))
+    by_id = {r["run_id"]: r for r in api.list_runs(store)}
+    assert by_id[covered]["targets"]["fills"] == "confirmed"
+    assert by_id[covered]["targets"]["fills_run"] == check.name
+    assert by_id[other]["targets"]["fills"] == "not checked"
+    listed = by_id[check.name]
+    assert (listed["kind"], listed["fill_check_passed"], listed["trades"]) == (
+        "fill_check",
+        True,
+        77,
+    )
+    assert api.run_detail(store, check.name)["fill_check"]["verdict"]["passed"] is True
+
+
+def test_strategies_report_status_candidate_and_readiness(runs_dir, tmp_path):
+    folder = tmp_path / "strategies"
+    rows = [r for r in api.list_runs(runs_dir) if r["kind"] == "backtest" and not r["scratch"]]
+    config = rows[0]["config"]
+    (folder / "random_entry").mkdir(parents=True)
+    (folder / "random_entry" / "strategy.yaml").write_text(
+        f"name: random_entry\nstatus: developing\nowner: claude\ncandidate: {config}\n"
+    )
+    (folder / "idle").mkdir()
+    (folder / "idle" / "strategy.yaml").write_text("name: idle\nstatus: parked\nowner: gpt\n")
+    (folder / "_template").mkdir()
+    (folder / "_template" / "strategy.yaml").write_text("name: template\n")
+    found = {s["strategy"]: s for s in api.strategies(runs_dir, folder)}
+    assert set(found) == {"random_entry", "idle"}
+    first = found["random_entry"]
+    assert first["state"] == "candidate" and first["candidate_run"]["config"] == config
+    assert first["ready_for_paper"] is False  # random entries meet no target, fills unchecked
+    assert found["idle"]["state"] == "parked" and found["idle"]["candidate_run"] is None
+    assert [s["strategy"] for s in api.strategies(runs_dir, folder)][0] == "random_entry"

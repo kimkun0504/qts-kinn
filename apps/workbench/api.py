@@ -7,13 +7,15 @@ code and never touches market data.
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 import numpy as np
 import pyarrow.parquet as pq
+import yaml
 
 from kinn.registry import runs as registry
-from kinn.validation import stats
+from kinn.validation import stats, targets
 
 KNOWN_SCHEMAS = {"manifest": {"manifest-1"}, "metrics": {"metrics-1"}, "study": {"study-1"}}
 MAX_POINTS = 700
@@ -35,10 +37,50 @@ def _flat(value, prefix="") -> dict:
     return out
 
 
+def _phase(manifest: dict) -> str | None:
+    """Development, validation or full sample, from the run's period."""
+    try:
+        period = manifest["period"]
+        return targets.phase(date.fromisoformat(period["start"]), date.fromisoformat(period["end"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _fill_checks(runs_dir: Path, manifests: list[dict]) -> dict[str, dict]:
+    """For each run a finished fill check covers: the latest check and whether it passed."""
+    found: dict[str, dict] = {}
+    for manifest in manifests:  # oldest first, so a later check replaces an earlier one
+        if manifest.get("kind") != "fill_check" or manifest["status"] != "complete":
+            continue
+        if manifest["scratch"]:
+            continue
+        result = _load(runs_dir / manifest["run_id"] / "fill_check.json") or {}
+        passed = bool(result.get("verdict", {}).get("passed"))
+        for source in manifest.get("resolved_config", {}).get("source_runs", {}):
+            found[source] = {"run_id": manifest["run_id"], "passed": passed}
+    return found
+
+
+def _targets(metrics: dict, fill_check: dict | None) -> dict:
+    """The owner's four targets for one out-of-sample backtest."""
+    items = targets.check(metrics)
+    fills = (
+        "not checked" if fill_check is None else "confirmed" if fill_check["passed"] else "failed"
+    )
+    met = sum(item["met"] for item in items) + (fills == "confirmed")
+    return {
+        "items": items, "fills": fills,
+        "fills_run": fill_check["run_id"] if fill_check else None,
+        "met": met, "of": len(items) + 1, "all_met": met == len(items) + 1,
+    }  # fmt: skip
+
+
 def list_runs(runs_dir: Path) -> list[dict]:
     """One row per run, newest first, with headline numbers and its parameters."""
     rows = []
-    for manifest in registry.read_manifests(runs_dir):
+    manifests = registry.read_manifests(runs_dir)
+    fill_checks = _fill_checks(runs_dir, manifests)
+    for manifest in manifests:
         run_dir = runs_dir / manifest["run_id"]
         kind = manifest.get("kind", "backtest")
         row = {
@@ -51,8 +93,19 @@ def list_runs(runs_dir: Path) -> list[dict]:
             "data_build_id": manifest["data_build_id"],
             "params": _flat(manifest.get("resolved_config", {})),
             "schema_ok": manifest.get("schema") in KNOWN_SCHEMAS["manifest"],
+            "phase": _phase(manifest), "targets": None, "sharpe_2x": None, "drawdown_2x": None,
+            "total_net_2x": None, "fill_check_passed": None,
         }  # fmt: skip
-        if kind == "event_study":
+        if kind == "fill_check":
+            check = _load(run_dir / "fill_check.json") or {}
+            verdict = check.get("verdict", {})
+            row.update(
+                trades=check.get("all_traded", {}).get("orders"), net_1x=None,
+                net_2x=verdict.get("validation_net_per_trade_2x"), gross=None, sharpe=None,
+                total_net=None, t_stat_2x=None,
+                fill_check_passed=verdict.get("passed") if check else None, phase="full",
+            )  # fmt: skip
+        elif kind == "event_study":
             study = _load(run_dir / "study.json") or {}
             close = study.get("curve", {}).get("r_close", {})
             row.update(
@@ -86,8 +139,12 @@ def list_runs(runs_dir: Path) -> list[dict]:
                 trades=m.get("trades"), net_1x=one.get("mean_return"),
                 net_2x=two.get("mean_return"), gross=m.get("gross_mean_return"),
                 sharpe=one.get("sharpe"), total_net=one.get("total_net"),
-                t_stat_2x=two.get("t_stat_daily"),
+                t_stat_2x=two.get("t_stat_daily"), sharpe_2x=two.get("sharpe"),
+                drawdown_2x=two.get("max_drawdown"), total_net_2x=two.get("total_net"),
             )  # fmt: skip
+            # Targets are judged out of sample only: a development result is a search result.
+            if two and manifest["status"] == "complete" and row["phase"] == "validation":
+                row["targets"] = _targets(m, fill_checks.get(manifest["run_id"]))
         rows.append(row)
     return sorted(rows, key=lambda r: r["started_at"], reverse=True)
 
@@ -117,7 +174,19 @@ def run_detail(runs_dir: Path, run_id: str) -> dict | None:
     if manifest.get("kind") == "tick_study":
         out["tick_study"] = _load(run_dir / "tick_study.json")
         return out
+    if manifest.get("kind") == "fill_check":
+        out["fill_check"] = _load(run_dir / "fill_check.json")
+        return out
     out["metrics"] = _load(run_dir / "metrics.json")
+    out["phase"] = _phase(manifest)
+    if (
+        manifest.get("kind", "backtest") == "backtest"
+        and out["metrics"]
+        and manifest["status"] == "complete"
+        and out["phase"] == "validation"
+    ):
+        checks = _fill_checks(runs_dir, registry.read_manifests(runs_dir))
+        out["targets"] = _targets(out["metrics"], checks.get(run_id))
     if (run_dir / "equity.parquet").exists():
         equity = pq.read_table(run_dir / "equity.parquet").to_pydict()
         index = _thin(len(equity["date"]))
@@ -232,4 +301,35 @@ def families(runs_dir: Path) -> list[dict]:
                 over["pbo"]["trials_compared"] = len(same)
             row["overfitting"] = over
         out.append(row)
+    return json.loads(json.dumps(out, default=float))
+
+
+def strategies(runs_dir: Path, strategies_dir: Path) -> list[dict]:
+    """One row per strategy: what its ``strategy.yaml`` says (status, owner, candidate config)
+    and how its candidate did out of sample. Reads the yaml files only, never strategy code."""
+    rows = [r for r in list_runs(runs_dir) if r["status"] == "complete" and not r["scratch"]]
+    declared = {}
+    for path in sorted(strategies_dir.glob("*/strategy.yaml")):
+        if not path.parent.name.startswith("_"):
+            try:
+                declared[path.parent.name] = yaml.safe_load(path.read_text()) or {}
+            except yaml.YAMLError:
+                declared[path.parent.name] = {}
+    out = []
+    for name in sorted(set(declared) | {r["strategy"] for r in rows}):
+        meta = declared.get(name, {})
+        mine = [r for r in rows if r["strategy"] == name]
+        config = meta.get("candidate")
+        candidate = next((r for r in mine if config and r["config"] == config), None)
+        validated = [r for r in mine if r["kind"] == "backtest" and r["phase"] == "validation"]
+        status = str(meta.get("status") or "unknown")
+        out.append({
+            "strategy": name, "status": status, "state": "candidate" if candidate else status,
+            "owner": meta.get("owner"), "family": meta.get("family") or name, "runs": len(mine),
+            "candidate_config": config, "candidate_run": candidate,
+            "validation_run": candidate or (validated[0] if validated else None),
+            "ready_for_paper": bool(candidate and (candidate["targets"] or {}).get("all_met")),
+        })  # fmt: skip
+    order = {"candidate": 0, "developing": 1}
+    out.sort(key=lambda r: (order.get(r["state"], 2), r["strategy"]))
     return json.loads(json.dumps(out, default=float))
