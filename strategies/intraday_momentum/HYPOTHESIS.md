@@ -141,3 +141,29 @@ rules with no edge at all would be expected to show about 0.8. So for D:
 
 A D rule that clears its own bar but whose neighbours lose is treated as luck and does not go
 forward.
+
+## Addendum, 2026-11-16 01:10 ET: measuring the real fills of the opening range breakout
+
+The development study is in REPORT.md. The breakout on stocks in play has a real return before
+slippage and none after 10 basis points a side; it breaks even at 6 to 9. The 5 basis points
+assumed here was a guess. Before anything else is built, the real figure is measured, which is
+the lesson of the rebound.
+
+**Sample.** 45 breakout trades a year drawn at random from the 5-minute candidates of 2003 to
+2016 (about 620). For each, quotes and trades from the start of the entry bar for 20 minutes.
+The owner downloads them; development years only.
+
+**Measured.**
+
+- Entry: the stop order triggers on the first real trade through the opening range. The fill
+  is the ask at that moment (and one second later). Slippage is the fill against the range.
+- A market exit: the half-spread through the window.
+- The fixed stop: the bid when the first trade reaches the stop, against the stop.
+- How often the stop was really hit inside the entry bar, which bars cannot see.
+
+**Reading the result, set now.** Cost a side = the mean of entry slippage and exit half-spread.
+
+- 5 basis points or less: build the rule into the engine and take it to validation, once the
+  owner has confirmed the bars for this family.
+- 8 or more: parked.
+- In between: marginal; the owner decides.
