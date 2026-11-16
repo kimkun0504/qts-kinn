@@ -240,6 +240,22 @@ def _trade(day, sd: SymbolDay, path: _Path, costs: CostModel) -> Trade:
     )
 
 
+def trade_from_fills(
+    day, sd: SymbolDay, signal: Signal, quantity: int, entry: list[Fill], exit_: list[Fill],
+    reason: str, costs: CostModel,
+) -> Trade:  # fmt: skip
+    """The round trip the simulator would record for these fills. For callers that walk orders
+    themselves (the paper book), so their trades are costed exactly like a backtest's."""
+    live_from = signal.minute + 1
+    path = _Path(signal, quantity, 0.0, live_from, live_from, entry, exit_, reason)
+    return _trade(day, sd, path, costs)
+
+
+def reference_price(sd: SymbolDay, signal: Signal) -> float:
+    """The price an order is sized against: its limit, or the last known close."""
+    return _reference_price(sd, signal)
+
+
 def _reference_price(sd: SymbolDay, signal: Signal) -> float:
     if signal.limit_price is not None:
         return signal.limit_price
