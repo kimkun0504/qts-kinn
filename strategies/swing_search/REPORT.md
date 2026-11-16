@@ -127,6 +127,45 @@ The rule became `strategies/earnings_drift` and the owner ran it once on the hol
 **Passed.** Details, the tick measurement and the caveats (2026 was flat) are in
 [`strategies/earnings_drift/REPORT.md`](../earnings_drift/REPORT.md).
 
+## Sliding windows and market cycles (after the holdout, on years already read)
+
+**Re-fitting the thresholds each year does worse than leaving them alone.** For each year
+from 2010 to 2023 the best cell of family 18's grid on the five years before (or on all years
+before) was traded in that year.
+
+| 2010 to Oct 2023 | Trades | A trade, auction basis | Years positive |
+|---|---|---|---|
+| Fixed rule A50 | 1,118 | 3.84% | 13 of 14 |
+| Chosen each year on the five years before | 1,293 | 2.81% | 11 of 14 |
+| Chosen each year on all years before | 1,380 | 2.77% | 11 of 14 |
+
+Two readings. The fixed rule's thresholds carry some hindsight, and the walk-forward 2.8% is
+the figure with none. And every year, from any window, the choice was an earnings cell with
+thresholds near A50's: the effect did not have to be known in advance to be found.
+
+**By market cycle** (signal date; holds run up to three weeks past each end date):
+
+| Stretch | Trades | A trade | Winners | All stocks, same holds |
+|---|---|---|---|---|
+| 2005 to Oct 2007, rising | 206 | 5.96% | 64% | 0.65% |
+| Oct 2007 to Mar 2009, financial crisis | 110 | 0.61% | 48% | −2.15% |
+| Mar 2009 to Apr 2011, recovery | 224 | 5.16% | 56% | 1.88% |
+| May to Dec 2011, sell-off | 45 | −4.98% | 40% | −4.77% |
+| 2012 to mid-2015, rising | 260 | 3.17% | 56% | 0.31% |
+| Aug 2015 to Feb 2016, sell-off | 32 | 2.81% | 50% | −1.14% |
+| Feb 2016 to Sep 2018, rising | 221 | 5.44% | 57% | 1.36% |
+| Oct to Dec 2018, sell-off | 18 | −9.08% | 44% | −4.23% |
+| 2019 to Feb 2020, rising, then into the crash | 94 | 0.64% | 45% | −2.11% |
+| Feb to Mar 2020, pandemic crash | 11 | −24.14% | 9% | −23.17% |
+| Mar 2020 to 2021, boom | 186 | 8.83% | 61% | 3.31% |
+| 2022, falling | 81 | 1.56% | 51% | −1.29% |
+| 2023 to Oct, recovery | 63 | 5.95% | 49% | −1.27% |
+
+In rising and recovering markets it makes 3% to 9% a trade. In slow declines (2008, 2022) it
+stays a little above zero, about 3% ahead of other stocks. In sharp sell-offs (2011, late
+2018, March 2020) it falls with the market or further. There are few signals in a crash, so
+those stretches are a small part of the trades, but they are where the drawdowns come from.
+
 ## Reproduce
 
 ```
