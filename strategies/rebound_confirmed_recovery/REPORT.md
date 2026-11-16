@@ -230,3 +230,51 @@ years netted $1,359 at 2×. On the same fills, the annualised daily Sharpe of gr
 0.84, below 1 even before commissions, fees, and slippage. Improving execution helps the
 trade-level result. A better risk-adjusted strategy would need a more consistent source of
 returns across sessions.
+
+## Limit retest at the confirmed low
+
+**Decision: park.** The same recovery signal with a resting bid at the already observed
+local low produced 211 portfolio fills on 187 dates. Mean net was **−0.37% at 1× and
+−0.47% at 2×**, down from +1.75% and +1.28% in the saved market-entry portfolio. The 50
+fills in 2013–2016 averaged −1.21% and −1.31%. Counts cleared the sample bars. Return
+and Sharpe failed, so the newer validation window stays unopened.
+
+Run `20261116T061722Z_gpt_rebound_confirmed_recovery_8bd1d311` used clean commit
+`2c606cfb`, preregistration `aafc5ed`, build `447e58e098` and 2003-09-10 through
+2016-12-30. This was one added trial in `intraday_rebound`. There were 599 signals,
+362 unfilled orders, 26 capital rejections, and 211 exits at the auction. Mean filled
+size was $1,960. All 445 run-time replay checks passed.
+
+| Development portfolio | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Net per completed trade | −0.37% | −0.47% |
+| Conditional mean winner | +10.14% | +10.03% |
+| Conditional mean loser | −12.49% | −12.58% |
+| Loss rate | 46.45% | 46.45% |
+| Total net | −$1,304 | −$1,717 |
+| Daily P&L t-statistic | −0.27 | −0.36 |
+| Annualised daily Sharpe | −0.07 | −0.10 |
+| Worst end-of-day drawdown | −$4,706 | −$4,915 |
+
+The mean gross was already −0.11% per trade. The cheaper bid selected a group with
+worse subsequent price movement. This is consistent with a retest selecting renewed
+selling pressure, although the minute bars do not identify the cause of order flow.
+The positive average winner conceals larger losing trades. The 3% target uses
+all completed trades.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 2 | +5.36% | +5.25% | +$214 | +$210 |
+| 2004 | 20 | +3.01% | +2.91% | +$1,198 | +$1,156 |
+| 2005 | 13 | −6.42% | −6.51% | −$1,613 | −$1,636 |
+| 2006 | 11 | −0.50% | −0.60% | −$39 | −$60 |
+| 2007 | 11 | +0.66% | +0.56% | +$114 | +$92 |
+| 2008 | 53 | +2.48% | +2.38% | +$2,917 | +$2,810 |
+| 2009 | 17 | −5.31% | −5.41% | −$1,865 | −$1,896 |
+| 2010 | 13 | −2.51% | −2.61% | −$653 | −$679 |
+| 2011 | 11 | −4.38% | −4.48% | −$958 | −$979 |
+| 2012 | 10 | +3.30% | +3.19% | +$595 | +$576 |
+| 2013 | 5 | +7.26% | +7.15% | +$722 | +$712 |
+| 2014 | 16 | +2.97% | +2.87% | +$947 | +$914 |
+| 2015 | 16 | −7.33% | −7.43% | −$2,337 | −$2,367 |
+| 2016 | 13 | −2.09% | −2.19% | −$546 | −$572 |
