@@ -50,9 +50,12 @@ class RelativeDislocationReversal:
         one_hour_exit: bool = False,
         peer_recovery: bool = False,
         quiet_baseline: bool = False,
+        two_hour_exit: bool = False,
     ):
         self.liquid_cohort = liquid_cohort
         self.max_hold_minutes = 60 if one_hour_exit else None
+        if two_hour_exit:
+            self.max_hold_minutes = 120
         self.peer_recovery = peer_recovery
         self.quiet_baseline = quiet_baseline
         min_adv = 10_000_000 if liquid_cohort else 1_000_000
@@ -114,20 +117,25 @@ class RelativeDislocationReversal:
 
 
 def build(params: dict) -> RelativeDislocationReversal:
-    if params.keys() - {"liquid_cohort", "one_hour_exit", "peer_recovery", "quiet_baseline"}:
+    allowed = {"liquid_cohort", "one_hour_exit", "peer_recovery", "quiet_baseline", "two_hour_exit"}
+    if params.keys() - allowed:
         raise ValueError("unrecognised relative_dislocation_reversal parameter")
     liquid_cohort = params.get("liquid_cohort", False)
     one_hour_exit = params.get("one_hour_exit", False)
     peer_recovery = params.get("peer_recovery", False)
     quiet_baseline = params.get("quiet_baseline", False)
+    two_hour_exit = params.get("two_hour_exit", False)
     if not all(
-        isinstance(p, bool) for p in (liquid_cohort, one_hour_exit, peer_recovery, quiet_baseline)
+        isinstance(p, bool)
+        for p in (liquid_cohort, one_hour_exit, peer_recovery, quiet_baseline, two_hour_exit)
     ):
         raise ValueError("relative dislocation parameters must be booleans")
     if one_hour_exit and not liquid_cohort:
         raise ValueError("one_hour_exit requires the liquid cohort")
-    if peer_recovery and not one_hour_exit:
-        raise ValueError("peer_recovery requires the one-hour exit")
+    if two_hour_exit and (one_hour_exit or not liquid_cohort or not peer_recovery):
+        raise ValueError("two_hour_exit requires the liquid cohort and peer recovery")
+    if peer_recovery and not (one_hour_exit or two_hour_exit):
+        raise ValueError("peer_recovery requires a timed exit")
     if quiet_baseline and (not one_hour_exit or peer_recovery):
         raise ValueError("quiet_baseline requires the one-hour exit with absolute recovery")
     return RelativeDislocationReversal(
@@ -135,4 +143,5 @@ def build(params: dict) -> RelativeDislocationReversal:
         one_hour_exit=one_hour_exit,
         peer_recovery=peer_recovery,
         quiet_baseline=quiet_baseline,
+        two_hour_exit=two_hour_exit,
     )

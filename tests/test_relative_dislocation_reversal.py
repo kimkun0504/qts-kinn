@@ -188,3 +188,42 @@ def test_quiet_baseline_config_only_changes_the_pre_shock_condition(phase):
     _, variant = runner.load_config(NAME, f"{phase}_liquid_quiet_baseline")
     assert variant["params"].pop("quiet_baseline") is True
     assert variant == base
+
+
+@pytest.mark.parametrize(
+    ("close_minute", "exit_minute", "exit_reason", "exit_price"),
+    [(960, 721, "time", 9.1), (700, 700, "auction", 14.0)],
+)
+def test_two_hour_peer_recovery_exit_uses_the_entry_clock_and_stays_intraday(
+    close_minute, exit_minute, exit_reason, exit_price
+):
+    meta, config = runner.load_config(NAME, "development_liquid_peer_recovery_two_hour")
+    strategy = runner.load_strategy(NAME, config["params"])
+    full = view(target=[*TARGET[:-1], (720, 9.0), (721, 9.1), TARGET[-1]], peer_at_599=100)
+    session = DayView(full.day, full.open_minute, close_minute, full.symbols)
+    found = day_signals(strategy, session)
+    assert found == [Signal("ABC", 600, expire_minute=601, max_hold_minutes=120)]
+    check_no_lookahead(strategy, session, found, [599, 600, 601, close_minute - 1])
+    result = simulate_day(
+        DayData(session, {"ABC": 14.0}),
+        found,
+        risk=RiskConfig(**config["risk"]),
+        config=FillConfig(**config["fills"]),
+        costs=load(meta["cost_calibration"]),
+    )
+    (trade,) = result.trades
+    assert (trade.entry_minute, trade.exit_minute, trade.exit_reason) == (
+        601,
+        exit_minute,
+        exit_reason,
+    )
+    assert trade.exit_price == pytest.approx(exit_price)
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_two_hour_peer_recovery_config_only_changes_the_exit(phase):
+    _, base = runner.load_config(NAME, f"{phase}_liquid_peer_recovery")
+    _, variant = runner.load_config(NAME, f"{phase}_liquid_peer_recovery_two_hour")
+    assert base["params"].pop("one_hour_exit") is True
+    assert variant["params"].pop("two_hour_exit") is True
+    assert variant == base

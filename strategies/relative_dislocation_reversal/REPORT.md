@@ -376,3 +376,45 @@ unverified.
 | 2014 | 6 | +5.74% | +5.49% | +$685 | +$655 |
 | 2015 | 8 | +6.50% | +6.29% | +$1,036 | +$1,003 |
 | 2016 | 5 | −5.76% | −6.06% | −$571 | −$601 |
+
+## Two-hour peer-relative exit
+
+**Study decision: develop.** The two-hour horizon passed the preregistered
+event gates in the existing peer-relative study
+`20261116T164207Z_gpt_relative_dislocation_reversal_a740b270`, registered for
+this decision in commit `92021b2`. All 295 entries followed the signal by
+one clock minute, across 199 sessions, and all 199 replay checks passed.
+The gross mean was +4.39% with a day-clustered 95% interval of +2.69%
+to +6.14%. In 2013–2016, 50 events across 46 sessions averaged +4.01%
+gross, +3.44% net at base costs and +3.11% at doubled slippage.
+
+| Two-hour study | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net per event | +3.67% | +3.21% |
+| 95% day-clustered interval | +2.00% to +5.37% | +1.54% to +4.90% |
+| Summed event P&L | +$21,597 | +$18,851 |
+| Daily event P&L t-statistic | 3.70 | 3.34 |
+| Worst drawdown of summed events | −$1,639 | −$1,937 |
+
+This is one additional horizon look using a saved run and all 3,352 development
+sessions. The two-hour return uses the study endpoint close and stored entry-side
+cost inputs. The portfolio applies the exit rule, exit-side costs and capacity.
+The horizon was chosen after reviewing the full development curve, so the
+two-hour result shares the first test's data and selection history.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +31.49% | +31.38% | +$622 | +$619 |
+| 2004 | 6 | +5.78% | +5.55% | +$692 | +$664 |
+| 2005 | 4 | −6.56% | −6.83% | −$525 | −$546 |
+| 2006 | 10 | +4.67% | +4.39% | +$930 | +$875 |
+| 2007 | 24 | +4.04% | +3.54% | +$1,932 | +$1,691 |
+| 2008 | 152 | +4.29% | +3.72% | +$13,013 | +$11,282 |
+| 2009 | 22 | +0.57% | +0.22% | +$250 | +$97 |
+| 2010 | 4 | +3.71% | +3.51% | +$292 | +$276 |
+| 2011 | 14 | −2.05% | −2.36% | −$575 | −$661 |
+| 2012 | 8 | +9.59% | +9.11% | +$1,532 | +$1,455 |
+| 2013 | 9 | +5.10% | +4.77% | +$919 | +$860 |
+| 2014 | 14 | +4.48% | +4.14% | +$1,253 | +$1,157 |
+| 2015 | 18 | +4.27% | +3.97% | +$1,528 | +$1,420 |
+| 2016 | 9 | −1.48% | −1.88% | −$265 | −$338 |
