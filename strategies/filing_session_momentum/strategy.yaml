@@ -1,0 +1,8 @@
+name: filing_session_momentum
+status: parked
+engine: intraday
+universe: filing_session_momentum
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: filing_session_momentum
+prior_trials: 0

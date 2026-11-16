@@ -18,6 +18,8 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/intraday_rebound` | claude | 2026-11-15 | parked; see its REPORT.md |
 | `strategies/random_entry` | claude | 2026-11-15 | canary; change only with the canary tests |
 | `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |
+| `strategies/opening_gap_reclaim` | gpt | 2026-11-15 | overnight gap reversal |
+| `strategies/filing_session_momentum` | gpt | 2026-11-15 | filing-related intraday momentum |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
