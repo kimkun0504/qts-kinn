@@ -182,9 +182,9 @@ trigger.
 What this says:
 
 - **Speed decides it.** A stop order resting at the broker fires within milliseconds and
-  fills near the left column's neighbour, "at the trigger". A program that reacts to a bar or
-  a delayed feed fills nearer "one second later". The truth for a resting stop is between the
-  two and closer to the first; it has not been measured to the millisecond.
+  fills nearer the right-hand column. A program that reacts to a bar or a delayed feed fills
+  nearer the left-hand one. Where a resting stop really lands between the two has not been
+  measured.
 - **The long side barely pays.** At one second it loses; at the trigger it makes about $4,000
   a year on the account.
 - **The profit is in the shorts**, above all stocks that gap down 3% or more and then break
