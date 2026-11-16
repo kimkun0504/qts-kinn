@@ -88,3 +88,33 @@ on 2017-01-03 through 2023-11-08. Apply the unchanged +3.00% and recent-regime
 validation bars. Count each run in `intraday_rebound` and disclose that the
 selector was motivated by development results. No other liquidity or cap
 cutoff is registered. The holdout stays sealed.
+
+## Addendum, 2026-11-16: exit after one hour
+
+The liquid cohort was positive through the close, but the recent development gross
+bar failed. Its published study report includes a one-hour outcome for each year.
+A short-lived liquidity discount may be largely corrected within an hour, after
+which a holder carries the longer-lived information component. This is an
+exploratory choice made after reading development horizon results. It uses the same
+data and does not constitute an additional independent signal test.
+
+Freeze one exit: hold for exactly 60 clock minutes from the first entry fill,
+then send a market sell at the first available bar. Preserve the closing auction
+fallback and same-day exit. Kinn may fill in parts and a missing bar may delay
+the sell. Use the same liquid cohort, signal, one-bar market entry, costs, account
+and participation constraints. The event-study measure is the close after 60
+one-minute bars, capped at the official close. The portfolio uses the next open
+after the held interval and exit-side costs.
+
+Use the saved `r_60` event return from
+`20261116T062029Z_gpt_relative_dislocation_reversal_56620f46` to apply the original
+development study gates at this horizon. The limit on recent years and the expiry
+sensitivity remain the same. If they pass, commit the decision and run
+`development_liquid_one_hour` in the portfolio engine, 2003-09-10 through
+2016-12-30. No new event study repeats the same input and horizon. Apply the
+original portfolio development gates. Only if all pass, run
+`validation_liquid_one_hour` once, 2017-01-03 through 2023-11-08, under the original
+validation gates, including the separate +3% recent return hurdle.
+
+Count the portfolio runs as `intraday_rebound` trials and disclose the horizon
+look. No other holding time is registered. Do not use sealed market data.
