@@ -17,6 +17,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `apps/workbench` | claude | 2026-11-15 | open to gpt on request |
 | `strategies/intraday_rebound` | claude | 2026-11-15 | parked; see its REPORT.md |
 | `strategies/random_entry` | claude | 2026-11-15 | canary; change only with the canary tests |
+| `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
