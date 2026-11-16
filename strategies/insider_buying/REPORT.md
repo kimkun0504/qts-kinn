@@ -1,0 +1,3 @@
+# Insider buying
+
+No result yet. Plan: [HYPOTHESIS.md](HYPOTHESIS.md).

@@ -1,0 +1,7 @@
+name: insider_buying
+kind: swing               # a daily event rule; research scripts first, `kinn swing` if a rule survives
+status: hypothesis        # open-market purchases by officers and directors; see HYPOTHESIS.md
+family: insider_buying
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
