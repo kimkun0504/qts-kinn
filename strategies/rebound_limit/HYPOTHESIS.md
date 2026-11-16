@@ -440,3 +440,10 @@ drawdown at 2× of at most $10,000. Otherwise there is no validation run and the
 test, and it would be the sixth use of those years in this family.
 
 **Trials.** Two development runs and at most one validation run.
+
+## Addendum, 2026-11-15 21:29 ET: the trend filter passed the development gate
+
+Development (sweep `20261116T022246Z_rebound_limit_2`, build `447e58e098`): `t_l468` has a
+Sharpe at 2× of 1.64 against `s_l468`'s 1.45, +2.64% a trade at 2× and a worst drawdown at 2×
+of $1,682. The gate is passed, so `t_l468` is run once on 2017-01-03 to 2023-11-08 as
+`validation_t_l468`, with identical parameters and sizing. (`t_o4`: Sharpe 1.77, +2.26%.)
