@@ -166,6 +166,53 @@ stays a little above zero, about 3% ahead of other stocks. In sharp sell-offs (2
 2018, March 2020) it falls with the market or further. There are few signals in a crash, so
 those stretches are a small part of the trades, but they are where the drawdowns come from.
 
+## Entries and exits (after the holdout, on signals of 2005 to October 2023)
+
+The frozen rule buys at the next open and sells at the close 15 sessions later. Twenty-three
+alternatives, on the same 1,551 signals (`research/claude/swing_exits.py`; auction basis; the
+book is 10 positions of $2,000 over 2005 to 2023):
+
+| Variant | A trade: 2010–17 / 2005–09 / 2018–23 | Book a year | Sharpe | Drawdown |
+|---|---|---|---|---|
+| **Plain rule** | 3.25% / 4.48% / 4.27% | $5,105 | 1.09 | $10,094 |
+| Hold 5 sessions | 1.64% / 1.52% / 2.14% | $2,858 | 1.30 | $5,454 |
+| Hold 10 | 2.41% / 2.61% / 3.53% | $4,178 | 1.25 | $6,794 |
+| Hold 20 | 4.64% / 6.13% / 4.50% | $5,709 | 1.08 | $11,656 |
+| Hold 30 | 5.57% / 7.61% / 3.95% | $6,015 | 1.13 | $15,385 |
+| Stop 8% under entry | 2.67% / 2.16% / 2.53% | $3,739 | 0.92 | $11,338 |
+| Stop 12% | 2.82% / 2.95% / 2.94% | $4,013 | 0.95 | $10,122 |
+| Stop 20% | 3.09% / 3.97% / 4.63% | $5,010 | 1.10 | $10,431 |
+| Stop at the signal day's low | 2.30% / 1.49% / 3.23% | $3,680 | 1.10 | $6,815 |
+| Target 15% | 1.93% / 3.97% / 2.34% | $3,634 | 1.26 | $5,921 |
+| Target 25% | 2.85% / 4.28% / 3.42% | $4,831 | 1.47 | $7,502 |
+| Target 40% | 3.32% / 4.44% / 3.84% | $5,148 | 1.45 | $8,464 |
+| Stop 12% with target 25% | 2.56% / 2.65% / 2.58% | $3,841 | 1.42 | $4,621 |
+| Trailing stop 20% under the highest close, to 30 sessions | 4.92% / 6.93% / 3.84% | $6,671 | 1.36 | $8,750 |
+| **Exit under the 20-day average, to 30 sessions** | 3.34% / 5.83% / 4.36% | $6,328 | 1.37 | $7,428 |
+| Exit under the 9-day average, to 30 | 2.73% / 2.54% / 2.16% | $3,731 | 1.02 | $6,361 |
+| Entry only if the open gaps up 5% at most | 3.66% / 4.68% / 4.68% | $5,137 | 1.12 | $10,307 |
+| Entry on a limit 3% under the signal close | 2.53% / 5.70% / 4.39% | $3,771 | 0.90 | $9,550 |
+| Entry at the next close instead of the open | 2.36% / 3.95% / 2.44% | $3,567 | 0.79 | $10,611 |
+
+- **Tight stops hurt.** A stop 8% or 12% under the entry lowers the mean in every period and
+  does not reduce the drawdown: these stocks swing that much before the winners run.
+- **Waiting a day costs a quarter to a half of the edge.** The first session after the signal
+  is part of the drift, and waiting for a pullback misses the best trades.
+- **The drift used to run 30 sessions and now runs about 15 to 20.** Longer holds beat the
+  plain rule before 2018 and not since.
+- **Profit targets give up a little return for a much steadier book** (Sharpe 1.45 against
+  1.09 with a 40% target) by selling the most volatile positions once they have run.
+- **One variant beats the plain rule on every measure set beforehand** (the mean in all
+  three periods, the book's Sharpe ratio and its drawdown): hold until the close falls under
+  its 20-day exponential average, 30 sessions at most. Its margins on the mean are small in
+  two periods (0.09%), it is one of 23 tried, and its holds run past the three weeks the
+  owner set. It cannot be confirmed on the holdout, which is spent; the frozen rule stays
+  the reference and this exit is a candidate for the paper ledger.
+
+Limits: a stop or target is judged from each day's high and low, so the order within the day
+is assumed (the stop first), and a target is assumed to fill as a limit order, which is
+generous in thin stocks.
+
 ## Reproduce
 
 ```
