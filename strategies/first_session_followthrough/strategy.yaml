@@ -1,0 +1,8 @@
+name: first_session_followthrough
+status: parked
+engine: intraday
+universe: first_session_followthrough
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: new_listing_drift
+prior_trials: 0
