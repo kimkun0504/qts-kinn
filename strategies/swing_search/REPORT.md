@@ -42,7 +42,7 @@ auction basis and 18 of 19 years are positive (2011: −0.4%).
 5. **No other kind of news works.** Jumps on other 8-Ks, on other filings or with no filing
    do not drift: none of those cells reached 2% with a weekly t of 3 in 2010–2017.
 
-The holdout from 2023-11-09 is sealed and has not been touched.
+The holdout from 2023-11-09 was sealed throughout this search. It was run afterwards, once; see the end of this report.
 
 ## What a trade looks like
 
@@ -76,9 +76,10 @@ Two checks so far, both from minute bars:
   the first 30 minutes of the entry day, and $126,000 or more in nine trades of ten. A $2,000
   order is under 2% of that.
 
-Not yet measured: what an on-open or on-close order actually pays. A sample of 150 trades
-(300 tick windows) is planned in
-`MarketData/processed/kinn/quotes_sample/swing_auction/windows.csv` for the owner to download.
+Measured since from a tick sample of 150 trades: the bar's open and close are auction prints
+in 99% of entries and 93% of exits, the cross is within 0.1% of the quotes beside it, and
+market orders instead cost 1.2% a round trip. See
+[`strategies/earnings_drift/REPORT.md`](../earnings_drift/REPORT.md).
 
 ## As a book of $20,000
 
@@ -119,13 +120,12 @@ spread in the search years (0.92%); Sharpe is above 1 only on the auction basis;
 
 About 12,000 cells in all.
 
-## What is still open
+## What happened next
 
-- **The tick sample**, to replace the auction allowance with a measurement. Owner's download.
-- **The holdout.** The rule is not a Kinn strategy yet; it has to be written for the engine
-  before the owner can run it on the sealed years. One run.
-- **Idle money.** The rule uses under half the account on average. Family 18 found no second
-  kind of news to fill it, and rule C made the book worse.
+The rule became `strategies/earnings_drift` and the owner ran it once on the holdout
+(2023-11-09 to 2026-11-06): 266 trades, 5.04% a trade at 1× and 4.67% at 2×, $26,716.
+**Passed.** Details, the tick measurement and the caveats (2026 was flat) are in
+[`strategies/earnings_drift/REPORT.md`](../earnings_drift/REPORT.md).
 
 ## Reproduce
 
