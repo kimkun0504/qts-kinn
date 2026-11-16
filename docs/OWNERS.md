@@ -20,6 +20,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |
 | `strategies/opening_gap_reclaim` | gpt | 2026-11-15 | overnight gap reversal |
 | `strategies/filing_session_momentum` | gpt | 2026-11-15 | filing-related intraday momentum |
+| `strategies/intraday_volume_surge` | gpt | 2026-11-15 | small-cap turnover surge continuation |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

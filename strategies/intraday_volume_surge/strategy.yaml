@@ -1,0 +1,8 @@
+name: intraday_volume_surge
+status: parked
+engine: intraday
+universe: intraday_volume_surge
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_volume_surge
+prior_trials: 0
