@@ -1,5 +1,5 @@
 name: new_listing_drift
-status: hypothesis
+status: parked
 engine: intraday
 universe: new_listing_drift
 cost_calibration: ibkr_pro_tiered
