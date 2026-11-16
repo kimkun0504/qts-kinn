@@ -68,6 +68,20 @@ def test_market_cap_floor_drops_small_and_unknown_companies():
     ])  # fmt: skip
     assert set(signals(v)) == {"BIG", "SMALL", "UNKNOWN"}
     assert set(signals(v, min_marketcap=3e8)) == {"BIG"}
+    assert set(signals(v, max_marketcap=3e8)) == {"SMALL"}
+
+
+def test_no_order_below_the_minimum_limit_price():
+    cheap = [(m, c / 9) for m, c in DROP]  # previous close 1.11, event bar close about 0.99
+    v = view([("AAA", DROP, {}), ("CHEAP", cheap, {"prev_close": 10 / 9})])
+    assert set(signals(v, limit_offset=0.04)) == {"AAA", "CHEAP"}
+    assert signals(v, limit_offset=0.04)["CHEAP"].limit_price < 1
+    assert set(signals(v, limit_offset=0.04, min_limit_price=1.0)) == {"AAA"}
+    # In a ladder only the rungs under the minimum are dropped.
+    edge = [(m, c * 0.118) for m, c in DROP]  # event bar close about 1.05
+    v = view([("EDGE", edge, {"prev_close": 1.18})])
+    rungs = all_signals(v, ladder=[[0.04, 0.5], [0.08, 0.5]], min_limit_price=1.0)
+    assert [s.tag for s in rungs] == ["o4"] and rungs[0].limit_price >= 1.0
 
 
 def test_a_ladder_sends_one_order_per_rung_and_the_simulator_admits_them_together():

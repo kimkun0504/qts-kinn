@@ -246,3 +246,52 @@ whole loss was in stocks that had already fallen over the previous 60 sessions (
 trades); stocks that had risen made +$6,750 on 221 trades and were profitable in all 14
 development years. Tables, the hypothesis that follows and the reasons to distrust it are in
 HYPOTHESIS.md (addendum of 20:10 ET). **Not tested on any period.**
+
+## Fill check against real trades, 2026-11-15 (plan in HYPOTHESIS.md, addendum of 19:50 ET)
+
+**Verdict: passed all four pre-set bars. The minute-bar fills of `x_o4` are real trades, in the
+order's size, at $2,000 a position.** Run `20261116T012801Z_claude_rebound_limit_0e3f2a2d`
+(`fill_check.md` there has every table); vendor trades and quotes for 5,828 order windows
+(owner download, plan `fillcheck_x_o4`); trade conditions from the vendor's own table.
+
+| Bar set in advance | Result | |
+|---|---|---|
+| Tick data for at least 95% of traded orders | 99.9% (3 of 4,989 had no prints) | passed |
+| At least 97% confirmed by a real trade below the limit, each period | 100%, 100% | passed |
+| Validation net per trade at 2×, orders cut to real size, 5 s latency: at least +1.0% | **+1.17%** (simulated +1.19%) | passed |
+| Keeps at least 80% of the simulated net at 2×, each period | 95% validation, 93% development | passed |
+
+"Cut to real size": each order keeps the smaller of its simulated quantity and the shares that
+printed at least a tick below the limit from 5 seconds after the event bar.
+
+| | Val orders | Filled in full | Net/trade 2×: simulated → real | Kept | Dev orders | Filled in full | Net/trade 2×: simulated → real | Kept |
+|---|---|---|---|---|---|---|---|---|
+| Under $300M | 1,003 | 95.9% | +1.94% → +1.92% | 95% | 1,852 | 96.8% | +1.07% → +1.01% | 89% |
+| $300M–$2B | 631 | 98.3% | +0.33% → +0.30% | 84% | 1,053 | 97.7% | +1.27% → +1.24% | 93% |
+| Over $2B | 143 | 100% | +0.25% → +0.25% | 100% | 250 | 98.8% | +2.83% → +2.78% | 98% |
+| All | 1,789 | 97.1% | +1.19% → +1.17% | 95% | 3,200 | 97.2% | +1.24% → +1.19% | 93% |
+
+- **The price traded through.** The national best bid fell below the limit in 99.7% of the
+  validation fills and 97.6% of the development fills.
+- **Latency costs money.** Order in the book 0, 5, 30 seconds after the bar: validation +1.19%,
+  +1.17%, +1.01% a trade and $34,013, $32,870, $28,304; development +1.24%, +1.19%, +1.04% and
+  $60,647, $57,971, $47,889. Thirty seconds late loses about a fifth of the profit.
+- **The bar rule leaves out touches.** Of sampled orders where the low touched the limit without
+  trading through, 97–98% did print at the limit (64–76% in the order's full size), and a fill
+  there would have earned +4.89% (validation, 160 orders) and +3.48% (development, 190) at 2×.
+  Live trading gets some of these; the backtest counts none. Orders that came within 1% of the
+  limit or stayed far from it had no print at or below it (240 sampled).
+- **2003–2006**, before the trade-through rules: 100% confirmed, 98% of the net kept.
+- **Size.** Share of under-$300M orders whose through-volume covers a larger order: 2× the
+  order 92–93%, 5× 83–86%, 10× 72–75%, 25× 46–51%. Median dollars traded below the limit:
+  $42,000–53,000 (over $1 million above $2B).
+
+**Micro-caps (rule set before the data):** not excluded (100% confirmed; 95% and 89% of the net
+kept). Their fills are real at $2,000 and would thin out by $10,000 a position. The two periods
+disagree on whether they are the best size group or the worst, so market cap enters the next
+search as a variant.
+
+**Not covered by this check:** the exit. Selling in the closing auction is modelled at 10 bps,
+not measured, and matters most in the smallest names.
+
+The family now carries 49 trials.

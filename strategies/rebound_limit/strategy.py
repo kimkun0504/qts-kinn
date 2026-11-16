@@ -37,6 +37,8 @@ class ReboundLimit:
         self.stop_pct = params.get("stop_pct")  # None: no stop
         self.max_hold = params.get("max_hold_minutes")  # None: hold to the close
         self.min_marketcap = float(params.get("min_marketcap", 0.0))  # previous session's
+        self.max_marketcap = params.get("max_marketcap")  # None: no ceiling
+        self.min_limit_price = float(params.get("min_limit_price", 0.0))  # no order below this
         # A ladder: [[offset, share of the position], ...]. None: one order at `limit_offset`.
         ladder = params.get("ladder")
         self.rungs = (
@@ -84,12 +86,17 @@ class ReboundLimit:
                 continue
             if minute > self.last_minute or adv < self.min_adv or prev_close < self.min_price:
                 continue
-            if self.min_marketcap > 0 and not cap >= self.min_marketcap:  # unknown cap: out
+            # A bound on market cap leaves out companies whose market cap is unknown.
+            if self.min_marketcap > 0 and not cap >= self.min_marketcap:
+                continue
+            if self.max_marketcap is not None and not cap < float(self.max_marketcap):
                 continue
             if self.min_drop_15m is not None and not ret15 <= -float(self.min_drop_15m):
                 continue
             for offset, share, tag in self.rungs:
                 limit = round(close * (1 - offset), 2 if close >= 1 else 4)
+                if limit < self.min_limit_price:
+                    continue
                 out.append(
                     Signal(
                         symbol, minute, limit_price=limit, expire_minute=minute + self.rest,

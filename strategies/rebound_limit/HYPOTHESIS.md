@@ -306,3 +306,61 @@ unfiltered run, and a filter also changes which orders get capital.
 
 **Status.** Proposed to the owner. It is not run on 2017–2023 without the owner's word, and
 any run of it, on any period, is a counted trial with its bars written first.
+
+## Addendum, 2026-11-15 20:30 ET: deeper limits and ladders (written before any run of them)
+
+**Why now.** The fill check passed (REPORT.md): the 4%-below fills are real trades, in size, at
+$2,000. The entry-depth round ended with the best variant at the edge of the tested range
+(0% to 4% below: +0.26% to +1.34% a trade). This round looks past the edge.
+
+**Fixed for every variant, by the owner (not tuned):**
+
+- **No order with a limit price under $1** (`min_limit_price: 1.0`). The universe rule is on the
+  previous close, so `x_o4` bought 121 times under $1 (lowest $0.72); those trades earned about
+  nothing after 105 bps of costs.
+- Everything else as `x_o4`: the same event, 10 minutes of rest, exit in the closing auction,
+  $20,000 account, $2,000 a position, build `6453bd3ec8`.
+
+**Variants (12), development period only (2003-09-10 to 2016-12-30).** Six entries, each for all
+stocks and for market cap under $300M only (`_m`; companies with unknown market cap are out):
+
+| Config | Entry |
+|---|---|
+| `s_o4`, `s_o4_m` | one limit 4% below the event bar's close (the reference) |
+| `s_o5`, `s_o5_m` | one limit 5% below |
+| `s_o6`, `s_o6_m` | one limit 6% below |
+| `s_o8`, `s_o8_m` | one limit 8% below |
+| `s_l48`, `s_l48_m` | ladder: half the position 4% below, half 8% below |
+| `s_l468`, `s_l468_m` | ladder: a third each 4%, 6% and 8% below |
+
+A ladder's orders go in together and each reserves its own capital; each filled rung is one
+trade in the counts and averages.
+
+**Why the under-$300M versions.** The owner wants to focus there, and the fill check found
+those fills real at this size. Against it: in development micro-caps were the weakest size group
+(+1.07% a trade at 2× against +1.27% and +2.83%); the case for them comes from the validation
+years. So they compete on development under the same rule as everything else.
+
+**Not in this round:** the prior-trend filter (addendum of 20:10 ET). The owner has not decided,
+and it needs a new column in the data build.
+
+**Selection rule.** Among variants with at least 1,000 trades in development, net per trade of
+at least +1.0% at 2× slippage and a worst drawdown at 2× of at most $10,000: the highest
+t-statistic of daily P&L at 2× slippage. Ties go to the simpler variant (one limit before a
+ladder, all stocks before under-$300M).
+
+**Validation (one run of the chosen variant, 2017-01-03 to 2023-11-08).** It passes on the
+owner's targets: net per trade at 2× of at least **+1.0%**, Sharpe at 2× **above 1**, worst
+drawdown at 2× **under $10,000** (half the account).
+
+- If the rule chooses `s_o4` or `s_o4_m`, **no validation run is made**: the validation result
+  of the 4% limit is already known (`x_o4`, and its under-$300M trades), and the finding is that
+  going deeper does not beat it.
+- A pass for an under-$300M variant is weak evidence: the 4% limit's under-$300M trades are
+  already known to have done well in those years.
+- The validation years have been used four times in this family. This would be the fifth.
+- Before paper trading, the chosen variant needs its own fill check: a deeper limit fills on
+  rarer, sharper prints than the ones checked so far.
+
+**Trials.** 12 development runs and at most one validation run: the family total goes from 49
+to 61 or 62.
