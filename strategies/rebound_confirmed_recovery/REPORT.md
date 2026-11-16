@@ -1,5 +1,9 @@
 # Rebound after a confirmed recovery
 
+**Final verdict: park.** The confirmed entry improved base-cost mean return in development
+to +1.69% versus +1.34% for Claude's fixed passive benchmark. It fell behind at 2× slippage
+and missed the Sharpe gate, ending the experiment before validation.
+
 ## Development event study
 
 **Decision: develop.** All event-study gates in the [preregistration](HYPOTHESIS.md) passed.
@@ -49,3 +53,72 @@ The portfolio engine applies expiry, auction costs, buying power and participati
 | 2014 | 46 | +1.35% | +0.26% | +$1,230 | +$232 |
 | 2015 | 67 | −0.91% | −1.90% | −$1,214 | −$2,539 |
 | 2016 | 67 | +2.24% | +1.22% | +$2,994 | +$1,630 |
+
+## Development portfolio decision
+
+**Decision: park.** This entry beat the `x_o4` mean at base costs on the same development
+sessions and data build, then fell behind at 2× slippage. The 2× Sharpe also fell below the
+minimum. These were required development bars. No validation run was opened.
+
+| Development metric | Confirmed recovery | Claude's `x_o4` |
+|---|---:|---:|
+| Trades / traded sessions | 952 / 654 | 3,200 / 1,603 |
+| Mean executed position | $1,376 | $1,834 |
+| Mean gross return per trade | +2.73% | +1.70% |
+| Mean net per trade, 1× | **+1.69%** | +1.34% |
+| Mean net per trade, 2× | +1.13% | **+1.24%** |
+| Net dollar P&L, 1× / 2× | +$19,993 / +$13,435 | +$68,085 / +$62,128 |
+| Daily t-statistic, 1× / 2× | 2.29 / 1.55 | 4.97 / 4.55 |
+| Daily annualised Sharpe, 1× / 2× | 0.63 / 0.42 | 1.36 / 1.25 |
+| Worst end-of-day drawdown, 1× / 2× | −$2,444 / −$3,197 | −$5,561 / −$6,659 |
+
+Fixed comparisons use the exact stored means. The 1× difference was +0.35 percentage
+points and the 2× difference was −0.11 points. The sample, regime and drawdown bars
+all passed. The two development halves earned +$10,283 and +$3,152 at 2×. The maximum
+allowed 2× drawdown was $10,000 and the annualised 2× Sharpe floor was 1.
+
+Run `20261116T013621Z_gpt_rebound_confirmed_recovery_2b36bc0c` used clean commit
+`1e8424f0` and build `6453bd3ec8`. The benchmark was
+`20261115T232205Z_claude_rebound_limit_84ff9c3d`. Both runs used the same calendar,
+account settings, cost calibration, and data build. The study and portfolio backtest
+charged two trials to `intraday_rebound`, bringing the shared count to 64 at reporting.
+The 2017–2023 validation and the holdout were left untouched for this strategy.
+
+### Annual development portfolio results
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L at 1× | Net P&L at 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 16 | +0.02% | −0.70% | +$12 | −$142 |
+| 2004 | 51 | +1.79% | +1.22% | +$2,073 | +$1,679 |
+| 2005 | 45 | −2.67% | −3.25% | −$1,864 | −$2,228 |
+| 2006 | 44 | +0.67% | +0.12% | −$483 | −$853 |
+| 2007 | 69 | +1.56% | +0.97% | +$1,981 | +$1,454 |
+| 2008 | 286 | +3.47% | +2.95% | +$12,946 | +$11,409 |
+| 2009 | 121 | +0.76% | +0.17% | −$324 | −$1,035 |
+| 2010 | 37 | +2.62% | +2.03% | +$701 | +$407 |
+| 2011 | 53 | −0.46% | −1.07% | +$201 | −$225 |
+| 2012 | 36 | +1.45% | +0.89% | +$623 | +$366 |
+| 2013 | 23 | +2.64% | +2.09% | +$1,375 | +$1,162 |
+| 2014 | 43 | +2.24% | +1.69% | +$1,361 | +$1,068 |
+| 2015 | 65 | −0.46% | −1.02% | −$1,181 | −$1,721 |
+| 2016 | 63 | +2.57% | +2.01% | +$2,571 | +$2,095 |
+
+## What the portfolio run changed
+
+- The engine left 48 signals unfilled and declined 85 for capital. The 952 trades all
+  exited in the closing auction. Mean actual notional was below the $2,000 target, as
+  expected from participation. The weighted round-trip cost at 1× was 81 bps versus
+  34 bps for the benchmark. Slippage was 50 bps versus 10 bps, helping explain why the
+  gross return advantage narrowed at base costs and reversed at 2×.
+- The May 6, 2010 Flash Crash accounted for 74 measured events and $15,231 of hypothetical
+  2× P&L in the study. With the account and execution rules, it produced 10 trades and
+  +$1,549 at 2×. Prices and executable size were unusually uncertain that day.
+  [SEC and CFTC findings on the May 6 market events](https://www.sec.gov/files/marketevents-report.pdf)
+- In the portfolio, 2008 produced about 85% of the total development net
+  P&L at 2×. The largest single session contributed +$3,828 at 2×. Removing that date
+  descriptively put the 1× mean at +1.49%. These observations did not change selection.
+- The benchmark's later tick check supported its own passive fills. This run uses
+  minute opens for market entries and the official closing price for the auction.
+  These fills would require their own quote and trade audit. Evidence that marketable
+  quotes and size survive across regimes, plus a materially stronger 2× Sharpe, would
+  change the verdict.
