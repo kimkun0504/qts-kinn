@@ -185,3 +185,9 @@ About 12 more measurements, counted against the family. The reading is the retur
 before slippage and the slippage at which each breaks even, beside the 20-name figures (0.17%
 a trade, break-even 7 to 9 bp). Picking individual tickers by their past results is not
 tested: that is fitting to history unless done walk-forward.
+
+**Added 01:50 ET, before looking: one more cut, by share price.** Slippage is mostly a fixed
+number of cents, so it is a smaller share of an expensive stock: 2 cents is 10 bp at $20 and
+2 bp at $100. If the return per trade (in percent) is similar across prices, expensive stocks
+are where the rule survives. Buckets: under $20, $20 to $50, $50 to $100, over $100. Read as
+the break-even in cents a share.
