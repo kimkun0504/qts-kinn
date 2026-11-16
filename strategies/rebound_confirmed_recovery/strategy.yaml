@@ -1,0 +1,8 @@
+name: rebound_confirmed_recovery
+status: parked
+engine: intraday
+universe: rebound_confirmed_recovery
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
