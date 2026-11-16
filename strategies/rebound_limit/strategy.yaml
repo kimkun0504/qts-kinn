@@ -1,5 +1,5 @@
 name: rebound_limit
-status: developing        # s_l468 failed the holdout; reversal signals did not help (2026-11-16); open question: fast falls bought at once; see REPORT.md
+status: parked            # holdout failed; reversal signals did not help; fast falls cost too much to buy (2026-11-16); see REPORT.md
 engine: intraday
 universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered

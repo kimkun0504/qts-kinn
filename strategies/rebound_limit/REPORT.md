@@ -555,3 +555,48 @@ has just been emptied) is the whole question. The 1.0% cost here is an assumptio
 
 Trials: 35 entry and exit combinations, 63 context cells and about a dozen further cuts
 (years, size, price, speed buckets). `prior_trials` rises from 9 to 107.
+
+## The cost of buying a fast fall at once, 2026-11-16 (plan in HYPOTHESIS.md, addendum of 00:10 ET)
+
+**Verdict: the rebound after a fast fall is mostly paid away at the entry. Best estimate of the
+net return is +0.2% a trade buying 5 seconds after the event bar, against a bar of +1.0% to go
+on and +0.5% to stay open. By the rule set before measuring, the family is parked.**
+
+Quotes and trades already on disk for 2,129 development fast falls
+(`research/claude/fast_fall_entry_cost.py`). No run, no validation or holdout data. The samples
+came from the fill checks and over-represent falls that continued, so events are grouped by
+how far they fell in the next 10 minutes and averaged with each group's share of all 13,745
+fast falls.
+
+| In the next 10 minutes | Share of fast falls | Study's return (bought at the next print) | Sampled | Ask 5 s later, over the study's price | Return from that ask to the close |
+|---|---|---|---|---|---|
+| Fell 4% or more | 16.5% | −1.28% | 1,931 | +0.72% | −2.83% |
+| Fell 3 to 4% | 6.7% | +0.66% | 126 | +0.71% | +0.60% |
+| Fell 1 to 3% | 24.6% | +2.20% | 18 | +0.33% | +2.76% |
+| Held (under 1%) | 52.2% | +3.15% | 39 | +1.32% | +0.81% |
+| **All fast falls** | | **+2.02%** | | **+0.94%** | **+0.67%** (standard error 0.60) |
+
+- **The entry costs about twice what the study assumed.** The ask 5 seconds after the event bar
+  is 0.94% above the price the study bought at (0.5% assumed). Half-spreads are 0.35% at the
+  median and 1.4% at the 90th percentile.
+- **It costs most where the money is.** In the half of fast falls that hold and bounce, the ask
+  is already 1.3% above the next print. Those events returned +2.05% from the print and +0.81%
+  from the ask.
+- **Net:** +0.67% from the ask to the close, less 0.45% for commissions, fees and the closing
+  auction: **+0.22%**. Buying 1 second after gives +0.11%; 30 seconds after, +0.42%.
+- **Size:** the ask shows $2,000 or more in 51% of events. A full position would often pay more
+  than the quoted ask.
+
+How sure this is. The cost of entry is measured on 2,114 events and is solid. The return from
+the ask rests on few events of the kind that matters (57 in the two groups that bounce), so its
+standard error is 0.6%: the true figure could be near +1% or below zero. A second estimate that
+does not depend on those few events, the study's +2.02% less the measured entry cost and other
+costs, is +0.63% (+0.42% without the flash-crash day). Both are under the +1.0% bar.
+
+What this means. A fast flush empties the order book; whoever is resting on the bid in that
+second is paid for it, and the price has moved by the time an order sent after the bar arrives.
+Waiting at the event bar's close instead (`fast_o0`, the first sweep) fills only on the falls
+that continue. Neither route reaches the owner's 1% a trade.
+
+A random download of a few hundred fast falls would shrink the standard error from 0.6% to
+about 0.3%. It would settle whether the figure is +0.2% or +0.7%, not lift it to +1.0%.
