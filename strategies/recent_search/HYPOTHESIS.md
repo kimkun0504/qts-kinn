@@ -153,3 +153,35 @@ measured, once the fields and coverage have been inventoried.**
   its publication date, not its settlement date.
 - Same periods and selection rule as the rest of this family. Long and short are both shown;
   only long cells can be candidates while the engine cannot short.
+
+## Addendum, 2026-11-16 12:05 ET: the news inventory, and family 11 as it will be measured
+
+**Inventory (no returns read).** 540,295 articles, but the archive is empty before 2021: 287
+articles in 2016 to 2020, then 132,932 in 2021, 211,763 in 2022 and 195,313 in 2023. Publishers:
+Zacks (43%), GlobeNewswire (20%), Motley Fool (17%), Benzinga (11%), MarketWatch, Seeking
+Alpha. Only GlobeNewswire carries company press releases (105,354; none before 2021); the
+rest is commentary, much of it stamped on the hour or half hour. Benzinga's own feed is not in
+the plan. Short volume returned nothing for these years. Short interest: 2.48 million rows.
+
+So timed news can be searched on 2021 and 2022 only, and checked on 2023. The selection rule is
+adjusted for the shorter span, before anything is measured: at least 150 trades, 3% net at 2×,
+t of at least 4 on daily means, positive in both 2021 and 2022.
+
+**Events.** GlobeNewswire releases naming one or two tickers in the universe. Headline groups by
+words in the title: results and guidance; offerings and financing; trial, FDA and approval
+news; contracts and partnerships; mergers; buybacks and dividends; law-firm notices; other.
+
+**11a. Released before the open** (after the prior close, or before 09:30). Buy at 09:35, sell
+at the close. Cells: headline group × gap (five buckets) × company size. Also: buy at the first
+premarket checkpoint after the release (07:00, 08:00 or 09:00), sell at the open, at 10:00 or
+at the close; cells: headline group × move so far × exit.
+
+**11b. Released during the session** (09:35 to 15:00). Buy at the first print at least one
+minute after the release, and again at least five minutes after; sell 15 or 60 minutes later
+or at the close. Cells: headline group × the stock's move from its last price before the
+release to the entry (five buckets) × exit × delay.
+
+**11c. Short interest**, as a second cut on the best cells of 11a and 11b and on the premarket
+runners of family 9: days to cover (under 2, 2 to 5, over 5) and shares short as a share of
+shares outstanding (under 5%, 5 to 15%, over 15%). A reading is used from 14 days after its
+settlement date, when it was public.
