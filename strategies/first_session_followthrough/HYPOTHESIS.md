@@ -66,3 +66,41 @@ stages. The study estimates both sides from the entry bar and
 portfolio fills model opening prints, size and auction proceeds.
 Current-vintage classifications, ticker matching and missing bars
 affect the observed-age proxy. The holdout stays sealed.
+
+## Addendum, 2026-11-16: decide after sufficient turnover
+
+The fixed 30-minute study (`20261116T220154Z_gpt_first_session_followthrough_df16ec8f`)
+cleared the sample requirements but averaged less than +3% gross and lost at
+doubled slippage. The first 30 minutes can capture different amounts of price
+discovery across stocks. A stock that is already trading heavily may show
+evidence of sustained demand earlier. Buying earlier may also pay a wider
+spread or buy the opening enthusiasm before the first pullback. The prior
+study motivated this change. This is one additional timing look.
+
+Keep the starting date, first observed session cohort, opening-price
+floor, latest first bar, next-minute entry, closing auction, minimum
+remaining session, risk and costs from the fixed rule. Keep the two
+consecutive actual closes at least 5% above the first opening price,
+$2 million cumulative regular-session turnover from the first bar,
+and $40,000 of decision-bar turnover. Look for the first qualifying
+completed bar on or before the 30th clock minute after the first
+bar, counting the opening minute as minute one. Require at least
+five valid observed closes through the decision and at least five
+sixths of elapsed clock minutes observed. The latter reproduces
+the 25-of-30 coverage at the original endpoint. The volume
+threshold is measured only through each candidate bar.
+
+Run `development_turnover_timing --study` on 2003-09-10 through
+2016-12-30 and apply the original `r_close` study gates, including
+the next-minute sensitivity if needed. Compare signal coverage,
+timing and event returns with the fixed-clock run as a descriptive
+diagnostic. After a committed develop verdict, run the
+`development_turnover_timing` portfolio and apply the same
+development gates. Only if qualified, run
+`validation_turnover_timing` once on 2017-01-03 through 2023-11-08
+under the unchanged +3% base-cost, sample and doubled-slippage
+requirements, including the separate 2022–2023-11-08 block.
+
+There is one varied timing rule. Use the existing unknown-liquidity
+spread assumption. Count the runs in `new_listing_drift`. The sealed
+holdout remains excluded.
