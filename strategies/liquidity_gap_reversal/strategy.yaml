@@ -1,0 +1,8 @@
+name: liquidity_gap_reversal
+status: hypothesis
+engine: intraday
+universe: liquidity_gap_reversal
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
