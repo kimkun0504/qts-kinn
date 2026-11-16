@@ -245,11 +245,16 @@ def _fills_plan(args: argparse.Namespace) -> int:
         if not done:
             print(f"paused while listing {run_id}; run the same command again to continue")
             return 0
-    out = fill_check.plan(settings, args.name, list(labels), work, labels=labels)
+    out = fill_check.plan(
+        settings, args.name, list(labels), work, labels=labels, also_reads=args.also_reads
+    )
     summary = json.loads((out / "plan.json").read_text())
     for run in summary["runs"]:
         print(run)
-    print(f"{summary['windows']} windows planned: {out / 'windows.csv'}")
+    print(
+        f"{summary['orders']} orders; {summary['windows']} windows to fetch "
+        f"({summary['windows_already_downloaded']} already downloaded): {out / 'windows.csv'}"
+    )
     print(f"The owner now runs: uv run python tools/owner/download_quotes.py {out / 'windows.csv'}")
     return 0
 
@@ -347,6 +352,13 @@ def main(argv: list[str] | None = None) -> int:
     f_plan = fills.add_parser("plan", help="list the runs' orders and write the windows to fetch")
     f_plan.add_argument("--name", required=True, help="name of the plan (and of the raw folder)")
     f_plan.add_argument("--runs", nargs="+", required=True, metavar="LABEL=RUN_ID")
+    f_plan.add_argument(
+        "--also-reads",
+        nargs="*",
+        default=[],
+        metavar="PLAN",
+        help="earlier plans whose downloaded windows are reused",
+    )
     f_plan.add_argument("--work", help="folder for resumable parts (default: inside the plan)")
     f_plan.add_argument("--budget", type=float, default=float("inf"), help="seconds, then pause")
     f_plan.add_argument("--workers", type=int, default=1)

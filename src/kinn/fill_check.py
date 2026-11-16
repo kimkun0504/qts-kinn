@@ -54,7 +54,7 @@ ODD_LOT = 37
 ORDER_FIELDS = [
     "run", "day", "symbol", "permaticker", "signal_minute", "live_from", "last_entry",
     "limit_price", "order_quantity", "bar_quantity", "bar_fill_minute", "min_low", "kind",
-    "close", "prev_close", "adv20_prev", "marketcap_prev",
+    "close", "prev_close", "adv20_prev", "marketcap_prev", "tag",
 ]  # fmt: skip
 WINDOW_FIELDS = [*quotes.WINDOW_FIELDS, "limit_price", "quantity", "kind", "run"]
 
@@ -121,7 +121,7 @@ def _list_month(job: dict) -> str | None:
                 "bar_fill_minute": entry[0].minute if entry else None, "min_low": min_low,
                 "kind": kind, "close": data.official_close.get(sd.symbol),
                 "prev_close": sd.prior.get("prev_close"), "adv20_prev": sd.prior.get("adv20_prev"),
-                "marketcap_prev": sd.prior.get("marketcap_prev"),
+                "marketcap_prev": sd.prior.get("marketcap_prev"), "tag": signal.tag,
             })  # fmt: skip
     out = Path(job["parts"])
     tmp = out / f"{job['month']}.parquet.tmp"
@@ -136,7 +136,7 @@ ORDER_SCHEMA = pa.schema([
     ("last_entry", pa.int64()), ("limit_price", pa.float64()), ("order_quantity", pa.int64()),
     ("bar_quantity", pa.int64()), ("bar_fill_minute", pa.int64()), ("min_low", pa.float64()),
     ("kind", pa.string()), ("close", pa.float64()), ("prev_close", pa.float64()),
-    ("adv20_prev", pa.float64()), ("marketcap_prev", pa.float64()),
+    ("adv20_prev", pa.float64()), ("marketcap_prev", pa.float64()), ("tag", pa.string()),
 ])  # fmt: skip
 
 
@@ -191,6 +191,11 @@ def read_orders(work_dir: Path, run_id: str) -> list[dict]:
     return [row for f in files for row in pq.read_table(f).to_pylist()]
 
 
+def order_key(row: dict) -> tuple:
+    """One order: a symbol on a day, and for a ladder the rung (its tag)."""
+    return (row["day"], row["symbol"], row.get("tag") or "")
+
+
 class OrdersMismatch(RuntimeError):
     """The rebuilt orders are not the run's orders."""
 
@@ -205,13 +210,13 @@ def check_against_run(settings: Settings, run_id: str, orders: list[dict]) -> di
         raise OrdersMismatch(
             f"{run_id}: {len(orders)} orders listed, the run saw {metrics['counts']['signals']}"
         )
-    by_key = {(o["day"], o["symbol"]): o for o in orders}
+    by_key = {order_key(o): o for o in orders}
     if len(by_key) != len(orders):
-        raise OrdersMismatch(f"{run_id}: two orders for one symbol on one day")
+        raise OrdersMismatch(f"{run_id}: two orders with one tag for one symbol on one day")
     for order in orders:
         order.update(traded=False, sim_net=None, sim_net_2x=None, sim_notional=None)
     for trade in trades:
-        order = by_key.get((trade["day"], trade["symbol"]))
+        order = by_key.get(order_key(trade))
         same = order is not None and (
             order["bar_quantity"] == trade["quantity"]
             and order["bar_fill_minute"] == trade["entry_minute"]
@@ -238,9 +243,13 @@ def check_against_run(settings: Settings, run_id: str, orders: list[dict]) -> di
 def plan(
     settings: Settings, name: str, run_ids: list[str], work_dir: Path, *, seed: int = 0,
     per_cell: dict[str, int] | None = None, labels: dict[str, str] | None = None,
+    also_reads: list[str] | None = None,
 ) -> Path:  # fmt: skip
     """Write the plan folder: ``orders.parquet`` (every traded order and the unfilled sample),
-    ``windows.csv`` for the owner's download, and ``plan.json``."""
+    ``windows.csv`` for the owner's download, and ``plan.json``.
+
+    A ladder's rungs share one window. ``also_reads`` names earlier plans whose downloaded
+    files are read where they are: a window already on disk there is not fetched again."""
     per_cell = per_cell or UNFILLED_PER_CELL
     chosen: list[dict] = []
     summary = {
@@ -248,6 +257,7 @@ def plan(
         "seed": seed,
         "per_cell": per_cell,
         "labels": labels or {r: r for r in run_ids},
+        "also_reads": list(also_reads or []),
         "runs": [],
         "sample": {},
     }
@@ -262,22 +272,36 @@ def plan(
                 cell = sorted(
                     (o for o in orders if o["kind"] == kind and o["cap_group"] == group
                      and o["order_quantity"] > 0),
-                    key=lambda o: (o["day"], o["symbol"]),
+                    key=order_key,
                 )  # fmt: skip
                 rng = random.Random(f"{seed}:{run_id}:{group}:{kind}")
                 picked = rng.sample(cell, min(count, len(cell)))
                 summary["sample"][f"{run_id}|{group}|{kind}"] = [len(picked), len(cell)]
                 chosen += picked
-    chosen.sort(key=lambda o: (o["day"], o["symbol"]))
+    chosen.sort(key=order_key)
     latest = max(o["day"] for o in chosen)
     seal.check_range(latest, latest, source="fill check plan")
     out = settings.data_dir / "quotes_sample" / name
     out.mkdir(parents=True, exist_ok=True)
     pq.write_table(pa.Table.from_pylist(chosen), out / "orders.parquet")
+    earlier = [settings.raw_dir / "massive" / "quotes_sample" / n for n in summary["also_reads"]]
+    seen: set[tuple] = set()
+    fetch = on_disk = 0
     with (out / "windows.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=WINDOW_FIELDS)
         writer.writeheader()
         for o in chosen:
+            if (o["day"], o["symbol"]) in seen:
+                continue
+            seen.add((o["day"], o["symbol"]))
+            if any(
+                all(quotes.sample_file(d, k, o["day"], o["symbol"]).exists()
+                    for k in ("trades", "quotes"))
+                for d in earlier
+            ):  # fmt: skip
+                on_disk += 1
+                continue
+            fetch += 1
             start, live, end = window_ns(o)
             writer.writerow({
                 "day": o["day"].isoformat(), "symbol": o["symbol"],
@@ -288,7 +312,7 @@ def plan(
                 "quantity": o["order_quantity"],
                 "kind": "traded" if o["traded"] else o["kind"], "run": o["run"],
             })  # fmt: skip
-    summary["windows"] = len(chosen)
+    summary.update(orders=len(chosen), windows=fetch, windows_already_downloaded=on_disk)
     registry.write_json(out / "plan.json", summary)
     return out
 
@@ -305,11 +329,20 @@ def window_ns(order: dict) -> tuple[int, int, int]:
 # -- 3. the comparison with real trades ----------------------------------------------------
 
 
-def ineligible_conditions(raw_dir: Path) -> tuple[frozenset[int], str]:
+def raw_dirs(settings: Settings, name: str) -> list[Path]:
+    """Where a plan's ticks are: its own raw folder, then those of the plans it also reads."""
+    base = settings.raw_dir / "massive" / "quotes_sample"
+    plan_file = settings.data_dir / "quotes_sample" / name / "plan.json"
+    extra = json.loads(plan_file.read_text()).get("also_reads", []) if plan_file.exists() else []
+    return [base / name, *(base / n for n in extra)]
+
+
+def ineligible_conditions(raw_dir: Path | list[Path]) -> tuple[frozenset[int], str]:
     """Condition codes of trades that do not update the consolidated high and low: from the
     vendor's table if it was downloaded, otherwise the fallback list."""
-    path = raw_dir / "conditions.json"
-    if not path.exists():
+    folders = raw_dir if isinstance(raw_dir, list) else [raw_dir]
+    path = next((d / "conditions.json" for d in folders if (d / "conditions.json").exists()), None)
+    if path is None:
         return FALLBACK_INELIGIBLE, "fallback list"
     codes = set()
     for row in json.loads(path.read_text()):
@@ -326,13 +359,22 @@ def _read(path: Path) -> list[dict]:
         return [json.loads(line) for line in handle if line.strip()]
 
 
-def order_ticks(order: dict, raw_dir: Path, ineligible: frozenset[int], tick: float) -> dict:
+def order_ticks(
+    order: dict, raw_dir: Path | list[Path], ineligible: frozenset[int], tick: float
+) -> dict:
     """What real trades and quotes say about one order. Prices only; no costs."""
     seal.check_range(order["day"], order["day"], source="fill check")
-    out = {"day": order["day"], "symbol": order["symbol"], "has_file": False, "prints": 0}
-    trade_path = quotes.sample_file(raw_dir, "trades", order["day"], order["symbol"])
-    if not trade_path.exists():
+    out = {"day": order["day"], "symbol": order["symbol"], "tag": order.get("tag") or "",
+           "has_file": False, "prints": 0}  # fmt: skip
+    folders = raw_dir if isinstance(raw_dir, list) else [raw_dir]
+    raw_dir = next(
+        (d for d in folders
+         if quotes.sample_file(d, "trades", order["day"], order["symbol"]).exists()),
+        None,
+    )  # fmt: skip
+    if raw_dir is None:
         return out
+    trade_path = quotes.sample_file(raw_dir, "trades", order["day"], order["symbol"])
     out["has_file"] = True
     _, live, end = window_ns(order)
     limit = order["limit_price"]
@@ -390,9 +432,9 @@ def order_ticks(order: dict, raw_dir: Path, ineligible: frozenset[int], tick: fl
 def _measure_part(job: dict) -> str | None:
     if time.time() > job["deadline"]:
         return None
-    raw_dir = Path(job["raw_dir"])
+    folders = [Path(d) for d in job["raw_dirs"]]
     ineligible = frozenset(job["ineligible"])
-    rows = [order_ticks(o, raw_dir, ineligible, job["tick"]) for o in job["orders"]]
+    rows = [order_ticks(o, folders, ineligible, job["tick"]) for o in job["orders"]]
     out = Path(job["parts"])
     tmp = out / f"{job['key']}.parquet.tmp"
     pq.write_table(pa.Table.from_pylist(rows), tmp)
@@ -407,17 +449,20 @@ def measure_orders(
     """Read the downloaded ticks for every planned order, a year at a time into ``work_dir``.
     Resumable. Returns True when every year is measured."""
     orders = pq.read_table(settings.data_dir / "quotes_sample" / name / "orders.parquet")
-    raw_dir = settings.raw_dir / "massive" / "quotes_sample" / name
-    ineligible, _ = ineligible_conditions(raw_dir)
+    folders = raw_dirs(settings, name)
+    ineligible, _ = ineligible_conditions(folders)
     parts = work_dir / f"{name}-ticks"
     parts.mkdir(parents=True, exist_ok=True)
     years: dict[str, list[dict]] = {}
-    for order in orders.select(["day", "symbol", "signal_minute", "live_from", "last_entry",
-                                "limit_price"]).to_pylist():  # fmt: skip
+    columns = ["day", "symbol", "signal_minute", "live_from", "last_entry", "limit_price"]
+    if "tag" in orders.column_names:
+        columns.append("tag")
+    for order in orders.select(columns).to_pylist():
         years.setdefault(str(order["day"].year), []).append(order)
     deadline = time.time() + budget_seconds
     jobs = [
-        {"key": year, "orders": rows, "raw_dir": str(raw_dir), "ineligible": sorted(ineligible),
+        {"key": year, "orders": rows, "raw_dirs": [str(d) for d in folders],
+         "ineligible": sorted(ineligible),
          "tick": costs.tick, "parts": str(parts), "deadline": deadline}
         for year, rows in sorted(years.items()) if not (parts / f"{year}.parquet").exists()
     ]  # fmt: skip
@@ -542,10 +587,10 @@ def assemble(settings: Settings, name: str, work_dir: Path) -> list[dict]:
     ticks = {}
     for path in sorted((work_dir / f"{name}-ticks").glob("*.parquet")):
         for row in pq.read_table(path).to_pylist():
-            ticks[(row["day"], row["symbol"])] = row
+            ticks[order_key(row)] = row
     rows = []
     for order in orders.to_pylist():
-        rows.append({**order, **ticks[(order["day"], order["symbol"])]})
+        rows.append({**order, **ticks[order_key(order)]})
     return rows
 
 
@@ -562,6 +607,8 @@ def evaluate(rows: list[dict], costs: CostModel, run_labels: dict[str, str]) -> 
             "all": summarize_traded(mine, costs),
             "by_cap": {g: summarize_traded([r for r in mine if r["cap_group"] == g], costs)
                        for g in groups},
+            "by_rung": {t: summarize_traded([r for r in mine if (r.get("tag") or "") == t], costs)
+                        for t in sorted({r.get("tag") or "" for r in mine}) if t},
             "before_2007": summarize_traded([r for r in mine if r["day"].year < 2007], costs),
             "from_2007": summarize_traded([r for r in mine if r["day"].year >= 2007], costs),
             "unfilled": {},
@@ -606,7 +653,7 @@ def study(
     costs = cost_model.load(meta["cost_calibration"])
     git = registry.git_state(repo)
     registry.check_clean(git, scratch=scratch)
-    raw_dir = settings.raw_dir / "massive" / "quotes_sample" / name
+    raw_dir = raw_dirs(settings, name)
     rows = assemble(settings, name, work_dir)
     result = evaluate(rows, costs, run_labels)
     result["verdict"] = verdict(result, validation_label)
@@ -694,6 +741,7 @@ def render(result: dict, run_id: str) -> str:
     for label, block in result["periods"].items():
         lines += [f"## {label}", "", head, row("All", block["all"])]
         lines += [row(g, s) for g, s in block["by_cap"].items()]
+        lines += [row(f"rung {t}", s) for t, s in block.get("by_rung", {}).items()]
         lines += [row("2003–2006", block["before_2007"]), row("2007 on", block["from_2007"]), ""]
         a = block["all"]
         if a.get("covered"):

@@ -104,7 +104,7 @@ def test_the_listing_reproduces_the_run_and_the_check_reads_ticks(world):
     )  # fmt: skip
     planned = pq.read_table(out / "orders.parquet").to_pylist()
     windows = quotes.read_windows(out / "windows.csv")
-    assert len(windows) == len(planned) >= len(trades)
+    assert len(windows) == len(planned) >= len(trades)  # one order a symbol a day here
     first = windows[0]
     assert first["entry_ns"] - first["start_ns"] == 60 * 10**9
     assert first["end_ns"] - first["entry_ns"] == 600 * 10**9
@@ -166,6 +166,21 @@ def test_the_listing_reproduces_the_run_and_the_check_reads_ticks(world):
         )  # fmt: skip
     manifest = json.loads((run_dir / "manifest.json").read_text())
     assert manifest["kind"] == "fill_check" and manifest["family"] == "test_dip"
+
+    # A second plan that also reads the first fetches only the windows not yet on disk.
+    again = fill_check.plan(
+        settings, "plan2", [run_id], work, labels={run_id: "validation"},
+        per_cell={"touched": 3, "near": 3, "far": 3}, also_reads=["plan"],
+    )  # fmt: skip
+    summary = json.loads((again / "plan.json").read_text())
+    assert summary["windows_already_downloaded"] == len(traded)
+    assert summary["windows"] == len(planned) - len(traded)
+    assert len(quotes.read_windows(again / "windows.csv")) == summary["windows"]
+    assert fill_check.raw_dirs(settings, "plan2") == [raw.parent / "plan2", raw]
+    first = fill_check.order_ticks(
+        traded[0], fill_check.raw_dirs(settings, "plan2"), frozenset(), 0.01
+    )
+    assert first["has_file"] and first["tag"] == ""
     assert "FAILED" in (run_dir / "fill_check.md").read_text()
 
 
