@@ -8,6 +8,7 @@ from pathlib import Path
 
 import duckdb
 import pyarrow as pa
+import pyarrow.parquet as pq
 
 from kinn.core.settings import HOLDOUT_START, Settings
 from kinn.data import seal
@@ -52,6 +53,11 @@ class DataStore:
         return "true" if self._unseal else f"{column} < DATE '{HOLDOUT_START.isoformat()}'"
 
     # -- tables --------------------------------------------------------------------------
+    def panel_columns(self) -> list[str]:
+        """Column names of this build's panel (older builds have fewer)."""
+        first = sorted((self.root / "panel").glob("*.parquet"))[0]
+        return pq.read_schema(first).names
+
     def table_path(self, name: str) -> Path:
         """Path of a small undated table: security_master, symbol_history, splits."""
         path = self.root / "master" / f"{name}.parquet"

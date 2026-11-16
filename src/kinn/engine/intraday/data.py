@@ -12,7 +12,14 @@ from kinn.core.types import RTH_CLOSE, RTH_OPEN
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
 
-PRIOR_COLUMNS = ("prev_close", "adv20_prev", "marketcap_prev", "sessions_prior", "filings_prev")
+PRIOR_COLUMNS = (
+    "prev_close",
+    "adv20_prev",
+    "marketcap_prev",
+    "sessions_prior",
+    "filings_prev",
+    "ret60_prev",  # from build data-6; None on older builds
+)
 _EMPTY_F = np.empty(0, dtype=float)
 _EMPTY_I = np.empty(0, dtype=np.int64)
 
@@ -84,11 +91,13 @@ def load_day(store: DataStore, day: date, universe: Universe) -> DayData:
     """Load the universe's members for ``day`` with their minute bars."""
     calendar = store.calendar(day, day).to_pylist()
     close_minute = calendar[0]["close_minute_et"] if calendar else RTH_CLOSE
+    built = set(store.panel_columns())
     panel = store.panel(
         day,
         day,
         universe=universe,
-        columns="symbol, permaticker, close, " + ", ".join(PRIOR_COLUMNS),
+        columns="symbol, permaticker, close, "
+        + ", ".join(c if c in built else f"null as {c}" for c in PRIOR_COLUMNS),
     ).to_pylist()
     members = {row["symbol"]: row for row in panel}
     symbols: dict[str, SymbolDay] = {}

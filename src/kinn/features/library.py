@@ -9,6 +9,7 @@ from kinn.features.base import Availability, Feature, prior
 PREV_CLOSE = prior("prev_close")
 ADV20 = prior("adv20", "adv20_prev")
 MARKETCAP = prior("marketcap", "marketcap_prev")
+RET60 = prior("ret60", "ret60_prev")  # price return over the 60 sessions before the day
 
 
 def _return_from_prev_close(sd) -> np.ndarray:

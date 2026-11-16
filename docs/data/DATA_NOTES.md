@@ -76,7 +76,9 @@ Code reads data only through `kinn.data.store.DataStore`, which applies the seal
 
 One row per company per session. Columns known **before the open** of `date`: `prev_close`
 (split-adjusted to today's share basis), `adv20_prev` (median dollar volume of the last 20
-sessions), `marketcap_prev` (Sharadar market cap of the previous session), `sessions_prior`,
+sessions), `marketcap_prev` (Sharadar market cap of the previous session), `ret60_prev` (from
+build data-6: the price return over the 60 sessions ending at the previous close, split-adjusted,
+dividends not added back; empty until a company has 60 sessions), `sessions_prior`,
 `category`. A `Universe` may filter on these only (a test enforces it). The same-day columns
 (`open` … `dollar_volume`) are outcomes.
 

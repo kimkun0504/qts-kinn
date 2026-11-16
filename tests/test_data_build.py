@@ -113,6 +113,8 @@ def test_prior_close_is_split_adjusted_and_lags_are_strictly_prior(built):
     assert rows[("AAA", date(2023, 10, 10))]["filings_today"] == 1
     assert rows[("AAA", date(2023, 10, 11))]["filings_prev"] == 1
     assert rows[("AAA", date(2023, 10, 12))]["filings_prev"] == 0
+    # The 60-session return needs all 60 sessions; this world has 33, so it is empty everywhere.
+    assert "ret60_prev" in first and all(r["ret60_prev"] is None for r in rows.values())
     # The rename does not reset the company's history.
     assert rows[("NEW", syn.RENAME_DAY)]["sessions_prior"] == days.index(syn.RENAME_DAY)
 
@@ -124,7 +126,8 @@ def test_universe_filters_use_only_pre_open_columns(built):
     where = universe.where()
     for column in ("open", "high", "low", "close", "volume", "dollar_volume"):
         assert column not in where.replace("prev_close", "")
-    assert all(c in PRE_OPEN_COLUMNS for c in ("prev_close", "adv20_prev", "marketcap_prev"))
+    for column in ("prev_close", "adv20_prev", "marketcap_prev", "ret60_prev"):
+        assert column in PRE_OPEN_COLUMNS
     rows = _rows(DataStore(built).panel(START, END, universe=universe, columns="symbol, date"))
     symbols = {r["symbol"] for r in rows}
     assert "AAA" in symbols and "DEAD" not in symbols and "PRE" in symbols

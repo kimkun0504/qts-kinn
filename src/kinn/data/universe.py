@@ -15,6 +15,7 @@ PRE_OPEN_COLUMNS = (
     "prev_close",
     "adv20_prev",
     "marketcap_prev",
+    "ret60_prev",
     "sessions_prior",
     "filings_prev",
     "category",

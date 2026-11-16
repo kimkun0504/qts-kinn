@@ -20,6 +20,7 @@ class ReboundLimit:
         f.PREV_CLOSE,
         f.ADV20,
         f.MARKETCAP,
+        f.RET60,
     )
     # Every variant shares one universe, so a sweep loads each session once.
     universe = Universe("rebound", min_prev_close=1.0, min_adv20=250_000.0, min_sessions_prior=20)
@@ -39,6 +40,8 @@ class ReboundLimit:
         self.min_marketcap = float(params.get("min_marketcap", 0.0))  # previous session's
         self.max_marketcap = params.get("max_marketcap")  # None: no ceiling
         self.min_limit_price = float(params.get("min_limit_price", 0.0))  # no order below this
+        # The stock's return over the 60 sessions before the day; None: no trend filter.
+        self.min_ret60 = params.get("min_ret60")
         # A ladder: [[offset, share of the position], ...]. None: one order at `limit_offset`.
         ladder = params.get("ladder")
         self.rungs = (
@@ -52,9 +55,9 @@ class ReboundLimit:
         self.max_gap = 0.05
         self.max_premarket = 0.05
 
-    def _events(self, view, features) -> list[tuple[int, str, float, float, float, float, float]]:
-        """(minute, symbol, bar close, 15-minute return, ADV, previous close, market cap) of
-        every base event, 09:35–15:00."""
+    def _events(self, view, features) -> list[tuple]:
+        """(minute, symbol, bar close, 15-minute return, ADV, previous close, market cap,
+        60-session return) of every base event, 09:35–15:00."""
         found = []
         for symbol, sd in view.symbols.items():
             values = features[symbol]
@@ -74,13 +77,13 @@ class ReboundLimit:
                 continue
             found.append((minute, symbol, float(sd.close[i]), float(values["return_15m"][i]),
                           float(values["adv20"]), float(values["prev_close"]),
-                          float(values["marketcap"])))  # fmt: skip
+                          float(values["marketcap"]), float(values["ret60"])))  # fmt: skip
         return sorted(found)
 
     def signals(self, view, features):
         out = []
         events = self._events(view, features)
-        for rank, (minute, symbol, close, ret15, adv, prev_close, cap) in enumerate(events):
+        for rank, (minute, symbol, close, ret15, adv, prev_close, cap, ret60) in enumerate(events):
             # `rank` counts the session's earlier events (ties broken by symbol): known by then.
             if self.max_prior_events is not None and rank > int(self.max_prior_events):
                 continue
@@ -90,6 +93,9 @@ class ReboundLimit:
             if self.min_marketcap > 0 and not cap >= self.min_marketcap:
                 continue
             if self.max_marketcap is not None and not cap < float(self.max_marketcap):
+                continue
+            # A stock with fewer than 60 sessions of history has no trend and is left out.
+            if self.min_ret60 is not None and not ret60 >= float(self.min_ret60):
                 continue
             if self.min_drop_15m is not None and not ret15 <= -float(self.min_drop_15m):
                 continue

@@ -366,6 +366,14 @@ def order_ticks(
     seal.check_range(order["day"], order["day"], source="fill check")
     out = {"day": order["day"], "symbol": order["symbol"], "tag": order.get("tag") or "",
            "has_file": False, "prints": 0}  # fmt: skip
+    # Every field is present on every row (an order without ticks keeps the empty values), so
+    # tables written from these rows always have the same columns.
+    for delay in DELAYS:
+        out.update({f"through_prints_{delay}": 0, f"through_volume_{delay}": 0,
+                    f"through_volume_odd_{delay}": 0, f"at_limit_volume_{delay}": 0,
+                    f"first_through_seconds_{delay}": None})  # fmt: skip
+    out.update(has_quotes=False, bid_at_start=None, ask_at_start=None, bid_below_limit=None,
+               ask_reached_limit=None)  # fmt: skip
     folders = raw_dir if isinstance(raw_dir, list) else [raw_dir]
     raw_dir = next(
         (d for d in folders
@@ -410,7 +418,6 @@ def order_ticks(
         out[f"at_limit_volume_{delay}"] = at_limit
         out[f"first_through_seconds_{delay}"] = first
     quote_path = quotes.sample_file(raw_dir, "quotes", order["day"], order["symbol"])
-    out["has_quotes"] = False
     if quote_path.exists():
         start = live + MAIN_DELAY * 1_000_000_000
         valid = [q for q in _read(quote_path) if q.get("bid_price", 0) > 0

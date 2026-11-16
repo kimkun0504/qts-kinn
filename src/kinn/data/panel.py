@@ -21,6 +21,7 @@ from pathlib import Path
 import duckdb
 
 ADV_WINDOW = 20
+TREND_WINDOW = 60  # sessions of the price return that ends at the previous close
 SPLIT_VISIBLE = 0.18  # |ln ratio|: splits this large can be checked against the price
 SPLIT_WINDOW = 20  # calendar days either side of the listed date
 SPLIT_TOLERANCE = 0.12  # allowed |ln| gap between the price change and the ratio ...
@@ -102,25 +103,40 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
                                    rows between {ADV_WINDOW} preceding and 1 preceding)
                                  as adv20_prev
                         from bars window w as (partition by permaticker order by date)),
+                    returned as (
+                        select l.*, coalesce(sp.ratio, 1) as ratio,
+                               case when l.prev_close_raw > 0 and l.close > 0
+                                    then ln(l.close * coalesce(sp.ratio, 1) / l.prev_close_raw)
+                               end as log_return
+                        from lagged l
+                        left join splits sp
+                          on sp.permaticker = l.permaticker and sp.date = l.date),
+                    trended as (
+                        select *, sum(log_return) over t as trend, count(log_return) over t
+                                 as trend_days
+                        from returned window t as (
+                            partition by permaticker order by date
+                            rows between {TREND_WINDOW} preceding and 1 preceding)),
                     filed as (
                         select l.permaticker, l.date,
                                count(*) filter (f.date < l.date) as filings_prev,
                                count(*) filter (f.date = l.date) as filings_today
-                        from lagged l join filings f
+                        from trended l join filings f
                           on f.permaticker = l.permaticker and f.date >= l.prev_date
                          and f.date <= l.date
                         group by 1, 2)
                     select l.date, l.permaticker, l.symbol, s.ticker, s.category, s.exchange,
                            l.open, l.high, l.low, l.close, l.volume, l.dollar_volume,
-                           l.prev_close_raw / coalesce(sp.ratio, 1) as prev_close,
-                           l.prev_date, coalesce(sp.ratio, 1) as split_ratio,
+                           l.prev_close_raw / l.ratio as prev_close,
+                           l.prev_date, l.ratio as split_ratio,
                            l.adv20_prev, l.sessions_prior, mc.marketcap as marketcap_prev,
                            coalesce(fd.filings_prev, 0)::integer as filings_prev,
-                           coalesce(fd.filings_today, 0)::integer as filings_today
-                    from lagged l
+                           coalesce(fd.filings_today, 0)::integer as filings_today,
+                           case when l.trend_days = {TREND_WINDOW} then exp(l.trend) - 1 end
+                             as ret60_prev
+                    from trended l
                     left join filed fd on fd.permaticker = l.permaticker and fd.date = l.date
                     join sec s on s.permaticker = l.permaticker
-                    left join splits sp on sp.permaticker = l.permaticker and sp.date = l.date
                     left join mcap mc on mc.permaticker = l.permaticker and mc.date = l.prev_date
                     where year(l.date) = {year}
                     order by l.date, l.symbol)

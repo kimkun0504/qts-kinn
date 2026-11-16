@@ -71,6 +71,17 @@ def test_market_cap_floor_drops_small_and_unknown_companies():
     assert set(signals(v, max_marketcap=3e8)) == {"SMALL"}
 
 
+def test_trend_filter_keeps_stocks_that_had_not_fallen_and_drops_unknowns():
+    v = view([
+        ("ROSE", DROP, {"ret60_prev": 0.25}),
+        ("FLAT", DROP, {"ret60_prev": 0.0}),
+        ("FELL", DROP, {"ret60_prev": -0.10}),
+        ("NEW", DROP, {}),
+    ])  # fmt: skip
+    assert set(signals(v)) == {"ROSE", "FLAT", "FELL", "NEW"}
+    assert set(signals(v, min_ret60=0.0)) == {"ROSE", "FLAT"}
+
+
 def test_no_order_below_the_minimum_limit_price():
     cheap = [(m, c / 9) for m, c in DROP]  # previous close 1.11, event bar close about 0.99
     v = view([("AAA", DROP, {}), ("CHEAP", cheap, {"prev_close": 10 / 9})])
