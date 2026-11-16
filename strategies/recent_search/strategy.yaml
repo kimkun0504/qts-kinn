@@ -1,0 +1,8 @@
+name: recent_search
+status: hypothesis        # owner's overnight search for a 3%-a-trade intraday rule, recent years; see HYPOTHESIS.md
+engine: intraday
+universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
+cost_calibration: ibkr_pro_tiered
+owner: claude
+family: recent_search
+prior_trials: 0
