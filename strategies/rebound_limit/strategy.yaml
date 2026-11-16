@@ -1,5 +1,5 @@
 name: rebound_limit
-status: parked            # failed the holdout 2026-11-15 (net per trade -0.86% at 2x); no re-test; see REPORT.md
+status: developing        # s_l468 failed the holdout 2026-11-15; reversal-confirmation study on development data (owner's request); see HYPOTHESIS.md
 engine: intraday
 universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered

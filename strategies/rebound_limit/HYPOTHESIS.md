@@ -539,3 +539,83 @@ Choosing between the two records by hand, after seeing unsealed data, would be a
 for this run. The check now recognises this case by its mechanism (a research row whose symbol
 is also claimed, on that date, by a company delisted after the seal with a reused ticker) and
 fails on any other missing row.
+
+## Addendum, 2026-11-15 23:50 ET: reversal confirmation (owner's request, before parking)
+
+`s_l468` failed the holdout and stays failed. The owner asked for one more piece of work before
+the family is parked: keep the deep fall as the setup, but enter only on a sign that the
+selling has stopped, and exit on a sign that the bounce has failed.
+
+**Why the old rule was weak.** It waited at prices 4% to 8% lower. An order filled only if the
+stock kept falling, and nothing in the rule asked whether buyers had come back. The exit was
+the clock.
+
+**What the literature says (looked up today).** Large moves caused by large trades reverse as
+resting orders refill the book, and faster in resilient stocks. Reversals are stronger after a
+volume surge and when measured against the industry, not the market. One study of single-stock
+crashes found continuation for several hours afterwards, which is the case against this idea.
+A 2025 paper finds intraday losers rebound in the last 30 minutes of the day. Bulk volume
+classification can estimate buy and sell volume from bars, well at 5 minutes and poorly at one
+second; its critics find the tick rule better. Practitioner writing on selling climaxes says
+the retest of the low on lighter volume is the better entry than the climax bar itself.
+
+**Data.** One-minute bars with volume and trade counts. No quotes or signed trades for the
+full history, so order flow is estimated from bars. Development years only (2003-09-10 to
+2016-12-30). The holdout is spent for this family and is not touched.
+
+**The setup (unchanged):** a stock's first one-minute close at least 10% below the prior
+close, 09:35 to 15:00, no 8-K since the prior session, no gap down over 5%, light premarket.
+
+**Entry signals.** Each is checked at every bar close from one minute after the event until
+90 minutes after it or 15:45. The first bar that triggers is the signal; the buy is at the
+next bar's open. "The low" is the lowest low since the event bar.
+
+| | Signal | Rule |
+|---|---|---|
+| E0 | None (reference) | buy at the open of the bar after the event |
+| E2 | Climax and rejection | a bar makes a new low, trades at least 5 times the stock's normal minute (ADV/390) and at least twice the mean of the 5 bars before it, and closes in the top third of its range |
+| E3 | Higher low, then break | after the low, a bounce high H, a pullback of at least a third of H minus the low that holds above the low, then a close above H |
+| E4 | Short breakout | a close above the highest high of the previous 5 bars, with the low at least 3 bars old |
+| E5 | Flow flip | estimated buy share (bulk volume classification) of the last 5 bars at least 60%, after 40% or less over the 5 bars ending at the low |
+| E6 | Reclaim of average price | a close above the volume-weighted average price since the event bar, after at least 5 closes below it, with the low at least 3 bars old |
+| E7 | End of day | still 10% or more below the prior close 31 minutes before the close: buy at the open of the bar 30 minutes before the close |
+
+**Context, as splits of E0 and of the best signal (not separate strategies):** market not
+falling (SPY above −1% from its open at the event); a fast fall (5% or more in the last 15
+minutes); large prints (mean trade size in the event bar at least twice the day's earlier
+mean); time of day (before 11:00, 11:00 to 14:00, after 14:00).
+
+**Exits, tested on E0 and the two best signals.** The fallback in every case is the close.
+
+| | Exit | Rule |
+|---|---|---|
+| X0 | Close | sell in the closing auction |
+| X1 | Structure stop | a bar closes below the low the entry came from: sell at the next open |
+| X2 | Trailing stop | a close below the highest high since entry minus 3 times the average one-minute range at entry (14 bars): sell at the next open |
+| X3 | Average-price stop | two closes in a row below the volume-weighted average price since the low: sell at the next open |
+| X4 | Failed bounce | below the entry price 30 minutes after entry: sell at the next open |
+
+**Costs in this study.** Entries are market orders in stocks that have just fallen 10%, so
+they cost more than the old resting orders. Net return = gross return minus 1.0% for the round
+trip (about 0.5% to cross the spread on entry, plus the 0.47% the engine charged at 2×
+slippage). The engine's own cost model applies in the backtest that follows.
+
+**Trials.** About 24 rules are measured here (7 signals with X0, 4 context splits, 12 exit
+combinations). They are counted against the family: `prior_trials` rises by the number
+actually measured.
+
+**Bars set now. A rule goes forward only if, on development, it has all of:**
+
+1. net return per trade of at least +1.0%, with a t-statistic of at least 3 on daily means;
+2. a positive net result in at least 11 of the 14 calendar years;
+3. at least 1,500 trades;
+4. at least 0.5% a trade better than E0 with the same exit (the signal must add something).
+
+If more than one passes, the highest t-statistic goes forward; a tie goes to the simpler rule.
+If none passes, the family is parked and this line of work ends.
+
+**What follows a pass.** The rule is built into the engine and backtested on development with
+the real cost model and capital limits. Then one validation run (2017-01-03 to 2023-11-08),
+with bars set now: the owner's three measured targets at 2× slippage, a positive net result in
+at least 5 of the 7 years, and 2022 and 2023 together not negative. The clean test after that
+is paper trading on new days, because there is no holdout left for this family.
