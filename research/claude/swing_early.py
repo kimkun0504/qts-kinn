@@ -21,6 +21,9 @@ RULES = {
     # Family 18's cells (chosen on 2010-2017): rule A with a $50M floor, and the wider one.
     "A50": "earn and ret2 >= 0.15 and dvr2 >= 5 and mcap >= 5e7 and mcap < 3e8",
     "A2": "earn and ret2 >= 0.10 and dvr2 >= 5 and mcap >= 5e7 and mcap < 3e8",
+    # Family 4's cell: a pullback in a small winner.
+    "C": """ret120 >= 0.50 and ret120 < 1.00 and ret5 <= -0.05 and ret5 >= -0.10
+            and history >= 120 and mcap >= 3e8 and mcap < 2e9""",
 }
 PERIODS = {
     "early": ("early", "day between DATE '2005-01-03' and DATE '2009-12-08'"),

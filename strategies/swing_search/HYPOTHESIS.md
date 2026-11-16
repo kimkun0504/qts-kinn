@@ -261,3 +261,18 @@ of the same kind: a small company that jumps on heavy volume when there is news.
 - A cell that passes is a second candidate under the same conditions as rule A: fills
   unmeasured, holdout sealed. The 2023 check has been read for rule A; for a new cell it is
   a second look at those months and is reported as such.
+
+## Addendum, 2026-11-16 14:29 ET: family 18's result, and rule C to 2005–2009
+
+**Family 18:** the five cells chosen on 2010 to 2017 are all the earnings rule with the $50M
+floor; each passed on 2005 to 2009 and 2018 to 2022 (pooled weekly t 3.5 to 4.2, every test
+year positive). No other kind of news qualified. The rule taken forward is A50 (15%, 5×,
+$50M to $300M, 15 sessions), now also `strategies/earnings_drift` for `kinn swing`.
+
+**Rule C,** to use the money rule A50 leaves idle: the one other cell that qualified on the
+auction basis in the search years (family 4). A company of $300M to $2B that is up 50% to
+100% over 120 sessions and down 5% to 10% over the last 5; buy at the next open, sell at the
+close 15 sessions after the signal. It is tested once on 2005 to 2009, which have not been
+read for it, with rule A's test: a mean of 1% or more on the auction basis, a weekly t of 2.5
+or more, and four years of five positive. In the search years it made 0.9% (2010–2017) and
+2.0% (2018–2022), so the prior is weak; this test decides whether it is worth more work.
