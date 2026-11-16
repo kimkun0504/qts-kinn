@@ -1,0 +1,8 @@
+name: turnover_compression_breakout
+status: parked
+engine: intraday
+universe: turnover_compression_breakout
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_volume_surge
+prior_trials: 0
