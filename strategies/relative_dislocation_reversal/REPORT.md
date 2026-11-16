@@ -133,3 +133,52 @@ The horizon choice was informed by the development curve.
 | 2014 | 14 | +5.38% | +5.04% | +$1,506 | +$1,411 |
 | 2015 | 19 | +5.48% | +5.18% | +$2,073 | +$1,961 |
 | 2016 | 9 | −4.27% | −4.67% | −$763 | −$836 |
+
+### One-hour portfolio result
+
+**Decision: park.** The portfolio earned **+3.33% net per trade at 1× and +2.93% at
+2×**. The 51 trades on 46 dates in 2013–2016 returned +4.16% and +3.85%. Counts,
+returns and drawdown passed their development bars. Annualised daily Sharpe at 2×
+was 0.91, below the preregistered requirement above 1. No validation run was
+started, so the +3% research objective and recent 2022+ hurdle remain unverified.
+
+Run `20261116T062349Z_gpt_relative_dislocation_reversal_034697eb` used clean commit
+`2cde0e33`, build `447e58e098` and 2003-09-10 through 2016-12-30. It added one
+trial to `intraday_rebound`. Of 301 signals, eight were refused for capital, with
+293 completed trades on 199 sessions. There were 291 clock exits and two auction
+exits. The mean filled notional was $1,982 against a $2,000 target.
+
+| Development portfolio | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Net per completed trade | +3.33% | +2.93% |
+| Mean winner | +10.82% | +10.54% |
+| Mean loser | −9.89% | −10.10% |
+| Loss rate | 36.18% | 36.86% |
+| Total net | +$19,296 | +$17,041 |
+| Daily P&L t-statistic | 3.68 | 3.32 |
+| Annualised daily Sharpe | 1.01 | 0.91 |
+| Worst end-of-day drawdown | −$1,473 | −$1,550 |
+
+The all-trade gross mean was +3.97%. 2008 supplied about 46% of the net at 2×.
+A descriptive read of entry and exit minutes found only five days with more than
+three simultaneous holdings. A simple change to the position count would leave
+most sessions unchanged. Live market quotes, actual exit liquidity and generalisation
+to the later validation years remain unmeasured. Evidence of stronger daily
+consistency across different dates would change the verdict.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +23.61% | +23.46% | +$466 | +$463 |
+| 2004 | 6 | +5.52% | +5.31% | +$659 | +$635 |
+| 2005 | 4 | −0.01% | −0.26% | −$2 | −$22 |
+| 2006 | 10 | +6.03% | +5.79% | +$1,207 | +$1,159 |
+| 2007 | 24 | +3.30% | +2.87% | +$1,584 | +$1,378 |
+| 2008 | 149 | +3.12% | +2.66% | +$9,110 | +$7,780 |
+| 2009 | 22 | +1.65% | +1.32% | +$727 | +$584 |
+| 2010 | 4 | +5.43% | +5.27% | +$434 | +$421 |
+| 2011 | 14 | −0.90% | −1.17% | −$253 | −$329 |
+| 2012 | 8 | +6.97% | +6.48% | +$1,118 | +$1,040 |
+| 2013 | 9 | +6.59% | +6.30% | +$1,182 | +$1,130 |
+| 2014 | 14 | +5.57% | +5.23% | +$1,561 | +$1,465 |
+| 2015 | 19 | +5.78% | +5.51% | +$2,184 | +$2,085 |
+| 2016 | 9 | −3.88% | −4.25% | −$682 | −$747 |
