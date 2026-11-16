@@ -447,3 +447,41 @@ Development (sweep `20261116T022246Z_rebound_limit_2`, build `447e58e098`): `t_l
 Sharpe at 2× of 1.64 against `s_l468`'s 1.45, +2.64% a trade at 2× and a worst drawdown at 2×
 of $1,682. The gate is passed, so `t_l468` is run once on 2017-01-03 to 2023-11-08 as
 `validation_t_l468`, with identical parameters and sizing. (`t_o4`: Sharpe 1.77, +2.26%.)
+
+## Addendum, 2026-11-15 22:24 ET: the holdout (written before the data is unsealed)
+
+The owner proposed spending the holdout now. Reason: 2022 and 2023 lost a little (−$884,
+−$406), more than half the validation profit is 2020, and validation cannot say whether the
+strategy is flat in grinding markets and pays in panics, or has faded. The holdout (from
+2023-11-09) is the only data that can.
+
+**What is run: one run, one variant.** `s_l468` exactly as validated: the same strategy code
+and parameters, $20,000 account, $2,000 positions, no order under $1. Config
+`holdout_s_l468`, 2023-11-09 to 2026-11-06 (the last session before the Sharadar snapshot of
+2026-11-09, which is where filings and splits end). Nothing else is run on the holdout: not
+`x_o4`, not the trend filter, no second variant.
+
+**Rule, set now and followed whatever the result:**
+
+| Holdout result at 2× slippage | What it means | What happens |
+|---|---|---|
+| Net per trade at least +1.0%, Sharpe above 1, worst drawdown under $10,000 | **Pass** | Paper trading. A fill check on the holdout trades follows |
+| Net per trade at or below zero | **Fail** | The strategy is parked. No change is made and re-tested on the holdout |
+| Anything between | **Not proven** | Paper trading at small size is the tiebreaker. No tuning on the holdout |
+
+**How much three years can say.** About 750 sessions. A strategy whose true Sharpe is 1.4
+shows under 1 in roughly one sample in four of this length, so a narrow miss on Sharpe alone
+is weak evidence. A negative result is strong evidence.
+
+**Reported, not judged:** by year, by market-cap group, by rung, the sessions with the most
+signals, and the same figures beside validation.
+
+**Who does what.** Unsealing is the owner's action (AGENTS.md): the owner runs the commands
+with `KINN_UNSEAL_TOKEN`; every unseal is logged. The agent writes and tests the commands on
+synthetic data and on open data, never reads `MarketData/sealed/`, and reads only the run's
+outputs afterwards. The unsealed data is built into its own folder; the research build and its
+seal stay as they are, and the unsealed build must reproduce the research build exactly on
+every date before 2023-11-09, checked by the build itself.
+
+**After the unseal.** The holdout is spent for this family. No later variant of the rebound can
+be judged on it. The run is a counted trial.
