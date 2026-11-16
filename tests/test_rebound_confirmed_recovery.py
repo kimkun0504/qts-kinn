@@ -141,3 +141,47 @@ def test_volume_momentum_config_only_changes_the_confirmation_filter(phase):
     _, filtered = runner.load_config(NAME, f"{phase}_volume_momentum")
     assert filtered.pop("params") == {"volume_momentum": True}
     assert filtered == base
+
+
+def test_retest_limit_is_the_known_low_rounded_down_to_cents():
+    strategy = runner.load_strategy(NAME, {"volume_momentum": True, "retest_limit": True})
+    session = view(OPEN, EVENT, (641, 8.307), RECOVERY, (643, 5.0))
+    found = day_signals(strategy, session)
+    assert found == [Signal("ABC", 642, limit_price=8.3, expire_minute=647)]
+    check_no_lookahead(strategy, session, found, [640, 641, 642, 643])
+
+
+def test_retest_declines_bid_under_one_dollar():
+    session = view(OPEN, EVENT, (641, 0.98), (642, 1.01), volume_by_minute={642: 50_000})
+    assert day_signals(runner.load_strategy(NAME, {"volume_momentum": True}), session) == [EXPECTED]
+    strategy = runner.load_strategy(NAME, {"volume_momentum": True, "retest_limit": True})
+    assert day_signals(strategy, session) == []
+
+
+@pytest.mark.parametrize(
+    "probe, fills", [((647, 8.6, 8.28), True), ((647, 8.6, 8.30), False), ((648, 8.6, 8.28), False)]
+)
+def test_retest_requires_through_print_inside_the_order_lifetime(probe, fills):
+    meta, config = runner.load_config(NAME, "development_volume_momentum_retest")
+    strategy = runner.load_strategy(NAME, config["params"])
+    session = view(*SETUP, probe, (779, 9.0))
+    result = simulate_day(
+        DayData(session, {"ABC": 9.1}),
+        day_signals(strategy, session),
+        risk=RiskConfig(**config["risk"]),
+        config=FillConfig(**config["fills"]),
+        costs=load(meta["cost_calibration"]),
+    )
+    if fills:
+        (trade,) = result.trades
+        assert (trade.entry_minute, trade.entry_price, trade.exit_reason) == (647, 8.3, "auction")
+    else:
+        assert not result.trades and result.unfilled == 1
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_retest_configs_only_change_the_execution_variant(phase):
+    _, market = runner.load_config(NAME, f"{phase}_volume_momentum")
+    _, retest = runner.load_config(NAME, f"{phase}_volume_momentum_retest")
+    assert retest["params"].pop("retest_limit") is True
+    assert retest == market

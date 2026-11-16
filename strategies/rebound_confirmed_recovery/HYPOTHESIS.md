@@ -159,7 +159,7 @@ uses the observed pre-confirmation minimum close and begins only after recovery.
   minutes, inclusive, subject to Kinn's session entry cutoff. Use the normal one-tick
   through rule and 5% bar participation. Fill at the bid without price improvement.
   Confirming quotes and volume actually traded through the limit would need a separate
-  execution audit. Keep `ibkr_pro_tiered` and the next-day-flat rule.
+  execution audit. Keep `ibkr_pro_tiered` and the same-day exit.
 
 **Development:** `development_volume_momentum_retest` through the portfolio engine on
 2003-09-10 through 2016-12-30. Count one new trial in `intraday_rebound`. Require 150

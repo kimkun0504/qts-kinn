@@ -1,6 +1,6 @@
 """Enter the intraday rebound after a deep close and an observable recovery."""
 
-from math import inf
+from math import floor, inf
 
 import numpy as np
 
@@ -22,8 +22,9 @@ class ReboundConfirmedRecovery:
         f.FILINGS_SINCE_PRIOR_SESSION,
     )
 
-    def __init__(self, *, volume_momentum: bool = False):
+    def __init__(self, *, volume_momentum: bool = False, retest_limit: bool = False):
         self.volume_momentum = volume_momentum
+        self.retest_limit = retest_limit
 
     def signals(self, view: DayView, features: FeatureValues) -> list[Signal]:
         signals = []
@@ -63,15 +64,31 @@ class ReboundConfirmedRecovery:
                     or close * bars.volume[i] < 40_000
                 ):
                     continue
-                signals.append(Signal(symbol, confirmation, expire_minute=confirmation + 1))
+                if self.retest_limit:
+                    # A qualifying recovery close is above the already observed low.
+                    bid = floor(100 * low_close + 1e-9) / 100
+                    if bid >= 1.0:
+                        signals.append(
+                            Signal(
+                                symbol,
+                                confirmation,
+                                limit_price=bid,
+                                expire_minute=confirmation + 5,
+                            )
+                        )
+                else:
+                    signals.append(Signal(symbol, confirmation, expire_minute=confirmation + 1))
                 break
         return signals
 
 
 def build(params: dict) -> ReboundConfirmedRecovery:
-    if params.keys() - {"volume_momentum"}:
-        raise ValueError("rebound_confirmed_recovery only accepts volume_momentum")
+    if params.keys() - {"volume_momentum", "retest_limit"}:
+        raise ValueError("rebound_confirmed_recovery accepts volume_momentum and retest_limit")
     volume_momentum = params.get("volume_momentum", False)
-    if not isinstance(volume_momentum, bool):
-        raise ValueError("volume_momentum must be a boolean")
-    return ReboundConfirmedRecovery(volume_momentum=volume_momentum)
+    retest_limit = params.get("retest_limit", False)
+    if not isinstance(volume_momentum, bool) or not isinstance(retest_limit, bool):
+        raise ValueError("volume_momentum and retest_limit must be booleans")
+    if retest_limit and not volume_momentum:
+        raise ValueError("retest_limit requires volume_momentum confirmation")
+    return ReboundConfirmedRecovery(volume_momentum=volume_momentum, retest_limit=retest_limit)
