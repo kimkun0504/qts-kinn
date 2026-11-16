@@ -280,7 +280,7 @@ printed at least a tick below the limit from 5 seconds after the event bar.
   trading through, 97–98% did print at the limit (64–76% in the order's full size), and a fill
   there would have earned +4.89% (validation, 160 orders) and +3.48% (development, 190) at 2×.
   Live trading gets some of these; the backtest counts none. Orders that came within 1% of the
-  limit or stayed far from it had no print at or below it (240 sampled).
+  limit or stayed far from it had no print at or below it (480 sampled).
 - **2003–2006**, before the trade-through rules: 100% confirmed, 98% of the net kept.
 - **Size.** Share of under-$300M orders whose through-volume covers a larger order: 2× the
   order 92–93%, 5× 83–86%, 10× 72–75%, 25× 46–51%. Median dollars traded below the limit:
