@@ -158,3 +158,105 @@ The validation years have now been used three times in this family. A pass here 
 evidence than the first pass was; the holdout and paper trading remain the real tests.
 
 Each of the 10 runs and the validation run is a counted trial (family total would reach 48).
+
+## Addendum, 2026-11-15 19:50 ET: targets changed by the owner; fill check on real trades
+
+Written before any tick data for these orders was requested or read.
+
+**Targets (owner, 2026-11-15).** The 3–4% a trade target is replaced. A strategy is a candidate
+for paper trading when, out of sample, it has **net per trade of at least +1.0% at 2× slippage**,
+**Sharpe above 1**, **worst drawdown under half the account**, and **fills confirmed against real
+trades**. Intraday is the focus; the daily engine and momentum are parked (decision 0017).
+
+`x_o4` meets the first three on 2017–2023 (+1.20% at 2×, Sharpe 1.43, drawdown $8,925 of
+$20,000). This addendum is the fourth.
+
+### Hypothesis
+
+The minute-bar fill rule reports fills a real resting order would have had. For an `x_o4` order
+that the simulator filled, real trades printed below the limit while the order was live, in at
+least the order's size, late enough for a real order to have been in the book.
+
+### Why it could be false
+
+1. **The bar's low is one small print.** The simulator lets the order take 5% of the *whole
+   bar's* volume once the low is a tick through the limit. Most of that volume may have traded
+   above the limit, before the low.
+2. **The print is not one a resting order could meet:** out of sequence, derivatively priced,
+   an average-price or contingent trade, or later cancelled.
+3. **Latency.** The order is assumed live in the first second after the event bar. A real order
+   is live a few seconds later; the prints may already be over.
+4. **Before 2007** (Regulation NMS) a trade on one venue could print below a better bid on
+   another. A through-print then proves less.
+5. **The opposite error.** The rule refuses orders where the price touched the limit and did not
+   trade through. Live, some of those fill. They are not in the backtest and may be better or
+   worse than the trades that are.
+
+### What is measured
+
+Orders: every traded order of the development run (`…84ff9c3d`, 3,200) and the validation run
+(`…eec4a69e`, 1,789), plus a sample of orders the bar rule left unfilled. The orders of both runs
+are rebuilt from the same strategy code, config and data build, with the simulator's own fill
+function; the rebuilt traded orders must equal the runs' trades exactly. This is a listing of
+orders, not a run: it produces no performance number.
+
+For each order, from the vendor's trades and NBBO quotes between the start of the event bar and
+the order's expiry (the live window is the 10 one-minute bars after the event bar):
+
+- **Through-prints:** regular-session trades at least one tick below the limit, excluding
+  corrected or cancelled trades and trades whose condition codes do not update the
+  consolidated high and low (the vendor's own table, downloaded with the data; odd lots are
+  therefore excluded, as they are from the bars). Reported also with odd lots included.
+- **Confirmed:** at least one through-print while the order was live.
+- **Through-volume:** shares in through-prints. A buy at the limit has price priority over every
+  one of them.
+- **Tick-rule quantity:** the smaller of the simulated quantity and the through-volume, counting
+  only prints from **5 seconds** after the event bar ended. Zero means the order did not trade.
+- **Tick-rule result:** the trade's P&L recomputed at the tick-rule quantity (same limit price,
+  same closing-auction exit, same cost model).
+- Supporting evidence, reported and not judged: whether the national best bid fell below the
+  limit (every displayed bid at the limit was taken), whether the best ask reached it, volume
+  printed exactly at the limit, through-volume as a multiple of the order, results with 0, 5 and
+  30 seconds of latency, and 2003–2006 separately from 2007 on.
+
+Everything is reported overall and by market cap of the previous session: under $300M,
+$300M–$2B, over $2B.
+
+**Unfilled sample.** Per period and market-cap group, drawn at random with a fixed seed from
+orders the bar rule did not fill (whether or not the account had capital for them): 100 where
+the low touched the limit, 50 where it came within 1% of it, 30 others. For these the report
+gives the share that real trades would have filled (a through-print: the rule missed a fill) and
+the share only touched, with what a fill at the limit would have earned to the close.
+
+### Pass bars (set now)
+
+1. **Coverage:** tick data for at least 95% of the traded orders. Below that the check is
+   inconclusive and goes back to the owner.
+2. **Confirmed:** at least 97% of the traded orders in each period have a through-print while
+   live.
+3. **Tick-rule result:** on validation, net per trade at 2× slippage of at least **+1.0%** over
+   the orders with a tick-rule quantity above zero; and in each period the tick-rule total net
+   at 2× is at least **80%** of the simulated total.
+
+All three pass: fills are confirmed, and the deeper-limit search may be registered. Any fails:
+the fill rule is replaced by one that matches the ticks before any further search, and `x_o4`'s
+numbers are restated under it.
+
+### Micro-caps: how the check decides (set now)
+
+The universe has no market-cap floor. For the under-$300M group alone:
+
+- **Exclude** (a floor at $300M) if under 90% of its traded orders are confirmed, or its
+  tick-rule total net at 2× is under 60% of its simulated total in either period: the simulated
+  profit there is not obtainable.
+- **Keep and stay small** if it passes those and its through-volume is thin (median
+  through-volume under 5 times the order): fills are real at $2,000 and would not be at a
+  multiple of it.
+- **A floor as a variant in the next search** if fills pass and the group's results are not
+  consistent between the two periods, so that no floor can be justified from results alone
+  without fitting.
+
+### Trials
+
+The tick study is recorded in the run store and charged as one trial (family total 49). It
+selects nothing: one variant, fixed. The order listing and the unfilled sample add none.
