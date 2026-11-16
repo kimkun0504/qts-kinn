@@ -61,3 +61,30 @@ prices and auction proceeds need separate verification with quotes and trades.
 The large-cap reference controls for a common move imperfectly. Same-clock missing
 bars can make the median depend on which names are actively printing, and stale
 market caps or current-vintage labels can misclassify the cohort.
+
+## Addendum, 2026-11-16: selection by absolute liquidity
+
+The original full-period study was positive and its later development block lost.
+An exploratory development-only look at saved run
+`20261116T061343Z_gpt_relative_dislocation_reversal_cbe31371` found that 39 of the
+2013–2016 events had at least $10 million in prior median daily turnover. Their
+mean was +3.14% gross and +2.08% at 2×. This is a small, selected subgroup.
+Its results motivated a new hypothesis and cannot validate it.
+
+Replace the tradable-stock selection by positive prior capitalisation **below
+$10 billion** and at least **$10 million** in prior daily median turnover. The
+$10 million breakpoint is the cost model's spread tier. The cap cutoff is the
+lower bound of the existing anchor basket. This lets liquid mid-caps participate.
+Remove the turnover-to-cap ratio. Keep the same $2 prior close floor, age floor,
+reference stocks, return cutoffs, bar-turnover confirmation, next-minute entry,
+auction exit, and account. Report actual bar-based capacity and encumbered capital.
+
+Run one new variant with `development_liquid --study` on 2003-09-10 through
+2016-12-30. Apply the exact original event-study gates, including the later
+development block and expiry sensitivity. If they pass, commit that decision
+and run `development_liquid` with the portfolio engine. Apply the unchanged
+portfolio development gates. Only if they pass, run `validation_liquid` once
+on 2017-01-03 through 2023-11-08. Apply the unchanged +3.00% and recent-regime
+validation bars. Count each run in `intraday_rebound` and disclose that the
+selector was motivated by development results. No other liquidity or cap
+cutoff is registered. The holdout stays sealed.
