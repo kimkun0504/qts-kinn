@@ -418,3 +418,58 @@ two-hour result shares the first test's data and selection history.
 | 2014 | 14 | +4.48% | +4.14% | +$1,253 | +$1,157 |
 | 2015 | 18 | +4.27% | +3.97% | +$1,528 | +$1,420 |
 | 2016 | 9 | −1.48% | −1.88% | −$265 | −$338 |
+
+### Two-hour portfolio result
+
+**Decision: park.** The two-hour exit raised the development mean to **+3.72%
+net per trade at 1× and +3.34% at 2×**. At 2×, annualised daily Sharpe was
+**0.94**, below the preregistered requirement above 1. The sample, return
+and drawdown bars passed. The 50 trades on 46 dates in 2013–2016 averaged
++3.48% and +3.18% net at 1× and 2×. Validation was skipped.
+
+| Development portfolio | One-hour exit | Two-hour exit |
+|---|---:|---:|
+| Trades / active dates | 288 / 199 | 288 / 199 |
+| Gross mean per trade | +4.08% | +4.37% |
+| Net/trade at 1× | +3.42% | +3.72% |
+| Net/trade at 2× | +3.03% | +3.34% |
+| Net dollars at 1× / 2× | +$19,526 / +$17,298 | +$21,292 / +$19,120 |
+| Daily P&L t-statistic at 1× / 2× | 3.74 / 3.38 | 3.72 / 3.42 |
+| Annualised daily Sharpe at 1× / 2× | 1.02 / 0.93 | 1.02 / 0.94 |
+| Worst drawdown at 1× / 2× | −$1,408 / −$1,474 | −$1,561 / −$1,826 |
+
+Trade dates, symbols, entry times and starting notionals matched the one-hour
+portfolio exactly. Both runs rejected seven entries for capital and averaged
+$1,982 in filled notional. The longer hold had 266 timed exits and 22 auction
+exits. In 51 timed exits the final fill came after the scheduled minute.
+Kinn models marketable fills from minute bars with a participation cap. The
+actual price and liquidity on both sides remain unverified.
+
+At base costs, 183 winners averaged +11.59% and 105 losers averaged −9.98%.
+At 2×, 178 winners averaged +11.52% and 110 losers averaged −9.90%. This
+change improved the trade mean on the same entries and increased worst
+drawdown. It left the stressed risk result below the gate.
+
+Run `20261116T211344Z_gpt_relative_dislocation_reversal_6ccbf180` used clean
+commit `7f37041d`, data build `447e58e098` and development dates 2003-09-10
+through 2016-12-30. All 288 entries were on the next clock minute, and all 199
+signal-session replay checks passed. The portfolio is one additional counted
+`intraday_rebound` run. Both the validation period and the sealed holdout
+stayed unopened for this variant.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +31.46% | +31.33% | +$621 | +$618 |
+| 2004 | 6 | +5.78% | +5.58% | +$690 | +$666 |
+| 2005 | 4 | −6.52% | −6.76% | −$519 | −$538 |
+| 2006 | 10 | +4.64% | +4.40% | +$928 | +$880 |
+| 2007 | 24 | +4.09% | +3.68% | +$1,959 | +$1,766 |
+| 2008 | 145 | +4.29% | +3.84% | +$12,331 | +$11,053 |
+| 2009 | 22 | +0.69% | +0.37% | +$306 | +$165 |
+| 2010 | 4 | +3.78% | +3.62% | +$302 | +$290 |
+| 2011 | 14 | −2.04% | −2.32% | −$577 | −$653 |
+| 2012 | 8 | +11.25% | +10.77% | +$1,800 | +$1,724 |
+| 2013 | 9 | +5.11% | +4.82% | +$919 | +$866 |
+| 2014 | 14 | +4.50% | +4.17% | +$1,260 | +$1,168 |
+| 2015 | 18 | +4.38% | +4.11% | +$1,569 | +$1,474 |
+| 2016 | 9 | −1.53% | −1.89% | −$297 | −$361 |
