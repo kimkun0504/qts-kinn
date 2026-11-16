@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import json
 import time
 from importlib.metadata import version
+from pathlib import Path
 
 from kinn.core.settings import HOLDOUT_START, load_settings
 
@@ -227,6 +229,62 @@ def _quotes_passive(args: argparse.Namespace) -> int:
     return 0
 
 
+def _fills_plan(args: argparse.Namespace) -> int:
+    from kinn import fill_check
+
+    settings = load_settings()
+    labels = dict(pair.split("=", 1)[::-1] for pair in args.runs)  # run id -> label
+    work = (
+        Path(args.work) if args.work else settings.data_dir / "quotes_sample" / args.name / "work"
+    )
+    deadline = time.time() + args.budget
+    for run_id in labels:
+        done = fill_check.list_orders(
+            settings, run_id, work, budget_seconds=deadline - time.time(), workers=args.workers
+        )
+        if not done:
+            print(f"paused while listing {run_id}; run the same command again to continue")
+            return 0
+    out = fill_check.plan(settings, args.name, list(labels), work, labels=labels)
+    summary = json.loads((out / "plan.json").read_text())
+    for run in summary["runs"]:
+        print(run)
+    print(f"{summary['windows']} windows planned: {out / 'windows.csv'}")
+    print(f"The owner now runs: uv run python tools/owner/download_quotes.py {out / 'windows.csv'}")
+    return 0
+
+
+def _fills_check(args: argparse.Namespace) -> int:
+    import yaml
+
+    from kinn import fill_check
+    from kinn.costs import model as cost_model
+    from kinn.registry import runs as registry
+    from kinn.run import REPO_ROOT, strategies_dir
+
+    settings = load_settings()
+    folder = settings.data_dir / "quotes_sample" / args.name
+    work = Path(args.work) if args.work else folder / "work"
+    plan = json.loads((folder / "plan.json").read_text())
+    meta = yaml.safe_load((strategies_dir() / args.strategy / "strategy.yaml").read_text())
+    costs = cost_model.load(meta["cost_calibration"])
+    done = fill_check.measure_orders(
+        settings, args.name, work, costs=costs, budget_seconds=args.budget, workers=args.workers
+    )
+    if not done:
+        print("paused while reading ticks; run the same command again to continue")
+        return 0
+    try:
+        run_dir = fill_check.study(
+            settings, args.name, work, strategy=args.strategy, run_labels=plan["labels"],
+            validation_label=args.validation, meta=meta, repo=REPO_ROOT, scratch=args.scratch,
+        )  # fmt: skip
+    except registry.DirtyTreeError as error:
+        raise SystemExit(f"refused: {error}") from error
+    print((run_dir / "fill_check.md").read_text())
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -282,6 +340,26 @@ def main(argv: list[str] | None = None) -> int:
     q_passive.add_argument("--strategy", default="intraday_rebound_passive")
     q_passive.add_argument("--scratch", action="store_true")
     q_passive.set_defaults(func=_quotes_passive)
+
+    fills = sub.add_parser(
+        "fills", help="check minute-bar fills against real trades"
+    ).add_subparsers(dest="fills_command", required=True)
+    f_plan = fills.add_parser("plan", help="list the runs' orders and write the windows to fetch")
+    f_plan.add_argument("--name", required=True, help="name of the plan (and of the raw folder)")
+    f_plan.add_argument("--runs", nargs="+", required=True, metavar="LABEL=RUN_ID")
+    f_plan.add_argument("--work", help="folder for resumable parts (default: inside the plan)")
+    f_plan.add_argument("--budget", type=float, default=float("inf"), help="seconds, then pause")
+    f_plan.add_argument("--workers", type=int, default=1)
+    f_plan.set_defaults(func=_fills_plan)
+    f_check = fills.add_parser("check", help="compare with the downloaded ticks; one trial")
+    f_check.add_argument("--name", required=True)
+    f_check.add_argument("--strategy", required=True)
+    f_check.add_argument("--validation", required=True, help="label of the validation run")
+    f_check.add_argument("--work")
+    f_check.add_argument("--budget", type=float, default=float("inf"))
+    f_check.add_argument("--workers", type=int, default=1)
+    f_check.add_argument("--scratch", action="store_true")
+    f_check.set_defaults(func=_fills_check)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True
