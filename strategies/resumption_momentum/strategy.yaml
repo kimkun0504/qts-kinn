@@ -1,0 +1,8 @@
+name: resumption_momentum
+status: hypothesis
+engine: intraday
+universe: resumption_momentum
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: resumption_momentum
+prior_trials: 0
