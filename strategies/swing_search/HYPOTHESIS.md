@@ -276,3 +276,8 @@ close 15 sessions after the signal. It is tested once on 2005 to 2009, which hav
 read for it, with rule A's test: a mean of 1% or more on the auction basis, a weekly t of 2.5
 or more, and four years of five positive. In the search years it made 0.9% (2010–2017) and
 2.0% (2018–2022), so the prior is weak; this test decides whether it is worth more work.
+
+**Rule C, result (same day):** 11,103 trades in 2005 to 2009, 1.78% a trade on the auction
+basis, weekly t 3.22, four years of five positive (2008: −3.94%). It passes the test as
+written. It is not taken forward: 0.80% of the 1.78% is over the market, and filling the
+earnings book's idle slots with it lowers the book's Sharpe ratio and raises its drawdown.

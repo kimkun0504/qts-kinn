@@ -2,6 +2,6 @@ name: earnings_drift
 kind: swing               # a daily event rule run by `kinn swing` (kinn.swing_run), not an intraday strategy
 status: event-study       # found and tested in strategies/swing_search (rule A50); fills unmeasured; holdout sealed
 family: swing_search
-prior_trials: 12013
+prior_trials: 12017
 cost_calibration: ibkr_pro_tiered
 owner: claude

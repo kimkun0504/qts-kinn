@@ -5,4 +5,4 @@ universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: swing_search
-prior_trials: 12013
+prior_trials: 12017

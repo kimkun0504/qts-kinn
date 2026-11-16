@@ -115,6 +115,8 @@ spread in the search years (0.92%); Sharpe is above 1 only on the auction basis;
 
 | Family 18: jumps on other news (other 8-Ks, other filings, no filing), under $300M | 108 | No cell reaches 2% with a weekly t of 3 in 2010–2017 |
 
+| Rule C: a pullback in a small winner ($300M to $2B, up 50–100% in 120 sessions, down 5–10% in 5), to fill the idle slots | 1 | Passed its test on 2005–2009 (1.78% a trade on the auction basis, weekly t 3.22, four years of five; 2008: −3.9%), but only 0.8% of that is over the market, and adding it to the book lowers the Sharpe ratio (1.07 to 0.81) and raises the drawdown. With the spread crossed the combined book earns less than the earnings rule alone. Not taken forward |
+
 About 12,000 cells in all.
 
 ## What is still open
@@ -122,8 +124,8 @@ About 12,000 cells in all.
 - **The tick sample**, to replace the auction allowance with a measurement. Owner's download.
 - **The holdout.** The rule is not a Kinn strategy yet; it has to be written for the engine
   before the owner can run it on the sealed years. One run.
-- **Idle money.** The rule uses under half the account on average, and family 18 found no
-  second kind of news to fill it.
+- **Idle money.** The rule uses under half the account on average. Family 18 found no second
+  kind of news to fill it, and rule C made the book worse.
 
 ## Reproduce
 
