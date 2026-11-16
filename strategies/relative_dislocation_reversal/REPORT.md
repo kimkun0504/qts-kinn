@@ -473,3 +473,56 @@ stayed unopened for this variant.
 | 2014 | 14 | +4.50% | +4.17% | +$1,260 | +$1,168 |
 | 2015 | 18 | +4.38% | +4.11% | +$1,569 | +$1,474 |
 | 2016 | 9 | −1.53% | −1.89% | −$297 | −$361 |
+
+## Ten-point dislocation after a quiet baseline
+
+**Decision: park.** The one-hour event study earned **+2.80% net at 1× and
++2.45% at 2×** over 214 events on 177 dates. The 47 events on 45 dates in
+2013–2016 averaged +1.21% gross, +0.68% at 1× and +0.37% at 2×. The later
+development block missed the +3% gross gate. The full-sample return and
+sample gates passed. The portfolio and validation phases were skipped.
+
+Compared with the 12-point quiet baseline, the new cutoff added 88 dates
+and 108 stock-days, retained all original stock-days, and moved the
+signal minute on seven retained stock-days. The 95 events on dates the
+prior rule did not trade earned +0.38% net at 1× and +0.07% at 2×, as a
+descriptive comparison. The broader rule roughly doubled the calendar
+coverage and diluted the return.
+
+| One-hour development study | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net per event | +2.80% | +2.45% |
+| 95% day-clustered interval | +1.04% to +4.40% | +0.69% to +4.03% |
+| Summed event P&L | +$11,959 | +$10,454 |
+| Daily event P&L t-statistic | 3.12 | 2.77 |
+| Worst drawdown of summed events | −$1,250 | −$1,455 |
+
+Gross mean was +3.37% with a day-clustered 95% interval of +1.61% to +4.99%.
+The daily dollar metrics sum the hypothetical exposures across all 3,352
+development sessions. The study models both sides from entry-bar inputs.
+The marketable prices, quoted depth and sale proceeds remain unverified.
+
+Run `20261116T212112Z_gpt_relative_dislocation_reversal_513e460f` used clean
+commit `ab05f4a6`, build `447e58e098` and the 2003-09-10 through 2016-12-30
+period. Preregistration `da3bbee` followed the 12-point study and preceded
+this run. It is one additional counted `intraday_rebound` trial. Every entry
+was one clock minute after the signal, and all 177 session replay checks
+passed. This data-informed change does not supply independent evidence.
+Validation and the sealed holdout stayed unopened.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 3 | +6.83% | +6.71% | +$404 | +$397 |
+| 2004 | 9 | +4.90% | +4.70% | +$879 | +$842 |
+| 2005 | 4 | +9.40% | +9.03% | +$748 | +$719 |
+| 2006 | 7 | +4.71% | +4.50% | +$655 | +$626 |
+| 2007 | 17 | +6.88% | +6.56% | +$2,333 | +$2,225 |
+| 2008 | 88 | +3.50% | +3.04% | +$6,151 | +$5,342 |
+| 2009 | 11 | −2.48% | −2.78% | −$541 | −$607 |
+| 2010 | 7 | +5.78% | +5.57% | +$800 | +$771 |
+| 2011 | 12 | −3.98% | −4.20% | −$955 | −$1,007 |
+| 2012 | 9 | +4.73% | +4.48% | +$849 | +$804 |
+| 2013 | 6 | +5.31% | +5.00% | +$636 | +$598 |
+| 2014 | 16 | −0.64% | −1.02% | −$209 | −$330 |
+| 2015 | 13 | +4.21% | +3.91% | +$1,090 | +$1,012 |
+| 2016 | 12 | −3.69% | −3.93% | −$881 | −$938 |
