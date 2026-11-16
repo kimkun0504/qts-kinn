@@ -1,0 +1,8 @@
+name: market_recovery_lag
+status: parked
+engine: intraday
+universe: market_recovery_lag
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
