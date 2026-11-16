@@ -1,5 +1,5 @@
 name: resumption_momentum
-status: hypothesis
+status: parked
 engine: intraday
 universe: resumption_momentum
 cost_calibration: ibkr_pro_tiered
