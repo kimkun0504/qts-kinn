@@ -649,3 +649,63 @@ conditional exit. The registered portfolio run will measure that exit
 directly, with entry logic and risk settings preserved. This is a further
 selection look on the same development period. Hypothesis commit
 `c40dd2d` preceded the new run.
+
+### Conditional holding portfolio result
+
+**Decision: park.** The conditional holding rule earned **+3.61% net
+per trade at 1× and +3.22% at 2×**. Its stressed daily Sharpe was
+**0.95**, below the prespecified bar above 1. The sample, return and
+drawdown bars passed. In 2013–2016, 50 trades on 46 dates averaged
++4.08% and +3.77% net at 1× and 2×. Validation was skipped.
+
+| Development portfolio | Fixed 60 minutes | Fixed 120 minutes | Conditional |
+|---|---:|---:|---:|
+| Trades / active dates | 288 / 199 | 288 / 199 | 288 / 199 |
+| Gross mean per trade | +4.08% | +4.37% | +4.26% |
+| Net/trade at 1× | +3.42% | +3.72% | +3.61% |
+| Net/trade at 2× | +3.03% | +3.34% | +3.22% |
+| Net dollars at 1× / 2× | +$19,526 / +$17,298 | +$21,292 / +$19,120 | +$20,647 / +$18,434 |
+| Daily P&L t-statistic at 1× / 2× | 3.74 / 3.38 | 3.72 / 3.42 | 3.81 / 3.47 |
+| Annualised daily Sharpe at 1× / 2× | 1.02 / 0.93 | 1.02 / 0.94 | 1.05 / 0.95 |
+| Worst drawdown at 1× / 2× | −$1,408 / −$1,474 | −$1,561 / −$1,826 | −$1,323 / −$1,389 |
+
+All three portfolios had the same dates, symbols, entry minutes and
+initial notionals. The assigned exits for each trade matched those in
+the corresponding fixed-duration portfolio. The 91 trades with a quiet
+baseline on 81 dates averaged +7.71% and +7.44% net at 1× and 2×.
+The 197 trades assigned an hour on 136 dates averaged +1.72% and
++1.27%. These groups have different price histories as well as
+different exits. Their means reflect both differences.
+
+At 1×, 177 winners averaged +11.72% while 111 losers averaged −9.32%.
+At 2×, 176 winners averaged +11.40% while 112 losers averaged −9.63%.
+The 295 signals produced 288 fills and seven capital rejections. The
+mean notional was $1,982, with 275 timed exits and 13 auction exits.
+Returns depend on modelled execution, whose prices and depth remain
+unverified. The results are from the same development period used
+to choose the rule.
+
+Run `20261116T213049Z_gpt_relative_dislocation_reversal_e7c7bac4`
+used clean commit `f759eee3` and data build `447e58e098` from
+2003-09-10 through 2016-12-30. All 288 entry timestamps followed their
+signal by one clock minute. All 199 signal-session replays passed.
+This adds one counted `intraday_rebound` run. It is the tenth rule
+definition in this strategy, including the original. No definition
+qualified for validation. The sealed holdout stayed unopened.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +31.46% | +31.33% | +$621 | +$618 |
+| 2004 | 6 | +6.53% | +6.33% | +$779 | +$755 |
+| 2005 | 4 | −3.06% | −3.31% | −$243 | −$263 |
+| 2006 | 10 | +5.70% | +5.46% | +$1,142 | +$1,094 |
+| 2007 | 24 | +3.07% | +2.64% | +$1,471 | +$1,265 |
+| 2008 | 145 | +3.59% | +3.13% | +$10,273 | +$8,978 |
+| 2009 | 22 | +2.17% | +1.85% | +$957 | +$815 |
+| 2010 | 4 | +5.32% | +5.16% | +$425 | +$412 |
+| 2011 | 14 | −1.11% | −1.38% | −$311 | −$388 |
+| 2012 | 8 | +9.05% | +8.57% | +$1,449 | +$1,372 |
+| 2013 | 9 | +4.86% | +4.56% | +$873 | +$819 |
+| 2014 | 14 | +6.32% | +5.98% | +$1,768 | +$1,673 |
+| 2015 | 18 | +5.24% | +4.97% | +$1,879 | +$1,782 |
+| 2016 | 9 | −2.49% | −2.86% | −$436 | −$501 |
