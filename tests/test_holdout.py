@@ -187,3 +187,42 @@ def test_a_rehearsal_fails_on_a_missing_or_unexplained_trade(tmp_path):
     )
     missing = holdout.compare_trades(research, fewer)
     assert not missing["passed"] and missing["examples_missing"][0][:2] == ["2020-03-03", "BBB"]
+
+
+def test_a_symbol_made_ambiguous_by_a_delisted_company_is_an_explained_loss(tmp_path):
+    """Sharadar keeps two records for one traded symbol: ``ABC1`` (delisted after the seal) and
+    ``ABC`` (first priced shortly before it). Research matches only ``ABC``; unsealed sees both
+    claims from the day they overlap and drops the symbol."""
+    import pyarrow as pa
+
+    def build(name, panel, delisted, history):
+        root = tmp_path / name
+        (root / "panel").mkdir(parents=True)
+        (root / "master").mkdir()
+        rows = [{"date": d, "permaticker": p, "symbol": "ABC", "close": 5.0} for p, d in panel]
+        pq.write_table(pa.Table.from_pylist(rows), root / "panel" / "year=2023.parquet")
+        sec = [{"permaticker": 1, "ticker": "ABC1", "delisted": delisted},
+               {"permaticker": 2, "ticker": "ABC", "delisted": False}]  # fmt: skip
+        pq.write_table(pa.Table.from_pylist(sec), root / "master" / "security_master.parquet")
+        hist = [{"permaticker": p, "symbol": "ABC", "valid_from": a, "valid_to": b}
+                for p, a, b in history]  # fmt: skip
+        pq.write_table(pa.Table.from_pylist(hist), root / "master" / "symbol_history.parquet")
+        return root
+
+    early, late = [date(2023, 6, 8), date(2023, 6, 9)], [date(2023, 6, 12), date(2023, 6, 13)]
+    new_life = (2, date(2023, 6, 12), date(2100, 1, 1))
+    research = build("research", [(2, d) for d in late], False, [new_life])
+    unsealed = build("unsealed", [(1, d) for d in early], True,
+                     [(1, date(2012, 5, 1), date(2024, 3, 1)), new_life])  # fmt: skip
+    report = holdout.compare_panels(research, unsealed)
+    assert report["same_before_seal"] and not report["exact"]
+    assert report["rows_missing_from_unsealed"][holdout.AMBIGUOUS]["rows"] == 2
+    assert (
+        report["rows_only_in_unsealed"]["delisted after the seal; ticker reused since"]["rows"] == 2
+    )
+    # Without the second claim on the symbol, the same loss has no explanation and fails.
+    bare = build("bare", [(1, d) for d in early], True,
+                 [(1, date(2012, 5, 1), date(2023, 6, 10)), new_life])  # fmt: skip
+    report = holdout.compare_panels(research, bare)
+    assert not report["same_before_seal"]
+    assert report["rows_missing_from_unsealed"]["unexplained"]["companies"] == 1

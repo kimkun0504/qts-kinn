@@ -27,6 +27,8 @@ FOLDER = "holdout"
 UNSEALED_VERSION = "unsealed-2"  # bump when the unsealed tables must be rebuilt
 TOLERANCE = 1e-9  # relative; see ``compare_panels``
 CHECK_NAME = "check.json"
+_REUSED = "^[A-Z.]+?[0-9]+$"  # Sharadar's name for a delisted company whose ticker was reused
+AMBIGUOUS = "symbol also claimed by a company delisted after the seal; ambiguous, dropped"
 
 
 def authorise(settings: Settings, source: str) -> None:
@@ -155,8 +157,8 @@ def compare_panels(research: Path, unsealed: Path, *, before: date = HOLDOUT_STA
             for p in (research / "panel").glob("year=*.parquet")
             if int(p.stem.split("=")[1]) <= before.year
         )
-        con.execute("create table gained (permaticker bigint, date date)")
-        con.execute("create table lost (permaticker bigint, date date)")
+        con.execute("create table gained (permaticker bigint, date date, symbol varchar)")
+        con.execute("create table lost (permaticker bigint, date date, symbol varchar)")
         totals = dict.fromkeys(("rows", "common"), 0)
         differs = dict.fromkeys(columns, 0)
         beyond = dict.fromkeys(columns, 0)
@@ -194,24 +196,53 @@ def compare_panels(research: Path, unsealed: Path, *, before: date = HOLDOUT_STA
                 else:
                     beyond[c] = differs[c]
             con.execute(
-                f"insert into gained select u.permaticker, u.date from {u} u anti join {r} r "
+                f"insert into gained select u.permaticker, u.date, u.symbol "
+                f"from {u} u anti join {r} r "
                 f"on r.date = u.date and r.permaticker = u.permaticker"
             )
             con.execute(
-                f"insert into lost select r.permaticker, r.date from {r} r anti join {u} u "
+                f"insert into lost select r.permaticker, r.date, r.symbol "
+                f"from {r} r anti join {u} u "
                 f"on r.date = u.date and r.permaticker = u.permaticker"
             )
         for which, root in (("r", research), ("u", unsealed)):
             con.execute(
                 f"create view sec_{which} as select * from '{root}/master/security_master.parquet'"
             )
-        why = """case when r.permaticker is null then 'left out of the research build'
-                      when not r.delisted and u.delisted
-                           and regexp_matches(u.ticker, '^[A-Z.]+?[0-9]+$')
-                        then 'delisted after the seal; ticker reused since'
-                      else 'unexplained' end"""
-        gained = _groups(con, "gained", why)
-        lost = _groups(con, "lost", "'unexplained'")
+        con.execute(
+            f"create view hist_u as select * from '{unsealed}/master/symbol_history.parquet'"
+        )
+        # Companies the research build cannot match and the unsealed build can.
+        con.execute(
+            f"""create view reused as
+                select u.permaticker from sec_u u join sec_r r using (permaticker)
+                where u.delisted and not r.delisted and regexp_matches(u.ticker, '{_REUSED}')"""
+        )
+        gained = _groups(
+            con,
+            """select t.permaticker, t.date,
+                      case when t.permaticker in (select permaticker from reused)
+                             then 'delisted after the seal; ticker reused since'
+                           when t.permaticker not in (select permaticker from sec_r)
+                             then 'left out of the research build'
+                           else 'unexplained' end as why
+               from gained t""",
+        )
+        # A research row is expected to go when its symbol, on that date, is also claimed by
+        # one of those companies: two claims on one symbol are ambiguous and both are dropped
+        # (the panel's standing rule).
+        lost = _groups(
+            con,
+            f"""select t.permaticker, t.date,
+                       case when c.permaticker is not null then '{AMBIGUOUS}'
+                            else 'unexplained' end as why
+                from lost t left join (
+                    select distinct l.permaticker, l.date from lost l
+                    join hist_u h on h.symbol = l.symbol and l.date >= h.valid_from
+                     and l.date < h.valid_to and h.permaticker <> l.permaticker
+                    join reused e on e.permaticker = h.permaticker) c
+                  on c.permaticker = t.permaticker and c.date = t.date""",
+        )
     finally:
         con.close()
     out = {
@@ -225,25 +256,24 @@ def compare_panels(research: Path, unsealed: Path, *, before: date = HOLDOUT_STA
     }
     out["exact"] = not (lost or gained or out["columns_that_differ"])
     out["same_before_seal"] = not (
-        lost or out["columns_beyond_tolerance"] or "unexplained" in gained
+        out["columns_beyond_tolerance"] or "unexplained" in gained or "unexplained" in lost
     )
     return out
 
 
-def _groups(con: duckdb.DuckDBPyConnection, table: str, why: str) -> dict:
-    """``table`` (permaticker, date) summed by reason, with five example companies each."""
+def _groups(con: duckdb.DuckDBPyConnection, classified: str) -> dict:
+    """``classified`` yields (permaticker, date, why); summed by reason, five examples each."""
     rows = con.execute(
         f"""with per as (
-                select t.permaticker, any_value(u.ticker) as ticker, count(*) as n,
-                       min(t.date) as first, max(t.date) as last, any_value({why}) as why
-                from {table} t
-                left join sec_u u on u.permaticker = t.permaticker
-                left join sec_r r on r.permaticker = t.permaticker
-                group by 1)
-            select why, sum(n), count(*),
-                   list({{'ticker': ticker, 'rows': n, 'first': first, 'last': last}}
-                        order by n desc)[1:5]
-            from per group by 1 order by 2 desc"""
+                select permaticker, why, count(*) as n, min(date) as first, max(date) as last
+                from ({classified}) group by 1, 2)
+            select p.why, sum(p.n), count(*),
+                   list({{'ticker': coalesce(u.ticker, r.ticker), 'rows': p.n,
+                          'first': p.first, 'last': p.last}} order by p.n desc)[1:5]
+            from per p
+            left join sec_u u on u.permaticker = p.permaticker
+            left join sec_r r on r.permaticker = p.permaticker
+            group by 1 order by 2 desc"""
     ).fetchall()
     return {
         why: {"rows": int(n), "companies": companies, "largest": examples}
@@ -291,8 +321,7 @@ def explained_additions(settings: Settings) -> list[int]:
     rows = duckdb.sql(
         f"""select u.permaticker from '{root}/master/security_master.parquet' u
             join '{research}/master/security_master.parquet' r using (permaticker)
-            where u.delisted and not r.delisted
-              and regexp_matches(u.ticker, '^[A-Z.]+?[0-9]+$')"""
+            where u.delisted and not r.delisted and regexp_matches(u.ticker, '{_REUSED}')"""
     ).fetchall()
     return [r[0] for r in rows]
 

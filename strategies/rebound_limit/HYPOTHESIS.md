@@ -514,3 +514,28 @@ the code and from a test on open data.
 
 The holdout run starts only if both pass. The rule for the result (Pass / Fail / Not proven)
 is unchanged.
+
+## Addendum, 2026-11-15 23:20 ET: check and rehearsal results; one named exception
+
+Still no strategy run on the holdout. The owner ran the new check and the rehearsal.
+
+- **Rehearsal passed.** `validation_s_l468` through the unsealed build gave the research
+  run's 3,001 trades exactly: same trades, prices and profit ($31,159.76).
+- **Rounding confirmed.** 4,751,651 rows differ in `ret60_prev` by at most 4e-13; 19 and 20
+  rows differ in `prev_close` and `split_ratio` by at most 2e-13. Nothing beyond tolerance.
+- **Extra rows, as expected:** two companies delisted after the seal with reused tickers
+  (`SIX1`, 3,371 rows; `SUPN1`, 2,796 rows).
+- **One exception, not expected:** 105 research rows of `SUPN` (2023-06-12 to 2023-11-08) are
+  missing from the unsealed build. Sharadar holds two records for that one traded symbol:
+  `SUPN1` (history from 2012, delisted after the seal) and `SUPN` (first priced 2023-06-12).
+  The research build cannot match `SUPN1`, so it sees one claim on the symbol. The unsealed
+  build matches both, and from 2023-06-12 the symbol has two claims. The panel's standing
+  rule drops a symbol with two claims.
+
+**Decision (proposed; the owner confirms by running):** keep the standing rule. One stock is
+left out of the unsealed universe while both records claim its symbol. The cause is a vendor
+record, not anything about returns, and the rehearsal shows it changes no validation trade.
+Choosing between the two records by hand, after seeing unsealed data, would be a rule made
+for this run. The check now recognises this case by its mechanism (a research row whose symbol
+is also claimed, on that date, by a company delisted after the seal with a reused ticker) and
+fails on any other missing row.

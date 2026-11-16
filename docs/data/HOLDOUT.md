@@ -40,7 +40,7 @@ research build on every date before the seal, row by row and column by column:
 |---|---|
 | `holdout_sessions`, `last_session` | about 756 sessions from 2023-11-09 |
 | `sharadar_reaches` | filings (`events`) and `actions` up to early November 2026 |
-| `rows_missing_from_unsealed` | must be empty |
+| `rows_missing_from_unsealed` | allowed only for the stated reason below; never "unexplained" |
 | `rows_only_in_unsealed` | allowed only for a stated reason (see below) |
 | `columns_that_differ` / `columns_beyond_tolerance` | the second must be empty |
 
@@ -52,6 +52,11 @@ Two differences are expected and allowed:
 - **Companies delisted after the seal whose ticker has been reused since.** Sharadar renames
   them with a digit (`ABC1`). The research build cannot know they were delisted, so it looks
   for bars under `ABC1`, finds none and leaves them out. The unsealed build matches them.
+
+A third follows from the second: where Sharadar keeps a second, newer record under the same
+symbol (`SUPN1` and `SUPN`), the unsealed build sees two claims on that symbol from the day
+they overlap and drops it, by the panel's standing rule. The check reports those rows as
+"symbol also claimed by a company delisted after the seal" and allows them.
 
 **Step 2** runs the validation config through the unsealed data and compares every trade with
 the research validation run. It must end with `rehearsal passed` (same trades, same prices,
