@@ -9,7 +9,7 @@ or more on one filing date; buy at the next open, sell at the close 15 sessions 
 
 | Period | What it is | Trades | Auction basis | Spread crossed | Over other stocks | Weekly t | Years positive |
 |---|---|---|---|---|---|---|---|
-| 2010–2017 | where the cell was chosen | 2,909 | 3.18% | 2.05% | 2.94% | 5.68 | 8 of 8 |
+| 2010–2017 | where the cell was chosen | 2,909 | 3.18% | 2.05% | 2.94% | 5.68 | 7 of 8 (2015 flat) |
 | 2006–2009 | test | 1,862 | 3.86% | 2.77% | 3.39% | 3.89 | 4 of 4 |
 | 2018–2022 | test | 2,086 | 1.54% | 0.46% | 1.77% | 1.84 | 3 of 5 |
 | 2023 to 29 Sep | check, read once | 275 | 1.73% | 0.65% | 2.41% | 1.58 | 1 of 1 |
@@ -23,7 +23,7 @@ over the two together: 3.84) and the 2023 check. Two things qualify that:
   trade before 2018, about 1% to 2.5% since.
 
 It is a different trade from the earnings rule: about 400 signals a year against 80, spread
-through the year, and only 90 of 7,132 fall on an earnings signal. Half its trades are in
+through the year, and only 92 of 7,132 come the session after an earnings filing. Half its trades are in
 stocks that trade over $1M a day, where it does as well as in the thinner ones.
 
 The search: 432 cells on 2010 to 2017; 68 reached 2% with a weekly t of 3; five were taken to
