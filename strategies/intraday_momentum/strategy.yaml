@@ -1,8 +1,8 @@
 name: intraday_momentum
-status: hypothesis        # published momentum and VWAP rules, development study first; see HYPOTHESIS.md
+status: event-study       # development study done 2026-11-16; opening range breakout awaits a fill measurement; see REPORT.md
 engine: intraday
 universe: A, listed common stock in play (price over $5, 1M shares a day); B and C, the ETFs QQQ and SPY
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_momentum
-prior_trials: 0
+prior_trials: 111    # measured offline in the development study, 2026-11-16
