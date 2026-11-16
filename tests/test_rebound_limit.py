@@ -15,11 +15,15 @@ def view(symbols):
     return DayView(date(2015, 1, 5), 570, 960, dict(sorted(out.items())))
 
 
-def signals(v, **params):
+def all_signals(v, **params):
     strategy = runner.load_strategy("rebound_limit", params)
     found = day_signals(strategy, v)
     check_no_lookahead(strategy, v, found, range(571, 955, 2))
-    return {s.symbol: s for s in found}
+    return found
+
+
+def signals(v, **params):
+    return {s.symbol: s for s in all_signals(v, **params)}
 
 
 DROP = [(570, 10.0), (620, 9.8), (640, 8.9), (700, 9.2)]
@@ -54,3 +58,42 @@ def test_exits_and_minimum_price_are_settings():
     assert set(got) == {"AAA"}  # CHEAP's previous close is under $5
     s = got["AAA"]
     assert (s.target_pct, s.stop_pct, s.max_hold_minutes) == (0.05, 0.07, 60)
+
+
+def test_market_cap_floor_drops_small_and_unknown_companies():
+    v = view([
+        ("BIG", DROP, {"marketcap_prev": 5e8}),
+        ("SMALL", DROP, {"marketcap_prev": 2e8}),
+        ("UNKNOWN", DROP, {}),
+    ])  # fmt: skip
+    assert set(signals(v)) == {"BIG", "SMALL", "UNKNOWN"}
+    assert set(signals(v, min_marketcap=3e8)) == {"BIG"}
+
+
+def test_a_ladder_sends_one_order_per_rung_and_the_simulator_admits_them_together():
+    import pytest
+
+    from kinn.costs import model as cost_model
+    from kinn.engine.intraday.data import DayData
+    from kinn.engine.intraday.simulator import FillConfig, simulate_day
+    from kinn.risk.sizing import RiskConfig
+
+    # After the event at 640 (close 8.90) the price trades down to 8.40, then recovers.
+    bars = [(570, 10.0), (620, 9.8), (640, 8.9), (643, 8.4), (700, 9.2), (959, 9.3)]
+    v = view([("AAA", bars, {})])
+    found = all_signals(v, ladder=[[0.04, 0.5], [0.08, 0.5]])
+    assert [(s.limit_price, s.weight, s.tag) for s in found] == [
+        (8.54, 0.5, "o4"), (8.19, 0.5, "o8"),
+    ]  # fmt: skip
+    with pytest.raises(ValueError):
+        all_signals(v, ladder=[[0.04, 0.5], [0.08, 0.4]])
+    result = simulate_day(
+        DayData(v, {"AAA": 9.3}), found,
+        risk=RiskConfig(equity=20_000, position_dollars=2_000, buying_power=20_000),
+        config=FillConfig(participation=1.0, flatten_before_close=0),
+        costs=cost_model.load("ibkr_pro_tiered"),
+    )  # fmt: skip
+    # The 4% rung fills (8.40 is through 8.54); the 8% rung does not (8.40 is above 8.19).
+    assert (result.signals, result.unfilled, result.rejected_capital) == (2, 1, 0)
+    (trade,) = result.trades
+    assert (trade.tag, trade.entry_price, trade.quantity) == ("o4", 8.54, int(1000 / 8.54))

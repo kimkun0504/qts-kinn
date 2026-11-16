@@ -300,7 +300,7 @@ if the stock's return over the 60 sessions before the event day is zero or more.
 **Why to distrust it.** It was found by looking at 14 features of the development trades after
 seeing which years lost, so it will look better here than it is. Per trade the relation is weak
 (rank correlation 0.02 to 0.17 by period); the evidence is the consistency of the group
-averages across periods, not a tight fit. It cuts trades by more than half (about 95 a year).
+averages across periods, not a tight fit. It cuts trades by more than half (to about 100 a year).
 It has not been run as a variant even on development: these are the filled trades of the
 unfiltered run, and a filter also changes which orders get capital.
 

@@ -209,3 +209,40 @@ data build `6453bd3ec8` (corrected dividends and split dates), $20,000 account, 
 **Next, in order:** check 4%-below fills against real trades on a tick sample of the events that
 filled; then paper trading with the daily loss limit left off (it hurt in testing) and a smaller
 position; the holdout stays sealed until then.
+
+## Where `x_o4`'s profit comes from, 2026-11-15 (existing runs, no new run)
+
+Script: `research/claude/x_o4_breakdown.py`. Market cap and price are the previous session's.
+Net per trade is at 2× slippage; totals are at 1× and add up to the runs' totals.
+
+| Market cap | Dev trades | Dev net/trade | Dev total | Val trades | Val net/trade | Val total |
+|---|---|---|---|---|---|---|
+| Under $300M | 1,852 | +1.07% | +$29,462 | 1,003 | +1.94% | +$35,279 |
+| $300M–$2B | 1,053 | +1.27% | +$24,927 | 631 | +0.34% | +$3,199 |
+| Over $2B | 250 | +2.83% | +$14,431 | 143 | +0.30% | +$923 |
+| Unknown | 45 | −1.60% | −$735 | 12 | −5.40% | −$1,268 |
+| All | 3,200 | +1.24% | +$68,085 | 1,789 | +1.20% | +$38,133 |
+
+| Previous close | Dev trades | Dev net/trade | Dev total | Val trades | Val net/trade | Val total |
+|---|---|---|---|---|---|---|
+| $1–2 | 482 | +0.54% | +$3,066 | 242 | +1.66% | +$7,909 |
+| $2–5 | 898 | +1.73% | +$28,331 | 489 | +1.83% | +$17,060 |
+| $5–10 | 702 | +1.34% | +$14,227 | 432 | +0.93% | +$6,595 |
+| $10–20 | 636 | +0.88% | +$10,528 | 325 | +0.65% | +$3,029 |
+| $20 and over | 482 | +1.34% | +$11,933 | 301 | +0.78% | +$3,540 |
+
+- **Micro-caps are 58% and 56% of the trades.** There is no market-cap floor in the universe.
+- **The periods disagree.** In development every size group cleared +1% and the largest stocks
+  paid most. In validation the under-$300M group made 93% of the profit; above $300M the
+  strategy earned +0.3% a trade (774 trades, +$4,122), which fails the owner's +1% bar.
+- **So the validation pass rests on micro-cap fills.** Whether those fills are real is what the
+  fill check decides (HYPOTHESIS.md, fill-check addendum; plan `fillcheck_x_o4`, 5,828 windows).
+- Round-trip costs: 44 bps under $300M, 18 bps over $2B; 80 bps for $1–2 stocks.
+
+## The losing development years, 2026-11-15
+
+2013–2015 lost $4,713 in development. They were quiet years (few broad selloff days), and the
+whole loss was in stocks that had already fallen over the previous 60 sessions (−$11,462 on 282
+trades); stocks that had risen made +$6,750 on 221 trades and were profitable in all 14
+development years. Tables, the hypothesis that follows and the reasons to distrust it are in
+HYPOTHESIS.md (addendum of 20:40 ET). **Not tested on any period.**

@@ -33,12 +33,15 @@ class BuyingPower:
 
     def __init__(self, config: RiskConfig):
         self._config = config
-        self._active: list[tuple[int, float, str]] = []  # (release minute, dollars, symbol)
+        # (release minute, dollars, symbol, minute the order went live)
+        self._active: list[tuple[int, float, str, int]] = []
 
     def try_reserve(self, *, symbol: str, start: int, release: int, dollars: float) -> bool:
         self._active = [r for r in self._active if r[0] > start]
-        if any(r[2] == symbol for r in self._active):
-            return False  # one position or order per symbol at a time
+        # One position per symbol at a time. Orders sent together for one symbol (a ladder of
+        # limits) are one decision: they are admitted together, each reserving its own capital.
+        if any(r[2] == symbol and r[3] != start for r in self._active):
+            return False
         if (
             self._config.max_positions is not None
             and len(self._active) >= self._config.max_positions
@@ -46,5 +49,5 @@ class BuyingPower:
             return False
         if sum(r[1] for r in self._active) + dollars > self._config.buying_power + 1e-9:
             return False
-        self._active.append((release, dollars, symbol))
+        self._active.append((release, dollars, symbol, start))
         return True

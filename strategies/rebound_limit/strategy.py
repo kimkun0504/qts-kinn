@@ -19,6 +19,7 @@ class ReboundLimit:
         f.FILINGS_SINCE_PRIOR_SESSION,
         f.PREV_CLOSE,
         f.ADV20,
+        f.MARKETCAP,
     )
     # Every variant shares one universe, so a sweep loads each session once.
     universe = Universe("rebound", min_prev_close=1.0, min_adv20=250_000.0, min_sessions_prior=20)
@@ -35,13 +36,23 @@ class ReboundLimit:
         self.target_pct = params.get("target_pct")  # None: no resting sell
         self.stop_pct = params.get("stop_pct")  # None: no stop
         self.max_hold = params.get("max_hold_minutes")  # None: hold to the close
+        self.min_marketcap = float(params.get("min_marketcap", 0.0))  # previous session's
+        # A ladder: [[offset, share of the position], ...]. None: one order at `limit_offset`.
+        ladder = params.get("ladder")
+        self.rungs = (
+            [(self.offset, 1.0, "")]
+            if ladder is None
+            else [(float(o), float(w), f"o{100 * float(o):g}") for o, w in ladder]
+        )
+        if abs(sum(w for _, w, _ in self.rungs) - 1.0) > 1e-9:
+            raise ValueError("ladder shares must add up to 1")
         self.first_minute = 575
         self.max_gap = 0.05
         self.max_premarket = 0.05
 
-    def _events(self, view, features) -> list[tuple[int, str, float, float, float, float]]:
-        """(minute, symbol, bar close, 15-minute return, ADV, previous close) of every base
-        event, 09:35–15:00."""
+    def _events(self, view, features) -> list[tuple[int, str, float, float, float, float, float]]:
+        """(minute, symbol, bar close, 15-minute return, ADV, previous close, market cap) of
+        every base event, 09:35–15:00."""
         found = []
         for symbol, sd in view.symbols.items():
             values = features[symbol]
@@ -60,29 +71,34 @@ class ReboundLimit:
             if values["premarket_dollar_volume"][i] >= self.max_premarket * values["adv20"]:
                 continue
             found.append((minute, symbol, float(sd.close[i]), float(values["return_15m"][i]),
-                          float(values["adv20"]), float(values["prev_close"])))  # fmt: skip
+                          float(values["adv20"]), float(values["prev_close"]),
+                          float(values["marketcap"])))  # fmt: skip
         return sorted(found)
 
     def signals(self, view, features):
         out = []
         events = self._events(view, features)
-        for rank, (minute, symbol, close, ret15, adv, prev_close) in enumerate(events):
+        for rank, (minute, symbol, close, ret15, adv, prev_close, cap) in enumerate(events):
             # `rank` counts the session's earlier events (ties broken by symbol): known by then.
             if self.max_prior_events is not None and rank > int(self.max_prior_events):
                 continue
             if minute > self.last_minute or adv < self.min_adv or prev_close < self.min_price:
                 continue
+            if self.min_marketcap > 0 and not cap >= self.min_marketcap:  # unknown cap: out
+                continue
             if self.min_drop_15m is not None and not ret15 <= -float(self.min_drop_15m):
                 continue
-            limit = round(close * (1 - self.offset), 2 if close >= 1 else 4)
-            out.append(
-                Signal(
-                    symbol, minute, limit_price=limit, expire_minute=minute + self.rest,
-                    target_pct=None if self.target_pct is None else float(self.target_pct),
-                    stop_pct=None if self.stop_pct is None else float(self.stop_pct),
-                    max_hold_minutes=None if self.max_hold is None else int(self.max_hold),
-                )
-            )  # fmt: skip
+            for offset, share, tag in self.rungs:
+                limit = round(close * (1 - offset), 2 if close >= 1 else 4)
+                out.append(
+                    Signal(
+                        symbol, minute, limit_price=limit, expire_minute=minute + self.rest,
+                        target_pct=None if self.target_pct is None else float(self.target_pct),
+                        stop_pct=None if self.stop_pct is None else float(self.stop_pct),
+                        max_hold_minutes=None if self.max_hold is None else int(self.max_hold),
+                        weight=share, tag=tag,
+                    )
+                )  # fmt: skip
         return out
 
 
