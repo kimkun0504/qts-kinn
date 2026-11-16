@@ -9,6 +9,7 @@ day. Built in twelve parts, then an industry table.
 
 from __future__ import annotations
 
+import sys
 import tempfile
 
 import duckdb
@@ -115,18 +116,37 @@ SHORT = """(select symbol, known, short_interest, days_to_cover,
 
 
 def main() -> None:
+    early = "--early" in sys.argv  # 2005 to 2009, for the out-of-sample test of two rules
+    start, first, last, name = (
+        ("2003-09-10", "2005-01-03", "2009-12-31", "early")
+        if early
+        else ("2008-06-01", "2010-01-04", "2100-01-01", "wide")
+    )
     settings = load_settings()
     store = DataStore(settings)
     out = settings.data_dir / "research" / "swing"
     scratch = tempfile.mkdtemp()
+    earnings = out / ("earn_early.parquet" if early else "earn.parquet")
+    if early and not earnings.exists():
+        duckdb.execute(
+            f"""copy (
+                select distinct q.permaticker, q.date as day
+                from read_parquet('{store.root}/panel/*.parquet') q
+                join '{store.root}/master/security_master.parquet' s using (permaticker)
+                join (select distinct ticker, date from '{store.root}/sharadar/events.parquet'
+                      where regexp_matches('|' || eventcodes || '|', '[|]22[|]')) e
+                  on e.ticker = s.ticker and e.date >= q.prev_date and e.date < q.date
+                where q.date between DATE '{start}' and DATE '{last}'
+            ) to '{earnings}' (format parquet)"""
+        )
     for part in range(PARTS):
-        target = out / f"wide_{part}.parquet"
+        target = out / f"{name}_{part}.parquet"
         if target.exists():
             continue
         con = duckdb.connect()
         con.execute(f"set threads=2; set memory_limit='2300MB'; set temp_directory='{scratch}'")
         con.execute("set preserve_insertion_order=false")
-        tmp = out / f"wide_{part}.tmp"
+        tmp = out / f"{name}_{part}.tmp"
         con.execute(
             f"""copy (
                 with p as (
@@ -142,9 +162,10 @@ def main() -> None:
                            e.permaticker is not null as earn
                     from read_parquet('{store.root}/panel/*.parquet') p
                     left join '{store.root}/master/security_master.parquet' s using (permaticker)
-                    left join '{out}/earn.parquet' e
+                    left join '{earnings}' e
                       on e.permaticker = p.permaticker and e.day = p.date
-                    where p.date >= DATE '2008-06-01' and p.permaticker % {PARTS} = {part}
+                    where p.date >= DATE '{start}' and p.date <= DATE '{last}'
+                      and p.permaticker % {PARTS} = {part}
                       and p.prev_close > 0 and p.close > 0 and p.low > 0 and p.open > 0
                       and p.category like '%Common Stock%'),
                 q as (select *, sum(lr) over (partition by permaticker order by day) as c,
@@ -153,7 +174,7 @@ def main() -> None:
                 r as (select {features()} from q
                       window w as (partition by permaticker order by day)),
                 k as (select * from r
-                      where day >= DATE '2010-01-04' and close >= 1 and adv >= 250000),
+                      where day >= DATE '{first}' and close >= 1 and adv >= 250000),
                 kf as (select k.*, f.datekey >= k.prev_date as fnew,
                               date_diff('day', f.datekey, k.day) as fage, f.ni_pos, f.rev_yoy,
                               f.ni_ttm / nullif(k.mcap, 0) as earn_price,
@@ -182,9 +203,19 @@ def main() -> None:
     con.execute(
         f"""copy (select day, industry, count(*) as ind_n, avg(ret5) as ind5,
                          avg(ret20) as ind20, avg(ret60) as ind60, avg(ret120) as ind120
-                  from read_parquet('{out}/wide_*.parquet') where industry is not null
-                  group by 1, 2) to '{out}/industry.parquet' (format parquet)"""
+                  from read_parquet('{out}/{name}_*.parquet') where industry is not null
+                  group by 1, 2) to '{out}/industry_{name}.parquet' (format parquet)"""
     )
+    if early:
+        con.execute(
+            f"""copy (
+                select day, avg(exp(first_day + c_exit5 - c_next) - 1) as mk5,
+                       avg(exp(first_day + c_exit10 - c_next) - 1) as mk10,
+                       avg(exp(first_day + c_exit15 - c_next) - 1) as mk15,
+                       avg(ret5) filter (mcap >= 2e9) as m5, avg(ret20) filter (mcap >= 2e9) as m20
+                from read_parquet('{out}/early_*.parquet') where next_open is not null
+                group by 1 order by 1) to '{out}/market_early.parquet' (format parquet)"""
+        )
     print("industry done", flush=True)
 
 

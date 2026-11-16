@@ -190,3 +190,29 @@ Family 17 refines that one effect, and splits the periods so the refinement is t
   more, and at least four years of five positive. One rule, so the bar is that of a single
   test, not of a search.
 - **Then** the minute-bar re-pricing, a book, and the 2023 check, as in the note above.
+
+## Addendum, 2026-11-16 13:56 ET: family 17 failed its test; two rules go to 2005–2009
+
+Family 17's chosen cell (session after the release, two-day jump of 15%+, volume 5×+, close
+in the top half, under $2B, hold 15; 2.00% a trade and weekly t 4.44 in 2010 to 2017) made
+0.76% a trade in 2018 to 2022 with a weekly t of 0.34. It fails. The under-$300M part of it
+held up (about 3% in both periods) but saying so after the test is hindsight.
+
+The years 2005 to 2009 are in the research data, have not been read by this search, and
+include 2008. Two rules, fixed here, are tested on them once. Signals from 2005-01-03 to
+2009-12-08; the same table (`swing_wide.py --early`), costs and trade.
+
+- **Rule A, earnings drift in the smallest stocks** (family 2's cell as written on the first
+  day): the session after an earnings 8-K; a two-day return of 15% or more; the larger of the
+  two days' volume at least 5× normal; market value under $300M; buy at the next open, sell
+  at the close 15 sessions after the signal. Passes if the mean is 1% or more on the auction
+  basis, the weekly t is 2.5 or more and at least four of the five years are positive.
+- **Rule B, buying a sell-off:** on a day when larger stocks ($2B and more) are down 7% or
+  more on average over 5 sessions, buy stocks of $2B and more that are down 20% or more over
+  those 5 sessions; sell at the close 15 sessions later. Passes if the mean is 3% or more on
+  the auction basis and no year with 50 or more trades loses more than 5% a trade. The weekly
+  t is reported, not required: the rule trades in a handful of weeks by design, and the
+  question for it is whether 2008 breaks it.
+
+Neither becomes a strategy on this alone; passing sends a rule on to the minute-bar
+re-pricing, a book and the 2023 check.
