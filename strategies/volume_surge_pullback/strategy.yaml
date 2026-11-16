@@ -1,0 +1,8 @@
+name: volume_surge_pullback
+status: parked
+engine: intraday
+universe: volume_surge_pullback
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
