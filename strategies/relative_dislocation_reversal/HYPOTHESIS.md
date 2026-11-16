@@ -178,3 +178,35 @@ If qualified, run `validation_liquid_peer_recovery` once on 2017-01-03 through
 of at least +3% at 1× across all completed trades overall and in the 2022+ block,
 with the respective count and stress requirements. Count each run in
 `intraday_rebound`. Later market data stays sealed.
+
+## Addendum, 2026-11-16: a quiet baseline before the dislocation
+
+Test a sudden break from a stable price against the existing broad dislocation rule.
+A stock already moving widely before the measured decline can be actively repricing.
+A sharp move from a narrow preceding range may instead reflect a temporary change
+in demand for liquidity. Stability of the earlier bars can also omit volatile
+stocks that offer genuine positive expectancy.
+
+Start from the liquid one-hour portfolio with ten slots and the absolute recovery
+condition. For a candidate at clock minute `t`, examine regular-session closes
+labelled `t−25` through `t−15`, inclusive. Require the entire interval to be in
+the regular session, at least nine observed closes, and a maximum close no higher
+than 1.03 times the minimum. The 3% band is one quarter of the existing 12-point
+dislocation threshold. The interval ends at the opening endpoint of the 15-minute
+return and excludes the dislocation's interior. Missing prices stay missing.
+Use the first bar satisfying the existing and new conditions. Keep execution,
+exit, risk and every other signal input from the base `liquid_one_hour` rules.
+
+One trial definition. Use `development_liquid_quiet_baseline --study` from
+2003-09-10 through 2016-12-30, evaluating `r_60` with the existing full and recent
+development study gates. Recheck on next-clock-minute fills if there are late
+entries. Only if qualified, record the develop verdict and run the corresponding
+`development_liquid_quiet_baseline` portfolio. Apply the existing development
+return, sample and risk gates including stressed Sharpe above 1.
+
+If qualified, run `validation_liquid_quiet_baseline` once from 2017-01-03 through
+2023-11-08 under the original validation gates. In particular, require +3% net
+per completed trade at 1× overall and in the 2022+ block. Keep the original
+sample minima and the 2× stress requirements. The holdout remains excluded.
+Count each run in `intraday_rebound` and report study or portfolio outcomes at
+both costs, with yearly results, daily t-statistics and drawdown.
