@@ -31,6 +31,26 @@ unset KINN_UNSEAL_TOKEN
 
 `uv run kinn holdout check` repeats step 1's check without rebuilding.
 
+### A swing rule (`kinn swing`)
+
+A daily event rule (`strategies/earnings_drift`) runs through `kinn swing`, which reads the
+same data store and takes the same `--unseal`. With the unsealed build already built and
+checked (step 1 above):
+
+```bash
+export KINN_UNSEAL_TOKEN="any phrase you choose"
+
+# Rehearsal: the search years through the unsealed data. Not a trial (--scratch).
+# Expect the research run's line: 833 trades, 3.56% a trade. A trade or two may differ,
+# for the reasons `kinn holdout check` lists.
+uv run kinn swing earnings_drift --config research --unseal --scratch
+
+# The one run.
+uv run kinn swing earnings_drift --config holdout --unseal
+
+unset KINN_UNSEAL_TOKEN
+```
+
 ## What the steps print
 
 **Step 1** ends with `check passed` or `check FAILED`. It compares the unsealed build with the
