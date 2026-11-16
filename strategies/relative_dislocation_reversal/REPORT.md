@@ -574,3 +574,59 @@ its actual exit rule, buying power and bar participation.
 | 2014 | 13 | +2.46% | +2.14% | +$642 | +$557 |
 | 2015 | 19 | +4.42% | +4.12% | +$1,670 | +$1,558 |
 | 2016 | 10 | −1.85% | −2.23% | −$368 | −$443 |
+
+### Size-group portfolio result
+
+**Decision: park.** The two-hour size-group portfolio earned **+3.73%
+net per trade at 1× and +3.36% at 2×**. At 2× the annualised daily
+Sharpe was **0.93**, below the preregistered bar above 1. It met the
+sample, return and drawdown bars. The 51 trades on 46 dates in
+2013–2016 averaged +2.85% at base costs and +2.56% at doubled slippage.
+Validation was skipped.
+
+| Two-hour development portfolio | Large-cap reference | Size-group reference |
+|---|---:|---:|
+| Trades / active dates | 288 / 199 | 286 / 199 |
+| Gross mean per trade | +4.37% | +4.36% |
+| Net/trade at 1× | +3.72% | +3.73% |
+| Net/trade at 2× | +3.34% | +3.36% |
+| Net dollars at 1× / 2× | +$21,292 / +$19,120 | +$21,199 / +$19,083 |
+| Daily P&L t-statistic at 1× / 2× | 3.72 / 3.42 | 3.69 / 3.40 |
+| Annualised daily Sharpe at 1× / 2× | 1.02 / 0.94 | 1.01 / 0.93 |
+| Worst drawdown at 1× / 2× | −$1,561 / −$1,826 | −$1,443 / −$1,664 |
+
+The subgroup reference reduced drawdown and slightly reduced total net
+P&L and stressed Sharpe. Both portfolios still had 145 trades in 2008.
+The matched benchmark changed a small share of the trade flow and did
+not address the calendar concentration. The cost and timing results rely
+on minute-bar fills. They do not verify live executable size or price.
+
+At base costs, 184 winners averaged +11.30% and 102 losers averaged
+−9.91%. At 2×, 179 winners averaged +11.23% and 107 losers
+averaged −9.81%. The 291 signals produced 286 fills with five capital
+rejections and a mean executed notional of $1,982. There were 264
+timed exits and 22 auction exits.
+
+Run `20261116T212704Z_gpt_relative_dislocation_reversal_e44b9cb3`
+used clean commit `5a2f695b` and build `447e58e098` from
+2003-09-10 through 2016-12-30. All 286 entries followed the signal
+by one clock minute and all 199 replay checks passed. The study and
+backtest add two counted `intraday_rebound` trials. This variant did
+not use validation or sealed holdout data.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +31.46% | +31.33% | +$621 | +$618 |
+| 2004 | 5 | +8.42% | +8.22% | +$839 | +$818 |
+| 2005 | 4 | −6.52% | −6.76% | −$519 | −$538 |
+| 2006 | 10 | +4.64% | +4.40% | +$928 | +$880 |
+| 2007 | 24 | +5.28% | +4.89% | +$2,532 | +$2,343 |
+| 2008 | 145 | +4.27% | +3.82% | +$12,257 | +$11,009 |
+| 2009 | 20 | +0.33% | +0.02% | +$134 | +$9 |
+| 2010 | 4 | +3.78% | +3.62% | +$302 | +$290 |
+| 2011 | 14 | −2.04% | −2.32% | −$577 | −$653 |
+| 2012 | 8 | +11.25% | +10.77% | +$1,800 | +$1,724 |
+| 2013 | 9 | +5.11% | +4.82% | +$919 | +$866 |
+| 2014 | 13 | +2.50% | +2.19% | +$654 | +$573 |
+| 2015 | 19 | +4.52% | +4.26% | +$1,708 | +$1,609 |
+| 2016 | 10 | −1.89% | −2.23% | −$399 | −$465 |
