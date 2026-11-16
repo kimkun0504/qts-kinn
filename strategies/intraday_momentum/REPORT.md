@@ -109,3 +109,34 @@ By share price, VWAP exit, with slippage in cents a share a side:
 In cents the whole question is simple: at 1 cent a share each way the rule earns about
 $15,900 a year on the account; at 2 cents about $4,100; at 3 cents it loses. The fill
 measurement will say which.
+
+## Three selectors, 2026-11-16 (addendum of 02:00 ET)
+
+**Verdict: none clears the bar set in advance (twice the unchosen group in both halves). Two
+are real improvements: a gap of 3% or more in the breakout's direction, and an earnings 8-K
+since the prior session. The height of the opening range does nothing.** 24 more measurements
+(169 in the family). Code: `research/claude/momentum_selectors.py`.
+
+VWAP exit, $4,000 a position, slippage in cents a share each way:
+
+| Group | Trades | Gross per trade | 2003–09 / 2010–16 | Breaks even at | Sharpe at 2 cents | Profit a year at 2 cents | Years positive |
+|---|---|---|---|---|---|---|---|
+| All trades | 52,386 | +0.21% | 0.23 / 0.19 | 2.3 | 0.77 | $4,057 | 10 of 14 |
+| Gap with the breakout, 3% or more | 8,399 | +0.36% | 0.41 / 0.31 | 3.5 | 1.11 | $3,528 | 13 of 14 |
+| Gap with, 1% or more | 18,015 | +0.24% | 0.28 / 0.22 | 2.6 | 0.74 | $2,752 | 12 of 14 |
+| Flat open (under 1%) | 18,952 | +0.17% | 0.19 / 0.15 | 2.2 | 0.40 | $845 | 9 of 14 |
+| Gap against, 1% or more | 15,419 | +0.20% | 0.21 / 0.19 | 2.1 | 0.16 | $461 | 8 of 14 |
+| Earnings 8-K since the prior session | 4,803 | +0.30% | 0.35 / 0.26 | 3.6 | 1.03 | $1,729 | 13 of 14 |
+| Any 8-K since the prior session | 9,784 | +0.26% | 0.30 / 0.22 | 2.9 | 0.89 | $2,122 | 12 of 14 |
+| Narrow / middle / wide opening range | 17,462 each | 0.21 / 0.21 / 0.20 | | 2.3 to 2.4 | 0.64 / 0.48 / 0.36 | | |
+
+- **Gap of 3% or more with the breakout:** 2.0 times the rest overall (+0.36% against +0.18%),
+  2.2 times in 2003–2009 and 1.85 times in 2010–2016, so just short of the bar. It keeps most
+  of the profit of the whole book on a sixth of the trades (about 2.5 a session) and has room
+  for 3.5 cents of slippage instead of 2.3.
+- **Earnings:** 1.5 times the rest, steady in both halves, about 360 trades a year. Filings
+  dated the same morning are not counted, so this understates what a trader with a news feed
+  would see.
+- The fixed stop tells the same story at lower levels (gap 3%: +0.26%; earnings: +0.24%).
+- Not tested: the two together, or any tuning of the 3%. Each would be another look at the
+  same trades.

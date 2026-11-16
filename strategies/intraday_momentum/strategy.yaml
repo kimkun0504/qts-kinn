@@ -5,4 +5,4 @@ universe: A, listed common stock in play (price over $5, 1M shares a day); B and
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_momentum
-prior_trials: 145    # measured offline in the development study and its cuts, 2026-11-16
+prior_trials: 169    # measured offline in the development study and its cuts, 2026-11-16
