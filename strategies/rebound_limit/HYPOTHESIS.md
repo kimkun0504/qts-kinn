@@ -397,3 +397,46 @@ are; the owner downloads only the missing windows (plan `fillcheck_s_l468`). A l
 share one window: the event bar to the orders' expiry.
 
 **Trials.** Recorded in the run store and charged as one trial (family total 66).
+
+## Addendum, 2026-11-15 21:22 ET: the prior-trend filter (written before any run of it)
+
+The owner asked for the hypothesis of the 20:10 ET addendum to be developed and, if it earns
+it, validated.
+
+**Hypothesis.** A 10% intraday drop in a stock that has not been falling is bought back; in a
+stock that has fallen over the previous 60 sessions it is the bad news continuing. Rule: *take
+the event only if `ret60_prev` is zero or more.*
+
+**Data.** `ret60_prev` is a new panel column in build `447e58e098` (data-6): the split-adjusted
+price return over the 60 sessions ending at the previous close, known before the open, empty
+until a company has 60 sessions (those companies are left out by the rule). Every other column
+of the build is identical to `6453bd3ec8`, row for row (26.4 million rows compared), so runs
+on the two builds are comparable; the column matches an independent calculation.
+
+**Variants (2), development period only (2003-09-10 to 2016-12-30):**
+
+| Config | What | Compared with |
+|---|---|---|
+| `t_l468` | `s_l468` (thirds at 4%, 6%, 8% below) with the rule | `s_l468` |
+| `t_o4` | `s_o4` (one limit 4% below) with the rule | `s_o4` |
+
+One threshold only (zero), as the hypothesis was stated. `t_o4` is there to read the rule's
+effect on the plain strategy; it is not a candidate.
+
+**Gate to validation (on development).** `t_l468` is validated only if its Sharpe at 2×
+slippage is above `s_l468`'s (1.45), with net per trade at 2× of at least +1.0% and a worst
+drawdown at 2× of at most $10,000. Otherwise there is no validation run and the rule is parked.
+
+**Validation (one run of `t_l468`, 2017-01-03 to 2023-11-08).**
+
+- It **passes** on the owner's targets: net per trade at 2× at least +1.0%, Sharpe at 2× above
+  1, worst drawdown at 2× under $10,000.
+- It **replaces `s_l468` as the candidate** only if it passes and also has a higher Sharpe at
+  2× than `s_l468` had in validation (1.37) and at least 70% of its total net at 2×
+  ($29,201 × 0.7 = $20,441). A pass that is not better leaves `s_l468` the candidate.
+
+**Why to distrust a good development result.** The rule was found on the development trades of
+`x_o4`, which are most of `s_l468`'s 4% rungs. Development will flatter it. Validation is the
+test, and it would be the sixth use of those years in this family.
+
+**Trials.** Two development runs and at most one validation run.

@@ -1,0 +1,25 @@
+# Development period. Prior-trend filter (HYPOTHESIS.md, addendum of 2026-11-15 21:22 ET).
+# Ladder 4/6/8% with the trend filter: only stocks whose 60-session return before the day is zero or more.
+params:
+  drop: 0.1
+  limit_offset: 0.04
+  rest_minutes: 10
+  min_adv: 0.0
+  max_prior_events: null
+  min_drop_15m: null
+  last_minute: 900
+  min_limit_price: 1.0
+  min_ret60: 0.0
+  ladder: [[0.04, 0.3334], [0.06, 0.3333], [0.08, 0.3333]]
+risk:
+  equity: 20000
+  position_dollars: 2000
+  buying_power: 20000
+fills:
+  participation: 0.05
+  flatten_before_close: 0   # exit in the closing auction
+period:
+  start: 2003-09-10
+  end: 2016-12-30
+lookahead_check_rate: 0.05
+seed: 3
