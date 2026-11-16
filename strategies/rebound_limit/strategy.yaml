@@ -1,10 +1,8 @@
 name: rebound_limit
-status: developing        # s_l468 (ladder 4/6/8%) meets all four targets incl. fills, 2026-11-15; trend filter rejected; see REPORT.md
+status: parked            # failed the holdout 2026-11-15 (net per trade -0.86% at 2x); no re-test; see REPORT.md
 engine: intraday
 universe: listed domestic common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_rebound
 prior_trials: 9
-# The config whose validation run is the candidate for paper trading (shown in the Workbench).
-candidate: validation_s_l468

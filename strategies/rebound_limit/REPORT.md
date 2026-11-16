@@ -463,3 +463,44 @@ What it still rests on: one strong year (2020) for more than half the validation
 micro-caps for most of it; a modelled exit; orders placed within seconds of the bar; and
 validation years that have been looked at six times. The holdout has not been touched and is
 the one clean test left.
+
+## The holdout, 2026-11-15 (plan in HYPOTHESIS.md, holdout addendum and the two after it)
+
+**Failed. `rebound_limit` is parked.** One run of `s_l468` exactly as validated, on
+2023-11-09 to 2026-11-06, run by the owner (`20261116T042612Z_human_rebound_limit_2fae870b`,
+unsealed build `bc35c2693c`, commit `694b2d5`). The rule was written before the run: net per
+trade at or below zero at 2× slippage is a fail, with no change and no re-test.
+
+| At 2× slippage | Validation 2017–2023 | Holdout 2023-11 to 2026-11 | Target |
+|---|---|---|---|
+| Net per trade | +1.56% | **−0.86%** | at least +1.0% |
+| Sharpe | 1.37 | **−1.04** | above 1 |
+| Worst drawdown | $4,485 | **$9,392** | under $10,000 |
+| Total net | +$29,201 | **−$8,842** | |
+| Trades | 3,001 | 1,368 | |
+
+Before the run, the unsealed data was checked against the research data on every earlier date
+(equal apart from rounding and three named vendor cases), and the validation run was
+reproduced through it trade for trade. The mechanics in the holdout match validation: 79
+orders a session against 81, the same position size ($631 against $640) and the same costs
+(0.37% to 0.41% of the position). Nothing points to a data or engine fault.
+
+Gross return per trade by year, validation then holdout: 2017 +2.0%, 2018 +2.4%, 2019 +1.8%,
+2020 +4.4%, 2021 +1.5%, 2022 +0.2%, 2023 (to the seal) +0.1% | late 2023 −1.4%, 2024 +0.1%,
+2025 +0.8%, 2026 −2.1%. The edge had gone by 2022; the two weak years at the end of
+validation were the signal, and 2020 hid them in the totals. The losing tail also grew: the
+worst 5% of trades lost 22.6% or more against 17.0%, and the worst single trade 81% against
+51%. All three rungs lost.
+
+What this says about the process, not the strategy:
+
+- The validation years were looked at six times, and the candidate was the best of twelve
+  variants in development. A Sharpe of 1.37 after that much choosing was worth less than it
+  looked.
+- More than half the validation profit came from one year. A result that needs one year
+  should have been held to a bar on the other years too.
+- The fill check was right about fills and said nothing about whether the rebound still
+  existed.
+
+These breakdowns are a record of the failure. They are holdout results and must not be used to
+design another variant of this family: the holdout is spent for `intraday_rebound`.
