@@ -295,3 +295,85 @@ search as a variant.
 not measured, and matters most in the smallest names.
 
 The family now carries 49 trials.
+
+## Deeper limits and ladders, 2026-11-15 (plan in HYPOTHESIS.md, addendum of 20:30 ET)
+
+**Verdict: a ladder of three limits (4%, 6% and 8% below) was chosen on development and passed
+its one validation run on all three of the owner's targets. It earns more per trade than `x_o4`
+with half the drawdown and less total profit, because it puts less money to work. It is a
+candidate for paper trading once its own fill check is run.**
+
+Twelve variants on the development period (2003–2016), sweep `20261116T013106Z_rebound_limit_12`.
+No order under $1 in any of them. `_m`: market cap under $300M only. For ladders each filled
+rung is a trade. Net per trade, t, Sharpe, total and drawdown are at 2× slippage.
+
+| Variant | Trades | Net/trade | t | Sharpe | Total net | Worst drawdown | Eligible |
+|---|---|---|---|---|---|---|---|
+| `s_o4` (4% below) | 3,136 | +1.28% | 4.67 | 1.28 | $63,460 | −$6,105 | yes |
+| `s_o5` | 2,132 | +1.64% | 4.71 | 1.29 | $56,822 | −$5,241 | yes |
+| `s_o6` | 1,528 | +2.12% | 4.90 | 1.34 | $53,498 | −$4,337 | yes |
+| `s_o8` | 828 | +2.54% | 3.66 | 1.00 | $32,929 | −$5,218 | no (trades) |
+| `s_l48` (half at 4%, half at 8%) | 4,049 | +1.60% | 5.07 | 1.39 | $57,191 | −$3,659 | yes |
+| **`s_l468` (thirds at 4%, 6%, 8%)** | 5,653 | +1.74% | **5.30** | 1.45 | $60,201 | −$3,661 | yes, chosen |
+| `s_o4_m` | 1,952 | +1.21% | 3.35 | 0.92 | $32,123 | −$7,012 | yes |
+| `s_o5_m` | 1,313 | +1.44% | 2.89 | 0.79 | $24,753 | −$7,510 | yes |
+| `s_o6_m` | 949 | +1.70% | 2.79 | 0.77 | $22,588 | −$8,092 | no (trades) |
+| `s_o8_m` | 521 | +1.98% | 1.84 | 0.50 | $12,084 | −$4,144 | no (trades) |
+| `s_l48_m` | 2,514 | +1.30% | 3.37 | 0.92 | $26,793 | −$5,094 | yes |
+| `s_l468_m` | 3,493 | +1.40% | 3.51 | 0.96 | $28,913 | −$5,333 | yes |
+
+- **Deeper still pays more per trade** (4%, 5%, 6%, 8%: +1.28%, +1.64%, +2.12%, +2.54%) and
+  fills less often, so total profit falls. The best single limit by the rule is 6%.
+- **A ladder beats any single limit:** it takes the frequent 4% fills at a third of the size and
+  adds to the position only when the price falls further. The losing years 2012–2015 come out
+  flat (−$492, −$365, +$84, −$331) where `x_o4` lost $4,713 in 2013–2015.
+- **Under-$300M only is worse than all stocks in development** in every pairing: about half the
+  profit, a Sharpe under 1, a larger drawdown. Development gives no reason to drop larger stocks.
+- **No order under $1** cost nothing: `s_o4` earns +1.28% a trade against `x_o4`'s +1.24%.
+
+**Validation, one run** (`20261116T014043Z_claude_rebound_limit_437947d4`, 2017-01-03 to
+2023-11-08, `s_l468`):
+
+| Bar set in advance (the owner's targets) | Result | |
+|---|---|---|
+| Net per trade at 2× at least +1.0% | **+1.56%** | passed |
+| Sharpe at 2× above 1 | **1.37** (1.46 at 1×) | passed |
+| Worst drawdown at 2× under $10,000 | **−$4,485** (−$3,978 at 1×) | passed |
+
+3,001 rung trades from 1,852 events (1,084 filled one rung, 387 two, 381 all three); total net
++$31,160 at 1×, +$29,201 at 2×; daily-P&L t-statistic 3.59 at 2×; 61% winners.
+
+| Year | Trades | Net/trade 1× | Net $ | `x_o4` net $ |
+|---|---|---|---|---|
+| 2017 | 254 | +1.67% | +$2,665 | +$3,454 |
+| 2018 | 461 | +2.07% | +$5,999 | +$9,387 |
+| 2019 | 345 | +1.43% | +$3,340 | +$6,368 |
+| 2020 | 714 | +3.98% | +$17,729 | +$19,050 |
+| 2021 | 383 | +1.16% | +$2,717 | +$4,311 |
+| 2022 | 523 | −0.19% | −$884 | −$5,997 |
+| 2023 | 321 | −0.26% | −$406 | +$1,560 |
+
+Against `x_o4` on the same years: total +$31,160 against +$38,133; worst drawdown $3,978
+against $8,925; Sharpe 1.46 against 1.43. The ladder invests $1,037 an event on average against
+about $1,800.
+
+**What to hold against this result**
+
+1. **Fifth use of the validation years** in this family, which the registry now puts at 65
+   trials (62 by claude, 3 by Astra's rebound strategies). The Workbench's figures for the
+   family: deflated Sharpe 0.98, probability of backtest overfitting 0.34.
+2. **One year carries it.** 2020 made $17,729 of the $31,160. 2022 and 2023 both lost a little.
+   The edge is still absent in some years; the ladder makes those years cheap, not profitable.
+3. **In validation the profit is again micro-caps:** under $300M +2.45% a trade at 2× and
+   $27,023; $300M–$2B +0.63% and $4,568; over $2B +0.28% and $495. In development the
+   under-$300M versions were the weaker ones. The periods still disagree.
+4. **Its fills are checked only in preview.** The ticks downloaded for `x_o4` cover 96% of the
+   ladder's validation rung trades (`research/claude/ladder_fill_preview.py`): 100% confirmed,
+   98% in full size, +1.33% simulated against +1.30% real at 2×, 96% of the net kept (82% with
+   30 seconds of latency). The 4% of rung trades without ticks are events `x_o4` had no capital
+   for, on the busiest days, and they earn more than average. The registered check needs the
+   order listing to handle ladders and a small extra download.
+5. **The exit is still modelled** (closing auction, 10 bps), not measured.
+
+**Next, in order:** the registered fill check for `s_l468`; then paper trading, with orders in
+the book within seconds of the bar. The holdout stays sealed.
