@@ -210,3 +210,37 @@ per completed trade at 1× overall and in the 2022+ block. Keep the original
 sample minima and the 2× stress requirements. The holdout remains excluded.
 Count each run in `intraday_rebound` and report study or portfolio outcomes at
 both costs, with yearly results, daily t-statistics and drawdown.
+
+## Addendum, 2026-11-16: allow a second hour for the peer-relative recovery
+
+The fixed one-hour peer-relative portfolio missed the stressed daily Sharpe gate.
+A large relative move can take longer than an hour to correct if liquidity
+providers replenish positions gradually. Holding longer can also concentrate
+capital and expose the trade to continued repricing. The already published curve
+for peer-relative study `20261116T164207Z_gpt_relative_dislocation_reversal_a740b270`
+showed a higher full-sample net at two hours than at one hour. The planned
+change is motivated by that in-sample look. It provides no independent test.
+
+Freeze one change to the peer-relative recovery portfolio. Keep the fixed liquid
+cohort, original peer-relative confirmation, 10 slots, next-clock-minute entry,
+$2,000 target and existing costs. Hold for 120 clock minutes from the first
+entry fill, then sell at the first available regular-session bar, with the
+existing closing auction fallback and same-day exit. Preserve exit-side
+participation and the same booking rules. No other duration is registered.
+
+Use the saved development study's `r_120` horizon and its stored costs to apply
+the original event gates overall and in 2013–2016. Recheck the next-minute sample
+if any event entered after expiry. The study endpoint is a close or closing
+auction, whereas the portfolio uses the open of the first eligible exit bar and
+the modelled costs for that bar. Count this horizon look in the report. Use the
+existing study run for the identical signal and horizon.
+
+Only if the study gates pass, commit a develop decision and run one portfolio
+on 2003-09-10 through 2016-12-30 with configuration
+`development_liquid_peer_recovery_two_hour`. Require the same development
+sample, return, drawdown and stressed Sharpe bars. Count the run in the
+`intraday_rebound` family. Compare it with the existing one-hour peer-relative
+portfolio under matching costs. If it qualifies, freeze this variant and run
+`validation_liquid_peer_recovery_two_hour` once on 2017-01-03 through 2023-11-08
+under the unchanged validation gates. Require at least +3% net per completed
+trade at 1× overall and in 2022 through 2023-11-08. The sealed data stays excluded.
