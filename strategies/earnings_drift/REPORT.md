@@ -61,7 +61,7 @@ the close of the exit day (`research/claude/swing_fill_measure.py`; plan in HYPO
   midpoint half a minute later; a seller in the closing cross gives up nothing. The auction
   allowance (0.50% a round trip under $1M a day, 0.20% above) is larger than this under $1M
   and about equal to it above.
-- **Market orders cost less than modelled:** 1.2% a round trip on average, against the 1.5%
+- **Market orders cost less than modelled:** 1.2% a round trip on average, against the 1.6%
   the "spread crossed" column assumes. Most of it is the entry: the quote is wide just after
   the open (half-spread 1.3% under $1M a day) and narrow before the close (0.3%).
 - **Limits.** One exit in eight under $1M a day had no closing cross; there an on-close
