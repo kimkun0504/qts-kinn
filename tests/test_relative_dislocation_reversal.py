@@ -227,3 +227,28 @@ def test_two_hour_peer_recovery_config_only_changes_the_exit(phase):
     assert base["params"].pop("one_hour_exit") is True
     assert variant["params"].pop("two_hour_exit") is True
     assert variant == base
+
+
+def test_ten_point_quiet_baseline_changes_only_the_shock_threshold():
+    _, standard = runner.load_config(NAME, "development_liquid_quiet_baseline")
+    _, lower = runner.load_config(NAME, "development_liquid_quiet_ten_point")
+    base = runner.load_strategy(NAME, standard["params"])
+    variant = runner.load_strategy(NAME, lower["params"])
+    earlier = [(m, 10.0) for m in range(575, 586)]
+    medium = view([*earlier, (599, 8.82), (600, 8.95), *TARGET[3:]])
+    found = day_signals(variant, medium)
+    assert found == [Signal("ABC", 600, expire_minute=601, max_hold_minutes=60)]
+    assert day_signals(base, medium) == []
+    small = view([*earlier, (599, 8.90), (600, 9.02), *TARGET[3:]])
+    assert day_signals(variant, small) == []
+    turbulent = view([(575, 10.4), *earlier[1:], (599, 8.82), (600, 8.95), *TARGET[3:]])
+    assert day_signals(variant, turbulent) == []
+    check_no_lookahead(variant, medium, found, [575, 585, 599, 600, 601, 910])
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_ten_point_config_is_otherwise_identical_to_quiet_baseline(phase):
+    _, base = runner.load_config(NAME, f"{phase}_liquid_quiet_baseline")
+    _, variant = runner.load_config(NAME, f"{phase}_liquid_quiet_ten_point")
+    assert variant["params"].pop("min_dislocation_pp") == 10
+    assert variant == base

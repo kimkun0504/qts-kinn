@@ -51,6 +51,7 @@ class RelativeDislocationReversal:
         peer_recovery: bool = False,
         quiet_baseline: bool = False,
         two_hour_exit: bool = False,
+        min_dislocation_pp: int = 12,
     ):
         self.liquid_cohort = liquid_cohort
         self.max_hold_minutes = 60 if one_hour_exit else None
@@ -58,6 +59,7 @@ class RelativeDislocationReversal:
             self.max_hold_minutes = 120
         self.peer_recovery = peer_recovery
         self.quiet_baseline = quiet_baseline
+        self.min_dislocation_return = min_dislocation_pp / 100
         min_adv = 10_000_000 if liquid_cohort else 1_000_000
         self.universe = Universe(self.name, min_prev_close=2, min_adv20=min_adv)
 
@@ -99,7 +101,9 @@ class RelativeDislocationReversal:
                 excess_recovery = lagged_return(close, 1)[current] - market_recovery[current]
                 recovered &= excess_recovery >= 0.01
             turnover = close[current] * bars.volume[in_window]
-            hits = np.flatnonzero((excess <= -0.12) & recovered & (turnover >= 40_000))
+            hits = np.flatnonzero(
+                (excess <= -self.min_dislocation_return) & recovered & (turnover >= 40_000)
+            )
             for hit in hits:
                 if self.quiet_baseline and not has_quiet_baseline(close, int(current[hit])):
                     continue
@@ -117,7 +121,14 @@ class RelativeDislocationReversal:
 
 
 def build(params: dict) -> RelativeDislocationReversal:
-    allowed = {"liquid_cohort", "one_hour_exit", "peer_recovery", "quiet_baseline", "two_hour_exit"}
+    allowed = {
+        "liquid_cohort",
+        "one_hour_exit",
+        "peer_recovery",
+        "quiet_baseline",
+        "two_hour_exit",
+        "min_dislocation_pp",
+    }
     if params.keys() - allowed:
         raise ValueError("unrecognised relative_dislocation_reversal parameter")
     liquid_cohort = params.get("liquid_cohort", False)
@@ -125,6 +136,7 @@ def build(params: dict) -> RelativeDislocationReversal:
     peer_recovery = params.get("peer_recovery", False)
     quiet_baseline = params.get("quiet_baseline", False)
     two_hour_exit = params.get("two_hour_exit", False)
+    min_dislocation_pp = params.get("min_dislocation_pp", 12)
     if not all(
         isinstance(p, bool)
         for p in (liquid_cohort, one_hour_exit, peer_recovery, quiet_baseline, two_hour_exit)
@@ -138,10 +150,15 @@ def build(params: dict) -> RelativeDislocationReversal:
         raise ValueError("peer_recovery requires a timed exit")
     if quiet_baseline and (not one_hour_exit or peer_recovery):
         raise ValueError("quiet_baseline requires the one-hour exit with absolute recovery")
+    if type(min_dislocation_pp) is not int or min_dislocation_pp not in (10, 12):
+        raise ValueError("min_dislocation_pp must be 10 or 12")
+    if min_dislocation_pp == 10 and not quiet_baseline:
+        raise ValueError("a ten-point dislocation requires the quiet baseline")
     return RelativeDislocationReversal(
         liquid_cohort=liquid_cohort,
         one_hour_exit=one_hour_exit,
         peer_recovery=peer_recovery,
         quiet_baseline=quiet_baseline,
         two_hour_exit=two_hour_exit,
+        min_dislocation_pp=min_dislocation_pp,
     )
