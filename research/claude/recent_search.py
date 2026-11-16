@@ -182,7 +182,7 @@ def limits(years: str = "yr <= 2022") -> None:
                 rows = con.execute(
                     f"""with x as (
                             select {CAP} as cap, day, yr,
-                                   official_close / (e{t} * {1 - depth}) - 1 as r,
+                                   (1 + r{t}) / {1 - depth} - 1 as r,
                                    2 * half_spread + 2 * commission as cost
                             from b where ok{t} and mae{t} <= {-depth} and {years}
                               and ({where.format(t=t)})),

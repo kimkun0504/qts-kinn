@@ -107,3 +107,16 @@ sold at or after the open. It needs prices at times before the open, which the t
 have yet; it is built only if family 10 leaves time.
 
 The same selection rule applies (300 trades, 3% net at 2×, t of 4, every year positive).
+
+## Addendum, 2026-11-16 04:25 ET: family 10 result and the detail of family 9
+
+Family 10 (276 cells): no candidate. The best, a bid 20% below the 10:00 price in companies
+over $2B, earned 2.7% a fill but only because of 2020; it lost in 2022. Every deep-bid cell is
+weaker or negative in 2022, the same decay as the rebound.
+
+**Family 9, as measured.** At 07:00, 08:00 and 09:00: the move from the prior close (seven
+buckets), premarket dollar volume to that time against the 20-day norm (under 1%, 1 to 10%,
+over 10%), and 8-K news (earnings, other, none). Buy at the first premarket print at or after
+that time (within 15 minutes, or no trade); sell at the first regular print (09:30), at 09:35,
+at 10:00, or at the close. 756 cells. Costs: the premarket entry pays twice the regular
+half-spread, the exit the regular one, both doubled at 2×, plus commission.
