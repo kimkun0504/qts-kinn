@@ -43,3 +43,28 @@ book.
    **passes** if the mean a trade at 2× is 1% or more and the run's total at 2× is positive;
    it **fails** if the mean a trade at 1× is zero or less. In between it is unproven.
    About 250 trades are expected, so the mean will be known to about ±1.5%.
+
+## Addendum, 2026-11-16 14:40 ET: the fill measurement, written before any tick is read
+
+The owner has downloaded the tick sample (150 trades of 2015 to 2023 at random: quotes and
+trades from 09:25 to 09:40 on the entry day and 15:50 to 16:02 on the exit day) and has run
+the holdout. The holdout result is recorded in REPORT.md. The ticks answer three questions,
+each for stocks under and over $1M a day:
+
+1. **Is the bar's price an auction price?** The share of entries with an opening-cross print
+   (trade conditions 25 or 17) and of exits with a closing-cross print (8 or 19), the dollars
+   in each cross, and how far the cross price is from the bar's open or close.
+2. **Is the auction price a fair one?** The opening cross against the quote midpoint 30
+   seconds after the open, and the closing cross against the midpoint 30 seconds before the
+   close. A buyer in the cross pays this difference; near zero means the cross is not
+   systematically on the wrong side.
+3. **What does a market order pay instead?** The ask 30 seconds after the open against the
+   bar's open, and the bar's close against the bid 30 seconds before the close. Their sum is
+   the measured cost of trading without the auctions, to set beside the modelled spread
+   (1% a side under $1M a day, 0.43% above).
+
+**What it changes.** The auction allowance (0.25% a side under $1M a day, 0.10% above) stands
+if at least nine trades in ten have a cross on both sides and the mean of question 2 is
+within the allowance. Otherwise the figure to use is question 3's. Either way the reports
+state the measured numbers. The ticks cannot show what the order's own size does to a cross;
+with the median cross size they bound it.
