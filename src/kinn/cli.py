@@ -51,6 +51,7 @@ def _run(args: argparse.Namespace) -> int:
     from pathlib import Path
 
     from kinn import run as runner
+    from kinn.data.seal import HoldoutError
     from kinn.registry import runs as registry
 
     settings = load_settings()
@@ -60,14 +61,17 @@ def _run(args: argparse.Namespace) -> int:
         if not args.strategy or not args.config:
             raise SystemExit("kinn run needs <strategy> --config <name>, or --resume <run_id>")
         try:
+            if args.unseal:
+                _check_holdout_reach(settings, args.strategy, args.config)
             run_dir = runner.start_run(
                 args.strategy,
                 args.config,
                 settings=settings,
                 scratch=args.scratch,
                 kind="event_study" if args.study else "backtest",
+                unseal=args.unseal,
             )
-        except registry.DirtyTreeError as error:
+        except (registry.DirtyTreeError, HoldoutError) as error:
             raise SystemExit(f"refused: {error}") from error
     done = runner.continue_run(
         Path(run_dir), settings=settings, budget_seconds=args.budget, workers=args.workers
@@ -77,6 +81,23 @@ def _run(args: argparse.Namespace) -> int:
         report = run_dir / "tearsheet.md"
         print((report if report.exists() else run_dir / "study.md").read_text())
     return 0 if done else 3
+
+
+def _check_holdout_reach(settings, strategy: str, config: str) -> None:
+    """Before the one holdout run: the unsealed data must reach the end of the run's period."""
+    from datetime import date
+
+    from kinn import run as runner
+    from kinn.data import holdout
+
+    _, cfg = runner.load_config(strategy, config)
+    end = date.fromisoformat(str(cfg.get("period", {}).get("end")))
+    report = holdout.check(settings)
+    if not holdout.covers(report, end):
+        raise SystemExit(
+            f"refused: the unsealed data does not reach {end}. Bars end {report['last_session']}; "
+            f"Sharadar reaches {report['sharadar_reaches']}. Nothing was run."
+        )
 
 
 def _book(args: argparse.Namespace) -> int:
@@ -290,6 +311,33 @@ def _fills_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _holdout_build(args: argparse.Namespace) -> int:
+    from kinn.data import holdout
+    from kinn.data.seal import HoldoutError
+
+    settings = load_settings()
+    sealed = Path(args.sealed).expanduser().resolve()
+    try:
+        build_id, pending = holdout.build_unsealed(
+            settings, sealed, budget_seconds=args.budget, workers=args.workers
+        )
+    except HoldoutError as error:
+        raise SystemExit(f"refused: {error}") from error
+    if pending:
+        print(f"unsealed build {build_id}: pending {', '.join(pending)}; run the command again")
+        return 3
+    report = holdout.check(settings)
+    print(f"unsealed build {build_id}: complete")
+    for key, value in report.items():
+        print(f"  {key}: {value}")
+    if not report["same_before_seal"]:
+        print(
+            "  note: the unsealed build differs from the research build before the seal;"
+            " show this output to the agent before running anything"
+        )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -307,6 +355,11 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--resume", metavar="RUN_ID", help="continue a paused run")
     run.add_argument("--budget", type=float, default=float("inf"), help="seconds before pausing")
     run.add_argument("--workers", type=int, default=1)
+    run.add_argument(
+        "--unseal",
+        action="store_true",
+        help="OWNER ONLY: run on the unsealed holdout build (needs KINN_UNSEAL_TOKEN)",
+    )
     run.set_defaults(func=_run)
     book = sub.add_parser("book", help="run a multi-day book: kinn book <config in books/>")
     book.add_argument("config", nargs="?")
@@ -372,6 +425,19 @@ def main(argv: list[str] | None = None) -> int:
     f_check.add_argument("--workers", type=int, default=1)
     f_check.add_argument("--scratch", action="store_true")
     f_check.set_defaults(func=_fills_check)
+
+    hold = sub.add_parser(
+        "holdout", help="OWNER ONLY: build the unsealed data for the one holdout run"
+    ).add_subparsers(dest="holdout_command", required=True)
+    h_build = hold.add_parser("build", help="convert the sealed bars and build unsealed tables")
+    h_build.add_argument(
+        "--sealed",
+        default="~/Desktop/QTS/MarketData/sealed",
+        help="the sealed folder (holds massive/us_stocks_sip/...)",
+    )
+    h_build.add_argument("--budget", type=float, default=float("inf"))
+    h_build.add_argument("--workers", type=int, default=4)
+    h_build.set_defaults(func=_holdout_build)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True

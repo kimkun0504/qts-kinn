@@ -19,6 +19,7 @@ from kinn.validation import stats, targets
 
 KNOWN_SCHEMAS = {"manifest": {"manifest-1"}, "metrics": {"metrics-1"}, "study": {"study-1"}}
 MAX_POINTS = 700
+OUT_OF_SAMPLE = ("validation", "holdout")  # the periods a run is judged against the targets on
 
 
 def _load(path: Path) -> dict | None:
@@ -143,7 +144,7 @@ def list_runs(runs_dir: Path) -> list[dict]:
                 drawdown_2x=two.get("max_drawdown"), total_net_2x=two.get("total_net"),
             )  # fmt: skip
             # Targets are judged out of sample only: a development result is a search result.
-            if two and manifest["status"] == "complete" and row["phase"] == "validation":
+            if two and manifest["status"] == "complete" and row["phase"] in OUT_OF_SAMPLE:
                 row["targets"] = _targets(m, fill_checks.get(manifest["run_id"]))
         rows.append(row)
     return sorted(rows, key=lambda r: r["started_at"], reverse=True)
@@ -183,7 +184,7 @@ def run_detail(runs_dir: Path, run_id: str) -> dict | None:
         manifest.get("kind", "backtest") == "backtest"
         and out["metrics"]
         and manifest["status"] == "complete"
-        and out["phase"] == "validation"
+        and out["phase"] in OUT_OF_SAMPLE
     ):
         checks = _fill_checks(runs_dir, registry.read_manifests(runs_dir))
         out["targets"] = _targets(out["metrics"], checks.get(run_id))
@@ -321,7 +322,7 @@ def strategies(runs_dir: Path, strategies_dir: Path) -> list[dict]:
         mine = [r for r in rows if r["strategy"] == name]
         config = meta.get("candidate")
         candidate = next((r for r in mine if config and r["config"] == config), None)
-        validated = [r for r in mine if r["kind"] == "backtest" and r["phase"] == "validation"]
+        validated = [r for r in mine if r["kind"] == "backtest" and r["phase"] in OUT_OF_SAMPLE]
         status = str(meta.get("status") or "unknown")
         out.append({
             "strategy": name, "status": status, "state": "candidate" if candidate else status,

@@ -19,14 +19,18 @@ class RawFile:
     size: int
 
 
-def massive_files(raw_dir: Path, kind: str) -> list[RawFile]:
-    """Massive flat files of ``kind`` ('day' or 'minute') dated before the holdout, oldest first."""
+def massive_files(raw_dir: Path, kind: str, *, holdout: bool = False) -> list[RawFile]:
+    """Massive flat files of ``kind`` ('day' or 'minute') dated before the holdout, oldest first.
+
+    ``holdout=True`` is the mirror image, for the owner's unsealed build only (``raw_dir`` is
+    then the sealed folder): the holdout-dated files and nothing else.
+    """
     base = raw_dir / "massive" / "us_stocks_sip" / MASSIVE_FOLDERS[kind]
     files = []
     for path in sorted(base.glob("*/*/*.csv.gz")):
         day = date.fromisoformat(path.name[:10])
-        if is_holdout(day):
-            continue  # belongs in sealed/; never opened
+        if is_holdout(day) != holdout:
+            continue  # a holdout file in the open folder (or the reverse) is never opened
         files.append(RawFile(day, path, path.stat().st_size))
     return files
 

@@ -7,7 +7,7 @@ import type { RunKind, RunRow } from "../lib/api";
 import { RunDetail } from "./RunDetail";
 
 export type KindFilter = "all" | RunKind;
-type PhaseFilter = "all" | "development" | "validation";
+type PhaseFilter = "all" | "development" | "validation" | "holdout";
 type ResultFilter = "all" | "success";
 
 interface RunsProps {
@@ -49,6 +49,7 @@ export function Runs({ runs, selected, onOpen, compare, onToggleCompare, kind, o
                 { value: "all", label: "Any period" },
                 { value: "development", label: "Development" },
                 { value: "validation", label: "Validation" },
+                { value: "holdout", label: "Holdout" },
               ]}
             />
             <Segmented

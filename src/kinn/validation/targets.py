@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from kinn.core.settings import HOLDOUT_START
+
 DEVELOPMENT_END = date(2016, 12, 30)  # every search happens up to here
 VALIDATION_START = date(2017, 1, 3)  # one run per chosen variant from here to the holdout
 MIN_NET_PER_TRADE_2X = 0.01
@@ -15,10 +17,13 @@ MAX_DRAWDOWN_SHARE = 0.5  # of the account
 
 
 def phase(start: date, end: date) -> str:
-    """Which research period a run covers: development, validation, or both ("full")."""
+    """Which research period a run covers: development, validation, the holdout, or a mix
+    ("full")."""
     if end <= DEVELOPMENT_END:
         return "development"
-    if start >= VALIDATION_START:
+    if start >= HOLDOUT_START:
+        return "holdout"
+    if start >= VALIDATION_START and end < HOLDOUT_START:
         return "validation"
     return "full"
 

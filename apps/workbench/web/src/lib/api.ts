@@ -2,7 +2,7 @@ import type { Stat } from "./format";
 
 export type RunKind = "backtest" | "event_study" | "tick_study" | "book" | "fill_check";
 /** Which research period a run covers. Searches happen on development; validation is run once. */
-export type Phase = "development" | "validation" | "full";
+export type Phase = "development" | "validation" | "holdout" | "full";
 
 export interface TargetItem {
   key: string;

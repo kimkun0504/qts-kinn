@@ -24,7 +24,14 @@ MAX_GAP_DAYS = 10
 
 class DataStore:
     def __init__(self, settings: Settings, *, build_id: str | None = None, unseal: bool = False):
-        builds = settings.data_dir / "builds"
+        # ``unseal=True`` opens the owner's unsealed build (kinn.data.holdout). It needs the
+        # owner's token even to open, and every read of a holdout date is logged.
+        if unseal:
+            seal.check_range(
+                HOLDOUT_START, HOLDOUT_START, source="open the unsealed build", unseal=True,
+                log_dir=settings.data_dir,
+            )  # fmt: skip
+        builds = settings.data_dir / ("holdout/builds" if unseal else "builds")
         if build_id is None:
             pointer = builds / CURRENT_NAME
             if not pointer.exists():
@@ -34,6 +41,11 @@ class DataStore:
         self.root = builds / build_id
         self.info = json.loads((self.root / "build.json").read_text())
         self.bars_root = settings.data_dir / "bars" / self.info["bars_id"]
+        self.bars_roots = [self.bars_root]
+        if unseal:
+            self.bars_roots.append(
+                settings.data_dir / "holdout" / "bars" / self.info["sealed_bars_id"]
+            )
         self._unseal = unseal
         self._log_dir = settings.data_dir
 
@@ -47,6 +59,10 @@ class DataStore:
             return con.sql(sql, params=params or []).to_arrow_table()
         finally:
             con.close()
+
+    def _bars(self, kind: str) -> str:
+        """SQL list of the Parquet files of ``kind`` ('calendar' or 'daily') in every bars root."""
+        return "[" + ", ".join(f"'{root}/{kind}/*.parquet'" for root in self.bars_roots) + "]"
 
     def _date_guard(self, column: str = "date") -> str:
         # Defence in depth: even a mis-built file cannot leak holdout rows through a query.
@@ -68,7 +84,7 @@ class DataStore:
     def calendar(self, start: date, end: date) -> pa.Table:
         self._check(start, end, "calendar")
         return self._query(
-            f"""select * from read_parquet('{self.bars_root}/calendar/*.parquet')
+            f"""select * from read_parquet({self._bars("calendar")})
                 where date between ? and ? and {self._date_guard()} order by date""",
             [start, end],
         )
@@ -104,8 +120,9 @@ class DataStore:
         self, day: date, *, symbols: list[str] | None = None, columns: str = "*"
     ) -> pa.Table:
         self._check(day, day, "minute")
-        path = self.bars_root / "minute" / f"year={day.year}" / f"{day.isoformat()}.parquet"
-        if not path.exists():
+        name = Path("minute") / f"year={day.year}" / f"{day.isoformat()}.parquet"
+        path = next((r / name for r in self.bars_roots if (r / name).exists()), None)
+        if path is None:
             raise FileNotFoundError(f"no minute bars for {day} (not a session, or not built)")
         if symbols is None:
             return self._query(f"select {columns} from '{path}' order by symbol, bar_start")
@@ -119,7 +136,7 @@ class DataStore:
         """Raw daily bars by symbol (for ETFs and other names outside the security master)."""
         self._check(start, end, "daily")
         return self._query(
-            f"""select * from read_parquet('{self.bars_root}/daily/*.parquet')
+            f"""select * from read_parquet({self._bars("daily")})
                 where date between ? and ? and {self._date_guard()}
                   and symbol in (select unnest(?)) order by date, symbol""",
             [start, end, symbols],

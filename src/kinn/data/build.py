@@ -15,7 +15,7 @@ import json
 import os
 import time
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import duckdb
@@ -28,6 +28,7 @@ from kinn.data import bars, master, panel, raw, sharadar
 # data-6: ret60_prev in the panel (price return over the 60 sessions before the day).
 DATA_VERSION = "data-6"
 SHARADAR_TABLES = ("TICKERS", "ACTIONS", "DAILY", "SEP", "EVENTS")
+FAR_FUTURE = date(2100, 1, 1)  # "still in force" when nothing is sealed
 
 
 @dataclass(frozen=True)
@@ -72,8 +73,8 @@ def build_bars(settings: Settings, *, budget_seconds: float, workers: int = 4) -
             return total_done, len(steps) - done
 
 
-def _write_master(p: BuildPaths) -> None:
-    shar, out = p.build_root / "sharadar", p.build_root / "master"
+def _write_master(build_root: Path, snapshot: Path, horizon: date) -> None:
+    shar, out = build_root / "sharadar", build_root / "master"
     out.mkdir(parents=True, exist_ok=True)
     con = duckdb.connect()
     tmp = out / "security_master.tmp"
@@ -111,7 +112,8 @@ def _write_master(p: BuildPaths) -> None:
     con.close()
     history = master.symbol_history(
         pq.read_table(shar / "tickers.parquet"),
-        sharadar.read_ticker_changes(raw.sharadar_zip(p.snapshot, "ACTIONS")),
+        sharadar.read_ticker_changes(raw.sharadar_zip(snapshot, "ACTIONS")),
+        horizon=horizon,
     )
     tmp = out / "symbol_history.tmp"
     pq.write_table(history, tmp, compression="zstd")
@@ -121,17 +123,41 @@ def _write_master(p: BuildPaths) -> None:
 def build_tables(settings: Settings, *, budget_seconds: float = 3600.0) -> tuple[str, list[str]]:
     """Build ``builds/<build_id>/``. Returns (build_id, steps still pending)."""
     p = paths(settings)
-    shar = p.build_root / "sharadar"
-    deadline = time.monotonic() + budget_seconds
-    info_path = p.build_root / "build.json"
+    info = {
+        "build_id": p.build_id,
+        "bars_id": p.bars_id,
+        "data_version": DATA_VERSION,
+        "holdout_start": HOLDOUT_START.isoformat(),
+        "sharadar_snapshot": p.snapshot.name,
+    }
+    pending = write_tables(
+        p.build_root, [p.bars_root], p.snapshot, info=info, seal_date=HOLDOUT_START,
+        deadline=time.monotonic() + budget_seconds,
+    )  # fmt: skip
+    if not pending:
+        (settings.data_dir / "builds" / "CURRENT").write_text(p.build_id + "\n")
+    return p.build_id, pending
+
+
+def write_tables(
+    build_root: Path, bars_roots: list[Path], snapshot: Path, *, info: dict,
+    seal_date: date | None, deadline: float,
+) -> list[str]:  # fmt: skip
+    """The tables of one build under ``build_root``, in resumable steps. Returns the steps
+    still pending. ``seal_date=None`` keeps holdout rows: only the unsealed build passes it."""
+    shar = build_root / "sharadar"
+    info_path = build_root / "build.json"
+    horizon = seal_date or FAR_FUTURE
 
     steps: list[tuple[str, Path, object]] = [
         (
             "sharadar tickers",
             shar / "tickers.parquet",
             lambda: sharadar.ingest_tickers(
-                raw.sharadar_zip(p.snapshot, "TICKERS"), shar / "tickers.parquet"
-            ),
+                raw.sharadar_zip(snapshot, "TICKERS"),
+                shar / "tickers.parquet",
+                seal_date=seal_date,
+            ),  # fmt: skip
         )
     ]
     for table in ("ACTIONS", "DAILY", "SEP", "EVENTS", "SF1"):
@@ -140,28 +166,30 @@ def build_tables(settings: Settings, *, budget_seconds: float = 3600.0) -> tuple
             (
                 f"sharadar {table.lower()}",
                 dst,
-                lambda t=table, d=dst: sharadar.ingest_dated(raw.sharadar_zip(p.snapshot, t), t, d),
+                lambda t=table, d=dst: sharadar.ingest_dated(
+                    raw.sharadar_zip(snapshot, t), t, d, seal_date=seal_date
+                ),
             )
         )
     steps.append(
-        ("master", p.build_root / "master" / "symbol_history.parquet", lambda: _write_master(p))
+        (
+            "master",
+            build_root / "master" / "symbol_history.parquet",
+            lambda: _write_master(build_root, snapshot, horizon),
+        )
     )
 
     def finish() -> None:
-        if not any((p.bars_root / "daily").glob("*.parquet")):
+        if not any((bars_roots[0] / "daily").glob("*.parquet")):
             raise FileNotFoundError("daily bars are not built yet; run `kinn data bars` first")
-        stats = panel.build_panel(bars_root=p.bars_root, build_root=p.build_root)
-        info = {
-            "build_id": p.build_id,
-            "bars_id": p.bars_id,
-            "data_version": DATA_VERSION,
-            "holdout_start": HOLDOUT_START.isoformat(),
-            "sharadar_snapshot": p.snapshot.name,
+        stats = panel.build_panel(bars_root=bars_roots, build_root=build_root)
+        done = {
+            **info,
             "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "panel": stats,
         }
         tmp = info_path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(info, indent=2) + "\n")
+        tmp.write_text(json.dumps(done, indent=2) + "\n")
         os.replace(tmp, info_path)
 
     steps.append(("panel", info_path, finish))
@@ -174,6 +202,4 @@ def build_tables(settings: Settings, *, budget_seconds: float = 3600.0) -> tuple
             break
         run()
         pending.remove(name)
-    if not pending:
-        (settings.data_dir / "builds" / "CURRENT").write_text(p.build_id + "\n")
-    return p.build_id, pending
+    return pending

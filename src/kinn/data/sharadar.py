@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 import zipfile
+from datetime import date
 from pathlib import Path
 
 import pyarrow as pa
@@ -119,10 +120,15 @@ def _sep_unadjust(table: pa.Table) -> pa.Table:
     return table.drop_columns(["close"]).append_column("unadjust", factor)
 
 
-def ingest_dated(zip_path: Path, table: str, dst: Path) -> int:
-    """Stream ``table`` to Parquet, keeping only rows dated before the holdout. Returns rows."""
+def ingest_dated(
+    zip_path: Path, table: str, dst: Path, *, seal_date: date | None = HOLDOUT_START
+) -> int:
+    """Stream ``table`` to Parquet, keeping only rows dated before the holdout. Returns rows.
+
+    ``seal_date=None`` keeps every row: the owner's unsealed build, and nothing else, passes it.
+    """
     date_column, columns = DATED_TABLES[table]
-    seal = pa.scalar(HOLDOUT_START, pa.date32())
+    seal = pa.scalar(seal_date or date.max, pa.date32())
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_suffix(".tmp")
     rows = 0
@@ -145,19 +151,25 @@ def ingest_dated(zip_path: Path, table: str, dst: Path) -> int:
     return rows
 
 
-def ingest_tickers(zip_path: Path, dst: Path) -> int:
+def ingest_tickers(zip_path: Path, dst: Path, *, seal_date: date | None = HOLDOUT_START) -> int:
     """The SEP rows of TICKERS, censored at the seal.
 
     - Names first priced on or after the seal are dropped: they did not exist before it.
     - A last price date on or after the seal becomes null ("still trading at the seal").
     - Snapshot-dated columns (size buckets, related tickers, last update) are not read at all.
+
+    ``seal_date=None`` (the owner's unsealed build only) keeps every name, and "still trading"
+    then means priced on the snapshot's own last day.
     """
     table = _reader(zip_path, TICKER_COLUMNS).read_all()
-    seal = pa.scalar(HOLDOUT_START, pa.date32())
     table = table.filter(pc.equal(table["table"], "SEP"))
-    table = table.filter(pc.less(table["firstpricedate"], seal))
+    if seal_date is None:
+        cutoff = pc.max(table["lastpricedate"])
+    else:
+        cutoff = pa.scalar(seal_date, pa.date32())
+        table = table.filter(pc.less(table["firstpricedate"], cutoff))
     last = table["lastpricedate"]
-    censored = pc.if_else(pc.less(last, seal), last, pa.scalar(None, pa.date32()))
+    censored = pc.if_else(pc.less(last, cutoff), last, pa.scalar(None, pa.date32()))
     table = table.set_column(
         table.schema.get_field_index("lastpricedate"), "lastpricedate", censored
     )

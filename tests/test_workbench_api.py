@@ -108,6 +108,8 @@ def test_targets_and_periods_follow_decision_0017():
     assert targets.phase(date(2003, 9, 10), date(2016, 12, 30)) == "development"
     assert targets.phase(date(2017, 1, 3), date(2023, 11, 8)) == "validation"
     assert targets.phase(date(2003, 9, 10), date(2023, 11, 8)) == "full"
+    assert targets.phase(date(2023, 11, 9), date(2026, 11, 6)) == "holdout"
+    assert targets.phase(date(2017, 1, 3), date(2026, 11, 6)) == "full"
 
     def metrics(net, sharpe, drawdown):
         side = {"mean_return": net, "sharpe": sharpe, "max_drawdown": drawdown}

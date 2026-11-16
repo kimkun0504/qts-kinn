@@ -30,8 +30,15 @@ SPLIT_TOLERANCE_SHARE = 0.35  # ... or this share of |ln ratio|, whichever is la
 _FITS = f"miss <= greatest({SPLIT_TOLERANCE}, {SPLIT_TOLERANCE_SHARE} * abs(ln(ratio)))"
 
 
-def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500MB") -> dict:
-    """Write ``panel/year=YYYY.parquet`` under ``build_root``. Returns match statistics."""
+def build_panel(
+    *, bars_root: Path | list[Path], build_root: Path, memory_limit: str = "1500MB"
+) -> dict:
+    """Write ``panel/year=YYYY.parquet`` under ``build_root``. Returns match statistics.
+
+    ``bars_root`` may be several folders of daily bars read as one (the unsealed build reads
+    the open bars and the holdout bars together)."""
+    roots = bars_root if isinstance(bars_root, list) else [bars_root]
+    daily_files = ", ".join(f"'{root}/daily/*.parquet'" for root in roots)
     master = build_root / "master"
     shar = build_root / "sharadar"
     out = build_root / "panel"
@@ -40,9 +47,7 @@ def build_panel(*, bars_root: Path, build_root: Path, memory_limit: str = "1500M
         con = duckdb.connect(str(Path(scratch) / "panel.duckdb"))
         con.execute(f"set memory_limit='{memory_limit}'; set temp_directory='{scratch}'")
         con.execute("set preserve_insertion_order=false")
-        con.execute(
-            f"create view daily as select * from read_parquet('{bars_root}/daily/*.parquet')"
-        )
+        con.execute(f"create view daily as select * from read_parquet([{daily_files}])")
         con.execute(f"create view hist as select * from '{master}/symbol_history.parquet'")
         con.execute(f"create view sec as select * from '{master}/security_master.parquet'")
         con.execute(f"create view listed_splits as select * from '{master}/splits.parquet'")

@@ -93,7 +93,7 @@ function RunHeader({ manifest, phase }: { manifest: Manifest; phase: Phase | nul
           <Badge tone={manifest.scratch || manifest.status === "abandoned" ? "muted" : "info"}>
             {manifest.scratch ? "Scratch, not counted" : manifest.status === "abandoned" ? "Abandoned, not counted" : "Counted trial"}
           </Badge>
-          {phase && <Badge tone={phase === "validation" ? "info" : "muted"}>{phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : PHASE[phase]}</Badge>}
+          {phase && <Badge tone={phase === "validation" || phase === "holdout" ? "info" : "muted"}>{phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : phase === "holdout" ? "Holdout: the one clean test" : PHASE[phase]}</Badge>}
           {manifest.git.dirty && <Badge tone="warn">Uncommitted code</Badge>}
         </div>
         <div className="text-xs text-ink-3">{manifest.run_id}</div>

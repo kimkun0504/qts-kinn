@@ -36,12 +36,15 @@ def traded_symbol(sharadar_ticker: str, delisted: bool) -> str:
     return sharadar_ticker
 
 
-def symbol_history(tickers: pa.Table, changes: pa.Table) -> pa.Table:
+def symbol_history(
+    tickers: pa.Table, changes: pa.Table, *, horizon: date = HOLDOUT_START
+) -> pa.Table:
     """Intervals ``[valid_from, valid_to)`` during which ``symbol`` meant ``permaticker``.
 
     ``tickers`` is the censored table from ``sharadar.ingest_tickers``; ``changes`` comes from
     ``sharadar.read_ticker_changes``. Every interval is clipped to the company's priced life
-    and to the seal, so no output date is on or after ``HOLDOUT_START``.
+    and to ``horizon`` (the seal, by default), so no output date is on or after it. Only the
+    owner's unsealed build passes a later horizon.
     """
     events: dict[str, list[tuple[date, str]]] = {}
     for when, ticker, old in zip(
@@ -62,7 +65,7 @@ def symbol_history(tickers: pa.Table, changes: pa.Table) -> pa.Table:
         strict=True,
     ):
         life_start = first or _FAR_PAST
-        life_end = min(last + timedelta(days=1), HOLDOUT_START) if last else HOLDOUT_START
+        life_end = min(last + timedelta(days=1), horizon) if last else horizon
         start = _FAR_PAST
         pieces: list[tuple[str, date, date]] = []
         for when, old in sorted(events.get(ticker, [])):

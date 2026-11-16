@@ -1,7 +1,7 @@
 import type { Phase, RunRow, Targets } from "../lib/api";
 import { Badge, type Tone } from "./ui/Badge";
 
-export const PHASE: Record<Phase, string> = { development: "Development", validation: "Validation", full: "Full sample" };
+export const PHASE: Record<Phase, string> = { development: "Development", validation: "Validation", holdout: "Holdout", full: "Full sample" };
 
 const STATES: Record<string, { label: string; tone: Tone }> = {
   candidate: { label: "Candidate", tone: "ok" },

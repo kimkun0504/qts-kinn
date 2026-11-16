@@ -223,16 +223,24 @@ def make_raw(root: Path, *, last: date = LAST_OPEN, with_holdout: bool = True) -
     return root
 
 
-def make_random_walk_raw(root: Path, *, symbols: int = 20, days: int = 40, seed: int = 0) -> Path:
-    """Liquid random-walk stocks with a bar every regular-session minute. No edge by design."""
+def make_random_walk_raw(
+    root: Path, *, symbols: int = 20, days: int = 40, seed: int = 0,
+    sealed: Path | None = None, sealed_days: int = 0,
+) -> Path:  # fmt: skip
+    """Liquid random-walk stocks with a bar every regular-session minute. No edge by design.
+
+    ``sealed`` and ``sealed_days`` continue the same walk into the holdout, written to a
+    separate sealed folder the way the real holdout files are kept."""
     import random
 
     rng = random.Random(seed)
     names = [f"RW{k:02d}" for k in range(symbols)]
-    all_days = sessions()[:days]
+    open_days = sessions()[:days]
+    later = [d for d in sessions(date(2024, 1, 31)) if d > LAST_OPEN][:sealed_days]
+    all_days = open_days + (later if sealed is not None else [])
     price = dict.fromkeys(names, 20.0)
-    base = root / "massive" / "us_stocks_sip"
     for day in all_days:
+        base = (sealed if day > LAST_OPEN else root) / "massive" / "us_stocks_sip"
         daily, minute = [], []
         for name in names:
             first = price[name]

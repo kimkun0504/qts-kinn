@@ -27,11 +27,11 @@ BARS_SCHEMA_VERSION = "bars-1"
 RTH_OPEN, RTH_CLOSE, EARLY_CLOSE = 570, 960, 780  # 09:30, 16:00, 13:00 New York
 
 
-def bars_id(raw_dir: Path) -> str:
+def bars_id(raw_dir: Path, *, holdout: bool = False) -> str:
     entries = [
         (f"{kind}/{f.path.name}", f.size)
         for kind in ("day", "minute")
-        for f in massive_files(raw_dir, kind)
+        for f in massive_files(raw_dir, kind, holdout=holdout)
     ]
     return fingerprint(entries, BARS_SCHEMA_VERSION)
 
@@ -109,11 +109,11 @@ def build_calendar_year(root: Path, year: int) -> None:
     _write(_connect(4), select, root / "calendar" / f"year={year}.parquet")
 
 
-def pending_steps(raw_dir: Path, root: Path) -> list[tuple[str, object]]:
+def pending_steps(raw_dir: Path, root: Path, *, holdout: bool = False) -> list[tuple[str, object]]:
     """Steps still to do, as (label, zero-argument function). Finished files are skipped."""
     steps: list[tuple[str, object]] = []
-    daily = massive_files(raw_dir, "day")
-    minute = massive_files(raw_dir, "minute")
+    daily = massive_files(raw_dir, "day", holdout=holdout)
+    minute = massive_files(raw_dir, "minute", holdout=holdout)
     for year in sorted({f.day.year for f in daily}):
         if not (root / "daily" / f"year={year}.parquet").exists():
             steps.append((f"daily {year}", lambda y=year: convert_daily_year(daily, root, y)))

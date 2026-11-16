@@ -92,7 +92,7 @@ def run_month_multi(job: dict) -> str:
     """Simulate one month's sessions for several configs of one strategy, loading each session
     once. Every config writes its own part files, exactly as if it had run alone."""
     settings = Settings(**{k: Path(v) for k, v in job["settings"].items()})
-    store = DataStore(settings, build_id=job["build_id"])
+    store = DataStore(settings, build_id=job["build_id"], unseal=job.get("unseal", False))
     costs = cost_model.load(job["cost_calibration"])
     runs = []
     for spec in job["runs"]:
@@ -173,13 +173,17 @@ def start_run(
     agent: str | None = None,
     repo: Path = REPO_ROOT,
     kind: str = "backtest",
+    unseal: bool = False,
 ) -> Path:
-    """Create the run folder and manifest. Refuses uncommitted code unless ``scratch``."""
+    """Create the run folder and manifest. Refuses uncommitted code unless ``scratch``.
+
+    ``unseal=True`` runs on the owner's unsealed build: the one run on the holdout. It needs
+    the owner's token (the data layer refuses otherwise) and is marked in the manifest."""
     settings = settings or load_settings()
     meta, cfg = load_config(strategy, config)
     git = registry.git_state(repo)
     registry.check_clean(git, scratch=scratch)
-    store = DataStore(settings)
+    store = DataStore(settings, unseal=unseal)
     period = cfg.get("period", {})
     start = date.fromisoformat(str(period.get("start", "2003-09-10")))
     end = date.fromisoformat(str(period.get("end", "2023-11-08")))
@@ -221,6 +225,8 @@ def start_run(
         "schemas": {"trades": registry.TRADES_SCHEMA, "equity": registry.EQUITY_SCHEMA,
                     "metrics": registry.METRICS_SCHEMA},
     }  # fmt: skip
+    if unseal:
+        manifest["unsealed"] = True
     registry.write_json(run_dir / "manifest.json", manifest)
     return run_dir
 
@@ -248,6 +254,7 @@ def continue_run(
         "config": manifest["resolved_config"],
         "cost_calibration": manifest["cost_calibration"],
         "parts": str(parts),
+        "unseal": bool(manifest.get("unsealed", False)),
     }
     deadline = time.time() + budget_seconds
     jobs = [{**base, "month": m, "sessions": months[m], "deadline": deadline} for m in pending]
@@ -289,6 +296,8 @@ def continue_sweep(
             head["strategy"], head["sessions"], head["data_build_id"]
         ):  # fmt: skip
             raise ValueError("a sweep needs one strategy, one period and one data build")
+    if any(m.get("unsealed") for m in manifests):
+        raise ValueError("the holdout takes one run of one frozen variant, never a sweep")
     months: dict[str, list[str]] = {}
     for day in head["sessions"]:
         months.setdefault(day[:7], []).append(day)
