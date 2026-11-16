@@ -156,9 +156,61 @@ def family(number: int) -> None:
               f"{len(big)} with 300+ trades; shortlisted {len(short_listed)}, near {len(near)}")  # fmt: skip
         show(sorted(short_listed, key=lambda r: -r[k + 3]), names, "SHORTLIST (long)")
         show(sorted(near, key=lambda r: -r[k + 3]), names, "near misses (long)")
-        show(sorted(big, key=lambda r: -r[k + 3])[:8], names, "best long cells by net")
-        show(sorted(big, key=lambda r: -r[k + 5])[:6], names, "best short cells (information)")
+        show(sorted(big, key=lambda r: -r[k + 3])[:5], names, "best long cells by net")
+        show(sorted(big, key=lambda r: -r[k + 5])[:4], names, "best short cells (information)")
     print(f"\ncells measured in family {number}: {total}")
+
+
+STATES = {
+    "any": "true", "gap up 10%+": "gap >= 0.10", "gap down 10%+": "gap <= -0.10",
+    "up 10%+ by then": "mov{t} >= 0.10", "yesterday up 20%+": "ret1 >= 0.20",
+    "yesterday down 20%+": "ret1 <= -0.20", "volume 5x": "rvol{t} >= 5",
+}  # fmt: skip
+
+
+def limits(years: str = "yr <= 2022") -> None:
+    """Family 10: a bid resting `depth` below the price from time t; sold at the close."""
+    con = connect()
+    found = []
+    for t in (575, 600):
+        for depth in (0.05, 0.10, 0.15, 0.20, 0.30):
+            for state, where in STATES.items():
+                per_year = ", ".join(
+                    f"sum(net * n) filter (yr = {y}) / nullif(sum(n) filter (yr = {y}), 0)"
+                    for y in (*YEARS, 2023)
+                )
+                rows = con.execute(
+                    f"""with x as (
+                            select {CAP} as cap, day, yr,
+                                   official_close / (e{t} * {1 - depth}) - 1 as r,
+                                   2 * half_spread + 2 * commission as cost
+                            from b where ok{t} and mae{t} <= {-depth} and {years}
+                              and ({where.format(t=t)})),
+                        d as (select cap, day, any_value(yr) as yr, count(*) as n,
+                                     avg(r - cost) as net, avg(r) as gross,
+                                     sum((r - cost > 0)::int) as wins from x group by 1, 2)
+                        select cap, sum(n), count(*), sum(gross * n) / sum(n),
+                               sum(net * n) / sum(n),
+                               avg(net) / nullif(stddev_samp(net) / sqrt(count(*)), 0),
+                               sum(wins) / sum(n), {per_year}
+                        from d group by 1"""
+                ).fetchall()
+                found += [(t, depth, state, *r) for r in rows]
+    print(f"cells: {len(found)}; with 300+ fills: {sum(r[4] >= 300 for r in found)}")
+    print(f"{'time':>5}{'depth':>6} {'state':22}{'cap':>6}{'fills':>7}{'days':>6}{'gross%':>8}"
+          f"{'net%':>7}{'t':>6}{'win':>5}   2018   2019   2020   2021   2022")  # fmt: skip
+    keep = [r for r in found if r[4] >= 300]
+    for r in sorted(keep, key=lambda r: -r[7])[:28]:
+        t, depth, state, cap, n, days, gross, net, tstat, win, *by = r
+        years_text = " ".join(f"{100 * (v or 0):6.1f}" for v in by[:5])
+        print(f"{t:>5}{100 * depth:>5.0f}% {state:22}{cap:>6}{n:>7.0f}{days:>6}"
+              f"{100 * gross:>8.2f}{100 * net:>7.2f}{tstat or 0:>6.1f}{100 * win:>5.0f}  "
+              f"{years_text}")  # fmt: skip
+    good = [r for r in keep if r[7] >= 0.03 and (r[8] or 0) >= 4
+            and all(v is not None and v > 0 for v in r[10:15])]  # fmt: skip
+    print(f"shortlisted: {len(good)}")
+    for r in good:
+        print("  ", r[:4], f"net {100 * r[7]:.2f}% t {r[8]:.1f} fills {r[4]:.0f}")
 
 
 def cell(t: int, where: str, check: bool) -> None:
@@ -171,7 +223,7 @@ def cell(t: int, where: str, check: bool) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("what", choices=("news", "family", "cell"))
+    parser.add_argument("what", choices=("news", "family", "cell", "limits"))
     parser.add_argument("args", nargs="*")
     parser.add_argument("--check", action="store_true")
     a = parser.parse_args()
@@ -179,6 +231,8 @@ if __name__ == "__main__":
         news()
     elif a.what == "family":
         family(int(a.args[0]))
+    elif a.what == "limits":
+        limits()
     else:
         cell(int(a.args[0]), a.args[1], a.check)
     sys.stdout.flush()

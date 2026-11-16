@@ -83,3 +83,27 @@ on the search years alone.
 The number of cells examined; prices at the first print flatter illiquid stocks; one row per
 stock-day means a cell with many trades on one day needs more capital than the account has;
 8-K dates carry no time of day.
+
+## Addendum, 2026-11-16 04:05 ET: families 1 to 8 are done; two more, declared before measuring
+
+Families 1 to 8 (1,179 cells) produced no candidate and no near miss on the long side: buying
+at the market and holding to the close earns under 1% before costs in almost every state. The
+large moves to the close are downward (stocks that gapped up 50% or more, or are already
+falling hard), which a long-only account cannot use.
+
+A market buy cannot reach 3%. Two structures that might:
+
+**Family 10. Resting bids far below the market.** At 09:35 (and at 10:00) a buy limit is left
+5%, 10%, 15%, 20% or 30% below the price, for the rest of the session, and sold at the close
+if filled. It only trades when a stock is driven far down intraday, and buys at a price a
+market order never gets. Cells: depth × company size × state (any stock; gap up 10% or more;
+gap down 10% or more; already up 10% at that time; yesterday up 20% or more; yesterday down
+20% or more; volume 5 times normal). The entry is passive, so it pays no spread; the exit
+pays the spread at 2× and both sides pay commission. This is kin to the rebound, whose
+holdout is spent: a candidate here could only be confirmed on 2023 and then by paper trading.
+
+**Family 9. The premarket.** Stocks moving on news before the open, bought before 09:30 and
+sold at or after the open. It needs prices at times before the open, which the table does not
+have yet; it is built only if family 10 leaves time.
+
+The same selection rule applies (300 trades, 3% net at 2×, t of 4, every year positive).
