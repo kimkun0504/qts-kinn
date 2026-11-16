@@ -244,3 +244,41 @@ portfolio under matching costs. If it qualifies, freeze this variant and run
 `validation_liquid_peer_recovery_two_hour` once on 2017-01-03 through 2023-11-08
 under the unchanged validation gates. Require at least +3% net per completed
 trade at 1× overall and in 2022 through 2023-11-08. The sealed data stays excluded.
+
+## Addendum, 2026-11-16: ten-point dislocation after a quiet baseline
+
+The 12-point quiet-baseline study
+`20261116T164732Z_gpt_relative_dislocation_reversal_7bceca33` passed
+the return bars and missed the event counts, particularly in 2013–2016.
+For a stock trading inside a 3% range immediately before the decline, a
+ten-percentage-point peer-relative move still represents a sharp break
+from the local range. Test whether moderating the shock cutoff yields
+more independent dates with sufficient remaining reversal. A smaller
+drawdown can reflect ordinary selling, and selecting an earlier first
+signal can enter before the decline has finished.
+
+Freeze one change to the liquid one-hour quiet-baseline rule. Require the
+stock's completed 15-minute return to be at least ten percentage points
+below the same-clock median of the large-cap peer basket. Keep the stable
+`t−25` through `t−15` range, the 1% absolute one-minute recovery, $40,000
+signal-bar turnover, first qualifying bar, next-clock-minute-only market
+entry and 60-minute exit. Retain the same universe, capital, 5%
+participation, ten reservations, and `ibkr_pro_tiered`. Earlier results
+on buying a market-wide or stock-level drop alone motivate retaining all
+of the other conditions. The ten-point cutoff is the only new variant.
+
+Run `development_liquid_quiet_ten_point --study` on 2003-09-10 through
+2016-12-30. Apply the original `r_60` study gates overall and in 2013–2016,
+including next-minute-only sensitivity if entries extend beyond expiry.
+Compare events and their dates with the saved 12-point quiet study to show
+whether the change adds independent dates or mainly moves entries. This is
+a descriptive comparison. After a committed develop verdict, run the
+portfolio under the same config and dates. Apply the unchanged development
+sample, return and risk thresholds, including 2× daily Sharpe above 1.
+
+Only if qualified, run `validation_liquid_quiet_ten_point` once from
+2017-01-03 through 2023-11-08. Keep all original validation bars including
++3% net per completed trade at 1× both overall and in 2022 through
+2023-11-08, while meeting the original sample and 2× stress requirements.
+Report this as another development look motivated by a prior result.
+Count each run in `intraday_rebound`. The later holdout stays sealed.
