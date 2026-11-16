@@ -107,3 +107,37 @@ Astra tested three momentum ideas on these development years and parked all thre
 surge (−1.65% a trade at 2×), an opening gap continuation (−0.13%) and filing-session momentum
 (−0.37%). None used an opening range with a tight stop, or VWAP on an index ETF. Their gross
 returns to the close were +0.4% or less, which is a warning for A.
+
+## Addendum, 2026-11-16 00:35 ET: moving averages (owner's request, before any measurement)
+
+The owner asked for the common moving averages to be tried as well: EMA 9, 20, 50 and SMA 8,
+20, 50, "all of them". They are added as a fourth set, D, on the same data and costs.
+
+**D on the ETFs (QQQ and SPY), one $20,000 position, flat at the close.** Averages are computed
+on regular-session bars and carry over from the previous day, as on a trader's chart.
+
+| | Rule | Variants |
+|---|---|---|
+| Price against one average | long while the close is above the average, short while below | EMA 9, 20, 50; SMA 8, 20, 50 |
+| Crossover of two averages | long while the faster is above the slower, short while below | EMA 9/20, 9/50, 20/50; SMA 8/20, 8/50, 20/50 |
+
+Each on one-minute and five-minute bars, on QQQ and SPY, long and short and long only:
+12 rules × 2 bar sizes × 2 ETFs × 2 = 96 variants.
+
+**D on stocks in play.** The opening range breakout (A1) with the fixed stop replaced by an
+average: out when a one-minute close crosses the one-minute EMA 9, EMA 20 or SMA 20, or the
+five-minute EMA 9 or EMA 20. Five variants.
+
+**Trials.** 101 more, 111 in the family.
+
+**Why the bar is higher for D.** Trying 100 rules guarantees that some look good by luck. Over
+13 years the standard error of a Sharpe ratio is about 0.27, and the best of 100 unrelated
+rules with no edge at all would be expected to show about 0.8. So for D:
+
+1. Sharpe of daily profit at 2× slippage of at least 1.5 (not 1.0);
+2. its neighbours must agree: the same rule with the next shorter and next longer average, and
+   on the other bar size, all profitable at 2×;
+3. bars 2, 3 and 4 of the main list (11 of 14 years, drawdown under $10,000, $2,000 a year).
+
+A D rule that clears its own bar but whose neighbours lose is treated as luck and does not go
+forward.
