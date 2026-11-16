@@ -20,6 +20,8 @@ intended feed. Sentiment insights begin after the cutoff.
 - Build a versioned, pre-seal news input alongside the existing derived data. Keep the
   vendor archives read-only. Enforce the same date boundary at import and query time.
   Store unique ID, publisher, headline, ticker tags and publisher UTC timestamp.
+  The downloaded publisher field is a string. The API documentation also shows
+  a structured publisher object, so normalise each form at ingestion.
   Preserve first receipt time when available. Resolve the symbol to the company on the
   publication date using the existing symbol history. Record the news build in run
   manifests.
@@ -40,6 +42,13 @@ headline rule. Evaluate a next-session entry after a conservative publication la
 and compare to price reaction on the same kinds of stocks. This tests a signed
 catalyst. The existing timed-news outline studies the first article after a quiet
 spell and release-time reaction. Publication time with a lag remains a proxy.
+
+A rough text inventory found 40 distinct single-ticker wire headlines matching
+the raising-guidance phrase in April–December 2021, before any stock-eligibility,
+trade or deduplication-by-company filters. That count is an upper bound for the
+narrow rule under that rough match. Check sample size before committing a portfolio
+hypothesis. A broader preregistered primary-release cohort or a denser historical
+archive would be needed for a well-powered test of a rare headline type.
 
 The usual 2003–2016 development window has very sparse coverage for this feed.
 For a separate news-only test, request a development window in the covered part
