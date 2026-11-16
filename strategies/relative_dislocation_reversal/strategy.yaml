@@ -1,0 +1,8 @@
+name: relative_dislocation_reversal
+status: hypothesis
+engine: intraday
+universe: relative_dislocation_reversal
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
