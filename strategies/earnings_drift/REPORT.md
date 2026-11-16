@@ -90,9 +90,16 @@ at the 15% boundary by rounding. Runs `…_71f5b45c` (`research`) and `…_f5006
 | Drawdown under half the account | $6,784 of $20,000, marked daily |
 | Fills confirmed | Measured from ticks as above; not yet traded live |
 
+## Paper trading (decision 0021)
+
+`tools/owner/paper_earnings_drift.py`, run by the owner each evening after the close, finds
+the day's signals from live data, fills the previous day's at the open, closes what has been
+held 15 sessions at the close, and writes `paper/earnings_drift/report.md` with the next
+morning's buys and the next close's sells. It keeps a 10-position and a 20-position book and
+follows every signal. It sends no order.
+
 ## What it is not yet
 
-It has not traded. Nothing sends on-open and on-close orders today: the Trader has no broker
-connection, and the rule needs each evening's earnings 8-Ks, which the live data feed does
-not yet supply. Position count (10 or 20) and what to do with the signals a full book skips
-are the owner's choices.
+It has not traded. There is no broker connection, and the live sources (Massive for market
+value, the SEC for 8-K items) differ from the research's (Sharadar), so the first weeks of the
+paper ledger are also a check that the signals come out the same.

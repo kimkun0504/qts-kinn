@@ -93,7 +93,7 @@ name = "Platform layers: lower layers never import higher ones"
 type = "layers"
 layers = [
     "kinn.cli",
-    "kinn.tick_study",
+    "kinn.tick_study | kinn.swing_paper",
     "kinn.run | kinn.book_run | kinn.swing_run",
     "kinn.reporting | kinn.registry | kinn.validation",
     "kinn.engine",
