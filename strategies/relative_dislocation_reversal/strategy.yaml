@@ -1,5 +1,5 @@
 name: relative_dislocation_reversal
-status: hypothesis
+status: parked
 engine: intraday
 universe: relative_dislocation_reversal
 cost_calibration: ibkr_pro_tiered
