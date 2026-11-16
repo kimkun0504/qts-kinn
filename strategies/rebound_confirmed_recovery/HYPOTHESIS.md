@@ -134,3 +134,49 @@ The later passive ladder reports filled rungs as trades and is separate context.
 
 Count every run. Report both cost scenarios, counts, daily t-statistics, drawdowns
 and yearly returns. Never query the sealed holdout.
+
+## Addendum, 2026-11-16: bid at the observed low after confirmation
+
+This is one execution variant of the registered volume-and-momentum signal. The stored
+event study `20261116T020656Z_gpt_rebound_confirmed_recovery_eebfba4c` already passed the
+signal's develop gate. A second identical event study cannot measure a limit because the
+study uses a next-bar market entry. The market-entry portfolio version earned +1.75% at
+1× and +1.28% at 2×, with daily Sharpe 0.45 at 2×. Lower costs on those same fills were
+insufficient on their own. This test changes both the price and which orders fill.
+
+The temporary imbalance may return to a level the market already tested after the first
+recovery. A bid at the trough can buy at a lower price and avoid chasing that recovery.
+A decline through the trough can instead reflect renewed informed selling. The benchmark
+ladder uses fixed offsets and exposes capital before confirmation. The proposed order
+uses the observed pre-confirmation minimum close and begins only after recovery.
+
+- Keep the eligible stock, trigger, exact recovery bar, volume and momentum rules,
+  target order, account, and closing-auction exit from the previous addendum.
+- When the recovery is confirmed, post a buy limit at the lowest post-event close that
+  preceded that confirmation. Round down to the nearest cent. Skip the order if the
+  resulting limit is below $1. The running minimum is known at the signal bar close.
+- Use one order per symbol, active from the next minute through confirmation + 5 clock
+  minutes, inclusive, subject to Kinn's session entry cutoff. Use the normal one-tick
+  through rule and 5% bar participation. Fill at the bid without price improvement.
+  Confirming quotes and volume actually traded through the limit would need a separate
+  execution audit. Keep `ibkr_pro_tiered` and the next-day-flat rule.
+
+**Development:** `development_volume_momentum_retest` through the portfolio engine on
+2003-09-10 through 2016-12-30. Count one new trial in `intraday_rebound`. Require 150
+filled trades across 90 dates, at least 40 trades in 2013–2016, at least +2.5% mean net
+at 1× and above +1% at 2× both overall and in 2013–2016, full-period daily Sharpe above
+1 at 2× and 2× end-of-day drawdown below $10,000. The stock selection and signal are
+already frozen. No other order depth, age, direction, or exit is registered.
+
+**Validation:** if development qualifies, run `validation_volume_momentum_retest` once
+on 2017-01-03 through 2023-11-08. Require +3.00% arithmetic mean net across all completed
+trades at 1× and +1.00% or more at 2×, both overall and in 2022 through 2023-11-08.
+Require at least 150 trades across 90 sessions overall and at least 50 trades across
+30 dates in the recent block, positive 1× mean in 2017–2021, 2× full-period daily Sharpe
+above 1 and 2× drawdown below $10,000. Report mean winners separately from expectancy.
+
+Use the built data. The published data-6 notes describe `447e58e098` as adding
+`ret60_prev` while preserving the earlier panel inputs. The retest does not use that
+feature. Compare executions against the saved market version and qualified passive
+benchmarks. Report both costs, trade counts, t-statistics, drawdown and annual outcomes.
+The sealed holdout stays excluded.
