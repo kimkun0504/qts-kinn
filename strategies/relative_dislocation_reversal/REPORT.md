@@ -182,3 +182,56 @@ consistency across different dates would change the verdict.
 | 2014 | 14 | +5.57% | +5.23% | +$1,561 | +$1,465 |
 | 2015 | 19 | +5.78% | +5.51% | +$2,184 | +$2,085 |
 | 2016 | 9 | −3.88% | −4.25% | −$682 | −$747 |
+
+## Two-position cap
+
+**Decision: park.** The cap raised the mean net per trade to **+3.41% at 1× and
++3.03% at 2×** on 260 completed trades. At 2× the Sharpe fell to 0.89 and
+drawdown increased. The required Sharpe above 1 still failed, so this
+specification stopped in development.
+
+| Development metric | Ten slots | Two slots |
+|---|---:|---:|
+| Trades / active dates | 293 / 199 | 260 / 199 |
+| Gross mean per trade | +3.97% | +4.04% |
+| Net/trade at 1× | +3.33% | +3.41% |
+| Net/trade at 2× | +2.93% | +3.03% |
+| Total net at 1× / 2× | +$19,296 / +$17,041 | +$17,679 / +$15,739 |
+| Daily P&L t-statistic at 1× / 2× | 3.68 / 3.32 | 3.60 / 3.25 |
+| Annualised daily Sharpe at 1× / 2× | 1.01 / 0.91 | 0.99 / 0.89 |
+| Worst end-of-day drawdown at 1× / 2× | −$1,473 / −$1,550 | −$2,280 / −$2,435 |
+
+The 51 trades on 46 dates in 2013–2016 were identical in aggregate to the ten-slot
+version, averaging +4.16% at 1× and +3.85% at 2×. The sample, return and drawdown
+bars passed. At 1× mean winners and losers were +10.78% and −9.83%, with a 35.77%
+loss rate. At 2× those were +10.54%, −10.02%, and 36.54%. The headline averages
+include both wins and losses.
+
+Run `20261116T155133Z_gpt_relative_dislocation_reversal_c00d4db2` used hypothesis
+commit `aba37a9`, clean run commit `e1a1ee96`, build `447e58e098` and the fixed
+2003–2016 dates. All 199 run-time replay checks passed. The cap removed 33
+completed trades, 32 from 2008 and one from 2007, while the count of dates was
+unchanged. It reduced total net and increased drawdown. This added one
+`intraday_rebound` development trial. There was no validation or holdout run.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +23.61% | +23.46% | +$466 | +$463 |
+| 2004 | 6 | +5.52% | +5.31% | +$659 | +$635 |
+| 2005 | 4 | −0.01% | −0.26% | −$2 | −$22 |
+| 2006 | 10 | +6.03% | +5.79% | +$1,207 | +$1,159 |
+| 2007 | 23 | +3.40% | +2.97% | +$1,564 | +$1,366 |
+| 2008 | 117 | +3.22% | +2.78% | +$7,513 | +$6,490 |
+| 2009 | 22 | +1.65% | +1.32% | +$727 | +$584 |
+| 2010 | 4 | +5.43% | +5.27% | +$434 | +$421 |
+| 2011 | 14 | −0.90% | −1.17% | −$253 | −$329 |
+| 2012 | 8 | +6.97% | +6.48% | +$1,118 | +$1,040 |
+| 2013 | 9 | +6.59% | +6.30% | +$1,182 | +$1,130 |
+| 2014 | 14 | +5.57% | +5.23% | +$1,561 | +$1,465 |
+| 2015 | 19 | +5.78% | +5.51% | +$2,184 | +$2,085 |
+| 2016 | 9 | −3.88% | −4.25% | −$682 | −$747 |
+
+The retry found a higher mean within the same historical sample. A candidate
+that earns across more independent dates is needed to improve confidence in
+the daily return series. The later 2022–2023 pre-seal gate has yet to be tested
+for this signal.
