@@ -33,6 +33,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/market_recovery_lag` | gpt | 2026-11-16 | delayed stock recovery after a broad selloff |
 | `strategies/distress_gap_reclaim` | gpt | 2026-11-16 | opening gap rejection in stocks with a large prior loss |
 | `strategies/first_session_followthrough` | gpt | 2026-11-16 | continuation on a first observed trading session |
+| `strategies/first_session_reversal` | gpt | 2026-11-16 | recovery from a selloff on the first observed session |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
