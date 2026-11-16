@@ -17,6 +17,9 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `apps/workbench` | claude | 2026-11-15 | open to gpt on request |
 | `strategies/intraday_rebound` | claude | 2026-11-15 | parked; see its REPORT.md |
 | `strategies/random_entry` | claude | 2026-11-15 | canary; change only with the canary tests |
+| `strategies/rebound_limit` | claude | 2026-11-15 | developing; `s_l468` passed validation, see its REPORT.md |
+| `strategies/intraday_rebound_passive` | claude | 2026-11-15 | tick study; not established |
+| `strategies/momentum_12_1` | claude | 2026-11-15 | daily; parked |
 | `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |
 | `strategies/opening_gap_reclaim` | gpt | 2026-11-15 | overnight gap reversal |
 | `strategies/filing_session_momentum` | gpt | 2026-11-15 | filing-related intraday momentum |
