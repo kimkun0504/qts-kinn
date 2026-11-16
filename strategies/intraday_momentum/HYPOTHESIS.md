@@ -209,3 +209,10 @@ known at 09:35.
 twice the unchosen group before slippage, in both halves of development (2003 to 2009 and
 2010 to 2016). Anything less is reported as no use. Results are given for the VWAP exit and
 the fixed stop, with the break-even in cents a share. About 20 more measurements.
+
+**Added 2026-11-16 02:20 ET, before reading any tick:** the fill measurement is also read for
+the trades with a gap of 3% or more in the breakout's direction, the best selector found since
+the sample was drawn. Costs are reported in cents a share as well as basis points, against the
+break-evens already measured: 2.3 cents for all trades with the VWAP exit, 3.5 cents for the
+gap-selected trades, 1.8 cents with the fixed stop. The main entry figure is the quote one
+second after the trigger, since an order cannot arrive at the same instant.
