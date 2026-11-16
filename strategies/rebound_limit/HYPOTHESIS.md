@@ -619,3 +619,38 @@ the real cost model and capital limits. Then one validation run (2017-01-03 to 2
 with bars set now: the owner's three measured targets at 2× slippage, a positive net result in
 at least 5 of the 7 years, and 2022 and 2023 together not negative. The clean test after that
 is paper trading on new days, because there is no holdout left for this family.
+
+## Addendum, 2026-11-16 00:10 ET: the real cost of buying a fast fall at once
+
+The owner approved measuring the one open number from the reversal study: what it costs to buy
+in the first seconds after a fast fall (5% or more in 15 minutes ending in the event bar).
+The study assumed 1.0% for the round trip and bought at the next bar's first print.
+
+**Data.** Quotes and trades already on disk for three samples of events (the event-study
+sample, and the order windows of the two fill checks). Development events only. No download,
+no run, no validation or holdout data.
+
+**The samples are not random.** Most fill-check windows are orders that filled 4% lower, so
+they over-represent falls that continued. Each sampled event is therefore put in one of two
+groups from its own bars: the low reached 4% below the event bar's close within 10 minutes, or
+it did not. Results are averaged with each group's share among all fast falls in development.
+The event-study sample was drawn at random and is shown beside it as a check.
+
+**Measured, per event, with T = the close of the event bar:**
+
+- the best bid and ask 1, 5 and 30 seconds after T, and the half-spread;
+- the ask against the price the study bought at (the next bar's first print);
+- the volume-weighted price of real trades in the 30 seconds after T + 5 s;
+- the return from the ask at T + 5 s to the official close.
+
+**Net return** = return from the ask to the close, minus 0.45% for commissions, fees and the
+closing auction (what the engine charged apart from entry slippage, at 2×).
+
+**Reading the result, set now:**
+
+- Net at T + 5 s of at least +1.0% a trade, and still at least +0.5% at T + 30 s: worth a
+  written hypothesis, a development backtest in the engine and one validation run.
+- Net at T + 5 s under +0.5%: the rebound is paid away in the spread. The family is parked.
+- In between: reported as marginal; the owner decides.
+
+A sample of a few hundred events measures a cost, not a strategy. It cannot pass anything.
