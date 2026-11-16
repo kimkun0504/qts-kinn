@@ -1,5 +1,5 @@
 name: filing_session_momentum
-status: hypothesis
+status: parked
 engine: intraday
 universe: filing_session_momentum
 cost_calibration: ibkr_pro_tiered
