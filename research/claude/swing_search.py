@@ -4,7 +4,7 @@ net of costs at twice the modelled spread, for holds of 5, 10 and 15 sessions. T
 2023 is a separate, explicit call.
 
     uv run python research/claude/swing_search.py prep            # once: side tables
-    uv run python research/claude/swing_search.py family 1        # one family
+    uv run python research/claude/swing_search.py family 10a      # one family
     uv run python research/claude/swing_search.py cell "<sql condition>" [--by "<expr>"]
 """
 
@@ -37,8 +37,10 @@ def cut(column: str, edges: list[float], unit: float = 100.0) -> str:
     return "case " + " ".join(parts) + f" else '>={edges[-1] * unit:g}' end"
 
 
+SIGN200 = "case when ma200 > 0 then 'above 200d' else 'below 200d' end"
+Z5 = "ln(1 + ret5) / nullif(vol60 * sqrt(5), 0)"
 FAMILIES = {
-    1: (
+    "1": (
         "ret5 <= -0.05 and history >= 60",
         {
             "fall5": cut("ret5", [-0.30, -0.20, -0.10]),
@@ -46,31 +48,31 @@ FAMILIES = {
             "cap": CAP,
         },
     ),
-    2: (
-        "react2 is not null",
+    "2": (
+        "earn",
         {
-            "react": cut("react2", [-0.15, -0.05, 0.0, 0.05, 0.15]),
+            "react": cut("ret2", [-0.15, -0.05, 0.0, 0.05, 0.15]),
             "volume": cut("dvr2", [2, 5], 1),
             "cap": CAP,
         },
     ),
-    3: (
+    "3": (
         "high250 > 0 and history >= 200",
         {"volume": cut("dvr", [1, 2, 5], 1), "run20": cut("ret20", [0.10, 0.30]), "cap": CAP},
     ),
-    4: (
+    "4": (
         "ret120 >= 0.30 and ret5 <= -0.05 and history >= 120",
         {"up120": cut("ret120", [0.50, 1.00]), "fall5": cut("ret5", [-0.20, -0.10]), "cap": CAP},
     ),
-    5: (
-        "dvr >= 5 and filings_today = 0 and filings_prev = 0 and react2 is null",
+    "5": (
+        "dvr >= 5 and filings_today = 0 and filings_prev = 0 and not earn",
         {
             "day": cut("ret1", [-0.10, -0.03, 0.03, 0.10]),
             "closed": cut("loc", [0.3, 0.7], 1),
             "cap": CAP,
         },
     ),
-    6: (
+    "6": (
         "low250 <= 0.05 and history >= 200",
         {
             "newlow": "case when low250 < 0 then 'new low' else 'within 5%' end",
@@ -79,50 +81,191 @@ FAMILIES = {
             "cap": CAP,
         },
     ),
-    7: (
-        "short_share is not null and yr >= 2018",
+    "7": (
+        "short_share is not null and short_age <= 45",
         {
             "short": cut("short_share", [0.02, 0.05, 0.10, 0.20]),
             "cover": cut("days_to_cover", [2, 5, 10], 1),
             "move5": cut("ret5", [-0.10, 0.10]),
         },
     ),
-    8: (
-        "rev_yoy is not null",
+    "8": (
+        "fnew and rev_yoy is not null",
         {
             "revenue": cut("rev_yoy", [-0.10, 0.0, 0.10, 0.30]),
             "earnings": cut("ni_chg", [-0.02, -0.002, 0.002, 0.02]),
-            "react": cut("freact", [-0.05, 0.05]),
+            "react": cut("ret2", [-0.05, 0.05]),
+            "cap": CAP,
+        },
+    ),
+    "10a": (
+        "ret5 <= -0.10 and history >= 60",
+        {
+            "market5": cut("m5", [-0.07, -0.04, -0.02, 0.0]),
+            "fall5": cut("ret5", [-0.30, -0.20]),
+            "cap": CAP,
+        },
+    ),
+    "10b": (
+        "ret5 <= -0.10 and history >= 60",
+        {
+            "marketvol": cut("mvol", [0.025, 0.035, 0.05]),
+            "market20": cut("m20", [-0.10, -0.03, 0.03]),
+            "cap": CAP,
+        },
+    ),
+    "10c": (
+        f"{Z5} <= -2 and history >= 60",
+        {"market5": cut("m5", [-0.07, -0.04, -0.02, 0.0]), "z5": cut(Z5, [-4, -3], 1), "cap": CAP},
+    ),
+    "11a": (
+        "rsi2 < 0.25 and history >= 200",
+        {
+            "rsi2": cut("rsi2", [0.05], 1),
+            "trend": SIGN200,
+            "fall5": cut("ret5", [-0.15, -0.07, -0.03]),
+            "cap": CAP,
+        },
+    ),
+    "11b": (
+        f"{Z5} <= -2 and history >= 200",
+        {"z5": cut(Z5, [-4, -3], 1), "trend": SIGN200, "cap": CAP},
+    ),
+    "11c": (
+        "history >= 60",
+        {
+            "night": cut("night20", [-0.15, -0.05, 0.05, 0.15]),
+            "daytime": cut("day20", [-0.15, -0.05, 0.05, 0.15]),
+            "cap": CAP,
+        },
+    ),
+    "11d": (
+        "history >= 200",
+        {
+            "ma20": cut("ma20", [-0.15, -0.07, -0.03, 0.03, 0.07, 0.15]),
+            "trend": SIGN200,
+            "cap": CAP,
+        },
+    ),
+    "11e": (
+        "history >= 60",
+        {
+            "max20": cut("max20", [0.05, 0.10, 0.20]),
+            "run20": cut("ret20", [-0.20, 0.0, 0.20]),
+            "cap": CAP,
+        },
+    ),
+    "11f": (
+        "high20 > 0 and history >= 60",
+        {
+            "volume": cut("dvr", [1, 2, 5], 1),
+            "trend": SIGN200,
+            "range": cut("range14", [0.03, 0.06]),
+            "cap": CAP,
+        },
+    ),
+    "12a": ("true", {"left": "least(tdleft, 12)", "cap": CAP}),
+    "12b": ("true", {"month": "month(day)", "cap": CAP}),
+    "12c": (
+        "month(day) = 12 and day(day) >= 10",
+        {
+            "year250": cut("ret250", [-0.50, -0.30, -0.10, 0.10]),
+            "half": "case when day(day) >= 20 then 'late' else 'mid' end",
+            "cap": CAP,
+        },
+    ),
+    "12d": ("true", {"weekday": "dayofweek(day)", "cap": CAP}),
+    "12e": (
+        "season is not null",
+        {"season": cut("season", [-0.15, -0.05, 0.05, 0.15]), "cap": CAP},
+    ),
+    "12f": (
+        "epred between 1 and 15",
+        {"due": cut("epred", [4, 8], 1), "run20": cut("ret20", [-0.10, 0.0, 0.10]), "cap": CAP},
+    ),
+    "13a": (
+        "fage <= 200 and ret5 <= -0.10",
+        {
+            "profit": "ni_pos",
+            "value": cut("earn_price", [0.0, 0.05, 0.10]),
+            "fall5": cut("ret5", [-0.20]),
+            "cap": CAP,
+        },
+    ),
+    "13b": (
+        "fage <= 200",
+        {
+            "issue": cut("issue", [-0.03, 0.01, 0.10, 0.30]),
+            "value": cut("earn_price", [0.0, 0.05, 0.10]),
+            "cap": CAP,
+        },
+    ),
+    "13c": (
+        "fage <= 200",
+        {
+            "netcash": cut("netcash_price", [-0.50, 0.0, 0.30, 0.70]),
+            "book": cut("book_price", [0.3, 0.7, 1.5], 1),
+            "cap": CAP,
+        },
+    ),
+    "13d": (
+        "fage <= 200",
+        {
+            "fcf": cut("fcf_price", [-0.05, 0.0, 0.05, 0.10]),
+            "growth": cut("growth", [0.0, 0.20]),
+            "accruals": cut("accruals", [-0.05, 0.05]),
+            "cap": CAP,
+        },
+    ),
+    "13e": (
+        "fage <= 200 and high250 > 0",
+        {
+            "profit": "ni_pos",
+            "revenue": cut("rev_yoy", [0.0, 0.20]),
+            "value": cut("earn_price", [0.0, 0.05]),
+            "cap": CAP,
+        },
+    ),
+    "14": (
+        "codes is not null",
+        {"item": "unnest(codes)", "react": cut("ret2", [-0.05, 0.05]), "cap": CAP},
+    ),
+    "15a": (
+        "ind_n >= 5",
+        {
+            "industry20": cut("ind20", [-0.10, -0.03, 0.03, 0.10]),
+            "against5": cut("ret5 - ind5", [-0.15, -0.07, 0.07, 0.15]),
+            "cap": CAP,
+        },
+    ),
+    "15b": (
+        "ind_n >= 5",
+        {
+            "industry60": cut("ind60", [-0.15, 0.0, 0.15, 0.30]),
+            "industry5": cut("ind5", [-0.05, 0.0, 0.05]),
             "cap": CAP,
         },
     ),
 }
 
 
-def connect(settings, short: bool = False) -> duckdb.DuckDBPyConnection:
+def connect(settings, codes: bool = False) -> duckdb.DuckDBPyConnection:
     base = settings.data_dir / "research" / "swing"
     con = duckdb.connect()
     con.execute(
         f"set threads=3; set memory_limit='2400MB'; set temp_directory='{tempfile.mkdtemp()}'"
     )
     con.execute("set preserve_insertion_order=false")
-    joins = f"""from read_parquet('{base}/daily_*.parquet') d
+    extra = ", k.codes" if codes else ""
+    joins = f"""from read_parquet('{base}/wide_*.parquet') d
         left join '{base}/market.parquet' m using (day)
-        left join '{base}/earn.parquet' e using (permaticker, day)
-        left join '{base}/fund.parquet' f using (permaticker, day)"""
-    if short:
-        joins += f""" asof left join '{settings.data_dir}/research/recent/short_interest.parquet' s
-            on s.symbol = d.symbol and s.known <= d.day"""
-        con.execute(
-            f"""create view t as select d.*, m.* exclude (day), e.* exclude (permaticker, day),
-                f.* exclude (permaticker, day), s.days_to_cover,
-                s.short_interest * d.close / nullif(d.mcap, 0) as short_share {joins}"""
-        )
-    else:
-        con.execute(
-            f"""create view t as select d.*, m.* exclude (day), e.* exclude (permaticker, day),
-                f.* exclude (permaticker, day) {joins}"""
-        )
+        left join '{base}/industry.parquet' i using (day, industry)"""
+    if codes:
+        joins += f" left join '{base}/codes.parquet' k using (permaticker, day)"
+    con.execute(
+        f"""create view t as select d.*, m.* exclude (day), i.* exclude (day, industry){extra}
+            {joins}"""
+    )
     return con
 
 
@@ -180,7 +323,7 @@ def prep() -> None:
             from q join a on a.ticker = q.ticker and a.datekey >= q.prev_date and a.datekey < q.day
             group by 1, 2) to '{base}/fund.parquet' (format parquet)"""
     )
-    daily = f"read_parquet('{base}/daily_*.parquet')"
+    daily = f"read_parquet('{base}/wide_*.parquet')"
     con.execute(
         f"""copy (
             select day,
@@ -191,11 +334,24 @@ def prep() -> None:
                    avg(ret60) filter (mcap >= 2e9) as m60,
                    avg(ret250) filter (mcap >= 2e9) as m250,
                    avg((ret60 > 0)::int) as breadth, avg(vol20) as mvol,
-                   avg((high250 > 0)::int) as highs, avg((low250 < 0)::int) as lows
+                   avg((high250 > 0)::int) as highs, avg((low250 < 0)::int) as lows,
+                   count(*) as stocks,
+                   row_number() over (partition by date_trunc('month', day)
+                                      order by day desc) - 1 as tdleft,
+                   row_number() over (partition by date_trunc('month', day) order by day) as tdom
             from {daily} where next_open is not null group by 1 order by 1
         ) to '{base}/market.parquet' (format parquet)"""
     )
-    for name in ("earn", "fund", "market"):
+    con.execute(
+        f"""copy (
+            select q.permaticker, q.day,
+                   list_distinct(flatten(list(string_split(e.eventcodes, '|')))) as codes
+            from {panel} q join '{store.root}/sharadar/events.parquet' e
+              on e.ticker = q.ticker and e.date >= q.prev_date and e.date < q.day
+            where q.day >= DATE '2010-01-04'
+            group by 1, 2) to '{base}/codes.parquet' (format parquet)"""
+    )
+    for name in ("earn", "fund", "market", "codes"):
         print(name, con.sql(f"select count(*) from '{base}/{name}.parquet'").fetchall())
 
 
@@ -229,6 +385,9 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
                    sum(s2) filter (yr >= 2018) / nullif(sum(n) filter (yr >= 2018), 0) as net2,
                    sum(s2) filter (yr <= 2017) / nullif(sum(n) filter (yr <= 2017), 0) as old2,
                    {years}
+                   avg(sx / n) filter (yr >= 2018) as xm,
+                   stddev_samp(sx / n) filter (yr >= 2018) as xsd,
+                   avg(sx / n) as xma, stddev_samp(sx / n) as xsda, count(*) as weeksa,
                    avg(s2 / n) filter (yr >= 2018) as wm,
                    stddev_samp(s2 / n) filter (yr >= 2018) as wsd,
                    count(*) filter (yr >= 2018) as weeks,
@@ -247,19 +406,37 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
                 if row["wsd"] and row["weeks"] and row["weeks"] > 2
                 else 0.0
             )
+            row["xt"] = (
+                row["xm"] / (row["xsd"] / row["weeks"] ** 0.5)
+                if row["xsd"] and row["weeks"] and row["weeks"] > 2
+                else 0.0
+            )
+            row["xta"] = (
+                row["xma"] / (row["xsda"] / row["weeksa"] ** 0.5)
+                if row["xsda"] and row["weeksa"] > 2
+                else 0.0
+            )
             rows.append(row)
     return rows
 
 
-def passes(r: dict) -> bool:
+def steady(r: dict) -> bool:
     return (
         r["n_new"] >= 300
         and r["n_old"] >= 300
         and (r["net2"] or 0) >= 0.01
-        and r["t"] >= 4
         and all((r[f"y{y}"] or -1) > 0 for y in range(2018, 2023))
         and (r["old2"] or -1) > 0
     )
+
+
+def passes(r: dict) -> bool:
+    return steady(r) and r["t"] >= 4
+
+
+def beats(r: dict) -> bool:
+    """The second, looser test of the addendum: steady, and an excess t of at least 4."""
+    return steady(r) and r["xt"] >= 4
 
 
 def show(rows: list[dict], minimum: int = 300, top: int = 40, key: str = "net2") -> None:
@@ -267,11 +444,12 @@ def show(rows: list[dict], minimum: int = 300, top: int = 40, key: str = "net2")
     kept.sort(key=lambda r: -(r[key] or -9))
     print(
         f"{len(rows)} cells measured; {len(kept)} with {minimum}+ trades in 2018-2022; "
-        f"{sum(passes(r) for r in rows)} pass every rule"
+        f"{sum(passes(r) for r in rows)} pass every rule; "
+        f"{sum(beats(r) and not passes(r) for r in rows)} more beat the market (looser test)"
     )
     print(
         "  h   n10-17  n18-22  gross  net1x  net2x  10-17 |   18    19    20    21    22 |"
-        "     t  excess  gone   low  wins  cell"
+        "     t    xt xt-all  excess  gone   low  wins  cell"
     )
 
     def pct(v):
@@ -279,12 +457,13 @@ def show(rows: list[dict], minimum: int = 300, top: int = 40, key: str = "net2")
 
     for r in kept[:top]:
         mark = "**" if passes(r) and r["net2"] >= 0.03 else "* " if passes(r) else "  "
+        mark = "+ " if mark == "  " and beats(r) else mark
         print(
             f"{mark}{r['h']:2d} {r['n_old']:8d} {r['n_new']:7d}  {pct(r['gross'])}  "
             f"{pct(r['net1'])}  {pct(r['net2'])}  {pct(r['old2'])} | "
             + " ".join(pct(r[f"y{y}"]) for y in range(2018, 2023))
-            + f" | {r['t']:5.1f}   {pct(r['excess'])} {pct(r['gone'])} {pct(r['low'])} "
-            f"{pct(r['wins'])}  {r['cell']}"
+            + f" | {r['t']:5.1f} {r['xt']:5.1f}  {r['xta']:5.1f}   {pct(r['excess'])} "
+            f"{pct(r['gone'])} {pct(r['low'])} {pct(r['wins'])}  {r['cell']}"
         )
 
 
@@ -303,12 +482,12 @@ def main() -> None:
         return
     settings = load_settings()
     if a.what == "family":
-        where, keys = FAMILIES[int(a.arg)]
-        con = connect(settings, short=int(a.arg) == 7)
+        where, keys = FAMILIES[a.arg]
+        con = connect(settings, codes=a.arg == "14")
     else:
         where = a.arg
         keys = {f"k{i}": expr for i, expr in enumerate(a.by)} or {"k0": "'all'"}
-        con = connect(settings, short="short_share" in where + " ".join(a.by))
+        con = connect(settings, codes="codes" in where + " ".join(a.by))
     rows = measure(con, where, keys, CHECK if a.check else SEARCH)
     show(rows, a.min, a.top, a.sort)
 

@@ -1,6 +1,6 @@
 # Hypothesis: a search for a profitable swing rule (holds of 1 to 3 weeks)
 
-Written 2026-11-16 13:05 ET, before any measurement. The owner's instruction of the same day:
+Written 2026-11-16 12:55 ET, before any measurement. The owner's instruction of the same day:
 holding for more than a day is allowed, as swing trades of 1 to 3 weeks; a smaller edge than 3%
 a trade is acceptable but it must be profitable; do not stop at the first few ideas. The
 intraday searches are in `strategies/recent_search` and `strategies/intraday_momentum`.
@@ -66,7 +66,7 @@ for the book that results. Nothing is called found on the search years alone.
 Many cells; delisting in losers; signals crowd into bad weeks, when the account cannot take
 them all; 2020 flatters anything that buys falls.
 
-## Addendum, 2026-11-16 13:40 ET: wider features, more families, a second test
+## Addendum, 2026-11-16 13:10 ET: wider features, more families, a second test
 
 Written after families 1 to 6 and 8 were measured (2,289 cells, none passing; the large
 returns sit in falls during market sell-offs, 2020 and 2022, and are not steady across weeks)
@@ -112,3 +112,28 @@ orders, which fill at the auction price without crossing a spread. Selection sta
 costs above (spread crossed, doubled); the gross column shows what auction fills would leave
 before commission. Whether the auction price is the bar's open is to be checked on minute
 bars before any claim rests on it.
+
+## Addendum, 2026-11-16 13:21 ET: the combined model (family 16), fixed before it is fitted
+
+Written after families 7 and 10 to 15 were measured on the wide table (about 7,900 further
+cells; none passes either test: single conditions beat other stocks by 0.5% to 1% over 15
+sessions at most, less than the cost of trading the small stocks where they are found; falls
+bought in a market sell-off rebound 10% or more but in a handful of weeks).
+
+- **Stocks:** close of $3 or more and 20-day dollar volume of $5M or more, for fitting.
+  Trading is judged on two sets: dollar volume of $10M or more, and of $100M or more.
+- **Target:** the 10-session trade return (next open to the close 10 sessions after the
+  signal day) less the mean of all stocks for the same days, cut off at ±30%.
+- **Features:** every numeric column of the wide table and the market and industry tables
+  (about 80), the sector as a category. No feature uses anything after the signal day's close.
+- **Model:** gradient-boosted trees (LightGBM, a research-only tool run with
+  `uv run --with lightgbm`): 300 trees, learning rate 0.03, 31 leaves, at least 2,000 rows a
+  leaf, 70% of features a tree, half the rows a tree, L2 of 10. Fixed; not tuned.
+- **Walk-forward:** the model for year Y is fitted on signals from 2010-01-04 to 10 December
+  of Y−1 (every third session, since neighbouring days repeat each other), for Y = 2014 to
+  2022. Each year's trades come from a model that never saw that year.
+- **Rule:** each day the stocks are ranked by the model's score; cells are the top 1, top 3,
+  top 10 and top 1% of the day, for holds of 5, 10 and 15 sessions. The same two tests apply,
+  with 2014 to 2017 standing for the earlier block.
+- **Variants allowed, each counted:** a 5-session and a 15-session target; a model without
+  the market columns. No others without a further dated note.
