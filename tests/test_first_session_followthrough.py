@@ -86,3 +86,27 @@ def test_validation_differs_only_in_dates():
     assert development.pop("period") == {"start": date(2003, 9, 10), "end": date(2016, 12, 30)}
     assert validation.pop("period") == {"start": date(2017, 1, 3), "end": date(2023, 11, 8)}
     assert development == validation
+
+
+def test_turnover_timing_uses_only_trading_through_each_candidate_bar():
+    _, config = runner.load_config(NAME, "development_turnover_timing")
+    strategy = runner.load_strategy(NAME, config["params"])
+    rows = [(650, 10.0, 40_000)]
+    rows += [(m, 10.6, 40_000) for m in range(651, 660)]
+    view = session(rows + LATER)
+    expected = [Signal("ABC", 654, expire_minute=655)]
+    found = day_signals(strategy, view)
+    assert found == expected
+    assert day_signals(strategy, view.upto(653)) == []
+    assert day_signals(strategy, view.upto(654)) == expected
+    check_no_lookahead(strategy, view, found, [650, 653, 654, 655, 679, 680, 950])
+    assert day_signals(strategy, session(rows[:4] + rows[7:8])) == []
+    assert day_signals(strategy, session(rows, close=713)) == []
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_turnover_timing_configs_keep_all_other_parameters(phase):
+    _, original = runner.load_config(NAME, phase)
+    _, timed = runner.load_config(NAME, f"{phase}_turnover_timing")
+    assert timed["params"].pop("turnover_timing") is True
+    assert timed == original
