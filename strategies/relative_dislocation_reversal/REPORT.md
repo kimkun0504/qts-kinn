@@ -47,3 +47,47 @@ exceeded the sum for the entire study. The trade-intensity selector and synchron
 reference were insufficient to give positive late-development returns. A credible
 improvement would have to demonstrate repeatable edge in later development and meet
 the separate recent validation requirement.
+
+## Absolute-liquidity cohort
+
+**Close-exit verdict: park.** The full study had 301 events on 199 dates and gained
++3.94% at 1× and +3.48% at 2× through the close. The 51 events on 46 dates in 2013–2016
+earned +2.15% and +1.82%. Their +2.72% gross mean missed the original +3% recent
+screen. The full-period and sample gates passed. This close-exit definition stopped
+at the study stage.
+
+Run `20261116T062029Z_gpt_relative_dislocation_reversal_56620f46` used clean commit
+`d426877e`, preregistration `2cec783`, build `447e58e098` and 2003-09-10 through
+2016-12-30. It added one charged `intraday_rebound` trial. All study entries were
+within expiry. All 199 replay checks passed. The estimated share above the
+entry-bar capacity cap fell from about 10% to 2%, compared with the original cohort.
+
+| Close outcome | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net return per event | +3.94% | +3.48% |
+| 95% session-clustered interval | +1.29% to +6.84% | +0.83% to +6.39% |
+| Summed event P&L | +$23,633 | +$20,854 |
+| Daily event P&L t-statistic | 2.60 | 2.33 |
+| Worst drawdown of summed events | −$2,645 | −$2,962 |
+
+Dollar results use the independent event sizing in the saved study and all 3,352
+sessions. This series ignores the account budget. The sample did not establish
+tradable capacity or portfolio risk. Study prices use the market-entry proxy and
+approximate exit costs from the entry bar. The 2× result remained dominated by 2008.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +35.08% | +34.98% | +$692 | +$690 |
+| 2004 | 6 | +6.93% | +6.70% | +$829 | +$802 |
+| 2005 | 4 | −6.39% | −6.66% | −$509 | −$530 |
+| 2006 | 10 | −1.33% | −1.61% | −$264 | −$320 |
+| 2007 | 24 | +5.12% | +4.62% | +$2,451 | +$2,210 |
+| 2008 | 157 | +6.18% | +5.62% | +$19,367 | +$17,606 |
+| 2009 | 22 | −0.16% | −0.51% | −$68 | −$221 |
+| 2010 | 4 | +1.64% | +1.45% | +$127 | +$111 |
+| 2011 | 14 | −4.43% | −4.74% | −$1,242 | −$1,328 |
+| 2012 | 8 | +0.36% | −0.12% | +$60 | −$17 |
+| 2013 | 9 | +2.08% | +1.75% | +$378 | +$318 |
+| 2014 | 14 | +3.20% | +2.86% | +$895 | +$800 |
+| 2015 | 19 | +4.79% | +4.49% | +$1,807 | +$1,695 |
+| 2016 | 9 | −4.96% | −5.37% | −$890 | −$963 |
