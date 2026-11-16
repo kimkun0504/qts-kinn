@@ -104,6 +104,26 @@ def _check_holdout_reach(settings, strategy: str, config: str) -> None:
         )
 
 
+def _swing(args: argparse.Namespace) -> int:
+    from kinn import swing_run
+    from kinn.data.seal import HoldoutError
+    from kinn.registry import runs as registry
+
+    settings = load_settings()
+    try:
+        if args.unseal:
+            _check_holdout_reach(settings, args.strategy, args.config)
+        run_dir = swing_run.run(
+            args.strategy, args.config, settings=settings, scratch=args.scratch,
+            unseal=args.unseal,
+        )  # fmt: skip
+    except (registry.DirtyTreeError, HoldoutError) as error:
+        raise SystemExit(f"refused: {error}") from error
+    print(f"run {run_dir.name}: complete")
+    print(swing_run.headline(run_dir))
+    return 0
+
+
 def _book(args: argparse.Namespace) -> int:
     import json
 
@@ -394,6 +414,18 @@ def main(argv: list[str] | None = None) -> int:
         help="OWNER ONLY: run on the unsealed holdout build (needs KINN_UNSEAL_TOKEN)",
     )
     run.set_defaults(func=_run)
+    swing = sub.add_parser(
+        "swing", help="run a daily event rule as a book: kinn swing <strategy> --config <name>"
+    )
+    swing.add_argument("strategy")
+    swing.add_argument("--config", required=True)
+    swing.add_argument("--scratch", action="store_true", help="allow uncommitted code; not counted")
+    swing.add_argument(
+        "--unseal",
+        action="store_true",
+        help="OWNER ONLY: run on the unsealed holdout build (needs KINN_UNSEAL_TOKEN)",
+    )
+    swing.set_defaults(func=_swing)
     book = sub.add_parser("book", help="run a multi-day book: kinn book <config in books/>")
     book.add_argument("config", nargs="?")
     book.add_argument("--scratch", action="store_true")

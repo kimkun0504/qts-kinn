@@ -94,7 +94,7 @@ type = "layers"
 layers = [
     "kinn.cli",
     "kinn.tick_study",
-    "kinn.run | kinn.book_run",
+    "kinn.run | kinn.book_run | kinn.swing_run",
     "kinn.reporting | kinn.registry | kinn.validation",
     "kinn.engine",
     "kinn.portfolio | kinn.execution",

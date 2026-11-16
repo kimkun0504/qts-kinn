@@ -21,6 +21,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/intraday_momentum` | claude | 2026-11-16 | development study and fill measurement done: marginal, owner to decide; see its REPORT.md |
 | `strategies/recent_search` | claude | 2026-11-16 | parked: 2,689 cells on 2018–2022 incl. timed news, no long candidate; see its REPORT.md |
 | `strategies/swing_search` | claude | 2026-11-16 | event-study: rule A50 (earnings drift, $50M–$300M) passed its tests on 2005–2009, 2018–2022 and 2023; auction fills not yet measured |
+| `strategies/earnings_drift` | claude | 2026-11-16 | event-study: rule A50 as a `kinn swing` run, for the owner's one holdout run |
 | `strategies/intraday_rebound_passive` | claude | 2026-11-15 | tick study; not established |
 | `strategies/momentum_12_1` | claude | 2026-11-15 | daily; parked |
 | `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |
