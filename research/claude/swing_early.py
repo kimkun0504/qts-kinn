@@ -18,6 +18,9 @@ from kinn.core.settings import load_settings
 RULES = {
     "A": "earn and ret2 >= 0.15 and dvr2 >= 5 and mcap < 3e8",
     "B": "m5 <= -0.07 and ret5 <= -0.20 and mcap >= 2e9",
+    # Family 18's cells (chosen on 2010-2017): rule A with a $50M floor, and the wider one.
+    "A50": "earn and ret2 >= 0.15 and dvr2 >= 5 and mcap >= 5e7 and mcap < 3e8",
+    "A2": "earn and ret2 >= 0.10 and dvr2 >= 5 and mcap >= 5e7 and mcap < 3e8",
 }
 PERIODS = {
     "early": ("early", "day between DATE '2005-01-03' and DATE '2009-12-08'"),

@@ -122,9 +122,10 @@ def report(found: dict, label: str, slots: int = SLOTS) -> None:
 
 if __name__ == "__main__":
     rule = sys.argv[1]
-    periods = [a for a in sys.argv[2:] if not a.isdigit()]
+    periods = [a for a in sys.argv[2:] if not a.isdigit() and a != "--by-volume"]
+    rank = "dvr2" if "--by-volume" in sys.argv else "ret2"
     found: dict = {}
     for period in periods:
-        found.update(paths(rule, period))
+        found.update(paths(rule, period, rank))
     for slots in [int(a) for a in sys.argv[2:] if a.isdigit()] or [SLOTS]:
         report(found, f"rule {rule}, {' + '.join(periods)}", slots)
