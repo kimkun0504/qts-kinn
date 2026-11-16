@@ -134,7 +134,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--day", help="the session to run to (default: the latest finished one)")
     parser.add_argument("--backfill", type=int, default=0,
-                        help="on the first run, start this many sessions back (20 at most)")  # fmt: skip
+                        help="on the first run, start this many sessions back")  # fmt: skip
     args = parser.parse_args()
     agent = os.environ.get("SEC_USER_AGENT", "").strip()
     if "@" not in agent:
