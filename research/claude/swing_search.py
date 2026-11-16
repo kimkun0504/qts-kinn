@@ -260,6 +260,8 @@ def connect(settings, codes: bool = False, scores: str = "") -> duckdb.DuckDBPyC
     joins = f"""from read_parquet('{base}/wide_*.parquet') d
         left join '{base}/market.parquet' m using (day)
         left join '{base}/industry.parquet' i using (day, industry)"""
+    extra += ", e0.permaticker is not null as earn0"
+    joins += f" left join '{base}/earn0.parquet' e0 using (permaticker, day)"
     if codes:
         joins += f" left join '{base}/codes.parquet' k using (permaticker, day)"
     if scores:
@@ -365,7 +367,16 @@ def prep() -> None:
             where q.day >= DATE '2010-01-04'
             group by 1, 2) to '{base}/codes.parquet' (format parquet)"""
     )
-    for name in ("earn", "fund", "market", "codes"):
+    con.execute(
+        f"""copy (
+            select distinct q.permaticker, q.day
+            from {panel} q join '{store.root}/sharadar/events.parquet' e
+              on e.ticker = q.ticker and e.date = q.day
+            where q.day >= DATE '2010-01-04'
+              and regexp_matches('|' || e.eventcodes || '|', '[|]22[|]')
+        ) to '{base}/earn0.parquet' (format parquet)"""
+    )
+    for name in ("earn", "fund", "market", "codes", "earn0"):
         print(name, con.sql(f"select count(*) from '{base}/{name}.parquet'").fetchall())
 
 
@@ -408,6 +419,9 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
                    avg(sx / n) filter (yr >= 2018) as xm,
                    stddev_samp(sx / n) filter (yr >= 2018) as xsd,
                    avg(sx / n) as xma, stddev_samp(sx / n) as xsda, count(*) as weeksa,
+                   avg(sa / n) filter (yr <= 2017) as om,
+                   stddev_samp(sa / n) filter (yr <= 2017) as osd,
+                   count(*) filter (yr <= 2017) as oweeks,
                    avg(sa / n) filter (yr >= 2018) as am,
                    stddev_samp(sa / n) filter (yr >= 2018) as asd,
                    avg(s2 / n) filter (yr >= 2018) as wm,
@@ -436,6 +450,11 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
             row["at"] = (
                 row["am"] / (row["asd"] / row["weeks"] ** 0.5)
                 if row["asd"] and row["weeks"] and row["weeks"] > 2
+                else 0.0
+            )
+            row["ato"] = (
+                row["om"] / (row["osd"] / row["oweeks"] ** 0.5)
+                if row["osd"] and row["oweeks"] and row["oweeks"] > 2
                 else 0.0
             )
             row["xta"] = (
@@ -493,7 +512,7 @@ def show(
     block = "aold" if basis == "auction" else "old2"
     print(
         f"  h   n10-17  n18-22  gross  net1x  net2x  auct  10-17 |   18    19    20    21    22 |"
-        f"     t    at    xt xt-all  excess  gone   low  wins  cell   (years on the {basis} basis)"
+        f"     t    at at-old    xt xt-all  excess  gone   low  wins  cell   ({basis} basis)"
     )
 
     def pct(v):
@@ -507,7 +526,7 @@ def show(
             f"{mark}{r['h']:2d} {r['n_old']:8d} {r['n_new']:7d}  {pct(r['gross'])}  "
             f"{pct(r['net1'])}  {pct(r['net2'])} {pct(r['auct'])}  {pct(r[block])} | "
             + " ".join(pct(r[f"{years}{y}"]) for y in range(2018, 2023))
-            + f" | {r['t']:5.1f} {r['at']:5.1f} {r['xt']:5.1f}  {r['xta']:5.1f}   "
+            + f" | {r['t']:5.1f} {r['at']:5.1f}  {r['ato']:5.1f} {r['xt']:5.1f}  {r['xta']:5.1f}   "
             f"{pct(r['excess'])} {pct(r['gone'])} {pct(r['low'])} {pct(r['wins'])}  {r['cell']}"
         )
 

@@ -176,10 +176,13 @@ that jumps 15% or more on earnings with five times its normal volume keeps risin
 
 Family 17 refines that one effect, and splits the periods so the refinement is tested:
 
-- **Chosen on 2010 to 2017 only.** Grid: the day the signal is read (the earnings day itself
-  when the 8-K is dated that day, or the session after); the size of the jump (5%, 10%, 15%,
-  25%); volume against normal (2×, 5×); where the stock closed in its day's range; company
-  size (under $300M, $300M to $2B); price ($1, $3, $5 and up); hold (5, 10, 15 sessions).
+- **Chosen on 2010 to 2017 only.** A grid of thresholds, 1,944 cells: the day the signal is
+  read (the earnings day itself when the 8-K is dated that day, with that day's return and
+  volume; or the session after, with the two-day return and the larger of the two days'
+  volume); a jump of at least 5%, 10%, 15% or 25%; volume of any size, at least 2× or at least
+  5× normal; a close anywhere, in the top half or in the top fifth of the day's range; company
+  size under $300M, $300M to $2B, or both; a price of at least $1, $3 or $5; a hold of 5, 10
+  or 15 sessions. `research/claude/swing_earnings.py choose` reads nothing after 2017.
   The cell taken forward is the one with the highest weekly t-statistic on the auction basis
   among cells with 300 or more trades and a mean of 2% or more in 2010 to 2017.
 - **Tested on 2018 to 2022,** which the choice above did not use (the base effect was seen
