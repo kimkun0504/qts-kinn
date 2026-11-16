@@ -249,7 +249,7 @@ FAMILIES = {
 }
 
 
-def connect(settings, codes: bool = False) -> duckdb.DuckDBPyConnection:
+def connect(settings, codes: bool = False, scores: str = "") -> duckdb.DuckDBPyConnection:
     base = settings.data_dir / "research" / "swing"
     con = duckdb.connect()
     con.execute(
@@ -262,6 +262,20 @@ def connect(settings, codes: bool = False) -> duckdb.DuckDBPyConnection:
         left join '{base}/industry.parquet' i using (day, industry)"""
     if codes:
         joins += f" left join '{base}/codes.parquet' k using (permaticker, day)"
+    if scores:
+        # The model's score and each day's rank among stocks of $10M and of $100M a day.
+        extra += """, z.score,
+            case when d.adv >= 1e7 then row_number() over (
+                partition by d.day, d.adv >= 1e7 order by z.score desc) end as rank10,
+            case when d.adv >= 1e8 then row_number() over (
+                partition by d.day, d.adv >= 1e8 order by z.score desc) end as rank100,
+            count(*) over (partition by d.day, d.adv >= 1e7) as of10,
+            count(*) over (partition by d.day, d.adv >= 1e8) as of100,
+            row_number() over (partition by d.day order by z.score desc) as rank,
+            count(*) over (partition by d.day) as of"""
+        joins += (
+            f" join read_parquet('{base}/scores/{scores}_*.parquet') z using (permaticker, day)"
+        )
     con.execute(
         f"""create view t as select d.*, m.* exclude (day), i.* exclude (day, industry){extra}
             {joins}"""
@@ -361,6 +375,7 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
     group = "".join(f"{n}, " for n in names)
     years = "".join(
         f"sum(s2) filter (yr = {y}) / nullif(sum(n) filter (yr = {y}), 0) as y{y}, "
+        f"sum(sa) filter (yr = {y}) / nullif(sum(n) filter (yr = {y}), 0) as a{y}, "
         for y in range(2018, 2024)
     )
     rows = []
@@ -370,11 +385,14 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
                               exp(first_day + c_exit{h} - c_next) - 1 as g,
                               exp(first_day + c_low{h} - c_next) - 1 as low,
                               2 * (half_spread + commission) as c1,
+                              2 * (commission + case when adv < 1e6 then 0.0025
+                                   when adv < 1e7 then 0.0010 when adv < 1e8 then 0.0005
+                                   else 0.0002 end) as ca,
                               2 * (2 * half_spread + commission) as c2,
                               (ahead < {h})::int as gone, mk{h} as mk
                        from t where {period} and next_open is not null and ({where})),
             w as (select {group} yr, wk, count(*) as n, sum(g) as sg, sum(g - c1) as s1,
-                         sum(g - c2) as s2, sum(gone) as gone, sum(g - mk) as sx,
+                         sum(g - c2) as s2, sum(g - ca) as sa, sum(gone) as gone, sum(g - mk) as sx,
                          sum(low) as slow, sum((g - c2 > 0)::int) as wins
                   from b group by all)
             select {group}
@@ -384,10 +402,14 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
                    sum(s1) filter (yr >= 2018) / nullif(sum(n) filter (yr >= 2018), 0) as net1,
                    sum(s2) filter (yr >= 2018) / nullif(sum(n) filter (yr >= 2018), 0) as net2,
                    sum(s2) filter (yr <= 2017) / nullif(sum(n) filter (yr <= 2017), 0) as old2,
+                   sum(sa) filter (yr >= 2018) / nullif(sum(n) filter (yr >= 2018), 0) as auct,
+                   sum(sa) filter (yr <= 2017) / nullif(sum(n) filter (yr <= 2017), 0) as aold,
                    {years}
                    avg(sx / n) filter (yr >= 2018) as xm,
                    stddev_samp(sx / n) filter (yr >= 2018) as xsd,
                    avg(sx / n) as xma, stddev_samp(sx / n) as xsda, count(*) as weeksa,
+                   avg(sa / n) filter (yr >= 2018) as am,
+                   stddev_samp(sa / n) filter (yr >= 2018) as asd,
                    avg(s2 / n) filter (yr >= 2018) as wm,
                    stddev_samp(s2 / n) filter (yr >= 2018) as wsd,
                    count(*) filter (yr >= 2018) as weeks,
@@ -409,6 +431,11 @@ def measure(con, where: str, keys: dict[str, str], period: str = SEARCH) -> list
             row["xt"] = (
                 row["xm"] / (row["xsd"] / row["weeks"] ** 0.5)
                 if row["xsd"] and row["weeks"] and row["weeks"] > 2
+                else 0.0
+            )
+            row["at"] = (
+                row["am"] / (row["asd"] / row["weeks"] ** 0.5)
+                if row["asd"] and row["weeks"] and row["weeks"] > 2
                 else 0.0
             )
             row["xta"] = (
@@ -439,17 +466,34 @@ def beats(r: dict) -> bool:
     return steady(r) and r["xt"] >= 4
 
 
-def show(rows: list[dict], minimum: int = 300, top: int = 40, key: str = "net2") -> None:
+def auction(r: dict) -> bool:
+    """Meets the first test only on the auction cost basis (addendum 3): auction-dependent."""
+    return (
+        r["n_new"] >= 300
+        and r["n_old"] >= 300
+        and (r["auct"] or 0) >= 0.01
+        and all((r[f"a{y}"] or -1) > 0 for y in range(2018, 2023))
+        and (r["aold"] or -1) > 0
+        and (r["at"] >= 4 or r["xt"] >= 4)
+    )
+
+
+def show(
+    rows: list[dict], minimum: int = 300, top: int = 40, key: str = "net2", basis: str = "2x"
+) -> None:
     kept = [r for r in rows if r["n_new"] >= minimum]
     kept.sort(key=lambda r: -(r[key] or -9))
     print(
         f"{len(rows)} cells measured; {len(kept)} with {minimum}+ trades in 2018-2022; "
         f"{sum(passes(r) for r in rows)} pass every rule; "
-        f"{sum(beats(r) and not passes(r) for r in rows)} more beat the market (looser test)"
+        f"{sum(beats(r) and not passes(r) for r in rows)} more beat the market (looser test); "
+        f"{sum(auction(r) and not passes(r) and not beats(r) for r in rows)} auction-dependent"
     )
+    years = "a" if basis == "auction" else "y"
+    block = "aold" if basis == "auction" else "old2"
     print(
-        "  h   n10-17  n18-22  gross  net1x  net2x  10-17 |   18    19    20    21    22 |"
-        "     t    xt xt-all  excess  gone   low  wins  cell"
+        f"  h   n10-17  n18-22  gross  net1x  net2x  auct  10-17 |   18    19    20    21    22 |"
+        f"     t    at    xt xt-all  excess  gone   low  wins  cell   (years on the {basis} basis)"
     )
 
     def pct(v):
@@ -458,12 +502,13 @@ def show(rows: list[dict], minimum: int = 300, top: int = 40, key: str = "net2")
     for r in kept[:top]:
         mark = "**" if passes(r) and r["net2"] >= 0.03 else "* " if passes(r) else "  "
         mark = "+ " if mark == "  " and beats(r) else mark
+        mark = "a " if mark == "  " and auction(r) else mark
         print(
             f"{mark}{r['h']:2d} {r['n_old']:8d} {r['n_new']:7d}  {pct(r['gross'])}  "
-            f"{pct(r['net1'])}  {pct(r['net2'])}  {pct(r['old2'])} | "
-            + " ".join(pct(r[f"y{y}"]) for y in range(2018, 2023))
-            + f" | {r['t']:5.1f} {r['xt']:5.1f}  {r['xta']:5.1f}   {pct(r['excess'])} "
-            f"{pct(r['gone'])} {pct(r['low'])} {pct(r['wins'])}  {r['cell']}"
+            f"{pct(r['net1'])}  {pct(r['net2'])} {pct(r['auct'])}  {pct(r[block])} | "
+            + " ".join(pct(r[f"{years}{y}"]) for y in range(2018, 2023))
+            + f" | {r['t']:5.1f} {r['at']:5.1f} {r['xt']:5.1f}  {r['xta']:5.1f}   "
+            f"{pct(r['excess'])} {pct(r['gone'])} {pct(r['low'])} {pct(r['wins'])}  {r['cell']}"
         )
 
 
@@ -476,6 +521,8 @@ def main() -> None:
     parser.add_argument("--top", type=int, default=40)
     parser.add_argument("--min", type=int, default=300)
     parser.add_argument("--sort", default="net2")
+    parser.add_argument("--scores", default="")
+    parser.add_argument("--basis", default="2x", choices=("2x", "auction"))
     a = parser.parse_args()
     if a.what == "prep":
         prep()
@@ -487,9 +534,9 @@ def main() -> None:
     else:
         where = a.arg
         keys = {f"k{i}": expr for i, expr in enumerate(a.by)} or {"k0": "'all'"}
-        con = connect(settings, codes="codes" in where + " ".join(a.by))
+        con = connect(settings, codes="codes" in where + " ".join(a.by), scores=a.scores)
     rows = measure(con, where, keys, CHECK if a.check else SEARCH)
-    show(rows, a.min, a.top, a.sort)
+    show(rows, a.min, a.top, a.sort, a.basis)
 
 
 if __name__ == "__main__":

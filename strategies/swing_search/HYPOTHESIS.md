@@ -137,3 +137,29 @@ bought in a market sell-off rebound 10% or more but in a handful of weeks).
   with 2014 to 2017 standing for the earlier block.
 - **Variants allowed, each counted:** a 5-session and a 15-session target; a model without
   the market columns. No others without a further dated note.
+
+## Addendum, 2026-11-16 13:44 ET: small stocks, auction fills, and a check on the open
+
+Written after the combined model was scored on stocks of $10M a day and more: its top pick
+of the day made 1.5% a trade net at 2× in 2018 to 2022 (15 sessions) but nothing in 2014 to
+2017 and −3.0% in 2022; top against bottom tenth differ by 0.7%. It passes neither test.
+Large, cheap stocks are priced too well for these features.
+
+The effects that are large (falls, earnings reactions, quality) sit in small stocks, where
+the declared cost (the quoted spread crossed, doubled: 0.9% to 2% a side) removes them. A
+swing trade does not have to cross the spread: it can join the opening and closing auctions.
+
+- **A small-stock model.** The same model and walk-forward, fitted on stocks with dollar
+  volume from $250k to $10M a day and a close of $1 or more (every fourth session, for
+  memory), without the market columns (in the first model they carried a third of the weight
+  through sector-by-period splits, which is fitting to dates). One variant with them.
+- **A second cost basis, labelled "auction".** Commission plus an allowance for the order's
+  own effect on the auction: 0.25% a side under $1M a day, 0.10% from $1M to $10M, 0.05% from
+  $10M to $100M, 0.02% above. These allowances are my assumption, not a measurement.
+- **What it may be used for.** A rule that meets the tests only on the auction basis is
+  called "auction-dependent" and is not called found. It becomes a candidate only after
+  (a) the same trades are re-priced from minute bars, buying at the volume-weighted price of
+  09:30 to 10:00 and selling at that of 15:30 to 16:00, which a small patient order can
+  approach and which does not depend on a single opening print, and (b) the owner downloads
+  a tick sample of opening and closing prints for its trades so the auction price, the first
+  quote and the size traded can be compared. The 2023 check waits for (a).

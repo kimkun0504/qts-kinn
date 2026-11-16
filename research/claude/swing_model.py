@@ -11,6 +11,7 @@ LightGBM is a research-only tool here, not a dependency of the package:
 from __future__ import annotations
 
 import argparse
+import gc
 import sys
 import tempfile
 
@@ -20,6 +21,8 @@ import numpy as np
 from kinn.core.settings import load_settings
 
 FIRST, LAST = 2014, 2022
+BIG = "close >= 3 and adv >= 5e6"
+SMALL = "close >= 1 and adv < 1e7"
 MARKET = ["m5", "m20", "m60", "m250", "breadth", "mvol", "highs", "lows"]
 CALENDAR = ["tdleft", "tdom", "month(day) as month", "dayofweek(day) as weekday"]
 PLAIN = [
@@ -49,8 +52,9 @@ def connect(settings) -> duckdb.DuckDBPyConnection:
     base = settings.data_dir / "research" / "swing"
     con = duckdb.connect()
     con.execute(
-        f"set threads=3; set memory_limit='1500MB'; set temp_directory='{tempfile.mkdtemp()}'"
+        f"set threads=3; set memory_limit='1300MB'; set temp_directory='{tempfile.mkdtemp()}'"
     )
+    con.execute("set preserve_insertion_order=false")
     con.execute(
         f"""create view t as select d.*, m.* exclude (day), i.* exclude (day, industry)
             from read_parquet('{base}/wide_*.parquet') d
@@ -65,25 +69,36 @@ def columns(market: bool) -> list[str]:
     return cols + MARKET if market else cols
 
 
-def load(con, where: str, target: int, market: bool, every: int = 1):
+def load(con, where: str, target: int, market: bool, every: int = 1, stocks: str = BIG):
+    """Rows as float32, read in batches so that only one copy is ever held."""
+    import pyarrow as pa
+
     cols = columns(market)
-    table = con.sql(
+    names = [name_of(c) for c in cols]
+    source = f"""from t where {stocks} and next_open is not null and ({where})
+                 and (tdom + 3 * month(day)) % {every} = 0"""
+    rows = con.sql(f"select count(*) {source}").fetchall()[0][0]
+    x = np.empty((rows, len(names)), dtype=np.float32)
+    y = np.empty(rows, dtype=np.float32)
+    keys = []
+    reader = con.sql(
         f"""select permaticker, day,
                    greatest(-0.3, least(0.3,
                        exp(first_day + c_exit{target} - c_next) - 1 - mk{target})) as y,
-                   {", ".join(cols)}
-            from t where close >= 3 and adv >= 5e6 and next_open is not null and ({where})
-              and (tdom + 3 * month(day)) % {every} = 0"""
-    ).to_arrow_table()
-    names = [name_of(c) for c in cols]
-    x = np.empty((table.num_rows, len(names)), dtype=np.float32)
-    for j, n in enumerate(names):
-        x[:, j] = table.column(n).to_numpy(zero_copy_only=False).astype(np.float32)
-    y = table.column("y").to_numpy(zero_copy_only=False).astype(np.float32)
-    return table.select(["permaticker", "day"]), x, y, names
+                   {", ".join(cols)} {source}"""
+    ).to_arrow_reader(200_000)
+    at = 0
+    for batch in reader:
+        n = batch.num_rows
+        for j, name in enumerate(names):
+            x[at : at + n, j] = batch.column(name).to_numpy(zero_copy_only=False)
+        y[at : at + n] = batch.column("y").to_numpy(zero_copy_only=False)
+        keys.append(pa.Table.from_batches([batch.select(["permaticker", "day"])]))
+        at += n
+    return pa.concat_tables(keys), x[:at], y[:at], names
 
 
-def fit(name: str, target: int, market: bool) -> None:
+def fit(name: str, target: int, market: bool, small: bool) -> None:
     import lightgbm as lgb
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -91,28 +106,37 @@ def fit(name: str, target: int, market: bool) -> None:
     settings = load_settings()
     out = settings.data_dir / "research" / "swing" / "scores"
     out.mkdir(parents=True, exist_ok=True)
-    con = connect(settings)
     params = {
         "objective": "regression", "learning_rate": 0.03, "num_leaves": 31,
         "min_data_in_leaf": 2000, "feature_fraction": 0.7, "bagging_fraction": 0.5,
         "bagging_freq": 1, "lambda_l2": 10.0, "num_threads": 3, "verbose": -1, "seed": 7,
         "max_bin": 63,
     }  # fmt: skip
+    stocks = SMALL if small else BIG
     for year in range(FIRST, LAST + 1):
         target_file = out / f"{name}_{year}.parquet"
         if target_file.exists():
             continue
+        con = connect(settings)
         _, x, y, names = load(
-            con, f"day between DATE '2010-01-04' and DATE '{year - 1}-12-10'", target, market, 3
-        )
-        keep = ~np.isnan(y)
-        data = lgb.Dataset(
-            x[keep], y[keep], feature_name=names, categorical_feature=["sector"],
-            free_raw_data=True,
+            con, f"day between DATE '2010-01-04' and DATE '{year - 1}-12-10'", target, market,
+            4 if small else 3, stocks,
         )  # fmt: skip
+        con.close()  # the fit needs the memory
+        rows = len(y)
+        data = lgb.Dataset(
+            x, y, feature_name=names, categorical_feature=["sector"], free_raw_data=True,
+            params={"max_bin": 63, "verbose": -1},
+        )  # fmt: skip
+        data.construct()
+        del x, y
+        gc.collect()
         model = lgb.train(params, data, num_boost_round=300)
-        del x, y, data
-        keys, x, _, _ = load(con, f"year(day) = {year}", target, market)
+        del data
+        gc.collect()
+        con = connect(settings)
+        keys, x, _, _ = load(con, f"year(day) = {year}", target, market, 1, stocks)
+        con.close()
         score = model.predict(x)
         del x
         tmp = out / f"{name}_{year}.tmp"
@@ -120,7 +144,7 @@ def fit(name: str, target: int, market: bool) -> None:
         tmp.rename(target_file)
         gain = model.feature_importance("gain")
         top = sorted(zip(gain, names, strict=True), reverse=True)[:12]
-        print(year, keep.sum(), "rows;", ", ".join(f"{n} {g / gain.sum():.0%}" for g, n in top),
+        print(year, rows, "rows;", ", ".join(f"{n} {g / gain.sum():.0%}" for g, n in top),
               flush=True)  # fmt: skip
 
 
@@ -130,8 +154,9 @@ def main() -> None:
     parser.add_argument("--name", default="base")
     parser.add_argument("--target", type=int, default=10)
     parser.add_argument("--no-market", action="store_true")
+    parser.add_argument("--small", action="store_true")
     a = parser.parse_args()
-    fit(a.name, a.target, not a.no_market)
+    fit(a.name, a.target, not a.no_market, a.small)
 
 
 if __name__ == "__main__":
