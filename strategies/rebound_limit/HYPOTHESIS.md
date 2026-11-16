@@ -260,3 +260,49 @@ The universe has no market-cap floor. For the under-$300M group alone:
 
 The tick study is recorded in the run store and charged as one trial (family total 49). It
 selects nothing: one variant, fixed. The order listing and the unfilled sample add none.
+
+## Addendum, 2026-11-15 20:40 ET: the losing development years, and a hypothesis from them
+
+Development period only (2003–2016). Nothing below was computed on, or checked against, any
+date after 2016-12-30. Script: `research/claude/losing_years.py`, on the 3,200 trades of the
+development run `…84ff9c3d`. No run was started.
+
+**What 2013–2015 have in common** (each lost: −$1,235, −$1,176, −$2,302):
+
+1. **Quiet markets.** 80% of their trades came on sessions with fewer than 30 signals (55% in
+   the other years), and 70% while SPY was flat or up at the signal. Broad selloff days, where
+   the strategy earns most, were rare.
+2. **All of the loss is in stocks that were already falling.** Split by the stock's own return
+   over the 60 sessions before the event day:
+
+   | | 2003–07 | 2008–09 | 2010–12 | 2013–15 | 2016 | All |
+   |---|---|---|---|---|---|---|
+   | Had fallen: trades, net/trade at 2×, total | 397, +1.08%, +$6,499 | 821, +1.33%, +$17,767 | 224, +0.20%, +$1,100 | 282, **−1.97%, −$11,462** | 133, +0.50%, +$473 | 1,857, +0.58%, +$14,376 |
+   | Had risen | 424, +2.44%, +$18,692 | 360, +2.89%, +$20,170 | 222, +1.36%, +$5,714 | 221, **+1.65%, +$6,750** | 116, +1.22%, +$2,384 | 1,343, +2.15%, +$53,709 |
+
+   Stocks that had risen were profitable in **every one of the 14 years** (+0.78% to +2.99% a
+   trade at 2×). Stocks that had fallen lost in 6 of the 14.
+3. **Fallers pay only when the market is selling.** On sessions with 30 or more signals they
+   earned +1.43% a trade; on quieter sessions −0.28% (−2.30% in 2013–15). With SPY down 0.3% or
+   more at the signal: +1.24%; flat or up: +0.11%.
+
+**What did not explain it:** market cap, price, sector (biotech made money in 2013–15; energy
+and materials lost, and they were fallers), time of day, size of the drop, and volume up to the
+signal. Volume over the *whole day* separates winners from losers strongly (days ending above
+5× normal volume lose in every period), but it is known only after the close; the same measure
+at the signal time is weak.
+
+**Hypothesis (not tested).** A 10% intraday drop in a stock that has been rising is a liquidity
+shock, and it is bought back. The same drop in a stock that has been falling for three months,
+on a day when the market is not falling, is the bad news continuing. So: *take the event only
+if the stock's return over the 60 sessions before the event day is zero or more.*
+
+**Why to distrust it.** It was found by looking at 14 features of the development trades after
+seeing which years lost, so it will look better here than it is. Per trade the relation is weak
+(rank correlation 0.02 to 0.17 by period); the evidence is the consistency of the group
+averages across periods, not a tight fit. It cuts trades by more than half (about 95 a year).
+It has not been run as a variant even on development: these are the filled trades of the
+unfiltered run, and a filter also changes which orders get capital.
+
+**Status.** Proposed to the owner. It is not run on 2017–2023 without the owner's word, and
+any run of it, on any period, is a counted trial with its bars written first.
