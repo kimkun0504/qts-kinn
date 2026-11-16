@@ -526,3 +526,51 @@ Validation and the sealed holdout stayed unopened.
 | 2014 | 16 | −0.64% | −1.02% | −$209 | −$330 |
 | 2015 | 13 | +4.21% | +3.91% | +$1,090 | +$1,012 |
 | 2016 | 12 | −3.69% | −3.93% | −$881 | −$938 |
+
+## Size-group benchmark
+
+**Study decision: develop.** The event study passed the original two-hour
+gates with 291 events across 199 dates. It averaged +4.33% gross, with a
+day-clustered 95% interval of +2.49% to +6.08%. The 2013–2016 block had 51
+events on 46 dates, averaging +3.36% gross, +2.81% net at base costs and
++2.49% at doubled slippage. All entries followed the signal by one clock
+minute and all 199 replay checks passed.
+
+| Two-hour development study | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net per event | +3.62% | +3.16% |
+| 95% day-clustered interval | +1.78% to +5.33% | +1.35% to +4.84% |
+| Summed event P&L | +$20,998 | +$18,328 |
+| Daily event P&L t-statistic | 3.58 | 3.23 |
+| Worst drawdown of summed events | −$1,493 | −$1,758 |
+
+The size-group reference added five dates to the large-cap study and gave
+up five. It added seven stock-days, omitted eleven and shifted the entry on
+four retained stock-days. The large-cap study's two-hour mean was +3.67%
+at base costs and +3.21% at doubled slippage. The two definitions use
+nearly the same development data and this comparison is descriptive.
+
+Run `20261116T212516Z_gpt_relative_dislocation_reversal_eb5399da` used
+commit `bc853ae5`, data build `447e58e098` and the development period
+2003-09-10 to 2016-12-30. Registration `f060464` preceded the run. The
+study is an additional counted `intraday_rebound` trial. The study prices
+both sides from the entry bar and sums hypothetical orders across all
+3,352 development sessions. The qualifying portfolio run will apply
+its actual exit rule, buying power and bar participation.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +31.49% | +31.38% | +$622 | +$619 |
+| 2004 | 5 | +8.38% | +8.14% | +$835 | +$811 |
+| 2005 | 4 | −6.56% | −6.83% | −$525 | −$546 |
+| 2006 | 10 | +4.67% | +4.39% | +$930 | +$875 |
+| 2007 | 24 | +5.23% | +4.73% | +$2,503 | +$2,265 |
+| 2008 | 150 | +4.15% | +3.59% | +$12,433 | +$10,751 |
+| 2009 | 20 | +0.22% | −0.13% | +$89 | −$49 |
+| 2010 | 4 | +3.71% | +3.51% | +$292 | +$276 |
+| 2011 | 14 | −2.05% | −2.36% | −$575 | −$661 |
+| 2012 | 8 | +9.59% | +9.11% | +$1,532 | +$1,455 |
+| 2013 | 9 | +5.10% | +4.77% | +$919 | +$860 |
+| 2014 | 13 | +2.46% | +2.14% | +$642 | +$557 |
+| 2015 | 19 | +4.42% | +4.12% | +$1,670 | +$1,558 |
+| 2016 | 10 | −1.85% | −2.23% | −$368 | −$443 |
