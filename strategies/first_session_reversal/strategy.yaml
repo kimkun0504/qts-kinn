@@ -1,0 +1,8 @@
+name: first_session_reversal
+status: parked
+engine: intraday
+universe: first_session_reversal
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
