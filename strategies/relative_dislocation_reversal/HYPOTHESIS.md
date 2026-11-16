@@ -146,3 +146,35 @@ through 2023-11-08. Apply the unchanged validation gates, including the +3% all-
 mean at 1× overall and in the recent block and the stressed risk gates. Report the
 average winner, average loser and sample size separately. No other position cap is
 registered and the sealed holdout stays excluded.
+
+## Addendum, 2026-11-16: relative recovery confirmation
+
+The liquid one-hour signal requires a stock-specific 15-minute decline but accepts
+an absolute one-minute recovery. A broad-market rebound can therefore qualify the
+confirmation even if demand in the stock has yet to recover relative to its peers.
+Test whether the recovery itself must exceed the synchronous market move. The
+extra condition may delay entry or exclude some profitable common-market rebounds.
+
+Use the fixed liquid cohort and one-hour exit with the original ten-slot capacity.
+Keep the existing price drop, turnover and absolute 1% recovery conditions. In
+addition, require the candidate's exact one-minute close-to-close return to exceed
+the median exact one-minute return of the same large-cap anchors by at least
+**one percentage point**. At least 30 anchors must print at both one-minute
+endpoints. This uses completed bars only. Keep the original one-per-symbol rule
+and take the first bar to meet every condition. All other parameters are identical
+to the stored liquid one-hour portfolio, including the per-order target.
+
+This is one fixed signal variant. Run `development_liquid_peer_recovery --study`
+on 2003-09-10 through 2016-12-30 and apply the original development study gates
+at the one-hour horizon. Recheck next-bar-only events if any study entries are
+late. If qualified, record the develop decision before running
+`development_liquid_peer_recovery` as a portfolio on the same dates. Apply the
+original portfolio development gates, including the 2013–2016 returns and the
+2× Sharpe gate. Compare actual risk and trade counts to the saved one-hour run
+`20261116T062349Z_gpt_relative_dislocation_reversal_034697eb`.
+
+If qualified, run `validation_liquid_peer_recovery` once on 2017-01-03 through
+2023-11-08 under the existing, unchanged validation bars. These include mean net
+of at least +3% at 1× across all completed trades overall and in the 2022+ block,
+with the respective count and stress requirements. Count each run in
+`intraday_rebound`. Later market data stays sealed.
