@@ -137,3 +137,10 @@ splits have no bars nearby (before 2003-09 or never in the SIP data).
 **Fundamentals (SF1).** Only the as-reported dimensions (ARQ, ART) are kept, dated by `datekey`,
 the day the filing reached the SEC. A value is usable from the session after that day. The
 restated dimensions and the price-based columns are not read.
+
+## Build `447e58e098` (data-6, 2026-11-15)
+
+Adds `ret60_prev` to the panel. Every other panel column, the security master, the split and
+dividend tables and the Sharadar tables are identical to build `6453bd3ec8`, row for row (26.4
+million panel rows compared), so runs on the two builds are comparable. `builds/CURRENT` points
+to the new build; runs by any agent started after 2026-11-15 21:20 ET record it.

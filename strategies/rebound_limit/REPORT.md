@@ -377,3 +377,89 @@ about $1,800.
 
 **Next, in order:** the registered fill check for `s_l468`; then paper trading, with orders in
 the book within seconds of the bar. The holdout stays sealed.
+
+## Fill check for the ladder, 2026-11-15 (plan in HYPOTHESIS.md, addendum of 21:05 ET)
+
+**Verdict: passed all four pre-set bars. `s_l468` now meets every one of the owner's targets:
++1.56% a trade at 2×, Sharpe 1.37 at 2×, worst drawdown $4,485, and fills confirmed against
+real trades.** Run `20261116T022546Z_claude_rebound_limit_6ab9ac2c`. The order listing rebuilt
+both runs exactly (139,441 and 180,869 rung orders; all 8,654 filled rungs). Ticks: 5,085
+windows already downloaded for `x_o4` and 818 new ones (owner download, plan `fillcheck_s_l468`).
+
+| Bar set in advance | Result | |
+|---|---|---|
+| Tick data for at least 95% of traded rungs | 99.97% (3 of 8,654 had no prints) | passed |
+| At least 97% confirmed by a real trade below the limit, each period | 100%, 100% | passed |
+| Validation net per trade at 2×, cut to real size, 5 s latency: at least +1.0% | **+1.53%** (simulated +1.55%) | passed |
+| Keeps at least 80% of the simulated net at 2×, each period | 97% validation, 96% development | passed |
+
+| | Val rungs | Filled in full | Net/trade 2×: simulated → real | Kept | Dev rungs | Filled in full | Net/trade 2×: simulated → real | Kept |
+|---|---|---|---|---|---|---|---|---|
+| 4% rung | 1,852 | 98.5% | +1.45% → +1.43% | 97% | 3,359 | 98.3% | +1.43% → +1.38% | 96% |
+| 6% rung | 768 | 98.2% | +1.85% → +1.82% | 98% | 1,500 | 98.3% | +2.06% → +2.01% | 96% |
+| 8% rung | 381 | 98.4% | +1.45% → +1.39% | 96% | 794 | 98.1% | +2.41% → +2.42% | 99% |
+| Under $300M | 1,656 | 97.6% | +2.45% → +2.42% | 97% | 3,256 | 97.6% | +1.35% → +1.30% | 94% |
+| $300M–$2B | 1,091 | 99.4% | +0.62% → +0.61% | 97% | 1,869 | 99.2% | +1.88% → +1.85% | 98% |
+| Over $2B | 233 | 99.6% | +0.25% → +0.25% | 88% | 454 | 99.6% | +4.43% → +4.38% | 98% |
+| All | 3,001 | 98.4% | +1.55% → +1.53% | 97% | 5,653 | 98.2% | +1.74% → +1.69% | 96% |
+
+- The deeper rungs are as real as the 4% rung. Each rung is a third of the position, so the
+  median rung had over 140 times its size trade below the limit.
+- Latency, validation: order in the book 0, 5, 30 seconds after the bar gives +1.55%, +1.53%,
+  +1.36% a trade and $28,900, $28,240, $24,825. Thirty seconds late keeps 85%; the single 4%
+  limit kept 82%.
+- Touched-only orders (refused by the bar rule): 97–98% printed at the limit, 85% in full size;
+  a fill there would have earned about +5.1% at 2× in both periods.
+
+Still not covered: the exit in the closing auction (modelled at 10 bps).
+
+## The prior-trend filter, 2026-11-15 (plan in HYPOTHESIS.md, addendum of 21:22 ET)
+
+**Verdict: rejected. The filter looked strong in development and failed validation. `s_l468`
+without it stays the candidate.**
+
+The rule: take the event only if the stock's return over the 60 sessions before the day
+(`ret60_prev`, new in build `447e58e098`) is zero or more. Figures at 2× slippage.
+
+| | Trades | Net/trade | Sharpe | Total net | Worst drawdown | 2022 (1×) |
+|---|---|---|---|---|---|---|
+| Development: `s_l468` (no filter) | 5,653 | +1.74% | 1.45 | $60,201 | −$3,661 | |
+| Development: **`t_l468`** (filter) | 2,248 | +2.64% | **1.64** | $37,118 | −$1,682 | |
+| Development: `t_o4` (4% limit, filter) | 1,319 | +2.26% | 1.77 | $52,580 | −$2,389 | |
+| Validation: `s_l468` (no filter) | 3,001 | +1.56% | 1.37 | $29,201 | −$4,485 | −$884 |
+| Validation: **`t_l468`** (filter) | 1,505 | +1.22% | **0.94** | $11,818 | −$4,913 | −$2,641 |
+
+- **Development** (sweep `20261116T022246Z_rebound_limit_2`): every one of the 14 years was
+  profitable with the filter, and the gate (Sharpe above 1.45) was passed.
+- **Validation, one run** (`20261116T022925Z_claude_rebound_limit_0976d236`): net per trade
+  +1.22% (bar +1.0%, passed), **Sharpe 0.94 (bar: above 1, failed)**, drawdown $4,913 (passed).
+  It also fails both conditions for replacing `s_l468`: lower Sharpe, and 40% of its profit.
+- **What happened:** in 2017–2023 the stocks the filter removes were the profitable ones. The
+  ladder made $31,160 with them and $12,811 without. The pattern that held in all 14
+  development years did not carry over.
+- This is the result the plan warned about: the rule was found by inspecting development
+  trades after seeing which years lost, and development flattered it.
+
+The `min_ret60` setting and the `ret60_prev` column stay in the code and the build; nothing
+uses them. Using a different threshold or window now would be fitting to the validation years.
+
+The family now carries 69 trials (66 by claude, 3 by Astra) and the validation years have been
+used six times.
+
+## Where `rebound_limit` stands, 2026-11-15
+
+**Candidate for paper trading: `s_l468`.** A third of a $2,000 position each at 4%, 6% and 8%
+below the event bar's close, resting 10 minutes, no order under $1, all market caps, sold in
+the closing auction.
+
+| Owner's target | Validation 2017–2023 | Checked how |
+|---|---|---|
+| Net per trade at 2× at least +1.0% | +1.56% (+1.53% on real fills) | one validation run; fill check |
+| Sharpe above 1 | 1.37 at 2× | one validation run |
+| Worst drawdown under half the account | $4,485 of $20,000 | one validation run |
+| Fills confirmed against real trades | 100% confirmed, 98% in full size | registered fill check |
+
+What it still rests on: one strong year (2020) for more than half the validation profit;
+micro-caps for most of it; a modelled exit; orders placed within seconds of the bar; and
+validation years that have been looked at six times. The holdout has not been touched and is
+the one clean test left.
