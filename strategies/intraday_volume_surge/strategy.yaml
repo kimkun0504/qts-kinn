@@ -1,5 +1,5 @@
 name: intraday_volume_surge
-status: hypothesis
+status: parked
 engine: intraday
 universe: intraday_volume_surge
 cost_calibration: ibkr_pro_tiered
