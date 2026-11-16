@@ -59,3 +59,44 @@ opening range breakout in `strategies/intraday_momentum`).
 
 Not tested for lack of data: news with a time of day or with text, short interest and borrow
 cost, halts, options.
+
+## Timed news and short interest, 2026-11-16 (addenda of 11:20 and 12:05 ET)
+
+**Verdict: timed news adds no long candidate either. 518 more cells (2,689 in all), none
+shortlisted, no near miss. The one effect above 3% a trade is still a short sale: fading
+stocks that are up 50% or more before the open, and short interest sharpens it.** The 2023
+check remains unopened.
+
+Data from the owner's download (`tools/owner/download_news.py`): 540,295 articles, but only
+287 before 2021, so the news search covers 2021 and 2022. Company press releases come from one
+wire, GlobeNewswire (105,354); the rest is commentary. Benzinga's feed is not in the plan,
+short volume returned nothing for these years, and sentiment labels start in July 2024, inside
+the sealed period. Short interest: 2.48 million rows, used from 14 days after settlement.
+Code: `research/claude/recent_news.py`, `recent_short_interest.py`.
+
+| Family 11 | Cells | Long candidates | Best long cell with 150+ trades (net at 2×) |
+|---|---|---|---|
+| a. Release before the open; buy 09:35, sell at the close (headline group × gap × size) | 132 | 0 | +0.10% |
+| a. Buy at the premarket checkpoint after the release; sell at the open, 10:00 or the close | 141 | 0 | −1.82% |
+| b. Release during the session; buy 1 or 5 minutes after; sell after 15 or 60 minutes or at the close | 201 | 0 | −0.92% |
+| c. Short interest and days to cover on the premarket runners | 44 | 0 | −1.75% |
+
+- **After a release during the session nothing happens that a buyer can use.** In almost every
+  case the price one minute after the stamped time is within 1% of the price before it, and
+  the return from there is zero to the second decimal. Either most releases do not move the
+  stock, or the stamp is later than the moment the market saw the news; this archive cannot
+  tell the two apart.
+- **Stocks bought before the open after a release lose** 0.2% to 1.7% before costs, whatever
+  the headline group. Results, trial news, contracts and offerings all fade from the premarket
+  price.
+- **Short interest does not reveal squeezes that continue.** Among stocks up 20% or more
+  before the open on heavy volume, the best group for a buyer (over 15% of shares short, more
+  than 5 days to cover) earned +0.4% before costs on 128 cases.
+- **It does sharpen the fade.** Stocks up 50% or more before the open with under 5% of shares
+  short and under 2 days to cover lost 9.8% from 08:00 or 09:00 to the close (208 and 254
+  cases, 2018 to 2022; 7% to 9% in 2021 and 2022). To a short seller that is about 5% a trade
+  after costs at 2×. Borrow availability and cost, the 10% short-sale rule and the risk of an
+  unlimited loss are not in that figure, and these are the stocks where all three bite.
+
+Not available from this subscription: Benzinga's timed headlines, PR Newswire and Business
+Wire releases, stock-loan availability and fees.

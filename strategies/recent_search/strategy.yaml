@@ -1,8 +1,8 @@
 name: recent_search
-status: parked            # 2,171 cells on 2018-2022, no long candidate (2026-11-16); 2023 check not opened; see REPORT.md
+status: parked            # 2,689 cells incl. timed news and short interest, no long candidate (2026-11-16); short-side fade noted; 2023 unopened
 engine: intraday
 universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: recent_search
-prior_trials: 2171   # cells measured in the overnight search, 2026-11-16
+prior_trials: 2689   # cells measured in the overnight search, 2026-11-16
