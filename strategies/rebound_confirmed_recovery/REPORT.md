@@ -122,3 +122,57 @@ The 2017–2023 validation and the holdout were left untouched for this strategy
   These fills would require their own quote and trade audit. Evidence that marketable
   quotes and size survive across regimes, plus a materially stronger 2× Sharpe, would
   change the verdict.
+
+## Volume and momentum follow-up
+
+### Development event study
+
+**Decision: develop the filtered variant.** The [addendum to the hypothesis](HYPOTHESIS.md)
+was committed at `678c168` before the new run. All study gates passed. There were 613 events
+across 457 sessions. The gross mean was +3.13%, with a day-clustered 95% interval of
++1.22% to +5.05%. Net of 2× slippage, the 2003–2009 and 2010–2016 means were +1.02% and
++1.55%. One entry occurred after expiry. The next-bar-only subset of 612 events returned
++3.12% gross (95% interval +1.22% to +5.04%), +2.02% net at 1× and +1.23% at 2×.
+It remained positive at 2× in both halves (+1.02% and +1.53%).
+
+Run `20261116T020656Z_gpt_rebound_confirmed_recovery_eebfba4c` used clean commit
+`fe5e511a`, build `6453bd3ec8` and 2003-09-10 to 2016-12-30.
+Replay passed on all 457 signal sessions. The original study is the comparison below.
+
+| Development study metric | Original | Volume + momentum |
+|---|---:|---:|
+| Events | 1,085 | 613 |
+| Gross mean to close | +3.59% | +3.13% |
+| Mean net per event at 1× | +2.02% | +2.03% |
+| Mean net per event at 2× | +0.88% | +1.24% |
+| Mean round-trip cost at 1× | 1.57% | 1.10% |
+| Orders above next-bar capacity | 49% | 19% |
+
+| Filtered study outcome | 1× slippage | 2× slippage |
+|---|---:|---:|
+| 95% day-clustered interval, net to close | +0.12% to +3.95% | −0.66% to +3.17% |
+| Summed event P&L | +$24,784 | +$15,134 |
+| Daily event P&L t-statistic | 1.78 | 1.15 |
+| Worst end-of-day drawdown of summed event P&L | −$4,276 | −$5,622 |
+
+The study takes hypothetical $2,000 orders independently. Dollar P&L follows the same
+unconstrained method as the original study. Turnover and capacity use trade bars.
+The decline in the capacity-limited share supports the proxy at the event level.
+The study stage does not establish realized size or costs for a portfolio.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 8 | +3.61% | +2.73% | +$569 | +$429 |
+| 2004 | 36 | +2.64% | +1.71% | +$1,896 | +$1,232 |
+| 2005 | 35 | −3.62% | −4.47% | −$2,527 | −$3,116 |
+| 2006 | 29 | −2.71% | −3.38% | −$1,567 | −$1,954 |
+| 2007 | 45 | +2.63% | +1.65% | +$2,369 | +$1,488 |
+| 2008 | 143 | +4.74% | +4.12% | +$13,514 | +$11,761 |
+| 2009 | 59 | −1.31% | −2.24% | −$1,544 | −$2,641 |
+| 2010 | 61 | +7.89% | +6.88% | +$9,591 | +$8,362 |
+| 2011 | 35 | +0.20% | −0.57% | +$138 | −$401 |
+| 2012 | 24 | +1.05% | +0.39% | +$499 | +$182 |
+| 2013 | 20 | +3.15% | +2.27% | +$1,254 | +$905 |
+| 2014 | 29 | +1.45% | +0.81% | +$832 | +$466 |
+| 2015 | 48 | −2.37% | −3.11% | −$2,269 | −$2,983 |
+| 2016 | 41 | +2.48% | +1.72% | +$2,028 | +$1,404 |
