@@ -24,19 +24,25 @@ def quarter_hour_return(close: np.ndarray) -> np.ndarray:
 
 class RelativeDislocationReversal:
     name = "relative_dislocation_reversal"
-    universe = Universe(name, min_prev_close=2, min_adv20=1_000_000)
     features = (f.MARKETCAP, f.ADV20)
+
+    def __init__(self, *, liquid_cohort: bool = False):
+        self.liquid_cohort = liquid_cohort
+        min_adv = 10_000_000 if liquid_cohort else 1_000_000
+        self.universe = Universe(self.name, min_prev_close=2, min_adv20=min_adv)
 
     def signals(self, view: DayView, features: FeatureValues) -> list[Signal]:
         peer_returns = []
         candidates = []
+        cap_ceiling = 10e9 if self.liquid_cohort else 2e9
         for symbol, bars in view.symbols.items():
             prior = features[symbol]
             cap = prior[f.MARKETCAP.name]
             adv = prior[f.ADV20.name]
             if cap >= 10e9 and adv >= 20e6:
                 peer_returns.append(quarter_hour_return(observed_closes(view, bars)))
-            if 0 < cap < 2e9 and adv >= 0.01 * cap:
+            min_turnover = 10e6 if self.liquid_cohort else 0.01 * cap
+            if 0 < cap < cap_ceiling and adv >= min_turnover:
                 candidates.append((symbol, bars))
         if len(peer_returns) < 30:
             return []
@@ -67,6 +73,9 @@ class RelativeDislocationReversal:
 
 
 def build(params: dict) -> RelativeDislocationReversal:
-    if params:
-        raise ValueError("relative_dislocation_reversal accepts no parameters")
-    return RelativeDislocationReversal()
+    if params.keys() - {"liquid_cohort"}:
+        raise ValueError("relative_dislocation_reversal only accepts liquid_cohort")
+    liquid_cohort = params.get("liquid_cohort", False)
+    if not isinstance(liquid_cohort, bool):
+        raise ValueError("liquid_cohort must be a boolean")
+    return RelativeDislocationReversal(liquid_cohort=liquid_cohort)

@@ -88,3 +88,22 @@ def test_configs_differ_only_in_dates():
     assert development.pop("period") == {"start": date(2003, 9, 10), "end": date(2016, 12, 30)}
     assert validation.pop("period") == {"start": date(2017, 1, 3), "end": date(2023, 11, 8)}
     assert development == validation
+
+
+def test_absolute_liquidity_admits_mid_caps_and_does_not_change_price_signal():
+    session = view(cap=4e9, adv=10e6)
+    assert day_signals(runner.load_strategy(NAME, {}), session) == []
+    liquid = runner.load_strategy(NAME, {"liquid_cohort": True})
+    found = day_signals(liquid, session)
+    assert found == [EXPECTED]
+    check_no_lookahead(liquid, session, found, [599, 600, 601, 910])
+    assert day_signals(liquid, view(cap=4e9, adv=9.9e6)) == []
+    assert day_signals(liquid, view(cap=10e9, adv=10e6)) == []
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_liquid_variant_only_changes_the_cohort(phase):
+    _, original = runner.load_config(NAME, phase)
+    _, liquid = runner.load_config(NAME, f"{phase}_liquid")
+    assert liquid.pop("params") == {"liquid_cohort": True}
+    assert liquid == original
