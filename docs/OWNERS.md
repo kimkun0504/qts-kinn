@@ -27,6 +27,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/rebound_confirmed_recovery` | gpt | 2026-11-15 | buy after a deep selloff starts recovering |
 | `strategies/relative_dislocation_reversal` | gpt | 2026-11-16 | active stocks, relative intraday reversals |
 | `strategies/gap_washout_reclaim` | gpt | 2026-11-16 | positive gap, selloff and VWAP reclaim |
+| `strategies/turnover_compression_breakout` | gpt | 2026-11-16 | high-turnover range and confirmed breakout |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
