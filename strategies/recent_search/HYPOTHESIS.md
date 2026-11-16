@@ -126,3 +126,30 @@ half-spread, the exit the regular one, both doubled at 2×, plus commission.
 Family 9 (716 cells): no candidate; the best long cell nets −0.05%. With families 1 to 8 and
 10 that is 2,171 cells and none shortlisted, so the 2023 check was not opened. Results and
 what they mean are in REPORT.md.
+
+## Addendum, 2026-11-16 11:20 ET: timed news and short-sale data (owner's instruction)
+
+The owner pointed out that the Massive subscription includes a news archive and asked for it
+to be used fully. The search so far had only 8-K filings, dated but not timed. Massive's
+ticker news has a publication time for every article from 2016-06-22, with tickers, headline,
+summary, keywords and publisher. Its sentiment labels start on 2024-07-02, inside the sealed
+period, so they are not available to research. The same subscription has FINRA short interest
+(twice a month) and daily short volume, which the search lacked for the runners it found.
+
+The owner downloads these with `tools/owner/download_news.py`. Nothing has been read yet.
+
+**Family 11, timed news. Outline now; the cells are written here before any return is
+measured, once the fields and coverage have been inventoried.**
+
+- An event is a stock's first article after a quiet spell (no article for some days), split by
+  when it was published: overnight, premarket, during the session, after the close.
+- Reaction is measured from the first print at least one minute after publication, and again
+  five minutes after, to several horizons the same day. A result that exists only at one
+  minute belongs to faster traders.
+- Articles are grouped by publisher type (company press-release wires against commentary) and
+  by headline words for the common kinds of news (results and guidance, offerings, contracts,
+  trial and approval news, mergers, analyst changes).
+- Short interest and days to cover enter as stock-selection features, each known only from
+  its publication date, not its settlement date.
+- Same periods and selection rule as the rest of this family. Long and short are both shown;
+  only long cells can be candidates while the engine cannot short.
