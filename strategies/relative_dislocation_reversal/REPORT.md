@@ -235,3 +235,46 @@ The retry found a higher mean within the same historical sample. A candidate
 that earns across more independent dates is needed to improve confidence in
 the daily return series. The later 2022–2023 pre-seal gate has yet to be tested
 for this signal.
+
+## Peer-relative recovery confirmation
+
+**Study decision: develop.** The preregistered one-hour horizon passed the full
+and recent development gates. Run `20261116T164207Z_gpt_relative_dislocation_reversal_a740b270`
+used the 2003-09-10 to 2016-12-30 period, commit `80213993` and build `447e58e098`.
+Hypothesis commit `213b438` came before the run. The study returned 295 events on 199
+sessions, all within intended expiry, and all 199 replay checks passed.
+
+The full sample averaged +4.01% gross with a day-clustered 95% interval of +2.50%
+to +5.41%. The 2013–2016 block had 50 events on 46 sessions, averaging +4.43% gross
+and +3.86% and +3.53% net at 1× and 2×. The original one-hour study had 301 events
+and +3.17% and +2.71% net overall. A session may change if the first acceptable
+confirmation moves. These are development estimates.
+
+| One-hour study | 1× slippage | 2× slippage |
+|---|---:|---:|
+| Mean net per event | +3.28% | +2.82% |
+| 95% day-clustered interval | +1.80% to +4.68% | +1.35% to +4.23% |
+| Summed event P&L | +$19,315 | +$16,569 |
+| Daily event P&L t-statistic | 4.01 | 3.56 |
+| Worst drawdown of summed events | −$1,413 | −$1,490 |
+
+The dollar series uses the saved hypothetical events across all 3,352 development
+sessions. The study prices both marketable sides using inputs from the entry bar.
+Portfolio restrictions and actual exit-bar participation apply in the next test.
+
+| Year | Events | Net/event 1× | Net/event 2× | Event P&L 1× | Event P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2003 | 1 | +23.51% | +23.40% | +$464 | +$462 |
+| 2004 | 6 | +5.44% | +5.21% | +$652 | +$624 |
+| 2005 | 4 | +0.08% | −0.19% | +$3 | −$18 |
+| 2006 | 10 | +5.87% | +5.59% | +$1,171 | +$1,115 |
+| 2007 | 24 | +3.28% | +2.77% | +$1,566 | +$1,325 |
+| 2008 | 152 | +3.15% | +2.58% | +$9,547 | +$7,816 |
+| 2009 | 22 | +1.47% | +1.12% | +$646 | +$493 |
+| 2010 | 4 | +5.45% | +5.26% | +$431 | +$415 |
+| 2011 | 14 | −0.95% | −1.25% | −$267 | −$353 |
+| 2012 | 8 | +7.78% | +7.30% | +$1,245 | +$1,169 |
+| 2013 | 9 | +6.50% | +6.17% | +$1,168 | +$1,108 |
+| 2014 | 14 | +5.38% | +5.04% | +$1,506 | +$1,411 |
+| 2015 | 18 | +5.43% | +5.12% | +$1,946 | +$1,837 |
+| 2016 | 9 | −4.27% | −4.67% | −$763 | −$836 |
