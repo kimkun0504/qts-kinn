@@ -163,3 +163,27 @@ swing trade does not have to cross the spread: it can join the opening and closi
   approach and which does not depend on a single opening print, and (b) the owner downloads
   a tick sample of opening and closing prints for its trades so the auction price, the first
   quote and the size traded can be compared. The 2023 check waits for (a).
+
+## Addendum, 2026-11-16 13:52 ET: earnings drift in small stocks, refined (family 17)
+
+Written after the small-stock model was scored (its top tenth beats other small stocks by
+0.5% over 10 sessions, steadily, excess t 7.7 over all years, but that is 0.4% a trade on the
+auction basis and its top picks lost in 2021) and after every family was re-read on the
+auction basis: one cell in about 10,000 is auction-dependent (pullbacks in small winners,
+2.0% a trade). The largest steady effect is the one family 2 was written for: a small company
+that jumps 15% or more on earnings with five times its normal volume keeps rising, 3.2% over
+15 sessions on the auction basis, in 2010 to 2017 and in four years of five since.
+
+Family 17 refines that one effect, and splits the periods so the refinement is tested:
+
+- **Chosen on 2010 to 2017 only.** Grid: the day the signal is read (the earnings day itself
+  when the 8-K is dated that day, or the session after); the size of the jump (5%, 10%, 15%,
+  25%); volume against normal (2×, 5×); where the stock closed in its day's range; company
+  size (under $300M, $300M to $2B); price ($1, $3, $5 and up); hold (5, 10, 15 sessions).
+  The cell taken forward is the one with the highest weekly t-statistic on the auction basis
+  among cells with 300 or more trades and a mean of 2% or more in 2010 to 2017.
+- **Tested on 2018 to 2022,** which the choice above did not use (the base effect was seen
+  there, the refinement was not): mean of 1% or more on the auction basis, weekly t of 2.5 or
+  more, and at least four years of five positive. One rule, so the bar is that of a single
+  test, not of a search.
+- **Then** the minute-bar re-pricing, a book, and the 2023 check, as in the note above.
