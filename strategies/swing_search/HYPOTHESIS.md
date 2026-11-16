@@ -216,3 +216,22 @@ include 2008. Two rules, fixed here, are tested on them once. Signals from 2005-
 
 Neither becomes a strategy on this alone; passing sends a rule on to the minute-bar
 re-pricing, a book and the 2023 check.
+
+## Addendum, 2026-11-16 14:05 ET: rule A after 2005–2009, and what the 2023 check can say
+
+Rule A passed on 2005 to 2009 (452 trades, 4.04% a trade on the auction basis, weekly t 4.42,
+five years of five positive; rule B failed, −0.10% a trade with 2008 at −1.09%). Re-priced
+from minute bars rule A is 3.90% (2005 to 2009) and 2.77% (2010 to 2022). As a book of 10
+positions of $2,000 over 2005 to 2022 it makes $2,683 a year with the spread crossed and
+$4,314 on the auction basis, with a worst drawdown near $11,000 and six losing years of 18.
+
+The 2023 check (signals 2023-01-03 to 2023-10-13) is now read once, for rule A unchanged.
+About 70 trades are expected, and one trade swings by about 25%, so the mean will be known
+only to about ±3%. Set before reading:
+
+- **Not contradicted:** the mean a trade on the auction basis is above zero.
+- **Contradicted:** it is below −3%, which a true edge of about +3% would rarely produce.
+- **Says nothing:** between the two.
+
+A book of 20 positions of $1,000 is also shown for 2005 to 2022 (same signals; it takes the
+trades the 10-position book skips). No other change to the rule is made before the check.

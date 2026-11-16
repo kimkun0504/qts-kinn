@@ -11,9 +11,9 @@ import tempfile
 
 import duckdb
 import numpy as np
+from swing_earnings import AUCTION, weekly
 
 from kinn.core.settings import load_settings
-from swing_earnings import AUCTION, weekly
 
 RULES = {
     "A": "earn and ret2 >= 0.15 and dvr2 >= 5 and mcap < 3e8",
