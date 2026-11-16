@@ -325,3 +325,47 @@ at least +3% net over all completed trades at base costs overall and
 separately from 2022 through 2023-11-08. Keep the recency sample and 2×
 stress requirements. Count each run in `intraday_rebound`. This is one
 data-informed development look and the sealed holdout remains excluded.
+
+## Addendum, 2026-11-16: assign the holding time from the pre-shock range
+
+The peer-relative entry with a two-hour exit passed the development return
+bars and missed the stressed Sharpe bar. The 12-point quiet-baseline study
+showed a larger gain between one and two hours than the peer-relative study
+as a whole, although their entry definitions differ. If a break from a
+quiet price range reflects a temporary liquidity imbalance, its recovery
+may be worth holding through a second hour. Stocks already moving widely
+can carry additional repricing risk after the first hour. Prior curves
+motivated the test. The adaptive exit has not been measured.
+
+Freeze one variant using the complete original large-cap peer-relative
+entry with the liquid cohort, 12-point shock threshold, absolute and
+relative recovery, $40,000 turnover, ten slots and the next-clock-minute
+expiry. For the first eligible signal, check the completed regular-session
+closes from `t−25` through `t−15`, inclusive. If the full interval lies in
+the session, at least nine closes are observed and positive, and the maximum
+is no greater than 1.03 times the minimum, hold 120 clock minutes from the
+first fill. Otherwise hold 60 minutes from that fill. Apply the same auction
+fallback and bar-based exit participation. Choose the duration at the
+signal, without using later prices. The quiet condition changes the exit
+only. No new price, group, time, size or cost thresholds are registered.
+
+The entry signal already passed the same full and 2013–2016 event gates
+at both fixed horizons in the saved study
+`20261116T164207Z_gpt_relative_dislocation_reversal_a740b270`. Use those
+preregistered reviews as the study gate for taking the unchanged entry
+to a portfolio test. The native event study reports fixed horizons and
+cannot measure this conditional exit. The separate 12-point quiet study
+`20261116T164732Z_gpt_relative_dislocation_reversal_7bceca33` motivates
+the holding rule and is not an independent test or a new selection gate.
+Record a develop decision before the single portfolio run
+`development_liquid_peer_recovery_quiet_hold` on 2003-09-10 through
+2016-12-30. Compare the two duration groups and the fixed portfolios in
+the saved runs. Use the same portfolio gates, including a stressed daily
+Sharpe strictly above 1 and all sample, return and drawdown thresholds.
+
+Only if qualified, run `validation_liquid_peer_recovery_quiet_hold`
+once on 2017-01-03 through 2023-11-08. Keep all validation bars including
+the +3% mean net per completed trade at 1× both overall and in 2022 through
+2023-11-08, sample minima and the separate 2× stress requirements. Every
+new run counts in `intraday_rebound`. Record this additional exit selection
+look in the report. The sealed holdout remains excluded.
