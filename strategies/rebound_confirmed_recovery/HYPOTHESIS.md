@@ -81,3 +81,56 @@ annual results. Event-study dollar statistics are unconstrained hypothetical P&L
 Minute opens and auctions do not establish executable quotes or order size. The
 pre-open filing proxy misses announcements, stale closes and splits can distort drops,
 and stored category labels have the known snapshot caveat.
+
+## Addendum, 2026-11-15: volume and momentum at confirmation
+
+The original portfolio run (`20261116T013621Z_gpt_rebound_confirmed_recovery_2b36bc0c`)
+earned +1.69% per trade at 1× and +1.13% at 2×, with 0.42 annualised Sharpe at 2×.
+Its average executed order was $1,376 against the $2,000 target. This fixed joint test
+asks whether buying on a rising minute with more observed turnover preserves the rebound
+while making the next fill less costly and less dependent on thin prints.
+
+Use the original event, reference price, recovery window and eligibility. Within that
+same window, take the first confirmation that also meets **both** criteria:
+
+- The confirmation close is strictly higher than the close one clock minute earlier.
+  Both must be post-event bars. A stale print does not count.
+- Confirmation-bar turnover, approximated by close times volume, is at least **$40,000**.
+  This is the $2,000 order divided by the 5% participation rate, fixed from account
+  mechanics. It measures the completed signal bar. The simulator still sizes and caps
+  the order using the actual next bar. Turnover measures two-sided activity and cannot
+  establish buy-side imbalance, next-bar depth, or a fill at the signal price.
+
+Use the same next-minute-only market order, auction exit, risk, and costs. The added
+conditions can delay the confirmation or suppress it. This test measures their joint
+effect together with that timing change. No separate threshold or factor sweeps are
+registered. The existing development runs are comparators and will not be rerun.
+
+The branch starts from Kinn's published integration tip `462efdb`. The shared
+`intraday_rebound` count was 65 at registration, including prior looks. The original
+confirmed entry is the control and `x_o4` is the fixed passive single-entry comparison.
+The later passive ladder reports filled rungs as trades and is separate context.
+
+1. Run `development_volume_momentum --study` on 2003-09-10 through 2016-12-30.
+   Advance using the original study gate at the close: at least 200 events across
+   120 sessions, gross mean at least +1.30%, positive lower 95% day-clustered
+   gross interval, and positive 2× mean net overall and in each of 2003–2009 and
+   2010–2016. Recheck the same gates on next-bar-only events if the study entered
+   any after expiry. Compare entry-bar capacity and costs with the saved original
+   study. Park if a gate fails.
+2. After a committed develop verdict, run `development_volume_momentum` as a portfolio
+   backtest on the same dates. Require at least 200 trades across 120 sessions, 1× mean
+   net per trade at least equal to the original confirmed-entry portfolio, 2× mean
+   net per trade higher than both fixed development comparators, positive 2× dollar
+   P&L in both development halves, 2× annualised daily Sharpe above 1 and 2× worst
+   end-of-day drawdown under $10,000. Use exact stored comparator values. Report mean
+   executed notional, round-trip cost and the share of net profit from the strongest
+   year as diagnostics. Park if a gate fails.
+3. If qualified, run `validation_volume_momentum` once on 2017-01-03 through 2023-11-08,
+   with the same comparison and risk bars as in the original validation plan. Retain
+   the +2% target and +3% stretch at 1×. Use the preregistered paired-session bootstrap
+   against `x_o4` for the difference in mean at 1×, and require an actual fill check
+   before paper trading. The original confirmed entry has no validation result.
+
+Count every run. Report both cost scenarios, counts, daily t-statistics, drawdowns
+and yearly returns. Never query the sealed holdout.
