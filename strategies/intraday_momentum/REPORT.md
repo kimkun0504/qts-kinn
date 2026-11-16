@@ -1,0 +1,3 @@
+# Intraday momentum and VWAP
+
+No result yet. Plan: [HYPOTHESIS.md](HYPOTHESIS.md).
