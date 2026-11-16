@@ -73,3 +73,39 @@ cent a share:
 
 Nothing passes. For A the 10 bp level is an assumption like the 5 bp one; the measured figure
 replaces both (HYPOTHESIS.md, addendum of 01:10 ET). 630 trades have been drawn for it.
+
+## Which stocks, and four positions at a time, 2026-11-16 (addendum of 01:40 ET)
+
+**Verdict: choosing by relative volume does not concentrate the return, and holding only four
+names halves the Sharpe. Share price matters for cost: the rule has the most room in $50 to
+$100 stocks.** Same development trades, 34 more measurements (145 in the family).
+
+Return per trade before slippage, VWAP exit (fixed stop in brackets):
+
+| Relative volume rank | Trades | Gross per trade | Breaks even at |
+|---|---|---|---|
+| 1 to 4 | 10,379 | +0.24% (+0.15%) | 10.4 bp (6.0) |
+| 5 to 10 | 15,689 | +0.22% (+0.18%) | 9.6 bp (7.5) |
+| 11 to 20 | 26,318 | +0.19% (+0.16%) | 7.9 bp (6.7) |
+
+- The most active four are a little better with the VWAP exit and no better with the fixed
+  stop. Thresholds on relative volume (3, 5, 10 times normal) say the same.
+- **Four positions:** the top four alone, at 5 bp, have a Sharpe of 1.2 against 2.3 for all
+  twenty. The edge per trade is the same, so fewer trades only means more luck in each day.
+  At $20,000 a position (four times the account) the worst drawdown is $23,000, more than the
+  account.
+- Long only is weaker in the top four (+0.16%, breaks even at 6.3 bp).
+
+By share price, VWAP exit, with slippage in cents a share a side:
+
+| Price | Trades | Gross per trade | Breaks even at | Sharpe at 1 / 2 / 3 cents |
+|---|---|---|---|---|
+| $5 to $20 | 11,370 | +0.36% | 1.9 cents | 1.35 / −0.16 / −1.67 |
+| $20 to $50 | 27,230 | +0.18% | 2.5 cents | 2.45 / 0.77 / −0.90 |
+| $50 to $100 | 11,804 | +0.14% | 3.8 cents | 1.86 / 1.19 / 0.51 |
+| Over $100 | 1,953 | +0.06% | 2.7 cents | 0.25 / 0.11 / −0.04 |
+| All | 52,386 | +0.21% | about 2.4 cents | 3.02 / 0.77 / −1.48 |
+
+In cents the whole question is simple: at 1 cent a share each way the rule earns about
+$15,900 a year on the account; at 2 cents about $4,100; at 3 cents it loses. The fill
+measurement will say which.
