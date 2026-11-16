@@ -372,3 +372,28 @@ the rule: all but `s_o8`, `s_o6_m` and `s_o8_m` (under 1,000 trades). The highes
 t-statistic at 2× slippage among the eligible is **`s_l468`** (5.30): all stocks, a third of the
 position each 4%, 6% and 8% below the event bar's close. It is run once on 2017-01-03 to
 2023-11-08 as `validation_s_l468`, with identical parameters and sizing.
+
+## Addendum, 2026-11-15 21:05 ET: fill check for the ladder (written before its plan is built)
+
+**What is checked.** The same hypothesis, measures and pass bars as the fill check of `x_o4`
+(addendum of 19:50 ET), unchanged, applied to every filled rung of `s_l468`: development run
+`…3d866b2f` (5,653 rung trades) and validation run `…437947d4` (3,001), plus the same sample
+of unfilled orders per period, market-cap group and kind, drawn from the ladder's rung orders.
+Results are also reported by rung (4%, 6%, 8%).
+
+**Pass bars (the same three):** tick data for at least 95% of the traded rungs; at least 97%
+confirmed by a through-print in each period; on validation, net per trade at 2× of at least
++1.0% at the tick-rule quantity with 5 seconds of latency, keeping at least 80% of the
+simulated net at 2× in each period.
+
+**What has already been seen.** A preview on the ticks downloaded for `x_o4` covered 96% of the
+ladder's validation rung trades and 95% of development's, all confirmed (REPORT.md). The rungs
+not covered are events `x_o4` had no capital for; they earn more than average, so the preview
+could not stand in for the check. The bars above were set before the preview and are not
+changed by it.
+
+**Data.** Windows already downloaded for `x_o4` (plan `fillcheck_x_o4`) are read where they
+are; the owner downloads only the missing windows (plan `fillcheck_s_l468`). A ladder's rungs
+share one window: the event bar to the orders' expiry.
+
+**Trials.** Recorded in the run store and charged as one trial (family total 66).
