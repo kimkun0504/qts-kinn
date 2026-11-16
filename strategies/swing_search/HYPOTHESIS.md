@@ -281,3 +281,18 @@ or more, and four years of five positive. In the search years it made 0.9% (2010
 basis, weekly t 3.22, four years of five positive (2008: −3.94%). It passes the test as
 written. It is not taken forward: 0.80% of the 1.78% is over the market, and filling the
 earnings book's idle slots with it lowers the book's Sharpe ratio and raises its drawdown.
+
+## Addendum, 2026-11-16 16:25 ET: sliding windows and market cycles (owner's question)
+
+Asked after the holdout run; a description of the rule on years already read (2005 to
+October 2023), not a new search and not a change to the frozen rule.
+
+1. **Sliding-window choice of the thresholds.** For each year Y from 2010 to 2023, the cell of
+   family 18's grid (180 cells) with the highest weekly t-statistic on the five years before Y
+   (signals to 8 December of Y−1; at least 150 trades and a mean of 2% on the auction basis)
+   is traded in year Y. The same with all years before Y instead of five. Both are set beside
+   the fixed rule A50 on the same years. The question: does re-fitting to recent years beat a
+   rule that never changes?
+2. **Market cycles.** A50's trades grouped by named stretches of the market (the 2005–2007
+   rise, the 2007–2009 fall, the 2009–2010 recovery, and so on to 2023), with the mean, the
+   share of winners and the number of trades in each.
