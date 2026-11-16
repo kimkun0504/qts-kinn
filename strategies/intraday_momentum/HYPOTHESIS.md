@@ -191,3 +191,21 @@ number of cents, so it is a smaller share of an expensive stock: 2 cents is 10 b
 2 bp at $100. If the return per trade (in percent) is similar across prices, expensive stocks
 are where the rule survives. Buckets: under $20, $20 to $50, $50 to $100, over $100. Read as
 the break-even in cents a share.
+
+## Addendum, 2026-11-16 02:00 ET: three selectors (owner's request), declared before looking
+
+Same development breakout trades (5-minute range, 52,386). Each selector uses only what is
+known at 09:35.
+
+1. **News.** (a) An 8-K dated since the prior session's date and before today. (b) The same,
+   limited to earnings 8-Ks (item code 22). A filing dated today is not used: the data has no
+   time of day, so a release before the open cannot be told from one after the close.
+2. **Gap.** The open against the prior close: with the breakout by 1% or more, against it by
+   1% or more, or flat; and with it by 3% or more.
+3. **Range.** The height of the opening 5-minute range as a share of the 14-day mean true
+   range: lowest third, middle third, highest third.
+
+**Reading, set now.** A selector is worth building on only if the chosen group earns at least
+twice the unchosen group before slippage, in both halves of development (2003 to 2009 and
+2010 to 2016). Anything less is reported as no use. Results are given for the VWAP exit and
+the fixed stop, with the break-even in cents a share. About 20 more measurements.
