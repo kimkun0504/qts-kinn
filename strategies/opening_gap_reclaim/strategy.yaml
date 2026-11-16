@@ -1,5 +1,5 @@
 name: opening_gap_reclaim
-status: hypothesis
+status: parked
 engine: intraday
 universe: opening_gap_reclaim
 cost_calibration: ibkr_pro_tiered
