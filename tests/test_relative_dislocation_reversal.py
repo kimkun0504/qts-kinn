@@ -37,16 +37,21 @@ def view(
     *,
     peer_count=30,
     peer_at_600=100,
+    peer_at_599=None,
     first_peer_minute=585,
     adv=10e6,
     cap=500e6,
     volume=5_000,
 ):
+    peer_rows = [(first_peer_minute, 100)]
+    if peer_at_599 is not None:
+        peer_rows.append((599, peer_at_599))
+    peer_rows.extend([(600, peer_at_600), (620, 20), (910, 200)])
     symbols = {
         f"P{i:02d}": stock(
             f"P{i:02d}",
             i + 1,
-            [(first_peer_minute, 100), (600, peer_at_600), (620, 20), (910, 200)],
+            peer_rows,
             50e9,
             50e6,
             10_000,
@@ -137,3 +142,27 @@ def test_one_hour_config_only_changes_the_exit(phase):
     _, one_hour = runner.load_config(NAME, f"{phase}_liquid_one_hour")
     assert one_hour["params"].pop("one_hour_exit") is True
     assert one_hour == close_variant
+
+
+def test_peer_recovery_demands_relative_strength_and_synchronous_endpoints():
+    kwargs = {"liquid_cohort": True, "one_hour_exit": True}
+    baseline = runner.load_strategy(NAME, kwargs)
+    strategy = runner.load_strategy(NAME, {**kwargs, "peer_recovery": True})
+    gate = {"cap": 4e9, "adv": 10e6}
+    expected = Signal("ABC", 600, expire_minute=601, max_hold_minutes=60)
+    flat = view(**gate, peer_at_599=100)
+    found = day_signals(strategy, flat)
+    assert found == [expected]
+    check_no_lookahead(strategy, flat, found, [585, 599, 600, 601, 910])
+    common_bounce = view(**gate, peer_at_599=99)
+    assert day_signals(baseline, common_bounce) == [expected]
+    assert day_signals(strategy, common_bounce) == []
+    assert day_signals(strategy, view(**gate)) == []
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_peer_recovery_config_only_changes_the_confirmation(phase):
+    _, base = runner.load_config(NAME, f"{phase}_liquid_one_hour")
+    _, variant = runner.load_config(NAME, f"{phase}_liquid_peer_recovery")
+    assert variant["params"].pop("peer_recovery") is True
+    assert variant == base
