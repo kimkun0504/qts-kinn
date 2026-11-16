@@ -14,10 +14,10 @@ from collections import defaultdict
 
 import duckdb
 import numpy as np
+from swing_early import PERIODS, RULES
 
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
-from swing_early import PERIODS, RULES
 
 HOLD, SLOTS, SIZE, CAPITAL = 15, 10, 2000.0, 20000.0
 BASES = {
@@ -66,7 +66,7 @@ def paths(rule: str, period: str, rank: str = "ret2"):
     return found
 
 
-def run(found: dict, basis: int, slots: int = SLOTS):
+def run(found: dict, basis: int, slots: int = SLOTS, size: float = SIZE):
     """Daily profit of the book, and the trades it took."""
     by_entry = defaultdict(list)
     for key, t in found.items():
@@ -86,21 +86,22 @@ def run(found: dict, basis: int, slots: int = SLOTS):
             taken += 1
             open_until[key] = t["dates"][-1]
             cost = t["costs"][basis]
-            value = SIZE * (1 - cost)
-            daily[t["dates"][0]] -= SIZE * cost
+            value = size * (1 - cost)
+            daily[t["dates"][0]] -= size * cost
             for date, r in zip(t["dates"], t["r"], strict=True):
                 moved = value * (np.exp(r) - 1)
                 daily[date] += moved
                 value += moved
             daily[t["dates"][-1]] -= value * cost
-            results.append((key[0], value * (1 - cost) / SIZE - 1))
+            results.append((key[0], value * (1 - cost) / size - 1))
     return days, np.array([daily[d] for d in days]), taken, skipped, results
 
 
-def report(found: dict, label: str) -> None:
-    print(f"{label}: {len(found)} signals")
+def report(found: dict, label: str, slots: int = SLOTS) -> None:
+    size = CAPITAL / slots
+    print(f"{label}: {len(found)} signals; {slots} positions of ${size:,.0f}")
     for basis, name in enumerate(BASES):
-        days, pnl, taken, skipped, results = run(found, basis)
+        days, pnl, taken, skipped, results = run(found, basis, slots, size)
         equity = np.cumsum(pnl)
         drawdown = (np.maximum.accumulate(equity) - equity).max()
         years = (days[-1] - days[0]).days / 365.25
@@ -110,18 +111,20 @@ def report(found: dict, label: str) -> None:
               f"{years:.1f} years (${equity[-1] / years:,.0f} a year, "
               f"{100 * equity[-1] / years / CAPITAL:.1f}% of ${CAPITAL:,.0f}); a trade "
               f"{100 * r.mean():.2f}%; Sharpe {sharpe:.2f}; worst drawdown ${drawdown:,.0f}")  # fmt: skip
-        if basis != 1:
+        if basis == 2:
             continue
         by_year = defaultdict(float)
         for d, x in zip(days, pnl, strict=True):
             by_year[d.year] += x
-        print("    by year, spread crossed: "
+        print("    by year: "
               + "  ".join(f"{y} ${v:,.0f}" for y, v in sorted(by_year.items())))  # fmt: skip
 
 
 if __name__ == "__main__":
     rule = sys.argv[1]
+    periods = [a for a in sys.argv[2:] if not a.isdigit()]
     found: dict = {}
-    for period in sys.argv[2:]:
+    for period in periods:
         found.update(paths(rule, period))
-    report(found, f"rule {rule}, {' + '.join(sys.argv[2:])}")
+    for slots in [int(a) for a in sys.argv[2:] if a.isdigit()] or [SLOTS]:
+        report(found, f"rule {rule}, {' + '.join(periods)}", slots)

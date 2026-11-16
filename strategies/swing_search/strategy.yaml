@@ -1,8 +1,8 @@
 name: swing_search
-status: hypothesis        # owner's search for a profitable swing rule, holds of 1 to 3 weeks; see HYPOTHESIS.md
+status: event-study       # rule A (earnings drift, stocks under $300M) passed 2005-2009 and the 2023 check; fills unmeasured; see REPORT.md
 engine: daily
 universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: swing_search
-prior_trials: 0
+prior_trials: 11823
