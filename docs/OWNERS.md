@@ -19,7 +19,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/random_entry` | claude | 2026-11-15 | canary; change only with the canary tests |
 | `strategies/rebound_limit` | claude | 2026-11-16 | parked: failed the holdout; reversal signals and fast-fall entries did not reach the target, see its REPORT.md |
 | `strategies/intraday_momentum` | claude | 2026-11-16 | development study and fill measurement done: marginal, owner to decide; see its REPORT.md |
-| `strategies/recent_search` | claude | 2026-11-16 | hypothesis: overnight search on 2018–2022, owner's instruction |
+| `strategies/recent_search` | claude | 2026-11-16 | parked: 2,171 cells on 2018–2022, no long candidate; see its REPORT.md |
 | `strategies/intraday_rebound_passive` | claude | 2026-11-15 | tick study; not established |
 | `strategies/momentum_12_1` | claude | 2026-11-15 | daily; parked |
 | `strategies/opening_gap_continuation` | gpt | 2026-11-15 | opening gap continuation, long only |

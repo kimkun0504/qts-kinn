@@ -120,3 +120,9 @@ over 10%), and 8-K news (earnings, other, none). Buy at the first premarket prin
 that time (within 15 minutes, or no trade); sell at the first regular print (09:30), at 09:35,
 at 10:00, or at the close. 756 cells. Costs: the premarket entry pays twice the regular
 half-spread, the exit the regular one, both doubled at 2×, plus commission.
+
+## Addendum, 2026-11-16 04:50 ET: family 9 result; the search stops here for tonight
+
+Family 9 (716 cells): no candidate; the best long cell nets −0.05%. With families 1 to 8 and
+10 that is 2,171 cells and none shortlisted, so the 2023 check was not opened. Results and
+what they mean are in REPORT.md.

@@ -213,6 +213,73 @@ def limits(years: str = "yr <= 2022") -> None:
         print("  ", r[:4], f"net {100 * r[7]:.2f}% t {r[8]:.1f} fills {r[4]:.0f}")
 
 
+def premarket(years: str = "yr <= 2022") -> None:
+    """Family 9: buy before the open at 07:00, 08:00 or 09:00; sell at the open or after."""
+    settings = load_settings()
+    base = settings.data_dir / "research" / "recent"
+    con = connect()
+    con.execute(
+        f"""create view pm as
+            select b.*, p.* exclude (day, symbol)
+            from read_parquet('{base}/premarket/*.parquet') p join b using (day, symbol)"""
+    )
+    exits = {
+        "open": "open_px", "09:35": "case when ok575 then official_close / (1 + r575) end",
+        "10:00": "case when ok600 then official_close / (1 + r600) end", "close": "official_close",
+    }  # fmt: skip
+    found = []
+    for t in (420, 480, 540):
+        for name, price in exits.items():
+            per_year = ", ".join(
+                f"sum(net * n) filter (yr = {y}) / nullif(sum(n) filter (yr = {y}), 0)"
+                for y in YEARS
+            )
+            rows = con.execute(
+                f"""with x as (
+                        select {cut(f"c{t} / prev_close - 1", [-0.20, -0.10, -0.05, 0.05, 0.10, 0.20, 0.50])} as move,
+                               {cut(f"dv{t} / adv", [0.01, 0.10])} as part, {NEWS} as news,
+                               day, yr, ({price}) / e{t} - 1 as r,
+                               6 * half_spread + 2 * commission as cost
+                        from pm where em{t} <= {t + 15} and em{t} < 570 and c{t} is not null
+                          and abs(c{t} / prev_close - 1) >= 0.05 and {years}),
+                    d as (select move, part, news, day, any_value(yr) as yr, count(*) as n,
+                                 avg(r - cost) as net, avg(r) as gross, avg(-r - cost) as short
+                          from x where r is not null group by 1, 2, 3, 4)
+                    select move, part, news, sum(n), sum(gross * n) / sum(n),
+                           sum(net * n) / sum(n),
+                           avg(net) / nullif(stddev_samp(net) / sqrt(count(*)), 0),
+                           sum(short * n) / sum(n), {per_year}
+                    from d group by 1, 2, 3"""
+            ).fetchall()
+            found += [(t, name, *r) for r in rows]
+    keep = [r for r in found if r[5] >= 300]
+    print(f"cells: {len(found)}; with 300+ trades: {len(keep)}")
+    head = (f"{'time':>5}{'exit':>7}{'move':>10}{'pm vol':>8}{'news':>9}{'trades':>7}{'gross%':>8}"
+            f"{'net%':>7}{'t':>6}{'short%':>8}   2018   2019   2020   2021   2022")  # fmt: skip
+
+    def line(r) -> str:
+        t, name, move, part, news_, n, gross, net, tstat, short, *by = r
+        years_text = " ".join(f"{100 * (v or 0):6.1f}" for v in by)
+        return (f"{t // 60:02d}:{t % 60:02d}{name:>7}{move:>10}{part:>8}{news_:>9}{n:>7.0f}"
+                f"{100 * gross:>8.2f}{100 * net:>7.2f}{tstat or 0:>6.1f}{100 * short:>8.2f}  "
+                f"{years_text}")  # fmt: skip
+
+    print("best long cells\n" + head)
+    for r in sorted(keep, key=lambda r: -r[7])[:14]:
+        print(line(r))
+    print("best short cells (information)\n" + head)
+    for r in sorted(keep, key=lambda r: -r[9])[:8]:
+        print(line(r))
+    good = [
+        r for r in keep if r[7] >= 0.03 and (r[8] or 0) >= 4 and all(v and v > 0 for v in r[10:])
+    ]
+    near = [r for r in keep if 0.015 <= r[7] < 0.03 and (r[8] or 0) >= 4
+            and all(v and v > 0 for v in r[10:])]  # fmt: skip
+    print(f"shortlisted: {len(good)}; near misses: {len(near)}")
+    for r in good + near:
+        print(line(r))
+
+
 def cell(t: int, where: str, check: bool) -> None:
     con = connect()
     rows, names = measure(con, t, where, {}, "yr = 2023" if check else "yr <= 2022")
@@ -223,7 +290,7 @@ def cell(t: int, where: str, check: bool) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("what", choices=("news", "family", "cell", "limits"))
+    parser.add_argument("what", choices=("news", "family", "cell", "limits", "premarket"))
     parser.add_argument("args", nargs="*")
     parser.add_argument("--check", action="store_true")
     a = parser.parse_args()
@@ -233,6 +300,8 @@ if __name__ == "__main__":
         family(int(a.args[0]))
     elif a.what == "limits":
         limits()
+    elif a.what == "premarket":
+        premarket()
     else:
         cell(int(a.args[0]), a.args[1], a.check)
     sys.stdout.flush()
