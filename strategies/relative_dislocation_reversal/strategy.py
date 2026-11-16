@@ -31,6 +31,14 @@ def median_peer_return(returns: np.ndarray) -> np.ndarray:
     return median
 
 
+def has_quiet_baseline(close: np.ndarray, current: int) -> bool:
+    if current < 25:
+        return False
+    baseline = close[current - 25 : current - 14]
+    valid = baseline[np.isfinite(baseline) & (baseline > 0)]
+    return len(valid) >= 9 and valid.max() <= 1.03 * valid.min()
+
+
 class RelativeDislocationReversal:
     name = "relative_dislocation_reversal"
     features = (f.MARKETCAP, f.ADV20)
@@ -41,10 +49,12 @@ class RelativeDislocationReversal:
         liquid_cohort: bool = False,
         one_hour_exit: bool = False,
         peer_recovery: bool = False,
+        quiet_baseline: bool = False,
     ):
         self.liquid_cohort = liquid_cohort
         self.max_hold_minutes = 60 if one_hour_exit else None
         self.peer_recovery = peer_recovery
+        self.quiet_baseline = quiet_baseline
         min_adv = 10_000_000 if liquid_cohort else 1_000_000
         self.universe = Universe(self.name, min_prev_close=2, min_adv20=min_adv)
 
@@ -87,8 +97,10 @@ class RelativeDislocationReversal:
                 recovered &= excess_recovery >= 0.01
             turnover = close[current] * bars.volume[in_window]
             hits = np.flatnonzero((excess <= -0.12) & recovered & (turnover >= 40_000))
-            if len(hits):
-                decision = int(minute[hits[0]])
+            for hit in hits:
+                if self.quiet_baseline and not has_quiet_baseline(close, int(current[hit])):
+                    continue
+                decision = int(minute[hit])
                 found.append(
                     Signal(
                         symbol,
@@ -97,23 +109,30 @@ class RelativeDislocationReversal:
                         max_hold_minutes=self.max_hold_minutes,
                     )
                 )
+                break
         return found
 
 
 def build(params: dict) -> RelativeDislocationReversal:
-    if params.keys() - {"liquid_cohort", "one_hour_exit", "peer_recovery"}:
+    if params.keys() - {"liquid_cohort", "one_hour_exit", "peer_recovery", "quiet_baseline"}:
         raise ValueError("unrecognised relative_dislocation_reversal parameter")
     liquid_cohort = params.get("liquid_cohort", False)
     one_hour_exit = params.get("one_hour_exit", False)
     peer_recovery = params.get("peer_recovery", False)
-    if not all(isinstance(p, bool) for p in (liquid_cohort, one_hour_exit, peer_recovery)):
-        raise ValueError("liquid_cohort, one_hour_exit and peer_recovery must be booleans")
+    quiet_baseline = params.get("quiet_baseline", False)
+    if not all(
+        isinstance(p, bool) for p in (liquid_cohort, one_hour_exit, peer_recovery, quiet_baseline)
+    ):
+        raise ValueError("relative dislocation parameters must be booleans")
     if one_hour_exit and not liquid_cohort:
         raise ValueError("one_hour_exit requires the liquid cohort")
     if peer_recovery and not one_hour_exit:
         raise ValueError("peer_recovery requires the one-hour exit")
+    if quiet_baseline and (not one_hour_exit or peer_recovery):
+        raise ValueError("quiet_baseline requires the one-hour exit with absolute recovery")
     return RelativeDislocationReversal(
         liquid_cohort=liquid_cohort,
         one_hour_exit=one_hour_exit,
         peer_recovery=peer_recovery,
+        quiet_baseline=quiet_baseline,
     )

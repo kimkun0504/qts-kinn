@@ -166,3 +166,25 @@ def test_peer_recovery_config_only_changes_the_confirmation(phase):
     _, variant = runner.load_config(NAME, f"{phase}_liquid_peer_recovery")
     assert variant["params"].pop("peer_recovery") is True
     assert variant == base
+
+
+def test_quiet_baseline_uses_only_closes_before_the_dislocation():
+    strategy = runner.load_strategy(
+        NAME, {"liquid_cohort": True, "one_hour_exit": True, "quiet_baseline": True}
+    )
+    earlier = [(m, 10.0) for m in range(575, 586)]
+    expected = Signal("ABC", 600, expire_minute=601, max_hold_minutes=60)
+    quiet = view([*earlier, *TARGET[1:]])
+    found = day_signals(strategy, quiet)
+    assert found == [expected]
+    check_no_lookahead(strategy, quiet, found, [575, 585, 599, 600, 601, 910])
+    assert day_signals(strategy, view([(575, 9.5), *earlier[1:], *TARGET[1:]])) == []
+    assert day_signals(strategy, view([*earlier[3:], *TARGET[1:]])) == []
+
+
+@pytest.mark.parametrize("phase", ["development", "validation"])
+def test_quiet_baseline_config_only_changes_the_pre_shock_condition(phase):
+    _, base = runner.load_config(NAME, f"{phase}_liquid_one_hour")
+    _, variant = runner.load_config(NAME, f"{phase}_liquid_quiet_baseline")
+    assert variant["params"].pop("quiet_baseline") is True
+    assert variant == base
