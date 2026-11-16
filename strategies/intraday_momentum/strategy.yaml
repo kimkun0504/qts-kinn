@@ -1,5 +1,5 @@
 name: intraday_momentum
-status: event-study       # development study done 2026-11-16; opening range breakout awaits a fill measurement; see REPORT.md
+status: event-study       # fills measured 2026-11-16: marginal (7.9 bp a side); profit is short-side and speed-dependent; owner to decide; see REPORT.md
 engine: intraday
 universe: A, listed common stock in play (price over $5, 1M shares a day); B and C, the ETFs QQQ and SPY
 cost_calibration: ibkr_pro_tiered

@@ -140,3 +140,56 @@ VWAP exit, $4,000 a position, slippage in cents a share each way:
 - The fixed stop tells the same story at lower levels (gap 3%: +0.26%; earnings: +0.24%).
 - Not tested: the two together, or any tuning of the 3%. Each would be another look at the
   same trades.
+
+## Real fills, 2026-11-16 (addenda of 01:10 and 02:20 ET)
+
+**Verdict: marginal, by the rule set before measuring (cost a side 7.9 bp; the line for
+parking was 8, for going ahead 5). The price runs about 2 cents in the second after the
+breakout, so the result depends on how fast the order arrives, and what profit survives is on
+the short side, which is the hardest side to trade.**
+
+Ticks for 630 development trades drawn at random (605 with a usable trigger; the trigger was
+inside the entry bar in every one). Code: `research/claude/momentum_fill_cost.py`.
+
+| | Mean | Median | In basis points |
+|---|---|---|---|
+| Entry, quote at the instant of the trigger, against the study's price | 1.9 cents | | 4 to 7 by price |
+| Entry, quote one second later (the figure declared as the main one) | 3.8 cents | 2.0 cents | 10.5 |
+| Half-spread during the next 20 minutes (the cost of a market exit) | 1.9 cents | 1.3 cents | 5.4 |
+| **Cost a side** (mean of entry at one second and exit) | 2.9 cents | | **7.9** |
+| Fixed stop, fill against the stop price | about 0 | | |
+
+- Costs by price: $5–20, 11.1 bp a side; $20–50, 7.3; $50–100, 5.9; over $100, 9.4. By period:
+  6.4 bp in 2003–2006 and 9.7 in 2013–2016. Later years cost more at one second, not less.
+- The fixed stop was reached within 20 minutes in 65% of trades, and inside the entry bar,
+  after the entry, in 12%. Bars cannot see those; the fixed-stop results above are too kind.
+
+The development trades again with the measured costs (entry and exit basis points by price
+bucket), VWAP exit, $4,000 a position:
+
+| | Entry one second after the trigger | Entry at the trigger |
+|---|---|---|
+| All trades | Sharpe 0.60, $3,148 a year, 9 of 14 years | 2.21, $11,678, 14 of 14 |
+| Long only | −0.09, −$331, 6 of 14 | 1.06, $3,984, 13 of 14 |
+| Short only | 0.84, $3,479, 12 of 14 | 1.85, $7,694, 13 of 14 |
+| Gap 3% or more with the breakout | 1.23, $3,925, 13 of 14 | 1.68, $5,347, 13 of 14 |
+| Gap 3% or more, long only | 0.08, $161, 7 of 14 | 0.46, $918, 10 of 14 |
+| Gap 3% or more, short only | 1.48, $3,764, 12 of 14 | 1.73, $4,429, 12 of 14 |
+
+With the published fixed stop: −0.68 and −$3,329 a year at one second; 1.06 and $5,202 at the
+trigger.
+
+What this says:
+
+- **Speed decides it.** A stop order resting at the broker fires within milliseconds and
+  fills near the left column's neighbour, "at the trigger". A program that reacts to a bar or
+  a delayed feed fills nearer "one second later". The truth for a resting stop is between the
+  two and closer to the first; it has not been measured to the millisecond.
+- **The long side barely pays.** At one second it loses; at the trigger it makes about $4,000
+  a year on the account.
+- **The profit is in the shorts**, above all stocks that gap down 3% or more and then break
+  their opening low. That side is flattered here: borrow cost and availability are ignored;
+  before July 2007 a short could not be sold on a downtick at all; and since 2011 a stock
+  down 10% on the day cannot be shorted at the bid. None of that is in these numbers.
+- The gap selector was found after the first look, among several cuts; with the costs sample
+  at 126 trades for it, its figures are the least certain in the table.
