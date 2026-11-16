@@ -118,3 +118,31 @@ validation gates, including the separate +3% recent return hurdle.
 
 Count the portfolio runs as `intraday_rebound` trials and disclose the horizon
 look. No other holding time is registered. Do not use sealed market data.
+
+## Addendum, 2026-11-16: at most two simultaneous positions
+
+The fixed one-hour portfolio run `20261116T062349Z_gpt_relative_dislocation_reversal_034697eb`
+passed the return and sample bars, and missed on stressed Sharpe. Its stored entry and
+exit minutes show nine sessions with more than two overlapping trades. The absolute
+number of overlaps is small, but related stocks can be hit by the same temporary
+liquidity shock. Capping simultaneous exposure could reduce that concentration.
+It could also discard valuable fills or increase dependence on admission order.
+
+Test exactly one change, `risk.max_positions: 2`, in the liquid cohort's one-hour
+configuration. The $2,000 target per order means the nominal concurrent target is
+$4,000 on the $20,000 account. Preserve Kinn's reservation, expiry, buying power
+and chronological priority rules. Leave all signal, universe, holding time and
+cost settings as registered. The saved one-hour study and previous portfolio run
+remain in the research record.
+
+Run `development_liquid_one_hour_two_positions` once on 2003-09-10 to 2016-12-30.
+Apply every original development portfolio gate, including the gross-return study
+gate already assessed on the identical signal, 2013–2016 returns, and 2× daily Sharpe
+strictly above 1. Compare the actual fills, total net and portfolio risk to the saved
+uncapped-in-practice ten-slot variant. Count the trial in `intraday_rebound`.
+
+Only if qualified, run `validation_liquid_one_hour_two_positions` once on 2017-01-03
+through 2023-11-08. Apply the unchanged validation gates, including the +3% all-trade
+mean at 1× overall and in the recent block and the stressed risk gates. Report the
+average winner, average loser and sample size separately. No other position cap is
+registered and the sealed holdout stays excluded.
