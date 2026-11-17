@@ -1,0 +1,8 @@
+name: equity_sale_gap_reclaim
+status: parked
+engine: intraday
+universe: equity_sale_gap_reclaim
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
