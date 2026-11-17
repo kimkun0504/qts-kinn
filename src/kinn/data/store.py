@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from collections.abc import Mapping
+from datetime import date, timedelta
 from pathlib import Path
 
 import duckdb
@@ -11,6 +12,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from kinn.core.settings import HOLDOUT_START, Settings
+from kinn.data import inputs as inputs_module
 from kinn.data import seal
 from kinn.data.sharadar import SF1_DIMENSIONS, SF1_FIELDS
 from kinn.data.universe import Universe
@@ -23,7 +25,18 @@ MAX_GAP_DAYS = 10
 
 
 class DataStore:
-    def __init__(self, settings: Settings, *, build_id: str | None = None, unseal: bool = False):
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        build_id: str | None = None,
+        unseal: bool = False,
+        inputs: Mapping[str, str] | None = None,
+    ):
+        # ``inputs`` pins versioned inputs by id ({"form4": "<input_id>"}); an input that is
+        # not pinned is read at its current version.
+        self._settings = settings
+        self._inputs = dict(inputs or {})
         # ``unseal=True`` opens the owner's unsealed build (kinn.data.holdout). It needs the
         # owner's token even to open, and every read of a holdout date is logged.
         if unseal:
@@ -114,6 +127,38 @@ class DataStore:
                 where e.date between ? and ? and {self._date_guard("e.date")}
                 order by e.date, s.permaticker""",
             [start, end],
+        )
+
+    def input_id(self, name: str) -> str:
+        """The version of a versioned input this store reads."""
+        return self._inputs.get(name) or inputs_module.current(self._settings, name)
+
+    def form4(self, day: date, *, sessions: int = 1) -> pa.Table:
+        """Insider (Form 4) transactions a strategy may use on session ``day``.
+
+        A filing is available from the first session after its filing date, so this returns
+        filings dated before ``day`` and on or after the ``sessions``-th session before it:
+        ``sessions=1`` is what became available this morning. Nothing filed on ``day`` or
+        later is ever returned.
+        """
+        self._check(day, day, "form4")
+        input_id = self.input_id("form4")
+        meta = inputs_module.info(self._settings, "form4", input_id)
+        if day > date.fromisoformat(meta["last_filed"]) + timedelta(days=7):
+            raise inputs_module.InputError(
+                f"the form4 input {input_id} ends at {meta['last_filed']}; it has nothing to "
+                f"say about {day}. End the run earlier or build a newer input."
+            )
+        earlier = [
+            d for d in self.sessions(day - timedelta(days=14 + 3 * sessions), day) if d < day
+        ]
+        first = earlier[-sessions] if len(earlier) >= sessions else day - timedelta(days=7)
+        path = inputs_module.root(self._settings, "form4") / input_id / "transactions.parquet"
+        return self._query(
+            f"""select * from '{path}'
+                where filed >= ? and filed < ? and {self._date_guard("filed")}
+                order by filed, accession, transaction_code, acquired""",
+            [first, day],
         )
 
     def minute(

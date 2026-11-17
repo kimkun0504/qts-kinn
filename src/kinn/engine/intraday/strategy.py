@@ -18,11 +18,21 @@ FeatureValues = Mapping[str, Mapping[str, Any]]  # symbol -> feature name -> val
 
 
 class Strategy(Protocol):
+    """``inputs`` is optional: a strategy that reads a versioned input declares it, e.g.
+    ``inputs = {"form4": {"sessions": 5}}`` for five sessions of insider disclosures in
+    ``view.disclosures``. The run records the input's version in its manifest."""
+
     name: str
     universe: Universe
     features: Sequence[Feature]
 
     def signals(self, view: DayView, features: FeatureValues) -> list[Signal]: ...
+
+
+def form4_sessions(strategy: Strategy) -> int:
+    """How many sessions of Form 4 disclosures the strategy asked for (0: none)."""
+    wanted = getattr(strategy, "inputs", None) or {}
+    return int(wanted["form4"].get("sessions", 1)) if "form4" in wanted else 0
 
 
 def compute_features(strategy: Strategy, view: DayView) -> dict[str, dict[str, Any]]:

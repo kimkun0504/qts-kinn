@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 
 import numpy as np
 
-from kinn.core.types import RTH_CLOSE, RTH_OPEN
+from kinn.core.types import RTH_CLOSE, RTH_OPEN, Disclosure
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
 
@@ -55,6 +56,9 @@ class DayView:
     open_minute: int
     close_minute: int
     symbols: Mapping[str, SymbolDay]
+    # Insider (Form 4) disclosures by symbol, for strategies that declare the ``form4`` input:
+    # only filings dated before ``day``, so all of it was public before the open.
+    disclosures: Mapping[str, tuple[Disclosure, ...]] = field(default_factory=dict)
 
     def upto(self, last_minute: int) -> DayView:
         return DayView(
@@ -62,6 +66,7 @@ class DayView:
             self.open_minute,
             self.close_minute,
             {s: sd.upto(last_minute) for s, sd in self.symbols.items()},
+            self.disclosures,
         )
 
 
@@ -87,8 +92,24 @@ def make_symbol_day(symbol, permaticker, minute, open_, high, low, close, volume
     )
 
 
-def load_day(store: DataStore, day: date, universe: Universe) -> DayData:
-    """Load the universe's members for ``day`` with their minute bars."""
+def load_disclosures(
+    store: DataStore, day: date, sessions: int, members: Mapping[str, object]
+) -> dict[str, tuple[Disclosure, ...]]:
+    """Form 4 disclosures available on ``day`` for the session's members, matched by the
+    trading symbol on the filing."""
+    names = [f.name for f in dataclasses.fields(Disclosure)]
+    found: dict[str, list[Disclosure]] = {}
+    for row in store.form4(day, sessions=sessions).select(names).to_pylist():
+        if row["symbol"] in members:
+            found.setdefault(row["symbol"], []).append(Disclosure(**row))
+    return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
+
+
+def load_day(
+    store: DataStore, day: date, universe: Universe, *, form4_sessions: int = 0
+) -> DayData:
+    """Load the universe's members for ``day`` with their minute bars, and, when
+    ``form4_sessions`` is positive, the insider disclosures of that many sessions."""
     calendar = store.calendar(day, day).to_pylist()
     close_minute = calendar[0]["close_minute_et"] if calendar else RTH_CLOSE
     built = set(store.panel_columns())
@@ -132,5 +153,6 @@ def load_day(store: DataStore, day: date, universe: Universe) -> DayData:
                 symbol, row["permaticker"], _EMPTY_I, _EMPTY_F, _EMPTY_F, _EMPTY_F, _EMPTY_F,
                 _EMPTY_I, {k: row[k] for k in PRIOR_COLUMNS},
             )  # fmt: skip
-    view = DayView(day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())))
+    disclosures = load_disclosures(store, day, form4_sessions, members) if form4_sessions else {}
+    view = DayView(day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())), disclosures)
     return DayData(view, {s: r["close"] for s, r in members.items() if r["close"] is not None})

@@ -104,6 +104,22 @@ def _check_holdout_reach(settings, strategy: str, config: str) -> None:
         )
 
 
+def _inputs(args: argparse.Namespace) -> int:
+    import json
+
+    from kinn.data import inputs
+
+    settings = load_settings()
+    try:
+        if args.action == "build":
+            input_id = inputs.build_form4(settings)
+            print(f"form4 input {input_id}: built and current")
+        print(json.dumps(inputs.info(settings, args.name), indent=2))
+    except inputs.InputError as error:
+        raise SystemExit(f"refused: {error}") from error
+    return 0
+
+
 def _swing(args: argparse.Namespace) -> int:
     from kinn import swing_run
     from kinn.data.seal import HoldoutError
@@ -414,6 +430,12 @@ def main(argv: list[str] | None = None) -> int:
         help="OWNER ONLY: run on the unsealed holdout build (needs KINN_UNSEAL_TOKEN)",
     )
     run.set_defaults(func=_run)
+    extra = sub.add_parser(
+        "inputs", help="versioned inputs beside the data build: kinn inputs build form4"
+    )
+    extra.add_argument("action", choices=("build", "show"))
+    extra.add_argument("name", choices=("form4",))
+    extra.set_defaults(func=_inputs)
     swing = sub.add_parser(
         "swing", help="run a daily event rule as a book: kinn swing <strategy> --config <name>"
     )

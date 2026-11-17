@@ -49,6 +49,35 @@ class Signal:
 
 
 @dataclass(frozen=True, slots=True)
+class Disclosure:
+    """One line of an insider's Form 4: a filing, a transaction code and a direction.
+
+    ``amount`` is shares times price, summed, in dollars (None when no price was reported);
+    ``purchase_amount`` is that amount for an open-market purchase (code P, acquired) and
+    None otherwise. ``filed`` is the SEC filing date; a strategy sees the disclosure from the
+    first session after it.
+    """
+
+    accession: str
+    issuer_cik: str
+    issuer_name: str
+    symbol: str
+    filed: date
+    document_type: str  # "4" or "4/A"
+    transaction_code: str  # P purchase, S sale, A award, M option exercise, F tax, G gift, ...
+    acquired: str  # "A" acquired, "D" disposed
+    shares: float | None
+    amount: float | None
+    purchase_amount: float | None
+    owner_cik: str | None
+    owner_name: str | None
+    officer: bool
+    director: bool
+    ten_percent_owner: bool
+    title: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class Order:
     symbol: str
     side: str  # "buy" | "sell"

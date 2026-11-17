@@ -26,6 +26,7 @@ from kinn.core.settings import HOLDOUT_START, Settings, load_settings
 from kinn.core.types import Trade
 from kinn.costs import model as cost_model
 from kinn.data import holdout
+from kinn.data.inputs import info as input_info
 from kinn.data.store import DataStore
 from kinn.engine.intraday.data import load_day
 from kinn.engine.intraday.simulator import FillConfig, simulate_day
@@ -34,6 +35,7 @@ from kinn.engine.intraday.strategy import (
     check_no_lookahead,
     compute_features,
     day_signals,
+    form4_sessions,
 )
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
@@ -93,7 +95,10 @@ def run_month_multi(job: dict) -> str:
     """Simulate one month's sessions for several configs of one strategy, loading each session
     once. Every config writes its own part files, exactly as if it had run alone."""
     settings = Settings(**{k: Path(v) for k, v in job["settings"].items()})
-    store = DataStore(settings, build_id=job["build_id"], unseal=job.get("unseal", False))
+    store = DataStore(
+        settings, build_id=job["build_id"], unseal=job.get("unseal", False),
+        inputs=job.get("inputs"),
+    )  # fmt: skip
     costs = cost_model.load(job["cost_calibration"])
     runs = []
     for spec in job["runs"]:
@@ -114,8 +119,9 @@ def run_month_multi(job: dict) -> str:
     share_features = all(
         [f.name for f in r["strategy"].features] == [f.name for f in first.features] for r in runs
     )
+    insider_sessions = max(form4_sessions(r["strategy"]) for r in runs)
     for day in (date.fromisoformat(d) for d in job["sessions"]):
-        data = load_day(store, day, first.universe)
+        data = load_day(store, day, first.universe, form4_sessions=insider_sessions)
         shared = compute_features(first, data.view) if share_features and len(runs) > 1 else None
         for r in runs:
             strategy, counts = r["strategy"], r["counts"]
@@ -190,6 +196,11 @@ def start_run(
     end = date.fromisoformat(str(period.get("end", "2023-11-08")))
     sessions = store.sessions(start, end)  # raises if the period reaches the holdout
     agent = agent or os.environ.get("KINN_AGENT", "human")
+    # Versioned inputs the strategy declares: the run is pinned to today's version of each.
+    used = {}
+    if form4_sessions(load_strategy(strategy, cfg.get("params", {}))):
+        found = input_info(settings, "form4")
+        used["form4"] = {k: found[k] for k in ("input_id", "version", "last_filed", "rows")}
     short = registry.config_hash(
         {
             "meta": meta,
@@ -197,6 +208,7 @@ def start_run(
             "commit": git["commit"],
             "build": store.build_id,
             "kind": kind,
+            **({"inputs": {k: v["input_id"] for k, v in used.items()}} if used else {}),
         }
     )
     run_id = registry.new_run_id(agent, strategy, short)
@@ -226,6 +238,8 @@ def start_run(
         "schemas": {"trades": registry.TRADES_SCHEMA, "equity": registry.EQUITY_SCHEMA,
                     "metrics": registry.METRICS_SCHEMA},
     }  # fmt: skip
+    if used:
+        manifest["inputs"] = used
     if unseal:
         manifest["unsealed"] = True
     registry.write_json(run_dir / "manifest.json", manifest)
@@ -256,6 +270,7 @@ def continue_run(
         "cost_calibration": manifest["cost_calibration"],
         "parts": str(parts),
         "unseal": bool(manifest.get("unsealed", False)),
+        "inputs": {k: v["input_id"] for k, v in manifest.get("inputs", {}).items()},
     }
     deadline = time.time() + budget_seconds
     jobs = [{**base, "month": m, "sessions": months[m], "deadline": deadline} for m in pending]
