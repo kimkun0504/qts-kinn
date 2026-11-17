@@ -1,4 +1,4 @@
-"""Family 24 (addendum of 2026-11-17 15:33 ET in strategies/swing_search/HYPOTHESIS.md): the
+"""Family 24 (addendum of 2026-11-17 15:28 ET in strategies/swing_search/HYPOTHESIS.md): the
 earnings rule read on the session the report could first move the stock, by the SEC's
 acceptance time.
 

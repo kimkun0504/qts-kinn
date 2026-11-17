@@ -568,7 +568,7 @@ keep falling". They do not: the buyer's loss is all between the purchase and tha
 close (−4.3%, −5.0%, −7.0% by span); from that close they make +4.9%, +1.1%, +0.9%. This is
 a split of trades already measured, not a new cell. REPORT.md is corrected.
 
-## Addendum, 2026-11-17 15:33 ET: the rule read on the session the report could first move the stock (family 24)
+## Addendum, 2026-11-17 15:28 ET: the rule read on the session the report could first move the stock (family 24)
 
 Written before it is measured. A50 reads a two-day return at the close of the session after
 the 8-K's *date*, because the data gave only the date. A report filed before the open and a
@@ -596,7 +596,7 @@ basis, and a worst drawdown no deeper than A50Q's ($10,366; $7,601 with the 20-d
 Anything less is noted and A50Q's books stay as they are. Found on years already read: a
 pass is a candidate for the forward test, not a result. The holdout is not touched.
 
-**Results, 2026-11-17 15:38 ET.** In REPORT.md. Failed both terms. T50Q a trade: 7.13%, 4.43%,
+**Results, 2026-11-17 15:29 ET.** In REPORT.md. Failed both terms. T50Q a trade: 7.13%, 4.43%,
 3.75% (3.05% without 2020) against A50Q's 5.58%, 4.10%, 5.35% (5.49%); its book makes $4,344
 a year against $5,097, with a losing year (2019, −$2,774) and a deeper drawdown ($13,372).
 Of T50's 1,384 signals 687 are A50's on the same day, 398 are A50's a session earlier and
