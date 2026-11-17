@@ -35,6 +35,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/heavy_turnover_stabilization` | gpt | 2026-11-17 | rebound after an active stabilization phase |
 | `strategies/equity_sale_gap_reclaim` | gpt | 2026-11-17 | gap recovery after a typed equity sale filing |
 | `strategies/small_cap_attention_rotation` | gpt | 2026-11-17 | delayed momentum in an active small-cap cohort |
+| `strategies/distributed_morning_selloff` | gpt | 2026-11-17 | recovery after a decline spread across the morning |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
