@@ -74,6 +74,13 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def end_headers(self):
+        # The page itself is always re-checked, so a rebuild shows without a hard refresh.
+        # Files under /assets/ carry a hash in their name and may be cached.
+        if not self.path.startswith(("/assets/", "/api/")):
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def log_message(self, *args):
         pass
 
