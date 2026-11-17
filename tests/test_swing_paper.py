@@ -169,3 +169,21 @@ def test_a_stock_that_does_not_trade_is_not_entered_and_the_report_lists_orders(
     assert "**AAA**, bought" in swing_paper.report(state, window, hold=RULE.hold, books=BOOKS)
     swing_paper.save(tmp_path / "ledger", state, "page")
     assert swing_paper.load_state(tmp_path / "ledger") == state
+
+
+def test_the_report_sets_each_trade_beside_the_index_fund():
+    window = _window({"AAA": _jumper(25), "IWM": ([100.0 + i for i in range(40)], [1e9] * 40)})
+    state = swing_paper.new_state()
+    _step(state, window, 25, [_signal("AAA")])
+    _step(state, window, 26)
+    page = swing_paper.report(state, window, hold=RULE.hold, books=BOOKS)
+    fund = window[DAYS[26]]["IWM"].close / window[DAYS[26]]["IWM"].open - 1
+    assert f"{100 * fund:+.1f}%" in page and "IWM sold short" in page
+    for i in (27, 28):
+        _step(state, window, i)
+    (track,) = state["tracks"]
+    expected = window[DAYS[28]]["IWM"].close / window[DAYS[26]]["IWM"].open - 1
+    assert track["benchmark_return"] == pytest.approx(expected)
+    assert "Against IWM over the same days (1 trades)" in swing_paper.report(
+        state, window, hold=RULE.hold, books=BOOKS
+    )

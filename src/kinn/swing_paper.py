@@ -26,6 +26,7 @@ from kinn.swing_run import MAX_GAP_DAYS, Rule, allowance
 COMMON_STOCK = ("CS", "ADRC")  # the vendor's types for common stock and common-stock ADRs
 EARNINGS_ITEM = "2.02"  # 8-K item: results of operations and financial condition
 ADV_SESSIONS, MIN_ADV_SESSIONS, MISSED_LIMIT = 20, 10, 5
+BENCHMARK = "IWM"  # the small-stock index fund each trade is set beside (and, hedged, against)
 
 
 @dataclass(frozen=True)
@@ -176,6 +177,7 @@ def step(
             slip = a * n + (costs.forced_exit_bps / 1e4 if forced else a) * exit_value
             result.update(net=exit_value - n - fees - slip, net_2x=exit_value - n - fees - 2 * slip)
         t.update(status="closed", exit_day=day.isoformat(), gross_return=growth - 1,
+                 benchmark_return=_benchmark(window, entry_day, day),
                  reason="stopped trading" if forced else "time")  # fmt: skip
         said.append(f"{t['symbol']}: sold at the close, {100 * (growth - 1):+.1f}% before costs")
     for s in sorted(signals, key=lambda s: (-s["volume"], s["symbol"])):
@@ -189,6 +191,12 @@ def step(
                     f"{s['volume']:.1f}x volume; buy at the next open")  # fmt: skip
     state["last_session"] = day.isoformat()
     return said
+
+
+def _benchmark(window: Window, entry_day: date, day: date) -> float | None:
+    """The index fund's return from the open of ``entry_day`` to the close of ``day``."""
+    first, last = window.get(entry_day, {}).get(BENCHMARK), window.get(day, {}).get(BENCHMARK)
+    return last.close / first.open - 1 if first and last else None
 
 
 def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) -> str:
@@ -213,14 +221,27 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
     due = [t for t in tracks if t["status"] == "open" and t["sessions"] + 1 >= hold]
     lines += ["", "## Sell at the next close (an on-close order)", ""]
     lines += [f"- **{t['symbol']}**, bought {t['entry_day']}" for t in due] or ["Nothing."]
-    lines += ["", "## Held now", "", "| Stock | Signal | Bought | At | Now | Sessions | Books |",
-              "|---|---|---|---|---|---|---|"]  # fmt: skip
+    today = date.fromisoformat(day) if day else None
+    lines += ["", "## Held now", "",
+              f"| Stock | Signal | Bought | At | Now | {BENCHMARK} since | Sessions | Books |",
+              "|---|---|---|---|---|---|---|---|"]  # fmt: skip
+    unrealised = dict.fromkeys(books, 0.0)
+    hedged = dict.fromkeys(books, 0.0)
     for t in (t for t in tracks if t["status"] == "open"):
         bar = bars.get(t["symbol"])
-        now = f"{bar.close:.2f} ({100 * (bar.close / t['entry_open'] - 1):+.1f}%)" if bar else "n/a"
+        change = bar.close / t["entry_open"] - 1 if bar else None
+        fund = _benchmark(window, date.fromisoformat(t["entry_day"]), today)
+        for name, result in t["books"].items():
+            unrealised[name] += result["notional"] * (change or 0.0)
+            hedged[name] += result["notional"] * ((change or 0.0) - (fund or 0.0))
+        now = f"{bar.close:.2f} ({100 * change:+.1f}%)" if bar else "n/a"
+        since = f"{100 * fund:+.1f}%" if fund is not None else "n/a"
         lines.append(f"| {t['symbol']} | {t['signal_day']} | {t['entry_day']} | "
-                     f"{t['entry_open']:.2f} | {now} | {t['sessions']} of {hold} | "
+                     f"{t['entry_open']:.2f} | {now} | {since} | {t['sessions']} of {hold} | "
                      f"{', '.join(t['books']) or 'none (followed only)'} |")  # fmt: skip
+    lines += ["", "Open positions, before costs: " + "; ".join(
+        f"{name} ${unrealised[name]:+,.0f} (${hedged[name]:+,.0f} with the same dollars of "
+        f"{BENCHMARK} sold short)" for name in books) + "."]  # fmt: skip
     closed = [t for t in tracks if t["status"] == "closed"]
     lines += ["", "## Results so far", ""]
     if closed:
@@ -228,6 +249,11 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
         lines.append(f"Every signal, whether or not a book took it: {len(closed)} finished, "
                      f"mean {100 * statistics.fmean(gross):+.2f}% before costs, "
                      f"{sum(g > 0 for g in gross)} winners.")  # fmt: skip
+        ahead = [t["gross_return"] - t["benchmark_return"] for t in closed
+                 if t.get("benchmark_return") is not None]  # fmt: skip
+        if ahead:
+            lines.append(f"Against {BENCHMARK} over the same days ({len(ahead)} trades): "
+                         f"{100 * statistics.fmean(ahead):+.2f}% a trade.")  # fmt: skip
         lines += ["", "| Book | Trades | A trade | A trade, costs doubled | Total | Doubled |",
                   "|---|---|---|---|---|---|"]  # fmt: skip
         for name in books:
