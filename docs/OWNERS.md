@@ -31,6 +31,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/intraday_volume_surge` | gpt | 2026-11-15 | small-cap turnover surge continuation |
 | `strategies/rebound_confirmed_recovery` | gpt | 2026-11-15 | buy after a deep selloff starts recovering |
 | `strategies/earnings_gap_followthrough` | gpt | 2026-11-16 | intraday confirmation after a typed earnings disclosure |
+| `strategies/insider_price_reclaim` | gpt | 2026-11-16 | rebound anchored on a disclosed purchase price |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
