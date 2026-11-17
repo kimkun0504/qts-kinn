@@ -1,9 +1,28 @@
 name: short_search
 kind: swing               # research scripts first; no runner yet
-status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+status: parked            # 24 cells and 6 tests, none passes; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $50M, close >= $3, 20-day dollar volume >= $1M
 family: swing_short
-prior_trials: 0
+prior_trials: 30
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: Short sales, one to three weeks
+  idea: Short sales held one to three weeks
+  horizon: 5 to 15 sessions
+  verdict: closed
+  result: "No event passes; the best averaged 3% a trade with single losses of 350%"
+  summary: >-
+    Sell short at the open after a fall on earnings, a failed earnings jump, a jump with no
+    news or a doubling in a month; buy back 5 or 15 sessions later. Stocks of $50M or more.
+  weaknesses:
+    - Bad news does not keep falling; a stock down 15% on earnings is slightly higher three weeks later.
+    - A stock that has doubled can double again; single trades lost three to four times the position.
+    - No stock-loan data, so borrow is an assumed 10% a year.
+  evidence:
+    - {when: 2026-11-17, title: 24 cells on 2010 to 2017, kind: found, text: "Three met the bar, all of them run-ups: 2.5% to 4.1% a trade."}
+    - {when: 2026-11-17, title: Tests failed, kind: failed, text: "2005 to 2009 and 2018 to 2022: 0.1% to 2.9% a trade, not steady, worst trades -330% to -390%."}
+  studies:
+    - {name: Four events sold short, when: 2026-11-17, trials: 30, result: "Run-ups met the search bar and failed their tests", verdict: failed}

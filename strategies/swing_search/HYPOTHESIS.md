@@ -562,3 +562,8 @@ A lead would become one more paper book. Nothing else is read into the tables.
 and 10:30 is the nearest (0.3 to 1.5 points over A50, 76 trades in 2005–2009); noted, not
 taken forward. A jump that had already held a close is no safer. 6 trials; family 23 has
 12 in all.
+
+**Correction, 2026-11-17 14:58 ET.** The first result above says the given-back jumps "then
+keep falling". They do not: the buyer's loss is all between the purchase and that day's
+close (−4.3%, −5.0%, −7.0% by span); from that close they make +4.9%, +1.1%, +0.9%. This is
+a split of trades already measured, not a new cell. REPORT.md is corrected.

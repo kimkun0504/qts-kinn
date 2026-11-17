@@ -480,11 +480,13 @@ The averages hide two opposite effects, and both are large.
   4.68% at A50's time: 1.2 to 2.3 points more a trade after paying the spread. The gain is
   made in the morning. Bought at 13:00 it is 0.7 points or less, and at 15:30 it is negative:
   nothing is earned between the afternoon and the next open that the spread does not take.
-- **About a fifth of early buys are jumps given back by the close, and those keep falling.**
-  368 of the 1,776 first-touch entries fail A50's test at the close. Over the next 15
-  sessions they lose 0.8%, 5.3% and 7.3% by span (8.6% without 2020); bought at 09:35 or
-  10:00 they lose 5% to 15% since 2010. Waiting for the close costs a point or two on the
-  jumps that hold and avoids these.
+- **About a fifth of early buys are jumps given back by the close, and the buyer takes that
+  fall the same day.** 368 of the 1,776 first-touch entries fail A50's test at the close.
+  Held for the 15 sessions they lose 0.8%, 5.3% and 7.3% by span (8.6% without 2020); bought
+  at 09:35 or 10:00, 5% to 15% since 2010. All of it is lost between the purchase and that
+  day's close (−4.3%, −5.0%, −7.0%). From that close on they make +4.9%, +1.1% and +0.9%
+  (−0.4% without 2020): they stop, they do not keep falling. Waiting for the close costs a
+  point or two on the jumps that hold and avoids these.
 
 **Second part: can the buys that hold be told apart when they fire?** Two facts known at the
 first touch, each looked at once.
@@ -506,9 +508,12 @@ taken forward. A jump that has already held one close is not safer: its failures
 **What it says about news within the day.** The reaction to an earnings report is not over
 at the open: stocks that will hold their jump keep rising through the first morning. But at
 the moment of buying they cannot be told from the ones that will give it back, and those
-lose more than the others gain. The close is the cheapest test of which is which. The
-steadiest effect in the tables is the fall after a jump that is given back the same day,
-which is a short sale and is not tested here.
+lose more than the others gain. The close is the cheapest test of which is which.
+
+*Corrected 2026-11-17 14:58 ET.* This section first said the given-back jumps "keep falling"
+and called that a short sale. Splitting the loss by day shows it is all taken on the day
+of the jump; sold short at the next open the same events lose money
+(`strategies/short_search/REPORT.md`).
 
 ## Reproduce
 

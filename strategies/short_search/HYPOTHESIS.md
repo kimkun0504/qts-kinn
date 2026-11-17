@@ -70,3 +70,9 @@ $50M to $300M, bought during the session), and that jumps with no filing "do not
 Neither was measured from the next open, with a short's costs, or in this universe. Cells
 1 and 4 I have not seen. This is why the search years prove nothing by themselves and the
 tests are the evidence.
+
+**Results, 2026-11-17 14:58 ET.** In REPORT.md. Search: three cells met the bar (run-up small
+5 and 15, run-up mid 5). Tests on 2005–2009 and 2018–2022, each run once: all three fail
+(weekly t under 2.5 in at least one period; fewer than four years of five positive in most).
+30 trials. The no-news jump in small companies was the largest effect and had 115 trades,
+under the 150 required; not taken forward.
