@@ -80,8 +80,68 @@ class VwapVolumeCross:
         return found
 
 
+def first_minute_cross(
+    bars: SymbolDay, session_open: int, last_minute: int
+) -> tuple[int, float] | None:
+    start = int(bars.minute.searchsorted(session_open))
+    stop = int(bars.minute.searchsorted(last_minute, side="right"))
+    minutes = bars.minute[start:stop]
+    prices = bars.close[start:stop]
+    shares = bars.volume[start:stop]
+    valid = np.isfinite(prices) & (prices > 0) & (shares > 0)
+    clock = minutes[valid] - session_open
+    length = last_minute - session_open + 1
+    close = np.full(length, np.nan)
+    volume = np.zeros(length)
+    turnover = np.zeros(length)
+    close[clock] = prices[valid]
+    volume[clock] = shares[valid]
+    turnover[clock] = prices[valid] * shares[valid]
+    cumulative_volume = np.cumsum(volume)
+    vwap = np.full(length, np.nan)
+    np.divide(np.cumsum(turnover), cumulative_volume, out=vwap, where=cumulative_volume > 0)
+
+    candidates = 30 + np.flatnonzero(
+        (close[29:-1] <= vwap[29:-1]) & (close[30:] > vwap[30:]) & (turnover[30:] >= 40_000)
+    )
+    if not len(candidates):
+        return None
+    first = int(candidates[0])
+    baseline = float(np.median(turnover[first - 30 : first]))
+    if baseline <= 0:
+        return None
+    return session_open + first, float(turnover[first] / baseline)
+
+
+class ImmediateVwapVolumeCross(VwapVolumeCross):
+    def __init__(self, turnover_group: str):
+        super().__init__("surge")
+        if turnover_group == "all":
+            self.minimum_ratio = 0.0
+
+    def signals(self, view: DayView, features: FeatureValues) -> list[Signal]:
+        last_minute = min(13 * 60 + 59, view.close_minute - 75)
+        if last_minute < view.open_minute + 30:
+            return []
+        found = []
+        for symbol, bars in view.symbols.items():
+            cross = first_minute_cross(bars, view.open_minute, last_minute)
+            if cross is None:
+                continue
+            minute, ratio = cross
+            if ratio >= self.minimum_ratio:
+                found.append(Signal(symbol, minute, expire_minute=minute + 1, max_hold_minutes=60))
+        return found
+
+
 def build(params: dict) -> VwapVolumeCross:
     group = params.get("turnover_group")
-    if set(params) != {"turnover_group"} or group not in ("surge", "ordinary"):
-        raise ValueError("vwap_volume_cross requires the surge or ordinary turnover group")
-    return VwapVolumeCross(group)
+    if set(params) == {"turnover_group"} and group in ("surge", "ordinary"):
+        return VwapVolumeCross(group)
+    if (
+        set(params) == {"turnover_group", "entry_mode"}
+        and params["entry_mode"] == "immediate"
+        and group in ("surge", "all")
+    ):
+        return ImmediateVwapVolumeCross(group)
+    raise ValueError("vwap_volume_cross requires one of its registered parameter sets")
