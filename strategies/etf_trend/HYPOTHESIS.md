@@ -65,3 +65,7 @@ holdout, which this family has not read. One that does not is closed.
 Not measured here. Generally reported: rules like T1 made 2008 a small loss or a gain and
 have been mediocre since 2015, with whipsaws in 2015, 2018 and 2022, when stocks and bonds
 fell together.
+
+**Results, 2026-11-17 17:22 ET.** In REPORT.md. Both rules fail the bar. T1: 4.1% a year, Sharpe
+over cash 0.37 (0.35 and 0.41 by half), drawdown 13.1%, 2008 +0.1%, 2022 −9.1%. T2: 5.0% a
+year, Sharpe 0.31, drawdown 25.8%. 2 trials. Closed; the holdout is untouched.

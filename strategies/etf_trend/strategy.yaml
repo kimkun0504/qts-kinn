@@ -1,9 +1,27 @@
 name: etf_trend
 kind: swing               # a monthly allocation rule on index funds; research script first
-status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+status: parked            # two fixed rules, neither meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: nine index funds (stocks, Treasuries, gold, commodities, property) and a cash fund
 family: etf_trend
-prior_trials: 0
+prior_trials: 2
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: Trend following on index funds
+  idea: Holding asset classes only while they are rising
+  horizon: Monthly
+  verdict: closed
+  result: "4.1% a year, Sharpe 0.37; flat in 2008, down 9% in 2022"
+  summary: >-
+    Nine funds across stocks, Treasuries, gold, commodities and property. Hold each while it
+    is above its ten-month average, otherwise cash. Two fixed rules, no search.
+  weaknesses:
+    - It protects in a long decline and gives up most of the return to do it.
+    - It lost 9% in 2022, when stocks and bonds fell together.
+    - For the idle money it pays about what Treasury bills pay.
+  evidence:
+    - {when: 2026-11-17, title: Two fixed rules on 2007 to 2023, kind: failed, text: "Sharpe 0.37 and 0.31 against a bar of 0.5; the second rule drew down 26%."}
+  studies:
+    - {name: Two monthly trend rules on nine funds, when: 2026-11-17, trials: 2, result: "Flat in 2008; 4% to 5% a year, Sharpe under 0.4", verdict: failed}
