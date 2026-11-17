@@ -1,6 +1,6 @@
 import type { Stat } from "./format";
 
-export type RunKind = "backtest" | "event_study" | "tick_study" | "book" | "fill_check";
+export type RunKind = "backtest" | "event_study" | "tick_study" | "book" | "fill_check" | "swing";
 /** Which research period a run covers. Searches happen on development; validation is run once. */
 export type Phase = "development" | "validation" | "holdout" | "full";
 
@@ -282,6 +282,188 @@ export interface Family {
   overfitting: Overfitting | null;
 }
 
+export type Group = "works" | "testing" | "closed";
+
+/** One idea on the board: a strategy's record, or a variant of it still being tested. */
+export interface BoardRow {
+  strategy: string;
+  idea: string;
+  title: string;
+  owner: string;
+  horizon: string | null;
+  family: string;
+  trials: number | null;
+  result: string | null;
+  summary: string | null;
+  verdict: string;
+  label: string;
+  group: Group;
+  variant: boolean;
+  paper: boolean;
+  stats?: { label: string; value: string }[];
+  settle?: { text: string; state: "running" | "open" }[];
+}
+
+export interface Board {
+  rows: BoardRow[];
+  others: { strategy: string; agent: string; runs: number; status: string }[];
+  waiting: { strategy: string; text: string }[];
+  counts: Record<Group, number>;
+}
+
+export interface StudyRow {
+  strategy: string;
+  strategy_title: string;
+  name: string;
+  when: string;
+  trials: number | null;
+  result: string | null;
+  verdict: string;
+}
+
+export interface PeriodStats {
+  trades: number | null;
+  signals: number | null;
+  net: number | null;
+  net_2x: number | null;
+  total: number | null;
+  total_2x: number | null;
+  sharpe: number | null;
+  sharpe_2x: number | null;
+  drawdown: number | null;
+  win_rate: number | null;
+  median: number | null;
+  spread_crossed: number | null;
+}
+
+/** One period a strategy's record names (holdout, search years...) and the run behind it. */
+export interface Period {
+  key: string;
+  label: string;
+  note: string | null;
+  config: string;
+  run_id: string | null;
+  start?: string;
+  end?: string;
+  equity?: number;
+  stats: PeriodStats | null;
+  months: [string, number][];
+  targets: TargetItem[] | null;
+}
+
+export interface Evidence {
+  when: string;
+  title: string;
+  kind: "found" | "passed" | "failed" | "running" | "open";
+  text: string;
+}
+
+export interface Variant {
+  rule: string;
+  evidence: string;
+  a_year: number;
+  sharpe: number;
+  drawdown: number;
+  worst_year: number;
+}
+
+export interface StrategyRecord {
+  title?: string;
+  idea?: string;
+  horizon?: string;
+  result?: string;
+  summary?: string;
+  short?: string;
+  paper?: string;
+  chart_note?: string;
+  fills?: string;
+  weaknesses?: string[];
+  variants?: Variant[];
+  variants_note?: string;
+  variants_footnote?: string;
+  evidence?: Evidence[];
+}
+
+export interface StrategyPageData {
+  strategy: string;
+  family: string;
+  owner: string | null;
+  status: string;
+  verdict: string;
+  label: string;
+  group: Group;
+  trials: number;
+  runs: number;
+  record: StrategyRecord;
+  studies: StudyRow[];
+  periods: Period[];
+  has_report: boolean;
+  has_hypothesis: boolean;
+}
+
+export interface Trade {
+  day: string;
+  symbol: string;
+  quantity: number;
+  entry_price: number;
+  exit_price: number;
+  notional: number;
+  net: number;
+  net_2x: number;
+  exit_reason: string;
+  tag: string;
+}
+
+export interface PaperPosition {
+  symbol: string;
+  signal_day: string;
+  entry_day: string | null;
+  entry_open: number | null;
+  last: number | null;
+  change: number | null;
+  benchmark: number | null;
+  sessions: number;
+  books: string[];
+  kept: boolean | null;
+  note: string | null;
+}
+
+export interface PaperBook {
+  name: string;
+  account: number | null;
+  slots: number | null;
+  quality: boolean;
+  exit: { average: number; max_sessions: number } | null;
+  open: number;
+  unrealised: number;
+  hedged: number | null;
+  trades: number;
+  net: number;
+  net_2x: number;
+  mean: number | null;
+}
+
+export interface PaperSnapshot {
+  schema: string;
+  last_session: string | null;
+  hold: number | null;
+  benchmark?: string;
+  buy_next_open: { symbol: string; note: string | null; kept?: boolean | null; jump?: number; volume?: number; market_cap?: number; signal_close?: number }[];
+  sell_next_open: { symbol: string; books: string[] }[];
+  sell_next_close: { symbol: string; books: string[] }[];
+  positions: PaperPosition[];
+  books: PaperBook[];
+  followed: {
+    signals: number;
+    finished: number;
+    mean_gross: number | null;
+    winners: number;
+    vs_benchmark?: number | null;
+    passed: { finished: number; mean_gross: number } | null;
+    failed: { finished: number; mean_gross: number } | null;
+  };
+}
+
 async function get<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url} answered ${response.status}`);
@@ -294,4 +476,10 @@ export const api = {
   strategies: () => get<StrategyInfo[]>("/api/strategies"),
   info: () => get<{ runs_dir: string }>("/api/info"),
   run: (id: string) => get<RunDetail>(`/api/runs/${encodeURIComponent(id)}`),
+  board: () => get<Board>("/api/board"),
+  studies: () => get<StudyRow[]>("/api/studies"),
+  strategy: (name: string) => get<StrategyPageData>(`/api/strategy/${encodeURIComponent(name)}`),
+  documents: (name: string) => get<{ report: string | null; hypothesis: string | null }>(`/api/strategy/${encodeURIComponent(name)}/documents`),
+  paper: (name: string) => get<PaperSnapshot>(`/api/strategy/${encodeURIComponent(name)}/paper`),
+  trades: (runId: string) => get<{ count: number; rows: Trade[] }>(`/api/trades/${encodeURIComponent(runId)}`),
 };

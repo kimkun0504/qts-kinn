@@ -65,7 +65,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
 
   return (
     <figure className="m-0 px-3 pt-3 pb-2">
-      <figcaption className="flex flex-wrap gap-x-5 gap-y-1 px-1 pb-1 text-xs text-ink-2">
+      <figcaption className="flex flex-wrap gap-x-5 gap-y-1 px-1 pb-1 text-[13px] text-ink-2">
         {series.map((s) => (
           <span key={s.name} className="inline-flex items-center gap-1.5">
             <svg aria-hidden="true" width="18" height="4">
@@ -120,7 +120,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
           {hover != null && <line x1={x(hover)} x2={x(hover)} y1={PAD.top} y2={height - PAD.bottom} stroke="var(--chart-axis)" />}
         </svg>
         {hover != null && (
-          <div className="pointer-events-none absolute top-1 left-16 rounded-md border border-line bg-raised px-2.5 py-1.5 text-xs whitespace-nowrap">
+          <div className="pointer-events-none absolute top-1 left-16 rounded-md border border-line bg-raised px-2.5 py-1.5 text-[13px] whitespace-nowrap">
             <div className="font-semibold">{labels[hover]}</div>
             {series.map((s) => (
               <div key={s.name}>
@@ -135,7 +135,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
           </div>
         )}
       </div>
-      {caption && <p className="m-0 px-1 pt-1 text-xs text-ink-3">{caption}</p>}
+      {caption && <p className="m-0 px-1 pt-1 text-[13px] text-ink-3">{caption}</p>}
     </figure>
   );
 }

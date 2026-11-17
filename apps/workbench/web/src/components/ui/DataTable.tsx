@@ -33,7 +33,7 @@ export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey,
             <th
               key={column.key}
               scope="col"
-              className={`border-b border-line px-3 py-2 text-xs font-medium whitespace-nowrap text-ink-2 ${
+              className={`border-b border-line px-3 py-2 text-[13px] font-medium whitespace-nowrap text-ink-2 ${
                 column.align === "left" ? "text-left" : "text-right"
               }`}
             >

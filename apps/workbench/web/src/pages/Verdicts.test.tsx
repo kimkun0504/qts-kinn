@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RunsTable } from "../components/RunsTable";
-import type { FillCheck, RunRow, StrategyInfo, Targets } from "../lib/api";
+import { BoardTable } from "../components/BoardTable";
+import type { Board, BoardRow, FillCheck, RunRow, Targets } from "../lib/api";
 import { FillCheckView } from "./FillCheckView";
-import { Overview } from "./Overview";
 
 afterEach(cleanup);
 vi.mock("../lib/useRun", () => ({ useRun: () => ({ detail: null, error: null }) }));
@@ -35,12 +35,23 @@ const failed = run({ run_id: "r2", config: "validation_t_l468", targets: { ...me
 const search = run({ run_id: "r3", config: "s_l468", phase: "development", targets: null });
 const check = run({ run_id: "r4", config: "fill_check:fillcheck_s_l468", kind: "fill_check", phase: "full", targets: null, fill_check_passed: true });
 
-function strategy(over: Partial<StrategyInfo>): StrategyInfo {
+function idea(over: Partial<BoardRow>): BoardRow {
   return {
-    strategy: "rebound_limit", status: "developing", state: "candidate", owner: "claude", family: "intraday_rebound", runs: 55,
-    candidate_config: "validation_s_l468", candidate_run: candidate, validation_run: candidate, ready_for_paper: true, ...over,
+    strategy: "earnings_drift", idea: "Earnings drift", title: "Earnings drift", owner: "claude", horizon: "40 sessions", family: "swing", trials: 150,
+    result: "+$11,430 a year in the holdout", summary: null, verdict: "passed_holdout", label: "Passed holdout", group: "works", variant: false, paper: true, ...over,
   };
 }
+
+const board: Board = {
+  rows: [
+    idea({}),
+    idea({ strategy: "earnings_drift", idea: "Skip fallen, cash-rich companies", verdict: "testing", label: "In paper test", group: "testing", variant: true, trials: null, paper: false }),
+    idea({ strategy: "rebound_limit", idea: "Intraday rebound", verdict: "failed_holdout", label: "Failed holdout", group: "closed", paper: false, trials: 2011, result: "Lost money in the holdout" }),
+  ],
+  others: [{ strategy: "opening_gap_reclaim", agent: "gpt", runs: 12, status: "parked" }],
+  waiting: [],
+  counts: { works: 1, testing: 1, closed: 1 },
+};
 
 describe("verdicts in the Workbench", () => {
   it("labels every run with its period and judges only validation backtests", () => {
@@ -53,22 +64,17 @@ describe("verdicts in the Workbench", () => {
     expect(screen.getByText("Passed")).toBeTruthy();
   });
 
-  it("headlines the candidate and lists what is ready for paper trading", () => {
-    const parked = strategy({ strategy: "opening_gap_reclaim", status: "parked", state: "parked", owner: "gpt", candidate_config: null, candidate_run: null, validation_run: null, ready_for_paper: false });
-    render(<Overview runs={[failed, candidate]} families={[]} strategies={[strategy({}), parked]} onOpen={() => {}} />);
-    expect(screen.getByText("Candidate for paper trading")).toBeTruthy();
-    expect(screen.getByText("Ready for paper trading")).toBeTruthy();
-    expect(screen.getByText("4 of 4")).toBeTruthy();
-    expect(screen.getByText(/Candidate: rebound_limit validation_s_l468/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Parked" }));
-    expect(screen.getByText("Strategies (1)")).toBeTruthy();
-    expect(screen.getByText("opening_gap_reclaim")).toBeTruthy();
-  });
-
-  it("falls back to the latest backtest when nothing is a candidate", () => {
-    render(<Overview runs={[failed]} families={[]} strategies={[strategy({ state: "developing", candidate_config: null, candidate_run: null, validation_run: failed, ready_for_paper: false })]} onOpen={() => {}} />);
-    expect(screen.getByText("None yet")).toBeTruthy();
-    expect(screen.queryByText("Ready for paper trading")).toBeNull();
+  it("lists every idea with its verdict and filters by where it stands", () => {
+    const opened: string[] = [];
+    render(<BoardTable board={board} onOpen={(name) => opened.push(name)} />);
+    expect(screen.getByText("Passed holdout")).toBeTruthy();
+    expect(screen.getByText("Failed holdout")).toBeTruthy();
+    expect(screen.getByText("Skip fallen, cash-rich companies")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Parked or closed 1" }));
+    expect(screen.queryByText("Passed holdout")).toBeNull();
+    expect(screen.getByText("Intraday rebound")).toBeTruthy();
+    fireEvent.click(screen.getByText("Intraday rebound"));
+    expect(opened).toEqual(["rebound_limit"]);
   });
 
   it("draws a fill check with its bars and its groups", () => {

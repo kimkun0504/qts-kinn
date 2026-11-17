@@ -81,6 +81,7 @@ def board(runs_dir: Path, strategies_dir: Path) -> dict:
             "trials": _trials(manifests, declared, family), "result": record.get("result"),
             "summary": record.get("short") or record.get("summary"),
             "verdict": key, "label": label, "group": group, "variant": False,
+            "paper": bool(record.get("paper")),
         })  # fmt: skip
         for item in record.get("in_test") or []:
             _, item_label, item_group = _verdict(item)
@@ -89,7 +90,7 @@ def board(runs_dir: Path, strategies_dir: Path) -> dict:
                 "owner": meta.get("owner") or "claude", "horizon": record.get("horizon"),
                 "family": family, "trials": None, "result": item.get("result"),
                 "summary": item.get("summary"), "verdict": item.get("verdict") or "testing",
-                "label": item_label, "group": item_group, "variant": True,
+                "label": item_label, "group": item_group, "variant": True, "paper": False,
                 "stats": item.get("stats") or [], "settle": item.get("settle") or [],
             })  # fmt: skip
         waiting += [{"strategy": name, "text": str(text)} for text in record.get("waiting") or []]

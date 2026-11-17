@@ -23,8 +23,11 @@ interface RunsProps {
 export function Runs({ runs, selected, onOpen, compare, onToggleCompare, kind, onKind }: RunsProps) {
   const [phase, setPhase] = useState<PhaseFilter>("all");
   const [result, setResult] = useState<ResultFilter>("all");
+  const [strategy, setStrategy] = useState("");
+  const names = [...new Set(runs.map((run) => run.strategy))].sort();
   const shown = runs.filter(
-    (run) => (kind === "all" || run.kind === kind) && (phase === "all" || run.phase === phase) && (result === "all" || isSuccess(run)),
+    (run) =>
+      (kind === "all" || run.kind === kind) && (phase === "all" || run.phase === phase) && (result === "all" || isSuccess(run)) && (!strategy || run.strategy === strategy),
   );
   return (
     <>
@@ -32,6 +35,21 @@ export function Runs({ runs, selected, onOpen, compare, onToggleCompare, kind, o
         title={`Runs, newest first (${shown.length})`}
         aside={
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <label className="inline-flex items-center gap-2">
+              <span className="sr-only">Strategy</span>
+              <select
+                value={strategy}
+                onChange={(event) => setStrategy(event.target.value)}
+                className="min-h-8 cursor-pointer rounded-md border border-line bg-surface px-2 text-[13px] font-medium text-ink focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <option value="">Every strategy</option>
+                {names.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <Segmented
               label="Result"
               value={result}
@@ -59,6 +77,7 @@ export function Runs({ runs, selected, onOpen, compare, onToggleCompare, kind, o
               options={[
                 { value: "all", label: "All" },
                 { value: "backtest", label: "Backtests" },
+                { value: "swing", label: "Swing" },
                 { value: "event_study", label: "Event studies" },
                 { value: "fill_check", label: "Fill checks" },
                 { value: "tick_study", label: "Tick studies" },

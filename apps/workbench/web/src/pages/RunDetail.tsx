@@ -96,9 +96,9 @@ function RunHeader({ manifest, phase }: { manifest: Manifest; phase: Phase | nul
           {phase && <Badge tone={phase === "validation" || phase === "holdout" ? "info" : "muted"}>{phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : phase === "holdout" ? "Holdout: the one clean test" : PHASE[phase]}</Badge>}
           {manifest.git.dirty && <Badge tone="warn">Uncommitted code</Badge>}
         </div>
-        <div className="text-xs text-ink-3">{manifest.run_id}</div>
+        <div className="text-[13px] text-ink-3">{manifest.run_id}</div>
       </div>
-      <div className="text-right text-xs text-ink-2">
+      <div className="text-right text-[13px] text-ink-2">
         {manifest.period.start} to {manifest.period.end}
         <br />
         {manifest.agent} on {manifest.git.branch} at {manifest.git.commit.slice(0, 8)}, {manifest.cost_calibration}
@@ -158,7 +158,7 @@ function BacktestView({ detail, metrics: m }: { detail: Detail; metrics: Metrics
           {detail.histogram ? (
             <>
               <Histogram counts={detail.histogram.counts} edges={detail.histogram.edges} label="Distribution of net return per trade" />
-              <p className="m-0 pt-2 text-xs text-ink-3">Clipped at the 1st and 99th percentiles.</p>
+              <p className="m-0 pt-2 text-[13px] text-ink-3">Clipped at the 1st and 99th percentiles.</p>
             </>
           ) : (
             <p className="m-0 text-ink-2">Too few trades for a distribution.</p>

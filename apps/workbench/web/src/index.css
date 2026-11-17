@@ -1,52 +1,66 @@
 @import "tailwindcss";
 
-/* Design tokens. Components use the semantic names below, never raw hex values. */
+/* Design tokens. Components use the semantic names below, never raw hex values.
+   Light is the default; the dark set is the same roles re-stepped for a dark surface.
+   --gain / --loss fill chart marks (checked for colour-blind separation in both themes);
+   --pos / --neg are the same meanings as text, with the contrast text needs. */
 :root {
-  color-scheme: dark;
-  --ground: #0e0f11;
-  --surface: #151719;
-  --raised: #1b1d20;
-  --line: #26292e;
-  --line-soft: #1e2124;
-  --ink: #e7e8ea;
-  --ink-2: #9a9fa8;
-  --ink-3: #6f747d;
-  --accent: #4c8dff;
-  --accent-soft: #8ab4ff;
-  --series-2: #8b9099;
-  --series-3: #d4d6da;
-  --series-4: #c98500;
-  --neg: #ef6b63;
-  --pos: #4cc38a;
-  --warn: #e5b567;
-  --chart-grid: #22252a;
-  --chart-axis: #4a4f58;
-}
-:root[data-theme="light"] {
   color-scheme: light;
-  --ground: #f4f5f7;
+  --ground: #f4f6f8;
+  --rail: #ffffff;
   --surface: #ffffff;
-  --raised: #eef0f3;
-  --line: #dcdfe4;
-  --line-soft: #eceef1;
-  --ink: #14171c;
-  --ink-2: #555b66;
-  --ink-3: #7b818c;
-  --accent: #1f5fd6;
-  --accent-soft: #1f5fd6;
+  --raised: #eef2f6;
+  --line: #dbe2ea;
+  --line-soft: #e8edf2;
+  --ink: #17202a;
+  --ink-2: #4d5967;
+  --ink-3: #66727f;
+  --accent: #1c63c2;
+  --accent-soft: #1c63c2;
+  --on-accent: #ffffff;
+  --series-1: #1c63c2;
   --series-2: #6b717c;
   --series-3: #2b3038;
   --series-4: #a86a00;
-  --neg: #c0392b;
-  --pos: #177a4c;
+  --gain: #0e9a92;
+  --loss: #d5463c;
+  --pos: #0a7d76;
+  --neg: #bf3a30;
   --warn: #8a5a00;
-  --chart-grid: #e6e8ec;
-  --chart-axis: #a3a8b1;
+  --chart-grid: #e3e8ee;
+  --chart-axis: #9aa4b0;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #10161d;
+  --rail: #0c1117;
+  --surface: #171f29;
+  --raised: #1d2733;
+  --line: #263241;
+  --line-soft: #1f2935;
+  --ink: #e8edf2;
+  --ink-2: #a9b4c0;
+  --ink-3: #8492a1;
+  --accent: #6aa5f0;
+  --accent-soft: #6aa5f0;
+  --on-accent: #0c1117;
+  --series-1: #4c8fe8;
+  --series-2: #8b9099;
+  --series-3: #d4d6da;
+  --series-4: #c98500;
+  --gain: #1fa9a0;
+  --loss: #e2574c;
+  --pos: #4fcfc4;
+  --neg: #f08a7d;
+  --warn: #e0a63a;
+  --chart-grid: #222c38;
+  --chart-axis: #55616f;
 }
 
 @theme inline {
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Source Sans 3", system-ui, sans-serif;
   --color-ground: var(--ground);
+  --color-rail: var(--rail);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
   --color-line: var(--line);
@@ -56,6 +70,10 @@
   --color-ink-3: var(--ink-3);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-series-1: var(--series-1);
+  --color-gain: var(--gain);
+  --color-loss: var(--loss);
   --color-neg: var(--neg);
   --color-pos: var(--pos);
   --color-warn: var(--warn);
@@ -66,7 +84,7 @@ body {
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.45;
   font-variant-numeric: tabular-nums;
 }

@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
-import { AppShell, type Page } from "./components/layout/AppShell";
+import { AppShell } from "./components/layout/AppShell";
 import { EmptyState } from "./components/ui/EmptyState";
-import { api, type Family, type RunRow, type StrategyInfo } from "./lib/api";
+import { api, type Board, type Family, type RunRow } from "./lib/api";
+import { useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
-import { Overview } from "./pages/Overview";
+import { Home } from "./pages/Home";
+import { PaperPage } from "./pages/PaperPage";
 import { Parameters } from "./pages/Parameters";
 import { type KindFilter, Runs } from "./pages/Runs";
+import { Strategies } from "./pages/Strategies";
+import { StrategyPage } from "./pages/StrategyPage";
+import { Studies } from "./pages/Studies";
 import { Trials } from "./pages/Trials";
 
-const TITLES: Record<Page, string> = { overview: "Overview", runs: "Runs", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
+const TITLES = { home: "Home", strategies: "Strategies", strategy: null, studies: "Studies", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
 type Theme = "dark" | "light";
 
 function initialTheme(): Theme {
@@ -19,34 +24,34 @@ function initialTheme(): Theme {
   } catch {
     /* storage unavailable: fall through */
   }
-  return "dark";
+  return "light";
 }
 
 export default function App() {
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [families, setFamilies] = useState<Family[]>([]);
-  const [strategyInfo, setStrategyInfo] = useState<StrategyInfo[]>([]);
+  const [board, setBoard] = useState<Board | null>(null);
   const [runsDir, setRunsDir] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState<Page>("overview");
-  const [family, setFamily] = useState<string | null>(null);
-  const [strategy, setStrategy] = useState<string | null>(null);
+  const [route, go] = useRoute();
   const [selected, setSelected] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [version, setVersion] = useState(0);
 
   const load = useCallback(() => {
     clearRunCache();
-    Promise.all([api.runs(), api.families(), api.info(), api.strategies()])
-      .then(([r, f, info, s]) => {
+    Promise.all([api.runs(), api.families(), api.info(), api.board()])
+      .then(([r, f, info, b]) => {
         setRuns(r);
         setFamilies(f);
-        setStrategyInfo(s);
+        setBoard(b);
         setRunsDir(info.runs_dir);
         setError(null);
+        setVersion((v) => v + 1);
       })
-      .catch(() => setError("The run store could not be read. Is the Workbench server running?"));
+      .catch(() => setError("The run store could not be read. Is the Workbench server running, and restarted since the last update?"));
   }, []);
   useEffect(load, [load]);
   useEffect(() => {
@@ -60,60 +65,53 @@ export default function App() {
 
   // Abandoned runs never produced results; they stay out of the lists (Trials still reports them).
   const live = runs.filter((run) => run.status !== "abandoned");
-  const visible = live.filter((run) => (!family || run.family === family) && (!strategy || run.strategy === strategy));
-  const strategies: Record<string, { name: string; runs: number }[]> = {};
-  for (const run of live) {
-    const list = (strategies[run.family] ??= []);
-    const entry = list.find((item) => item.name === run.strategy);
-    if (entry) entry.runs += 1;
-    else list.push({ name: run.strategy, runs: 1 });
-  }
-  const pick = (nextFamily: string | null, nextStrategy: string | null = null) => {
-    setFamily(nextFamily);
-    setStrategy(nextStrategy);
-  };
-  const visibleFamilies = families.filter((f) => !family || f.family === family);
   const open = (run: RunRow) => {
     setSelected(run.run_id);
-    setPage("runs");
+    go({ page: "runs" });
   };
+  const openStrategy = (name: string, tab = "results") => go({ page: "strategy", name, tab });
   const toggleCompare = (run: RunRow) =>
     setCompare((current) => (current.includes(run.run_id) ? current.filter((id) => id !== run.run_id) : current.length < 4 ? [...current, run.run_id] : current));
+  const ledgers = board?.rows.filter((row) => row.paper).length ?? 0;
 
   return (
     <AppShell
-      page={page}
-      onNavigate={setPage}
-      title={TITLES[page]}
-      subtitle={strategy ?? family ?? "All families"}
-      families={families}
-      family={family}
-      strategies={strategies}
-      strategy={strategy}
-      onFamily={pick}
-      counts={{ runs: visible.length, compare: compare.length || undefined, trials: visibleFamilies.reduce((sum, f) => sum + f.trials, 0) }}
+      page={route.page}
+      onNavigate={(page) => go({ page })}
+      title={TITLES[route.page]}
+      counts={{
+        strategies: board ? board.rows.filter((row) => !row.variant).length : undefined,
+        runs: live.length || undefined,
+        paper: ledgers ? `${ledgers} ledger${ledgers > 1 ? "s" : ""}` : undefined,
+        compare: compare.length || undefined,
+      }}
       runsDir={runsDir}
       theme={theme}
       onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       onReload={load}
     >
       {error ? (
-        <EmptyState title="Could not load runs">{error}</EmptyState>
-      ) : page === "overview" ? (
-        <Overview
-          runs={visible}
-          families={visibleFamilies}
-          strategies={strategyInfo.filter((s) => (!family || s.family === family) && (!strategy || s.strategy === strategy))}
-          onOpen={open}
-        />
-      ) : page === "runs" ? (
-        <Runs runs={visible} selected={selected} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
-      ) : page === "compare" ? (
+        <EmptyState title="Could not load the Workbench">{error}</EmptyState>
+      ) : !board ? (
+        <p className="text-ink-2">Loading…</p>
+      ) : route.page === "home" ? (
+        <Home key={version} board={board} onOpen={openStrategy} />
+      ) : route.page === "strategies" ? (
+        <Strategies board={board} onOpen={openStrategy} />
+      ) : route.page === "strategy" && route.name ? (
+        <StrategyPage key={`${route.name}-${version}`} name={route.name} tab={route.tab ?? "results"} runs={live} onTab={(tab) => openStrategy(route.name as string, tab)} onBack={() => go({ page: "strategies" })} />
+      ) : route.page === "studies" ? (
+        <Studies key={version} onOpen={openStrategy} />
+      ) : route.page === "paper" ? (
+        <PaperPage key={version} board={board} />
+      ) : route.page === "runs" ? (
+        <Runs runs={live} selected={selected} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
+      ) : route.page === "compare" ? (
         <Compare ids={compare} runs={runs} />
-      ) : page === "parameters" ? (
-        <Parameters runs={visible} />
+      ) : route.page === "parameters" ? (
+        <Parameters runs={live} />
       ) : (
-        <Trials families={visibleFamilies} runs={runs} />
+        <Trials families={families} runs={runs} />
       )}
     </AppShell>
   );

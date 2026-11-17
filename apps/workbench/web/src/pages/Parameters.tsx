@@ -12,7 +12,7 @@ function Select({ label, value, options, onChange }: { label: string; value: str
   return (
     <label className="inline-flex items-center gap-2 text-ink-2">
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="min-h-8 rounded-md border border-line bg-surface px-2 text-[13px] text-ink">
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="min-h-8 rounded-md border border-line bg-surface px-2 text-sm text-ink">
         {options.map(([key, text]) => (
           <option key={key} value={key}>
             {text}
@@ -65,12 +65,12 @@ export function Parameters({ runs }: { runs: RunRow[] }) {
         <table className="border-collapse">
           <thead>
             <tr>
-              <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-ink-2">
+              <th scope="col" className="px-3 py-2 text-left text-[13px] font-medium text-ink-2">
                 {y ? `${clean(y)} ↓ ` : ""}
                 {clean(x)} →
               </th>
               {xs.map((xv) => (
-                <th key={show(xv)} scope="col" className="px-3 py-2 text-center text-xs font-medium text-ink-2">
+                <th key={show(xv)} scope="col" className="px-3 py-2 text-center text-[13px] font-medium text-ink-2">
                   {show(xv)}
                 </th>
               ))}
@@ -79,7 +79,7 @@ export function Parameters({ runs }: { runs: RunRow[] }) {
           <tbody>
             {ys.map((yv) => (
               <tr key={show(yv)}>
-                <th scope="row" className="px-3 py-2 text-left text-xs font-medium text-ink-2">
+                <th scope="row" className="px-3 py-2 text-left text-[13px] font-medium text-ink-2">
                   {y ? show(yv) : ""}
                 </th>
                 {xs.map((xv) => {

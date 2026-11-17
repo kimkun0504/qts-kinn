@@ -1,17 +1,21 @@
-import { Fragment, type ReactNode } from "react";
-import type { Family } from "../../lib/api";
-import { Badge } from "../ui/Badge";
-import { Button } from "../ui/Button";
+import type { ReactNode } from "react";
+import type { Page } from "../../lib/route";
 
-export type Page = "overview" | "runs" | "compare" | "parameters" | "trials";
+type NavPage = Exclude<Page, "strategy">;
 
-const ICONS: Record<Page, ReactNode> = {
-  overview: (
+const ICONS: Record<NavPage, ReactNode> = {
+  home: <path d="M2.5 7.5L8 3l5.5 4.5V13h-3.5V9.5h-4V13H2.5z" />,
+  strategies: (
     <>
-      <rect x="2" y="2" width="5" height="5" rx="1" />
-      <rect x="9" y="2" width="5" height="5" rx="1" />
-      <rect x="2" y="9" width="5" height="5" rx="1" />
-      <rect x="9" y="9" width="5" height="5" rx="1" />
+      <path d="M8 2l6 3-6 3-6-3z" />
+      <path d="M2 8l6 3 6-3M2 11l6 3 6-3" />
+    </>
+  ),
+  studies: <path d="M6 2v4L2.5 12.5a1 1 0 0 0 .9 1.5h9.2a1 1 0 0 0 .9-1.5L10 6V2M5 2h6M4.5 10h7" />,
+  paper: (
+    <>
+      <rect x="3" y="2" width="10" height="12" rx="1.5" />
+      <path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" />
     </>
   ),
   runs: <path d="M2 4h12M2 8h12M2 12h12" />,
@@ -27,33 +31,26 @@ const ICONS: Record<Page, ReactNode> = {
   trials: <path d="M8 2v12M3 5h10M4 5l-2 4h4zM12 5l-2 4h4z" />,
 };
 
-const LABELS: Record<Page, string> = {
-  overview: "Overview",
+const LABELS: Record<NavPage, string> = {
+  home: "Home",
+  strategies: "Strategies",
+  studies: "Studies",
+  paper: "Paper trading",
   runs: "Runs",
   compare: "Compare",
   parameters: "Parameters",
-  trials: "Trials",
+  trials: "Trials and overfitting",
 };
-
-function Icon({ page }: { page: Page }) {
-  return (
-    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-      {ICONS[page]}
-    </svg>
-  );
-}
+const GROUPS: NavPage[][] = [
+  ["home", "strategies", "studies", "paper"],
+  ["runs", "compare", "parameters", "trials"],
+];
 
 interface AppShellProps {
   page: Page;
-  onNavigate: (page: Page) => void;
-  title: string;
-  subtitle?: string;
-  families: Family[];
-  family: string | null;
-  strategies: Record<string, { name: string; runs: number }[]>;
-  strategy: string | null;
-  onFamily: (family: string | null, strategy?: string | null) => void;
-  counts: Partial<Record<Page, number>>;
+  onNavigate: (page: NavPage) => void;
+  title: string | null;
+  counts: Partial<Record<NavPage, string | number>>;
   runsDir: string;
   theme: "dark" | "light";
   onToggleTheme: () => void;
@@ -63,74 +60,60 @@ interface AppShellProps {
 
 /** Side rail, top bar and the page area. Every page renders inside this. */
 export function AppShell(props: AppShellProps) {
-  const { page, onNavigate, families, family, onFamily, counts, strategies, strategy } = props;
+  const { page, onNavigate, counts } = props;
+  const current: NavPage = page === "strategy" ? "strategies" : page;
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="flex shrink-0 flex-col gap-0.5 border-b border-line bg-surface px-2.5 py-3.5 md:w-[232px] md:border-r md:border-b-0">
-        <div className="flex items-center gap-2.5 px-2.5 pt-1 pb-4">
-          <span aria-hidden="true" className="inline-flex size-6 items-center justify-center rounded-md bg-ink text-[13px] font-bold text-ground">
+      <aside className="flex shrink-0 flex-col gap-1 border-b border-line bg-rail px-3 py-4 md:sticky md:top-0 md:h-screen md:w-[216px] md:border-r md:border-b-0">
+        <div className="flex items-center gap-2.5 px-3 pt-0.5 pb-4">
+          <span aria-hidden="true" className="inline-flex size-[26px] items-center justify-center rounded-[7px] bg-ink font-bold text-rail">
             K
           </span>
-          <span className="text-sm font-semibold">Kinn Research</span>
+          <span className="text-base font-semibold">Kinn Research</span>
         </div>
-        <nav aria-label="Sections" className="flex flex-col gap-0.5">
-          {(Object.keys(LABELS) as Page[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-current={page === key ? "page" : undefined}
-              onClick={() => onNavigate(key)}
-              className={`flex min-h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-left text-[13px] focus-visible:outline-2 focus-visible:outline-accent ${
-                page === key ? "bg-raised font-semibold text-ink" : "font-medium text-ink-2 hover:text-ink"
-              }`}
-            >
-              <Icon page={key} />
-              <span className="flex-1">{LABELS[key]}</span>
-              {counts[key] != null && <span className="text-xs text-ink-3">{counts[key]}</span>}
-            </button>
+        <nav aria-label="Sections" className="flex flex-col gap-1">
+          {GROUPS.map((group, g) => (
+            <div key={g} className={`flex flex-col gap-1 ${g ? "mt-2 border-t border-line pt-3" : ""}`}>
+              {group.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-current={current === key ? "page" : undefined}
+                  onClick={() => onNavigate(key)}
+                  className={`flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-3 text-left font-medium focus-visible:outline-2 focus-visible:outline-accent ${
+                    current === key ? "bg-raised text-ink" : "text-ink-2 hover:text-ink"
+                  }`}
+                >
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                    {ICONS[key]}
+                  </svg>
+                  <span className="flex-1">{LABELS[key]}</span>
+                  {counts[key] != null && <span className="text-[13px] text-ink-3">{counts[key]}</span>}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
-        <div className="px-2.5 pt-4 pb-1.5 text-xs text-ink-3">Strategy families, trials charged</div>
-        <FamilyButton label="All families" count={null} active={family === null} onClick={() => onFamily(null)} />
-        {families.map((f) => (
-          <Fragment key={f.family}>
-            <FamilyButton label={f.family} count={f.trials} active={family === f.family && strategy === null} onClick={() => onFamily(f.family)} />
-            {(strategies[f.family] ?? []).map((item) => (
-              <FamilyButton key={item.name} nested label={item.name} count={null} active={strategy === item.name} onClick={() => onFamily(f.family, item.name)} />
-            ))}
-          </Fragment>
-        ))}
-        <div className="mt-auto flex flex-col gap-1.5 border-t border-line px-2.5 pt-3 text-xs text-ink-2">
-          <Badge tone="ok">Holdout sealed from 9 Nov 2023</Badge>
-          <span className="break-all text-ink-3">{props.runsDir}</span>
+        <div className="mt-auto flex flex-col gap-1 border-t border-line px-3 pt-3 text-[13px] text-ink-3">
+          <span>Holdout sealed from 9 Nov 2023</span>
+          <span className="break-all">{props.runsDir}</span>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-[52px] flex-wrap items-center gap-4 border-b border-line px-6">
-          <h1 className="m-0 text-[15px] font-semibold">{props.title}</h1>
-          {props.subtitle && <span className="text-ink-3">{props.subtitle}</span>}
-          <div className="flex-1" />
-          <Button onClick={props.onToggleTheme}>{props.theme === "dark" ? "Light theme" : "Dark theme"}</Button>
-          <Button onClick={props.onReload}>Reload</Button>
-        </header>
-        <main className="flex flex-col gap-4 px-6 pt-5 pb-8">{props.children}</main>
+        <main className="mx-auto flex w-full max-w-[1260px] flex-col gap-5 px-5 pt-5 pb-12 md:px-8">
+          <div className="flex min-h-10 flex-wrap items-center gap-3">
+            {props.title && <h1 className="m-0 text-[26px] font-semibold tracking-tight">{props.title}</h1>}
+            <div className="flex-1" />
+            <button type="button" onClick={props.onToggleTheme} className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
+              {props.theme === "dark" ? "Light theme" : "Dark theme"}
+            </button>
+            <button type="button" onClick={props.onReload} className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
+              Reload
+            </button>
+          </div>
+          {props.children}
+        </main>
       </div>
     </div>
-  );
-}
-
-function FamilyButton({ label, count, active, onClick, nested = false }: { label: string; count: number | null; active: boolean; onClick: () => void; nested?: boolean }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={`flex cursor-pointer items-center justify-between rounded-md text-left ${nested ? "ml-3 min-h-7 border-l border-line pl-3 pr-2.5 text-[13px]" : "min-h-8 px-2.5"} focus-visible:outline-2 focus-visible:outline-accent ${
-        active ? "bg-raised text-ink" : "text-ink-2 hover:text-ink"
-      }`}
-    >
-      <span className="truncate">{label}</span>
-      {count != null && <span className="text-ink-3">{count}</span>}
-    </button>
   );
 }

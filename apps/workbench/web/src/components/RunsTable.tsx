@@ -3,7 +3,7 @@ import { int, num, pct, shortTime } from "../lib/format";
 import { type Column, DataTable } from "./ui/DataTable";
 import { PHASE, ResultBadge } from "./Verdict";
 
-const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study", book: "Book", fill_check: "Fill check" };
+const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study", book: "Book", fill_check: "Fill check", swing: "Swing" };
 
 /** Backtests and studies report the net return per trade; a book reports its return a year. */
 function net(run: RunRow, value: number | null): string {

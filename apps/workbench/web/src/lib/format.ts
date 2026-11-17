@@ -27,6 +27,20 @@ export function money(value: number | null | undefined): string {
   return (value < 0 ? MINUS + "$" : "+$") + Math.abs(Math.round(value)).toLocaleString("en-US");
 }
 
+/** Dollars without a plus sign: for totals and levels, where a sign would read as a change. */
+export function dollars(value: number | null | undefined): string {
+  if (value == null) return "–";
+  return (value < 0 ? MINUS : "") + "$" + Math.abs(Math.round(value)).toLocaleString("en-US");
+}
+
+/** "2026-11-16" as "16 Nov 2026" (or "16 Nov" when short). */
+export function day(iso: string | null | undefined, short = false): string {
+  if (!iso) return "–";
+  const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return `${d} ${names[m - 1]}${short ? "" : ` ${y}`}`;
+}
+
 export function isNegative(text: string): boolean {
   return text.startsWith(MINUS);
 }
