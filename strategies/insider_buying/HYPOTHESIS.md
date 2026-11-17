@@ -118,3 +118,10 @@ company's market value; the buyer is only a ten-percent owner.
    the holdout. If nothing meets that, the insider rule stays as it is: a weak second sleeve.
 
 About 200 trials, in family `insider_buying`.
+
+**Results, 2026-11-17 00:01 ET.** In REPORT.md. Three single splits hold in every span
+(price under $5, issuance of 10% or less, a buyer who is not only a ten-percent owner). 161
+pair groups had 150 trades or more; their ranking in 2010–2017 and elsewhere correlates at
+0.26. No group meets step 3: the best (under $5 and little issuance: 5.63%, 8.06%, 3.06%;
+3.29% without 2020; 17 of 18 years) lost in 2022, as every strong group did. No refined rule
+is written. 181 trials.

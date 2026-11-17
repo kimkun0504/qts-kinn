@@ -89,6 +89,37 @@ flat years does not carry over: insider purchases in fallen, cash-rich companies
 than the rest. In the earnings rule's idle slots rule I adds dollars and brings back losing
 years. Tables: `strategies/swing_search/REPORT.md`, "The flat years".
 
+## Which insider signals fail (2026-11-17; plan in HYPOTHESIS.md, addendum of 00:01 ET)
+
+The method that found the earnings rule's quality test, applied to rule I: its 7,132 trades
+split on ten facts known at the signal, single splits in every span, then 161 pairs ranked
+on 2010–2017 alone. Auction basis, a trade.
+
+| Split | 2010–17 | 2006–09 | 2018–23 | Without 2020 |
+|---|---|---|---|---|
+| All of rule I | 3.18% | 3.86% | 1.56% | 1.24% |
+| **Price under $5** | **5.42%** (929) | **7.05%** (660) | **2.93%** (988) | **2.51%** |
+| Price $5 or more | 2.13% | 2.12% | 0.57% | 0.28% |
+| Issued 10% or less in a year | 3.19% | 4.48% | 2.11% | 1.78% |
+| Buyer not only a ten-percent owner | 3.32% | 4.58% | 1.61% | 1.33% |
+| Under $5 and issued 10% or less | 5.63% (583) | 8.06% (473) | 3.06% (574) | 3.29% |
+
+- Three splits hold in every span: the price, share issuance, and who the buyer is. The
+  price matters most: **since 2018 almost all of what is left of the edge is in stocks under
+  $5** (2.9% against 0.6%).
+- Groups persist less than they did for the earnings rule: the ranking of 2010–2017 and of
+  the other years correlate at 0.26 (earnings: 0.53); the best tenth of groups made 6.1%
+  where ranked and 3.3% elsewhere.
+- **No group meets the terms set for a refined rule.** The best, under $5 with little
+  issuance, makes 3% or more in every span on 470 to 580 trades with 17 of 18 years
+  positive, but it lost in 2022 (−1.0%), as did every other strong group. No rule is written.
+- A caution on the under-$5 result: these are the stocks where the modelled costs are least
+  trustworthy (a one-cent tick is 0.5% of a $2 stock, and the tick study covered the
+  earnings rule's trades, not these). It would need its own fill measurement before it
+  meant anything.
+
+The insider rule stays what it was: a weak second sleeve, not a fix. 181 trials.
+
 ## Reproduce
 
 ```
@@ -99,4 +130,5 @@ uv run python research/claude/insider_study.py choose
 uv run python research/claude/insider_study.py test '$50M-$300M' 1e5 1 False False 15
 uv run python research/claude/insider_book.py
 uv run python research/claude/insider_hedge.py
+cd research/claude && uv run python insider_quality.py
 ```
