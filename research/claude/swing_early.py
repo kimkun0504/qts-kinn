@@ -21,6 +21,9 @@ RULES = {
     # Family 18's cells (chosen on 2010-2017): rule A with a $50M floor, and the wider one.
     "A50": "earn and ret2 >= 0.15 and dvr2 >= 5 and mcap >= 5e7 and mcap < 3e8",
     "A2": "earn and ret2 >= 0.10 and dvr2 >= 5 and mcap >= 5e7 and mcap < 3e8",
+    # Family 19: an earnings 8-K dated the day of the jump itself, read on that day's move
+    # (needs the join to earn0 that swing_overnight.load makes).
+    "S50": "e0.p0 is not null and ret1 >= 0.15 and dvr >= 5 and mcap >= 5e7 and mcap < 3e8",
     # Family 4's cell: a pullback in a small winner.
     "C": """ret120 >= 0.50 and ret120 < 1.00 and ret5 <= -0.05 and ret5 >= -0.10
             and history >= 120 and mcap >= 3e8 and mcap < 2e9""",

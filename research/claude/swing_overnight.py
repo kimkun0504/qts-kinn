@@ -33,8 +33,9 @@ CACHE = Path(tempfile.gettempdir()) / "swing_overnight_signals.pkl"
 
 def load(rule: str = "A50") -> list[dict]:
     """A50's signals with their bars (as in swing_exits.load) and the facts known at the close."""
-    if CACHE.exists() and rule == "A50":
-        return pickle.loads(CACHE.read_bytes())
+    cache = CACHE.with_name(f"swing_overnight_{rule}.pkl")
+    if cache.exists():
+        return pickle.loads(cache.read_bytes())
     settings = load_settings()
     store = DataStore(settings)
     base = settings.data_dir / "research" / "swing"
@@ -61,6 +62,9 @@ def load(rule: str = "A50") -> list[dict]:
                              p.rn, p.c
                       from read_parquet('{base}/{name}_*.parquet') d
                       left join '{base}/{market}.parquet' m using (day)
+                      left join (select permaticker as p0, day as d0
+                                 from '{base}/earn0{"_early" if name == "early" else ""}.parquet') e0
+                        on e0.p0 = d.permaticker and e0.d0 = d.day
                       join p on p.permaticker = d.permaticker and p.date = d.day
                       where {dates} and next_open is not null and ({RULES[rule]}))
                 select s.day, s.symbol, s.adv, s.dvr2, s.commission, {", ".join("s." + n for n in names)},
@@ -79,8 +83,7 @@ def load(rule: str = "A50") -> list[dict]:
                                                   **facts, "bars": {}})  # fmt: skip
             t["bars"][k] = (d, close * o, close * h, close * low, close)
         out += list(trades.values())
-    if rule == "A50":
-        CACHE.write_bytes(pickle.dumps(out))
+    cache.write_bytes(pickle.dumps(out))
     return out
 
 
@@ -586,10 +589,65 @@ def final(signals, fund) -> None:
                       f"worst {min(totals, key=totals.get)} ${min(v):6,.0f}, losing {sum(x < 0 for x in v)}")  # fmt: skip
 
 
+def same_day(signals, fund) -> None:
+    """Family 19's passing cell: the earnings 8-K is dated the day of the jump, so the signal
+    is read that day and bought a session earlier than A50 would."""
+    early = load("S50")
+    keep = GROUPS["up or net debt"]
+    a50 = build(signals, fund, keep=keep)
+    s50_all = build(early, fund)
+    s50 = build(early, fund, keep=keep)
+    print(len(early), "same-day signals;", len(s50), "pass the test; A50Q has", len(a50))
+    for label, trades in (("same day, all", s50_all), ("same day, quality", s50)):
+        rows = per_trade(trades)
+        cells = [f"{n} {100 * np.mean([x for y, x in rows if ok(y)]):5.2f}% "
+                 f"({sum(ok(y) for y, _ in rows):3d})" for n, ok in SPANS]  # fmt: skip
+        by = {y: np.mean([x for yy, x in rows if yy == y]) for y in sorted({y for y, _ in rows})}
+        print(f"{label:20} " + "  ".join(cells) + f"  yrs+ {sum(v > 0 for v in by.values())}/{len(by)}")
+        print("      " + " ".join(f"{y % 100:02d}:{100 * v:5.1f}" for y, v in by.items()))
+    # One position a company: of two signals within 15 sessions, the earlier is kept.
+    union, last = [], {}
+    for x in sorted(a50 + s50, key=lambda x: (x["dates"][0], x["t"]["symbol"])):
+        symbol, entry = x["t"]["symbol"], x["dates"][0]
+        if symbol in last and entry <= last[symbol]:
+            continue
+        last[symbol] = x["dates"][-1]
+        union.append(x)
+    firsts = {(x["t"]["symbol"], x["t"]["day"]) for x in s50}
+    took_early = sum((x["t"]["symbol"], x["t"]["day"]) in firsts for x in union)
+    print(f"together, one position a company: {len(union)} trades, {took_early} entered on the "
+          f"same-day signal, {len(union) - took_early} on A50's")  # fmt: skip
+    books = {"A50Q alone": a50, "same day (quality) alone": s50, "both, one a company": union,
+             "both, one a company, 20-day exit": None}  # fmt: skip
+    a50e, s50e = build(signals, fund, keep=keep, ema=20), build(early, fund, keep=keep, ema=20)
+    union_e, last = [], {}
+    for x in sorted(a50e + s50e, key=lambda x: (x["dates"][0], x["t"]["symbol"])):
+        symbol, entry = x["t"]["symbol"], x["dates"][0]
+        if symbol in last and entry <= last[symbol]:
+            continue
+        last[symbol] = x["dates"][-1]
+        union_e.append(x)
+    books["both, one a company, 20-day exit"] = union_e
+    for label, trades in books.items():
+        describe(label, trades)
+    for label in ("A50Q alone", "both, one a company"):
+        by_year(label, books[label])
+    for slots in (15, 20):
+        for basis in ("auction", "crossed"):
+            daily, taken = run_book(union, basis, slots)
+            totals = defaultdict(float)
+            for d, v in daily.items():
+                if d.year >= 2006:
+                    totals[d.year] += v
+            v = list(totals.values())
+            print(f"{slots} positions, both: {basis:8} taken {taken:5d} ${np.mean(v):6,.0f} a year, "
+                  f"worst {min(totals, key=totals.get)} ${min(v):6,.0f}, losing {sum(x < 0 for x in v)}")  # fmt: skip
+
+
 if __name__ == "__main__":
     what = sys.argv[1]
     data, market = load(), index()
     print(len(data), "signals;", len(market), "sessions of the index")
     {"quality": quality, "books": books, "cross": cross, "filtered": filtered, "chance": chance,
      "pairs": pairs, "cutoffs": cutoffs, "who": who, "wider": wider, "insider": insider,
-     "final": final}[what](data, market)  # fmt: skip
+     "final": final, "same_day": same_day}[what](data, market)  # fmt: skip

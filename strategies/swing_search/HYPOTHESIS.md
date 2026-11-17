@@ -426,3 +426,11 @@ seen). 3 cells.
 **What counts.** A cell is added to the rule only if it makes 3% or more a trade in each of
 the three spans, without 2020 as well, on 100 trades or more in each, and the book with it
 added has no losing year on either cost basis. Otherwise it is recorded as failed. 7 trials.
+
+**Results, 2026-11-17 00:05 ET.** In REPORT.md. Family 19: jumps on other 8-K items, other
+filings and no filing lose with or without the test (failed). The earnings 8-K dated the day
+of the jump clears the trade bar with the test (5.19%, 8.20%, 4.01%; 3.81% without 2020; 211,
+168 and 195 trades) and fails the book term: added to A50Q with one position a company it
+raises the book to $6,044 a year with no losing year on the auction basis, and two small
+losing years with the spread crossed. Not added. Family 20: failed (no cell with 100 trades a
+span clears 3%). 7 trials.

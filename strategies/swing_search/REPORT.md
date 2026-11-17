@@ -306,10 +306,41 @@ the filtered book makes $2,984 a year (worst year +$1,068), and with rule I adde
 Two or more insiders is about one point better than rule I since 2018. Every cell lost in
 2022, and none removes the fall-off after 2017.
 
+**Does the test rescue other jumps? (families 19 and 20, plan of 23:45 ET; 7 cells.)**
+Companies of $50M to $300M, hold 15, the auction basis, the test as fixed.
+
+| Jump | With the test: 2010–17 | 2005–09 | 2018–23 | Without 2020 | The fallen, cash-rich group |
+|---|---|---|---|---|---|
+| Earnings 8-K dated the same day, 15% on 5× volume | 5.19% (211) | 8.20% (168) | 4.01% (195) | 3.81% | −0.81%, 0.05%, −4.74% |
+| Another 8-K item, 15% on 5× | 0.03% | −0.90% | −2.73% | −5.29% | −3.83%, −4.12%, −2.69% |
+| Another filing, 15% on 5× | −0.87% | −3.53% | −0.98% | −3.68% | all negative |
+| No filing, 15% on 5× | −3.79% | −2.26% | −3.41% | −4.59% | all negative |
+| Earnings, next day, 15% on 2× to 5× | 1.23% | 0.20% | 0.69% | −0.29% | |
+| Earnings, next day, 10% to 15% on 5×, up and net debt | 2.57% (63) | 4.05% (42) | 4.74% (40) | 5.31% | |
+
+- The test is about **earnings**. Jumps on other news lose money with or without it, so the
+  idea that it marks a general "bounce that holders sell into" is wrong, or at least not
+  enough: without earnings there is no drift to protect.
+- **One cell clears the bar on the trade: the earnings 8-K dated the day of the jump.** A50
+  waits a session after the 8-K, because the filing has a date and no time; these are the
+  releases filed that morning, read at that day's close and bought a session earlier. With
+  the test they make 3.8% to 8.2% in every span; the fallen, cash-rich group fails here as
+  well. Two thirds of them (378 of 574) are A50 events entered a day sooner; 196 are events
+  A50 never takes, because the stock gave some back the next day.
+- **It fails the last term set for adding it.** With one position a company (the earlier
+  signal wins), the book makes $6,044 a year against $5,097 (Sharpe 1.24, worst year +$936)
+  on the auction basis, but with the spread crossed two years lose a little (2011 −$404,
+  2019 −$456). So it is **not added to the rule**. With the 20-day-average exit the combined
+  book is the best seen ($7,227 a year, Sharpe 1.51, drawdown $6,484, worst year +$1,405;
+  spread crossed $5,860, worst year +$26, none losing), but that is a second choice stacked
+  on a first and was not the term set, so it is a lead, not a result.
+- Weaker earnings jumps do not pass: lower volume has no edge, and the 10% to 15% jumps
+  pass only under a stricter test on 40 to 60 trades a span.
+
 ### What this is worth
 
 The filter was found by looking at years already read, among eight splits, their pairs and
-24 cut-offs (about 210 trials added). The checks say it is unlikely to be chance and is not
+24 cut-offs, then seven more cells on other jumps (about 220 trials added). The checks say it is unlikely to be chance and is not
 a knife edge, and the failing group shows up in a second universe. It is still a finding
 from data that has been seen. Two honest tests remain:
 
