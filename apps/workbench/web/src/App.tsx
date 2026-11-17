@@ -17,9 +17,12 @@ import { Trials } from "./pages/Trials";
 const TITLES = { home: "Home", strategies: "Strategies", strategy: null, studies: "Studies", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
 type Theme = "dark" | "light";
 
+// Light unless the owner picked dark. The key is new so the old app's auto-saved "dark" is ignored.
+const THEME_KEY = "kinn-theme-choice";
+
 function initialTheme(): Theme {
   try {
-    const saved = localStorage.getItem("kinn-theme");
+    const saved = localStorage.getItem(THEME_KEY);
     if (saved === "dark" || saved === "light") return saved;
   } catch {
     /* storage unavailable: fall through */
@@ -56,12 +59,16 @@ export default function App() {
   useEffect(load, [load]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    try {
-      localStorage.setItem("kinn-theme", theme);
-    } catch {
-      /* storage unavailable */
-    }
   }, [theme]);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      /* storage unavailable: the choice lasts for this visit */
+    }
+  };
 
   // Abandoned runs never produced results; they stay out of the lists (Trials still reports them).
   const live = runs.filter((run) => run.status !== "abandoned");
@@ -87,7 +94,7 @@ export default function App() {
       }}
       runsDir={runsDir}
       theme={theme}
-      onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onToggleTheme={toggleTheme}
       onReload={load}
     >
       {error ? (

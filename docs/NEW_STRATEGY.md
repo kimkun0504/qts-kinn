@@ -26,6 +26,9 @@
    sweeps. Every run is a counted trial; watch the Deflated Sharpe and PBO in the Workbench.
 10. **Never** touch the holdout. Unsealing is the owner's decision, once, for a frozen strategy.
 
+11. **Keep the record.** Add a `record:` block to `strategy.yaml` when the first verdict is
+    written, and update it with every later verdict (see below). The Workbench shows it.
+
 Before trusting any number, go through the bias checklist in [AGENTS.md](../AGENTS.md).
 
 ## A daily alpha (multi-day holding)
@@ -41,3 +44,36 @@ Before trusting any number, go through the bias checklist in [AGENTS.md](../AGEN
 5. Write `REPORT.md` with the verdict against the bars set in step 1.
 
 `strategies/momentum_12_1/` is the worked example.
+
+## The record in `strategy.yaml`
+
+The Workbench's home page, strategy pages and Studies page are built from this block
+(decision 0022). Write it in plain words; it is what the owner reads first.
+
+```yaml
+record:
+  title: Earnings drift            # the page title
+  idea: Earnings drift             # the row name in "everything tested"
+  horizon: 40 sessions
+  verdict: passed_holdout          # passed_holdout | testing | weak | failed_holdout | parked | closed
+  label: Passed holdout            # optional; overrides the verdict's default label
+  result: "+$11,430 a year in the holdout"     # one line, the number that matters
+  summary: >-                      # the rule in two sentences
+    ...
+  paper: earnings_drift            # the paper ledger's folder, if it has one
+  periods:                         # the runs behind the page's numbers, oldest test first
+    - {key: holdout, config: holdout}          # the latest complete run of each config is used
+    - {key: search, config: research}
+  weaknesses: ["..."]
+  in_test:                         # variants being tested forward (their own row and verdict)
+    - {idea: ..., verdict: testing, result: ..., stats: [...], settle: [...]}
+  waiting: ["what only the owner can do next"]
+  evidence:                        # what was found, in order
+    - {when: 2026-11-16, title: ..., kind: found, text: "..."}   # found | passed | failed | running | open
+  studies:                         # every search or test, with its trial count, scripts included
+    - {name: ..., when: 2026-11-16, trials: 438, result: "...", verdict: lead}   # lead | passed | failed
+```
+
+`board: false` keeps a strategy off the board (a control, or a folder that only holds studies);
+its `studies` still appear on the Studies page. Numbers in `periods` come from the runs; text
+fields are not checked against them, so change both together.
