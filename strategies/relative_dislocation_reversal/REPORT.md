@@ -630,3 +630,72 @@ not use validation or sealed holdout data.
 | 2014 | 13 | +2.50% | +2.19% | +$654 | +$573 |
 | 2015 | 19 | +4.52% | +4.26% | +$1,708 | +$1,609 |
 | 2016 | 10 | −1.89% | −2.23% | −$399 | −$465 |
+
+## Owner-requested 2017–2023 size-group check
+
+**Verdict: park.** The frozen portfolio earned **+3.47% net per trade at
+base costs and +3.12% at doubled slippage** over 291 completed trades on
+183 dates in 2017-01-03 through 2023-11-08. The full-period mean and
+sample bars passed. The recent block earned **−0.13% at base costs and
+−0.45% at doubled slippage** over 54 trades on 48 dates. Both recent
+return bars failed. Full-period daily Sharpe at doubled slippage was
+**0.85**, below the specified requirement above 1. The drawdown bar passed.
+
+| Period | Trades / active dates | Gross mean | Net/trade 1× | Net/trade 2× |
+|---|---:|---:|---:|---:|
+| 2017–2023 through Nov 8 | 291 / 183 | +4.06% | +3.47% | +3.12% |
+| 2017–2021 | 237 / 135 | +4.89% | +4.29% | +3.93% |
+| 2022–2023 through Nov 8 | 54 / 48 | +0.43% | −0.13% | −0.45% |
+
+| Period | Net dollars 1× / 2× | Daily P&L t-statistic 1× / 2× | Annualised daily Sharpe 1× / 2× | Worst drawdown 1× / 2× |
+|---|---:|---:|---:|---:|
+| 2017–2023 through Nov 8 | +$18,750 / +$16,811 | 2.41 / 2.22 | 0.92 / 0.85 | −$3,827 / −$4,094 |
+| 2017–2021 | +$18,910 / +$17,316 | 2.50 / 2.35 | 1.12 / 1.05 | −$2,755 / −$2,857 |
+| 2022–2023 through Nov 8 | −$160 / −$505 | −0.09 / −0.30 | −0.07 / −0.22 | −$1,772 / −$1,900 |
+
+Daily statistics include dates with no trades. Each subperiod drawdown
+starts from that subperiod's initial balance. In the full period, the
+168 winners averaged +12.51% at 1× and the 123 losers averaged −8.88%.
+At 2× the 161 winners averaged +12.64% and the 130 losers averaged −8.67%.
+Mean executed notional was $1,942. There were 295 signals, four unfilled
+orders and no capital rejections. Of the completed trades, 267 exited by
+time and 24 by auction.
+
+| Original later-period bar | Outcome |
+|---|---|
+| At least 150 trades on 90 dates overall | Pass, 291 on 183 dates |
+| At least +3.00% at 1× overall | Pass, +3.47% |
+| At least +1.00% at 2× overall | Pass, +3.12% |
+| At least 50 trades on 30 dates from 2022 | Pass, 54 on 48 dates |
+| At least +3.00% at 1× from 2022 | Fail, −0.13% |
+| At least +1.00% at 2× from 2022 | Fail, −0.45% |
+| Positive 1× mean in 2017–2021 | Pass, +4.29% |
+| Full-period 2× daily Sharpe above 1 | Fail, 0.85 |
+| Full-period 2× worst end-of-day drawdown below $10,000 | Pass, −$4,094 |
+
+The 2020 stressed result alone was greater than the stressed dollar
+profit for the entire test. The average trade lost after costs in the
+recent block despite meeting its minimum trade count. Entry and exit
+prices still use minute-bar simulation, with tradable quote depth
+unverified.
+
+This is a single owner-requested follow-up after the original
+development advancement gate failed. It preserves that decision.
+Registration `a6b63e5` preceded run
+`20261117T030800Z_gpt_relative_dislocation_reversal_ab2e2a4e` and was
+also the clean run commit. The run used data build `447e58e098` and the
+original `validation_liquid_size_peers` configuration. All 291 entries
+were one minute after the signal, all exits were same-session and all
+185 signal-session lookahead replays passed. This adds one counted
+`intraday_rebound` trial. The sealed holdout beginning 2023-11-09
+stayed unopened.
+
+| Year | Trades | Net/trade 1× | Net/trade 2× | Net P&L 1× | Net P&L 2× |
+|---|---:|---:|---:|---:|---:|
+| 2017 | 6 | +2.63% | +2.39% | +$320 | +$291 |
+| 2018 | 17 | +4.08% | +3.80% | +$1,385 | +$1,289 |
+| 2019 | 17 | −4.33% | −4.68% | −$1,458 | −$1,575 |
+| 2020 | 126 | +7.74% | +7.29% | +$18,021 | +$16,963 |
+| 2021 | 71 | +0.41% | +0.20% | +$642 | +$348 |
+| 2022 | 35 | −1.44% | −1.76% | −$1,021 | −$1,245 |
+| 2023 through Nov 8 | 19 | +2.28% | +1.96% | +$861 | +$740 |
