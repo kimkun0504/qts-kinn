@@ -324,3 +324,38 @@ trade and in a 10-position book's Sharpe ratio and drawdown. About 30 variants, 
 wins in one period only is noise. The holdout is spent: nothing here can be confirmed on it,
 and the frozen rule stays the reference. A variant that wins everywhere would go to the paper
 ledger beside it.
+
+## Addendum, 2026-11-16 22:53 ET: the overnight programme (owner's instruction)
+
+The owner: keep researching swing rules overnight; aim at 3% a trade or close to it; solve
+the flat years; treat 2020 as an outlier year. Still long only. Everything below is on years
+already read (2005 to October 2023); the holdout is spent for this family and untouched for
+insider buying, so whatever survives goes to the paper ledger, not to a claim of proof.
+**2020 is shown apart, and nothing is chosen because of it:** every comparison is also made
+with 2020 left out.
+
+Written before any of it is measured.
+
+1. **Which earnings jumps fail (a quality filter).** A50's signals split by facts known at the
+   signal: shares issued over the past year (more than 10% or not), profitable last quarter
+   or not, free cash flow positive or not, net cash or net debt, price ($3, $5), already at a
+   250-day high or not, up or down over the past year, and short interest (2018 on). A filter
+   counts only if the kept trades beat all trades in each of 2010–2017, 2005–2009 and
+   2018–2023, with and without 2020.
+2. **A hedge that is a purchase.** An inverse small-stock fund (RWM) is bought beside each
+   position, so no short sale and no margin: half or all of the position's dollars, always or
+   only when the small-stock index is under its 200-day average. The fund is modelled as the
+   opposite of the index's daily return less 2% a year, checked against the fund's own prices.
+   The account's $20,000 pays for both legs.
+3. **Standing aside.** No hedge; new signals are skipped when the index is under its 200-day
+   average, or has fallen 5% in five sessions.
+4. **Exits with the above:** the 20-day-average exit and a 40% target, from the exit study.
+5. **Stronger insider signals.** Cells of the insider grid that were eligible on 2010–2017 but
+   not among the five tested: $500,000 or more bought, and two or three insiders, in
+   companies of $50M to $300M, hold 15. Tested like the others on 2006–2009 and 2018–2022.
+6. **The book that results,** year by year, with the measures used so far (a year, Sharpe
+   ratio, worst drawdown, worst year, losing years), on the auction basis and with the spread
+   crossed, with and without 2020.
+
+A book "solves the flat years" here if its worst year of 2006 to 2023 is a gain of at least
+5% of the account on the auction basis and no year loses with the spread crossed.
