@@ -1,0 +1,8 @@
+name: small_cap_attention_rotation
+status: parked
+engine: intraday
+universe: small_cap_attention_rotation
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: small_cap_attention_rotation
+prior_trials: 0
