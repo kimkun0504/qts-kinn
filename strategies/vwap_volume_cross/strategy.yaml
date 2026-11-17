@@ -1,0 +1,8 @@
+name: vwap_volume_cross
+status: parked
+engine: intraday
+universe: vwap_volume_cross
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
