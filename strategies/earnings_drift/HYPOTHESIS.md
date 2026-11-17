@@ -176,3 +176,22 @@ the whole account, two losing years), against 10 positions $5,097 ($10,366). Wit
 20-day exit: $6,692 ($10,408, one losing year), $7,901 ($11,968, two) and $5,783 ($7,601,
 none). The Sharpe ratio falls with every step. No count is added to the paper ledger; the
 choice is the owner's. 4 trials.
+
+## Addendum, 2026-11-17 15:35 ET: larger positions only while the book is nearly empty
+
+Written before it is measured. The table above says the idle money is the price of signals
+arriving together. That suggests sizing by how full the book is, which has not been tried:
+a position bought while the book is nearly empty can be larger without the account ever
+being more than fully invested in the busy weeks.
+
+**Two rules,** $20,000, A50Q, the most volume first, never more invested than the account:
+- **V3:** a position is $4,000 if fewer than 3 are open when it is bought, otherwise $2,000.
+- **V5:** $4,000 if fewer than 5 are open, otherwise $2,000.
+
+Each with the 15-session exit and the 20-day-average exit: 4 trials, charged to
+`swing_search`.
+
+**What counts.** A rule becomes a paper book only if, against the 10-position book with the
+same exit, it makes more a year on both cost bases, its worst drawdown is no deeper, and it
+has no losing year from 2006 to 2023 on the auction basis. Otherwise it is noted. The choice
+is made on years already read, so a pass is a candidate for the forward test.
