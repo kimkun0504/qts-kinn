@@ -55,7 +55,7 @@ record:
   title: Earnings drift            # the page title
   idea: Earnings drift             # the row name in "everything tested"
   horizon: 40 sessions
-  verdict: passed_holdout          # passed_holdout | testing | weak | failed_holdout | parked | closed
+  verdict: passed_holdout          # planned | passed_holdout | testing | weak | failed_holdout | parked | closed
   label: Passed holdout            # optional; overrides the verdict's default label
   result: "+$11,430 a year in the holdout"     # one line, the number that matters
   summary: >-                      # the rule in two sentences

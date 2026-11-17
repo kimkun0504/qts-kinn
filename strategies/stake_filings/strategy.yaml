@@ -7,3 +7,14 @@ family: stake_filings
 prior_trials: 0
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: After a holder crosses 5%
+  idea: Buying after a Schedule 13D
+  horizon: 15 to 40 sessions
+  verdict: planned
+  label: "Planned, waiting for data"
+  result: "Not measured yet"
+  summary: >-
+    A holder who crosses 5% of a company and may seek to influence it must file a Schedule
+    13D. Buy at the open after the filing; 13G, the passive form, is the control.

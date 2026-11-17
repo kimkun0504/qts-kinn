@@ -7,3 +7,16 @@ family: foreign_drift
 prior_trials: 0
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: The earnings rule in foreign companies
+  idea: The earnings rule in companies that report on 6-K
+  horizon: 15 sessions
+  verdict: planned
+  label: "Planned, waiting for data"
+  result: "Not measured yet"
+  summary: >-
+    Foreign companies listed in the US report results on a 6-K, not an 8-K, so the earnings
+    rule has never taken one. The same rule, fixed in advance, on companies it has not seen.
+  waiting:
+    - "Run the SEC download once more with --what other. It adds the 6-K and 13D filings two planned tests need."

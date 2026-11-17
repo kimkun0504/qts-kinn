@@ -24,6 +24,7 @@ NAME = re.compile(r"^[a-z0-9_]+$")
 VERDICTS = {
     "passed_holdout": ("Passed holdout", "works"),
     "testing": ("In test", "testing"),
+    "planned": ("Planned", "testing"),
     "weak": ("Weak", "testing"),
     "failed_holdout": ("Failed holdout", "closed"),
     "parked": ("Parked", "closed"),
