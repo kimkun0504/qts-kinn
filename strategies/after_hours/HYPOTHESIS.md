@@ -78,3 +78,27 @@ three years of five). 30 cells and 10 test runs: 40 trials.
 every year for one cell (mid, up 5% to 15%, sold at the next open), which showed its 2023
 figure: +1.59% on 101 trades. The 2023 check was reserved for a cell that passed, and this
 one had not. It is recorded here as seen; for this cell 2023 is no longer an unseen check.
+
+## Addendum, 2026-11-17 17:42 ET: the other side, selling short after hours on a bad report
+
+Written before it is measured. The path table of the first part showed (search years, every
+size together, measured from the minute's high) that a stock down 5% or more 30 minutes
+after its report was another 1.1% lower at the next open and 1.2% lower at the next close.
+That is known. Not known: what a short seller would have made, by size and by how far the
+stock had fallen, and on the other years. The owner allowed short research today. Unlike the
+other short ideas, the larger companies here are easy to borrow and the hold is one night.
+
+Same events, reading and liquidity floor as the first part (reports after the close only).
+**Sell short at the low of the first minute that trades after the reading.** Buy back at the
+next session's open, or at its close. Costs: the auction allowance and commission, and a
+borrow fee of 10% a year for the night.
+
+Cells: 3 sizes × 2 reactions (down 5% to under 15%; down 15% or more) × 2 exits = **12**,
+charged to `after_hours`.
+
+**What counts:** as the first part. Search 2010–2017: 150 trades, 1% after costs, weekly t
+of 3, six years of eight. Tests on 2005–2009 and 2018–2022, each cell that goes forward run
+once: 0.5%, t of 2.5, four years of five, in both. For any cell that goes forward the report
+gives the worst trade and the worst 1%, since a short's loss has no limit. Whether the
+shares can be borrowed after hours at a retail broker is not known and is the first thing to
+check if anything passes.
