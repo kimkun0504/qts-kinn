@@ -182,6 +182,13 @@ Would fewer, larger positions use the money better? $20,000, A50Q, the most volu
   average ($11,600 with the 20-day exit). In Treasury bills at 4% that is roughly $500 a
   year, a tenth more profit; at the near-zero rates of 2010 to 2021 it was nothing.
 
+**Larger only while the book is nearly empty** (4 more trials; `research/claude/swing_sizing.py`).
+A position of $4,000 while fewer than three are open, $2,000 after, never more invested than
+the account: $6,241 a year with a drawdown of $13,696 on the plain exit, and $6,253 with
+$8,577 on the 20-day exit (Sharpe 1.20, no losing year on the auction basis, one with the
+spread crossed). More dollars, deeper drawdown again, so it does not pass the bar set for
+it. "While fewer than five are open" is the 5-position book under another name.
+
 Nothing here changes the paper books. The count is the owner's choice between dollars and
 drawdown, made on years already read.
 

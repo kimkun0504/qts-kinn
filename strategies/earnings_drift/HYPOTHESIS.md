@@ -195,3 +195,8 @@ Each with the 15-session exit and the 20-day-average exit: 4 trials, charged to
 same exit, it makes more a year on both cost bases, its worst drawdown is no deeper, and it
 has no losing year from 2006 to 2023 on the auction basis. Otherwise it is noted. The choice
 is made on years already read, so a pass is a candidate for the forward test.
+
+**Results, 2026-11-17 15:35 ET.** In REPORT.md. Neither passes: both make more and both draw
+down deeper. V3: $6,241 a year with a drawdown of $13,696 (15 sessions); $6,253 with $8,577
+(20-day exit), against $5,097 / $10,366 and $5,783 / $7,601. V5 turns out to be the
+5-position book (five positions of $4,000 fill the account). Noted; no paper book. 4 trials.
