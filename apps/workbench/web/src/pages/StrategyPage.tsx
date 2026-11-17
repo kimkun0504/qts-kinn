@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MonthGrid, MonthLegend } from "../components/charts/MonthGrid";
 import { ProfitChart } from "../components/charts/ProfitChart";
+import { ReturnBars, TradeDots } from "../components/charts/TradeCharts";
 import { YearBars } from "../components/charts/YearBars";
 import { Markdown } from "../components/Markdown";
 import { Books, Orders, Positions } from "../components/PaperPanel";
@@ -8,7 +9,7 @@ import { RunsTable } from "../components/RunsTable";
 import { Card, Note, Stat } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { VerdictBadge } from "../components/ui/VerdictBadge";
-import { api, type Evidence, type Period, type RunRow, type StrategyPageData, type StudyRow } from "../lib/api";
+import { api, type Evidence, type Period, type RunRow, type StrategyPageData, type StudyRow, type Trade } from "../lib/api";
 import { day, dollars, int, money, num, pct, plainPct } from "../lib/format";
 import { byYear, timeline } from "../lib/series";
 import { useLoad } from "../lib/useLoad";
@@ -297,6 +298,42 @@ function EvidenceCard({ evidence }: { evidence: Evidence[] }) {
   );
 }
 
+/** Where the profit comes from: how many win, how large the two sides are, and each trade
+ *  by date. */
+function TradeSummary({ rows }: { rows: Trade[] }) {
+  const returns = rows.filter((t) => t.notional > 0).map((t) => t.net / t.notional);
+  if (returns.length < 5) return null;
+  const mean = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0);
+  const wins = returns.filter((r) => r > 0);
+  const losses = returns.filter((r) => r <= 0);
+  const profit = rows.map((t) => t.net).sort((a, b) => b - a);
+  const total = profit.reduce((a, b) => a + b, 0);
+  const tenth = Math.max(1, Math.round(profit.length / 10));
+  const best = profit.slice(0, tenth).reduce((a, b) => a + b, 0);
+  return (
+    <div className="flex flex-col gap-5 border-b border-line pb-5">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
+        <Stat label="Winners" value={plainPct(wins.length / returns.length)} note={`${int(wins.length)} of ${int(returns.length)}`} />
+        <Stat label="Average winner" value={pct(mean(wins), 1)} />
+        <Stat label="Average loser" value={pct(mean(losses), 1)} />
+        <Stat label="Best trade" value={pct(Math.max(...returns), 0)} />
+        <Stat label="Worst trade" value={pct(Math.min(...returns), 0)} />
+        <Stat label="Best tenth of trades" value={dollars(best)} note={total - best < 0 ? `the rest lost ${dollars(best - total)}` : `${plainPct(best / (total || 1))} of the profit`} />
+      </div>
+      <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <h3 className="m-0 text-[13px] font-semibold text-ink-2">Trades by return, after costs</h3>
+          <ReturnBars returns={returns} />
+        </div>
+        <div className="flex flex-col gap-2">
+          <h3 className="m-0 text-[13px] font-semibold text-ink-2">Each trade, by the day it closed</h3>
+          <TradeDots dots={rows.filter((t) => t.notional > 0).map((t) => ({ day: t.day, symbol: t.symbol, value: t.net / t.notional }))} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Trades({ periods }: { periods: Period[] }) {
   const order = [...periods].reverse();
   const [key, setKey] = useState(order[0]?.key ?? "");
@@ -330,6 +367,7 @@ function Trades({ periods }: { periods: Period[] }) {
         <p className="m-0 text-ink-2">Loading the trades…</p>
       ) : (
         <>
+          <TradeSummary rows={data.rows} />
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-sm">
               <thead>

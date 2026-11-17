@@ -55,8 +55,8 @@ record:
         - {label: Losing years, value: 0 of 18}
         - {label: Worst drawdown, value: "$10,366"}
       settle:
-        - {text: "Paper books with the test. Months of signals needed.", state: running}
-        - {text: "One run on the holdout, a second look. The owner's decision, not taken.", state: open}
+        - {text: "Paper books with the test. Years of signals would be needed to be sure.", state: running}
+        - {text: "One run on the holdout, a second look. Suggestive at best; the owner's decision, not taken.", state: open}
   waiting:
     - Run the paper ledger after the close each evening.
     - Decide whether to run the quality test on the holdout.
