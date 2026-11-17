@@ -138,3 +138,118 @@ its 2% cross threshold and confirmation delay. The first impulse
 has already occurred at entry. It cannot establish the return from
 a trade submitted before the impulse or from immediate news receipt.
 The holdout beginning 2023-11-09 stayed sealed.
+
+## Immediate minute crossing, 2026-11-17
+
+**Verdict. Park.** Removing the five-minute confirmation delay and
+the 2% crossing buffer did not produce a profitable mean return.
+At the registered one-hour horizon the surge group averaged
+−0.014% gross and −0.36% net at
+base costs, far below the +3% gross advancement gate.
+The sample bars passed. The gross confidence and stressed return
+bars failed both overall and in 2013–2016. The development
+portfolio and validation were skipped under the addendum.
+
+This adds two counted studies to `intraday_rebound`. The shared
+family count reached 101, including nine earlier
+declared looks. Hypothesis addendum commit `39262d7` preceded
+both studies. Both used clean commit `b149d45`, data build
+`447e58e098`, and 2003-09-10 through 2016-12-30.
+
+- Surge run `20261117T193030Z_gpt_vwap_volume_cross_2eaa484a`, config `development_immediate`.
+- All-crossing run `20261117T193221Z_gpt_vwap_volume_cross_9f93c0b8`, config
+  `development_immediate_all`.
+
+The first common price-and-liquidity crossing was selected before
+its turnover was compared with the preceding 30-minute median.
+The surge group requires turnover at least three times that
+median. The all-crossing group uses every such first crossing
+with a positive median. An earlier crossing with less turnover
+cannot be replaced by a later high-turnover event.
+
+Every one of the 1,071,159 primary events matched
+a comparator event exactly on security, date, signal minute,
+entry minute, shares, entry price, modeled costs and one-hour
+return. The remaining 435,475 events provide
+the complementary group. Their market capitalisations,
+liquidity and other exposures can differ, so the differences
+describe this filter and do not identify a causal volume effect.
+
+| Immediate crossing, one-hour outcome | Events | Active dates | Gross mean | Net mean at 1× | Net mean at 2× |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Surge, full development | 1,071,159 | 3,332 | −0.014% | −0.36% | −0.59% |
+| All, full development | 1,506,634 | 3,332 | −0.011% | −0.34% | −0.55% |
+| Non-surge complement, full development | 435,475 | 3,332 | −0.005% | −0.28% | −0.45% |
+| Surge, 2013–2016 | 286,157 | 1,008 | −0.002% | −0.35% | −0.58% |
+| All, 2013–2016 | 378,906 | 1,008 | −0.001% | −0.34% | −0.55% |
+| Non-surge complement, 2013–2016 | 92,749 | 1,008 | −0.001% | −0.29% | −0.47% |
+
+| Full-period 95% day-clustered interval | Surge | All crossings |
+| --- | ---: | ---: |
+| Gross mean | −0.023% to −0.004% | −0.024% to +0.001% |
+| Net mean at 1× | −0.370% to −0.351% | −0.349% to −0.325% |
+| Net mean at 2× | −0.603% to −0.584% | −0.565% to −0.541% |
+
+Kinn passed 3,332 primary and
+3,332 comparator lookahead replays.
+The studies count 153,496 primary
+and 171,455 comparator entries
+after order expiry. Restricting to next-minute entries leaves
+the verdict unchanged.
+
+| Entries within expiry | Events | Active dates | Gross mean | Net mean at 1× | Net mean at 2× |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Surge, full development | 917,663 | 3,332 | −0.014% | −0.36% | −0.60% |
+| All, full development | 1,335,179 | 3,332 | −0.012% | −0.34% | −0.55% |
+| Non-surge complement, full development | 417,516 | 3,332 | −0.006% | −0.28% | −0.46% |
+| Surge, 2013–2016 | 240,479 | 1,008 | −0.002% | −0.36% | −0.59% |
+| All, 2013–2016 | 327,967 | 1,008 | −0.002% | −0.34% | −0.56% |
+
+| Independent event series | Daily P&L t-statistic | Worst end-of-day drawdown | Total modeled net P&L |
+| --- | ---: | ---: | ---: |
+| Surge, 1× | −72.81 | −$7,687,901 | −$7,687,901 |
+| Surge, 2× | −111.37 | −$12,652,895 | −$12,652,895 |
+| All, 1× | −51.59 | −$10,117,053 | −$10,117,053 |
+| All, 2× | −80.15 | −$16,584,957 | −$16,584,957 |
+
+These dollar series sum full $2,000-target independent event
+orders across all 3,352 development sessions. They require capital
+far beyond the account and are not portfolio losses for a
+$20,000 account. About 69%
+of primary target orders and
+62% of comparator target
+orders exceeded 5% of entry-bar volume. Even within expiry,
+67% of primary target
+sizes exceeded the participation cap. The primary's poor gross
+return precedes all cost and size adjustments.
+
+| Year | Surge events | Surge net at 1× | Surge net at 2× | All events | All net at 1× | All net at 2× |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2003 | 16,387 | −0.38% | −0.61% | 21,697 | −0.37% | −0.59% |
+| 2004 | 79,125 | −0.35% | −0.58% | 106,626 | −0.33% | −0.54% |
+| 2005 | 90,413 | −0.35% | −0.58% | 121,056 | −0.33% | −0.54% |
+| 2006 | 99,997 | −0.34% | −0.56% | 138,946 | −0.32% | −0.52% |
+| 2007 | 107,486 | −0.34% | −0.56% | 153,985 | −0.31% | −0.52% |
+| 2008 | 94,829 | −0.42% | −0.68% | 152,717 | −0.39% | −0.61% |
+| 2009 | 78,344 | −0.39% | −0.64% | 125,927 | −0.35% | −0.58% |
+| 2010 | 75,204 | −0.36% | −0.59% | 109,109 | −0.33% | −0.55% |
+| 2011 | 71,105 | −0.39% | −0.63% | 102,592 | −0.36% | −0.58% |
+| 2012 | 72,112 | −0.34% | −0.57% | 95,073 | −0.32% | −0.54% |
+| 2013 | 73,289 | −0.35% | −0.58% | 93,037 | −0.34% | −0.56% |
+| 2014 | 74,927 | −0.36% | −0.59% | 99,369 | −0.35% | −0.57% |
+| 2015 | 72,388 | −0.35% | −0.59% | 95,706 | −0.33% | −0.55% |
+| 2016 | 65,553 | −0.33% | −0.56% | 90,794 | −0.32% | −0.54% |
+
+The additional tests cover prefix replay at the crossing minute,
+exact subset construction, missing preceding bars, the positive
+baseline requirement, rejection of later substitute crosses, and
+next-minute expiry with a same-session one-hour exit. The original
+confirmed-entry tests also passed after the implementation
+extension. Ruff, the import contracts, repository rules and the
+lookahead canaries passed.
+
+The baseline remains the stock's preceding 30 minutes. This test
+does not measure relative volume against previous sessions at the
+same clock time. The crossing VWAP is approximated from minute
+closes. News receipt time, actual bid and ask prices and depth
+are unobserved. The sealed holdout stayed excluded.
