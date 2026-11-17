@@ -369,6 +369,25 @@ to April 2020, made back by August. Its longest spell under its own high is 445 
   loss back, so the pause re-armed for good); the row above resets the high when a pause
   ends. Both are counted.
 
+**How steady it is, month by month (description, no trial).** A year without a loss is still
+made of losing months.
+
+| Book, auction basis, 2006–2023 | Months won | Quarters won | Worst month | Worst quarter | A trade with the spread doubled |
+|---|---|---|---|---|---|
+| A50 | 64% | 75% | −$3,285 | −$5,878 | 0.47%, 1.82%, 1.59% by span |
+| A50Q | 65% | 76% | −$6,681 | −$9,553 | 1.31%, 2.92%, 2.69% |
+| A50Q, 20-day exit | 62% | 74% | −$3,534 | −$6,882 | 1.13%, 4.39%, 2.72% |
+
+- About two months in three and three quarters in four make money; the longest run of
+  losing months is four in each book.
+- **The quality test makes a crash worse.** A50Q's worst month and quarter are March and the
+  first quarter of 2020, at about twice A50's loss, because the test keeps companies with
+  debt and those fell hardest. With the plain exit the worst quarter takes nearly half the
+  account. The 20-day exit brings it back to A50's level. If a credit squeeze is what the
+  owner expects, this is the risk to watch: the book would be in indebted small companies.
+- The test also leaves more room for cost: with the modelled spread paid twice over A50Q
+  still makes 1.3% to 2.9% a trade and 15 of 19 years are positive (A50: 0.5% to 1.8%, 13).
+
 **How much money the rule can carry (description, no trial).** The owner finds $1,000 to
 $2,000 positions small. The stocks set the limit: the kept signals trade a median of $861,000
 on a normal day (a tenth of them under $344,000), and the tick study found a median opening
