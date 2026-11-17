@@ -98,3 +98,63 @@ P&L t-statistics and worst drawdown. In portfolios report average
 winners and losers separately. The study prices both cost legs
 from entry-bar conditions and does not measure actual depth or
 capital usage. The sealed holdout stays excluded.
+
+## Addendum, 2026-11-17, immediate minute crossing
+
+The confirmed block studies are complete and rejected. Their primary
+one-hour gross mean was −0.10%, and its earliest measured one-minute
+mean was −0.02%. Those outcomes begin after the confirmation delay.
+They leave the first observed crossing unresolved. Test an earlier
+entry in development with an unfiltered price-cross comparator.
+This follow-up is motivated by the preceding results and the owner's
+request. It adds two counted studies to the same family, whose shared
+count reached 99 including nine earlier looks.
+
+Preserve the universe, cost calibration, account, one-minute expiry
+and one-hour exit. Replace the block decision with the following
+minute decision. The VWAP proxy remains cumulative regular-session
+minute close times valid share volume divided by valid shares.
+
+- From 10:00 through 13:59 ET, with at least 75 clock minutes
+  before the calendar close, require an actual positive-price,
+  positive-volume bar at minute t and t−1. Require the close
+  at t−1 at or below its VWAP through t−1 and the close at t
+  strictly above its VWAP through t. Require at least $40,000
+  of turnover in bar t.
+- Take the first crossing that satisfies those common conditions.
+  Measure its turnover relative to the median turnover in the
+  preceding 30 clock minutes, excluding t. Missing or invalid
+  bars contribute zero observed turnover. Require a positive
+  median for both groups. If the first crossing lacks a positive
+  median, that stock-date remains ineligible for both groups.
+  A later crossing cannot replace it.
+- Enter on the next clock minute. The signal can use the completed
+  crossing bar only. There is no extra confirmation bar and no
+  minimum distance above VWAP.
+
+Run exactly two new studies, in order, on 2003-09-10 through
+2016-12-30. Config `development_immediate` sets `entry_mode: immediate`
+and `turnover_group: surge`, requiring a ratio at least 3.
+Config `development_immediate_all` sets the same mode and
+`turnover_group: all`, requiring only the positive baseline.
+The surge events must be an exact subset of the comparator with
+identical security, decision minute and entry. This permits a
+direct check of the selection effect within the eligible set.
+It cannot establish a causal effect of volume.
+
+Judge the primary `r_60` return using all original study gates,
+including gross at least +3% and positive net at 2× overall and in
+2013–2016, the sample bars, gross interval, and expiry sensitivity.
+Report the all-crossing group and its complementary events at both
+cost levels, alongside annual results and daily risk statistics.
+Neither comparison can replace the primary or relax any gate.
+There are now four registered study configurations in this folder.
+
+If the primary passes, commit a develop verdict and run only
+`development_immediate` as a portfolio on the same dates. Apply
+every original portfolio gate. If qualified, run
+`validation_immediate` once on 2017-01-03 through 2023-11-08
+with identical signal parameters and all original validation gates,
+including the separate recent return requirement. No other horizon,
+turnover threshold or selector is registered. The price reference
+and volume baseline remain approximate and the holdout stays sealed.
