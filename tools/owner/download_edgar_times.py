@@ -12,8 +12,9 @@ Why: the 8-K data on disk gives the day of a filing, not the minute. With the mi
 stock does in the first hours after any kind of company news can be tested on 2005 to 2023.
 `--what other` keeps the filings that are not 8-Ks and are events for a stock: a holder
 crossing 5% (SC 13D, SC 13G), tender offers (SC TO-I, SC TO-T, SC 14D9), merger proxies
-(DEFM14A, PREM14A), spin-offs (10-12B), share sales (S-1, S-3, 424B5) and late-report notices
-(NT 10-K, NT 10-Q).
+(DEFM14A, PREM14A), spin-offs (10-12B), share sales (S-1, S-3, 424B5), late-report notices
+(NT 10-K, NT 10-Q), and the periodic reports (10-Q, 10-K, and the 6-K, 20-F and 40-F through
+which foreign companies report results, since they file no 8-K).
 
 What it does: fetches the SEC's nightly bulk file of every filer's filing list
 (`submissions.zip`, about 1.5 GB) to a temporary folder, keeps the chosen rows filed before
@@ -48,6 +49,7 @@ KINDS = {
     "other": ("other_forms.jsonl.gz", "other_forms.manifest.json", frozenset({
         "SC 13D", "SC 13D/A", "SC 13G", "SC 13G/A", "SC TO-I", "SC TO-T", "SC 14D9",
         "DEFM14A", "PREM14A", "10-12B", "S-1", "S-3", "424B5", "NT 10-K", "NT 10-Q",
+        "10-Q", "10-K", "6-K", "20-F", "40-F",
     })),
 }  # fmt: skip
 FORMS = KINDS["8k"][2]
