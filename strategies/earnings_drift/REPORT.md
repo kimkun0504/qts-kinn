@@ -152,6 +152,31 @@ resting on tests set beforehand ($7,601 against $10,366; $5,783 a year, Sharpe 1
 ledger's version of the exit gave the same exit day and return as the research's on 220
 real signals.
 
+## What the forward test can and cannot tell (2026-11-17)
+
+From the spread of the 1,551 past trades (mean 3.9% a trade, standard deviation 23%; no new
+rule is measured here).
+
+- **The frozen rule can be read in about a year, not in weeks.** At the past mean, 137
+  signals put the average two standard errors above zero; the ledger follows every signal
+  and the holdout years had about 150 a year. If the edge is intact, a year of signals
+  averages below zero about 1 time in 100 and below +2% about 1 in 7. A month or two of
+  paper trading checks the plumbing (signals, fills, the nightly run), not the edge.
+- **A bad start is ordinary.** Of all runs of 24 consecutive past signals, 21% averaged below
+  zero and 8% below −3%; the worst averaged −22% (January 2020). After a run under −3% the
+  next 24 averaged +6.7%. The ledger's first 24 signals (October–November 2026) are down a
+  few percent with most still open.
+- **Neither remaining test can settle the quality test.** It skips 24% of signals; in the
+  past those made 0.8% a trade against 4.9% for the rest, a gap of 4.1 points. One run on
+  the holdout (about 111 skipped signals) would measure that gap to ±2.2 points; a year of
+  paper to ±3.9; three years to ±2.3. Even if the gap is as large as it was, none of these
+  reaches two standard errors. The holdout run would be suggestive at best, and it is the
+  most informative single look available.
+- **So the choice between A50 and A50Q is a judgment about cost, not a test to wait for.**
+  If the filter is right, it removes a quarter of the trades that made nothing and both
+  losing-year risks. If it is wrong, it gives up a quarter of the profit. It cannot make the
+  book worse by more than that.
+
 ## How much of the account it uses (2026-11-17)
 
 Counted day by day on 2006 to October 2023, the 10-position book of A50Q holds **3.3
