@@ -53,3 +53,8 @@ Costs: the auction allowance and commission on both sides.
 
 Nothing measured here. From the literature: the rise is mostly on and before the filing day,
 which a buyer at the next open does not get; what is left afterwards is the question.
+
+**Results, 2026-11-17 15:59 ET.** In REPORT.md. No cell meets the search bar, so no test was
+run. After a 13D a stock makes 1.1% to 1.8% after costs over 15 to 40 sessions, 0.5% to 0.9%
+more than the index fund, with weekly t under 3 except in the middle size (which misses the
+mean). The 13G control does the same. 24 trials. Closed.

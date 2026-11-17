@@ -1,10 +1,10 @@
 name: foreign_drift
 kind: swing               # research script first; no runner yet
-status: developing        # plan written 2026-11-17; waiting for the 6-K dates; see HYPOTHESIS.md
+status: parked            # measured 2026-11-17; nothing passes; see REPORT.md
 engine: daily
 universe: listed common stock and ADRs of companies that file 6-Ks, $50M-$300M, close >= $1, 20-day dollar volume >= $250k
 family: foreign_drift
-prior_trials: 0
+prior_trials: 3
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,11 +12,15 @@ record:
   title: The earnings rule in foreign companies
   idea: The earnings rule in companies that report on 6-K
   horizon: 15 sessions
-  verdict: planned
-  label: "Planned, waiting for data"
-  result: "Not measured yet"
+  verdict: closed
+  result: "Loses 5.3% a trade; the jumps reverse"
   summary: >-
-    Foreign companies listed in the US report results on a 6-K, not an 8-K, so the earnings
-    rule has never taken one. The same rule, fixed in advance, on companies it has not seen.
-  waiting:
-    - "Run the SEC download once more with --what other. It adds the filings three planned tests need."
+    Foreign companies listed in the US report on a 6-K, not an 8-K, so the earnings rule has
+    never taken one. The same price pattern after a 6-K, fixed in advance.
+  weaknesses:
+    - A 6-K is filed for every press release, not only results, so this is a jump on any news in a small foreign company.
+    - Those jumps are given back, in every span; the quality test does not help.
+  evidence:
+    - {when: 2026-11-17, title: The fixed rule run on three spans, kind: failed, text: "421 trades, -5.27% a trade after costs, weekly t -4.21; below zero in each span."}
+  studies:
+    - {name: Rule A50 after a 6-K, when: 2026-11-17, trials: 3, result: "-5.3% a trade; five years of nineteen positive", verdict: failed}

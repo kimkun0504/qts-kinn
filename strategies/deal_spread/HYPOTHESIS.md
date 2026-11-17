@@ -62,3 +62,8 @@ out for cash: charged in full anyway).
 Nothing measured here. From what is generally reported: the gap is usually 1% to 4% and has
 narrowed over the years; deals fail perhaps one time in fifteen and the target then falls
 20% to 40%; the losses cluster in market crises.
+
+**Results, 2026-11-17 15:59 ET.** In REPORT.md. No cell meets the search bar, so no test was
+run. Tender offers held to 60 sessions: 1.05% a trade after costs (weekly t 1.70), 7.6% a
+year on the money while deployed, worst trade −35%. Pinned mergers: 0.3% to 0.9% a trade,
+1.9% to 4.3% a year, worst trade −96%. 10 trials. Closed.

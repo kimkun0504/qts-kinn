@@ -1,10 +1,10 @@
 name: deal_spread
 kind: swing               # research script first; no runner yet
-status: developing        # plan written 2026-11-17; waiting for the filing dates; see HYPOTHESIS.md
+status: parked            # measured 2026-11-17; nothing passes; see REPORT.md
 engine: daily
 universe: listed common stock under a tender offer or an agreed merger, close >= $1, 20-day dollar volume >= $250k
 family: deal_spread
-prior_trials: 0
+prior_trials: 10
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,10 +12,15 @@ record:
   title: Companies being acquired
   idea: Holding a takeover target to the close of the deal
   horizon: 1 to 6 months
-  verdict: planned
-  label: "Planned, waiting for data"
-  result: "Not measured yet"
+  verdict: closed
+  result: "0.3% to 1% a trade; 2% to 8% a year on the money, with losses of 35% to 95%"
   summary: >-
     A stock under an agreed takeover trades a little under the offer until the deal closes.
-    Buy after the tender-offer or merger filing and hold to the close; a slow trade that
-    could work the money the earnings book leaves idle.
+    Buy after the tender-offer or merger filing and hold to the close.
+  weaknesses:
+    - By the filing most of the gap has closed; what is left pays about what cash earns.
+    - A failed deal costs 35% to 95% of the position.
+  evidence:
+    - {when: 2026-11-17, title: 10 cells on 2010 to 2017, kind: failed, text: "Tender offers: 1.05% in seven weeks, weekly t 1.7. Pinned mergers: 0.3% to 0.9%."}
+  studies:
+    - {name: Tender offers and merger proxies held to the close, when: 2026-11-17, trials: 10, result: "Too thin: 2% to 8% a year on the money", verdict: failed}

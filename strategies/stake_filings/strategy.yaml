@@ -1,10 +1,10 @@
 name: stake_filings
 kind: swing               # research script first; no runner yet
-status: developing        # plan written 2026-11-17; waiting for the 13D dates; see HYPOTHESIS.md
+status: parked            # measured 2026-11-17; nothing passes; see REPORT.md
 engine: daily
 universe: listed common stock, close >= $1, 20-day dollar volume >= $250k, financial companies left out
 family: stake_filings
-prior_trials: 0
+prior_trials: 24
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,9 +12,15 @@ record:
   title: After a holder crosses 5%
   idea: Buying after a Schedule 13D
   horizon: 15 to 40 sessions
-  verdict: planned
-  label: "Planned, waiting for data"
-  result: "Not measured yet"
+  verdict: closed
+  result: "Half a point to a point over the market; the passive filings do the same"
   summary: >-
     A holder who crosses 5% of a company and may seek to influence it must file a Schedule
     13D. Buy at the open after the filing; 13G, the passive form, is the control.
+  weaknesses:
+    - What is left after the filing day is 0.5% to 0.9% over small stocks in general.
+    - The filer is not named in the data, so a known activist cannot be told from any holder.
+  evidence:
+    - {when: 2026-11-17, title: 24 cells on 2010 to 2017, kind: failed, text: "None reaches the bar. 13D and 13G both drift about as much as the market plus half a point."}
+  studies:
+    - {name: After initial 13D and 13G filings, when: 2026-11-17, trials: 24, result: "1% to 2% a trade, 0.5% to 0.9% over the index fund", verdict: failed}

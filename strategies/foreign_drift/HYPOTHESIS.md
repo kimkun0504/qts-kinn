@@ -47,3 +47,8 @@ A50's own figures (3.3% to 4.5% a trade by span). Family 18 found that jumps "wi
 or "on other filings" under $300M do not drift; those groups pooled every company and every
 kind of filing as Sharadar's events table has them (8-Ks only), so a 6-K filer's results day
 sat in "no filing" beside spikes with no news at all. This is the first look at them apart.
+
+**Results, 2026-11-17 15:59 ET.** In REPORT.md. Failed, and in the opposite direction. F50: 421
+trades, −5.27% a trade after costs over all years (weekly t −4.21), below zero in each span
+(−2.86%, −3.17%, −7.05%). F50Q: 276 trades, −6.07%. $300M to $2B: 648 trades, −2.17%.
+3 trials. Closed; no holdout run.
