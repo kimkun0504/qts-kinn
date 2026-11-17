@@ -1,0 +1,7 @@
+name: etf_reversal
+kind: swing               # a daily rule on index funds; research script first
+status: event-study       # plan written 2026-11-17; see HYPOTHESIS.md and REPORT.md
+family: etf_swing
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
