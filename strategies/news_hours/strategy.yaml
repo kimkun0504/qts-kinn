@@ -1,0 +1,9 @@
+name: news_hours
+kind: swing               # research scripts first; no runner yet
+status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+engine: intraday
+universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k
+family: news_hours
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude

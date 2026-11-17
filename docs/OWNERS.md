@@ -31,6 +31,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/intraday_volume_surge` | gpt | 2026-11-15 | small-cap turnover surge continuation |
 | `strategies/rebound_confirmed_recovery` | gpt | 2026-11-15 | buy after a deep selloff starts recovering |
 | `strategies/short_search` | claude | 2026-11-17 | short sales held one to three weeks (owner allowed short research 2026-11-17) |
+| `strategies/news_hours` | claude | 2026-11-17 | the hours and days after an 8-K becomes public (SEC acceptance times) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
