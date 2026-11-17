@@ -533,3 +533,27 @@ than A50 makes on its own signals in each of the three spans, and (b) the events
 but fail A50's test at the close do not lose after costs in any span. Otherwise A50's entry
 stands. A lead would go to the paper ledger as one more book, not into the frozen rule. The
 holdout is not touched.
+
+**Results, 2026-11-17 14:44 ET.** In REPORT.md. No cell passes: none beats A50's own figures
+after costs in all three spans, and in every cell the events that trigger but fail A50's
+test at the close lose (5% to 15% a trade since 2010). 6 trials. What the measurement shows
+is in two halves: where A50 also buys, the early entry makes 1 to 3 points more a trade in
+the morning, and nothing more by 13:00; and about a fifth of the early buys are jumps that
+are given back by the close, which then keep falling.
+
+## Addendum, 2026-11-17 14:45 ET: which early buys are the ones that hold? (family 23, second part)
+
+Written before it is measured. Two facts are known at the moment of the first touch and
+could separate the buys that hold from the ones given back; each is looked at once.
+
+1. **Whether the jump has already held a close.** If the stock closed S−1 15% or more above
+   the close of S−2, the market has had a session to disagree and did not (2 groups: held a
+   close; first seen on S).
+2. **When the first touch comes** (4 groups: by 09:40; 09:41 to 10:30; 10:31 to 13:00;
+   later).
+
+First-touch entries, the same costs, the same spans. 6 trials.
+
+**What counts.** A group is a lead only if after costs it beats A50's own figure by a point
+or more in each of the three spans and without 2020, on 100 trades or more in each span.
+A lead would become one more paper book. Nothing else is read into the tables.
