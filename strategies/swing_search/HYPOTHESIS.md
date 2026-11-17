@@ -402,3 +402,27 @@ no losing year on either cost basis; adding the insider rule brings losing years
 note in check 2 said eight facts: short interest exists only from 2018 and the two price
 splits are one fact, so seven facts and 75 groups of 60 trades or more were ranked. Trials
 added by the two addenda: about 210, all in family `swing_search`.
+
+## Addendum, 2026-11-16 23:45 ET: does the quality test rescue other jumps? (families 19 and 20)
+
+Written before anything is measured. The quality test (up over the year, or net debt) was
+found on earnings jumps. If the reason is general (a jump in a fallen, cash-rich company is
+a bounce that holders sell into), it should also lift jumps on other news, which family 18
+found too weak to trade (no cell at 2%). If it does, they are extra signals for the idle
+slots; if it does not, the test is specific to earnings and that is worth knowing too.
+
+Companies of $50M to $300M, hold 15, the auction basis, the test exactly as fixed (no new
+cut-offs), spans 2010–2017, 2005–2009 and 2018 to October 2023 with and without 2020.
+
+**Family 19, other news** (a jump of 15% or more on 5 times normal volume): four kinds of
+day, each with the test applied: an earnings 8-K filed the same day, another 8-K item since
+the previous session, another filing, and no filing at all. 4 cells.
+
+**Family 20, weaker earnings jumps:** a jump of 15% or more on 2 to 5 times volume, with the
+test, and with the stricter "up over the year and net debt"; and a jump of 10% to 15% on 5
+times volume with the stricter test (with the plain test it was 2.0% to 2.9%, already
+seen). 3 cells.
+
+**What counts.** A cell is added to the rule only if it makes 3% or more a trade in each of
+the three spans, without 2020 as well, on 100 trades or more in each, and the book with it
+added has no losing year on either cost basis. Otherwise it is recorded as failed. 7 trials.
