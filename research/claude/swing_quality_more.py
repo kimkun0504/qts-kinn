@@ -1,5 +1,5 @@
 """Families 19 and 20 of the swing search: the quality test on jumps other than A50's
-(strategies/swing_search/HYPOTHESIS.md, addendum of 2026-11-16 23:45 ET).
+(strategies/swing_search/HYPOTHESIS.md, addendum of 2026-11-16 23:40 ET).
 
     cd research/claude && uv run python swing_quality_more.py
 """

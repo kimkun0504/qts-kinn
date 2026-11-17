@@ -403,7 +403,7 @@ note in check 2 said eight facts: short interest exists only from 2018 and the t
 splits are one fact, so seven facts and 75 groups of 60 trades or more were ranked. Trials
 added by the two addenda: about 210, all in family `swing_search`.
 
-## Addendum, 2026-11-16 23:45 ET: does the quality test rescue other jumps? (families 19 and 20)
+## Addendum, 2026-11-16 23:40 ET: does the quality test rescue other jumps? (families 19 and 20)
 
 Written before anything is measured. The quality test (up over the year, or net debt) was
 found on earnings jumps. If the reason is general (a jump in a fallen, cash-rich company is
@@ -427,10 +427,36 @@ seen). 3 cells.
 the three spans, without 2020 as well, on 100 trades or more in each, and the book with it
 added has no losing year on either cost basis. Otherwise it is recorded as failed. 7 trials.
 
-**Results, 2026-11-17 00:05 ET.** In REPORT.md. Family 19: jumps on other 8-K items, other
+**Results, 2026-11-16 23:43 ET.** In REPORT.md. Family 19: jumps on other 8-K items, other
 filings and no filing lose with or without the test (failed). The earnings 8-K dated the day
 of the jump clears the trade bar with the test (5.19%, 8.20%, 4.01%; 3.81% without 2020; 211,
 168 and 195 trades) and fails the book term: added to A50Q with one position a company it
 raises the book to $6,044 a year with no losing year on the auction basis, and two small
 losing years with the spread crossed. Not added. Family 20: failed (no cell with 100 trades a
 span clears 3%). 7 trials.
+
+## Addendum, 2026-11-16 23:50 ET: the drawdown of A50Q (family 21), written before any of it is measured
+
+"No losing calendar year" is not the same as never being under water. Described first, no
+trial: A50Q's book has two drawdowns of about $10,000 on a $20,000 account (June to November
+2007, not recovered until August 2009; December 2019 to April 2020, recovered by August
+2020). That is over the half of the account decision 0017 allows. The 20-day-average exit,
+already a candidate, cuts the worst to $7,601.
+
+Three plain risk controls on A50Q's book (10 positions, the plain 15-session exit), each a
+single setting fixed here without looking:
+
+1. **Smaller positions in wilder stocks.** A position is $2,000 times the lesser of 1 and
+   4% divided by the stock's daily volatility over the 60 sessions before the signal.
+2. **A pause after a loss.** When the book's marked profit is $3,000 (15% of the account) or
+   more under its high, no new position is opened for 20 sessions.
+3. **At most two new positions a day** (the most volume against normal first), since the
+   signals come in clusters in earnings weeks.
+
+**What counts.** Against A50Q on the auction basis ($5,097 a year, drawdown $10,366): a
+control is kept as a candidate only if the worst drawdown falls to $7,800 or less, dollars a
+year stay at $3,800 or more, no year loses on either cost basis, and the Sharpe ratio is not
+lower in either half (2006–2014, 2015–2023). Each is also shown with the 20-day exit, as
+description. Standing aside by the market's trend already failed, and the pause may fail for
+the same reason (the rule's best trades follow sell-offs); it is tested because it is the
+control most people would reach for. 3 trials.

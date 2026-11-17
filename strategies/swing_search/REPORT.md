@@ -306,7 +306,7 @@ the filtered book makes $2,984 a year (worst year +$1,068), and with rule I adde
 Two or more insiders is about one point better than rule I since 2018. Every cell lost in
 2022, and none removes the fall-off after 2017.
 
-**Does the test rescue other jumps? (families 19 and 20, plan of 23:45 ET; 7 cells.)**
+**Does the test rescue other jumps? (families 19 and 20, plan of 23:40 ET; 7 cells.)**
 Companies of $50M to $300M, hold 15, the auction basis, the test as fixed.
 
 | Jump | With the test: 2010–17 | 2005–09 | 2018–23 | Without 2020 | The fallen, cash-rich group |
