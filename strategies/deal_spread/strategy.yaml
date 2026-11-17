@@ -1,0 +1,21 @@
+name: deal_spread
+kind: swing               # research script first; no runner yet
+status: developing        # plan written 2026-11-17; waiting for the filing dates; see HYPOTHESIS.md
+engine: daily
+universe: listed common stock under a tender offer or an agreed merger, close >= $1, 20-day dollar volume >= $250k
+family: deal_spread
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Companies being acquired
+  idea: Holding a takeover target to the close of the deal
+  horizon: 1 to 6 months
+  verdict: planned
+  label: "Planned, waiting for data"
+  result: "Not measured yet"
+  summary: >-
+    A stock under an agreed takeover trades a little under the offer until the deal closes.
+    Buy after the tender-offer or merger filing and hold to the close; a slow trade that
+    could work the money the earnings book leaves idle.

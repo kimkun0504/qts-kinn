@@ -19,4 +19,4 @@ record:
     Foreign companies listed in the US report results on a 6-K, not an 8-K, so the earnings
     rule has never taken one. The same rule, fixed in advance, on companies it has not seen.
   waiting:
-    - "Run the SEC download once more with --what other. It adds the 6-K and 13D filings two planned tests need."
+    - "Run the SEC download once more with --what other. It adds the filings three planned tests need."

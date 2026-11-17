@@ -34,6 +34,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/news_hours` | claude | 2026-11-17 | the hours and days after an 8-K becomes public (SEC acceptance times) |
 | `strategies/foreign_drift` | claude | 2026-11-17 | the earnings rule in companies that report on 6-K (plan only; waiting for data) |
 | `strategies/stake_filings` | claude | 2026-11-17 | buying after a Schedule 13D (plan only; waiting for data) |
+| `strategies/deal_spread` | claude | 2026-11-17 | takeover targets held to the close of the deal (plan only; waiting for data) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
