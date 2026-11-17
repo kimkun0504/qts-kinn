@@ -3,7 +3,10 @@
 Run it yourself on the Mac after the close (the vendor's daily bars are complete by about
 16:30 New York time). It sends no order. It fetches the last 45 sessions of daily bars from
 Massive, finds the stocks that meet the rule's price and volume tests, looks up each one's
-type and market value at Massive and its 8-K filings at the SEC, then updates the ledger:
+type and market value at Massive and its 8-K filings at the SEC, then updates the ledger.
+For each signal it also fetches a year of the stock's daily bars (Massive) and the company's
+reported balance sheet (the SEC's company facts), for the quality test that two of the books
+apply:
 
     export SEC_USER_AGENT="Your Name your@email"     # the SEC asks who is calling
     uv run python tools/owner/paper_earnings_drift.py            # the latest finished session
@@ -124,10 +127,29 @@ def signals_for(window, day: date, rule, key: str, agent: str) -> tuple[list[dic
             filings=filings, rule=rule,
         )  # fmt: skip
         if signal:
+            signal.update(quality_facts(c["symbol"], day, details.get("cik"), key, agent))
             found.append(signal)
         else:
             notes.append(f"{c['symbol']} (+{100 * c['jump']:.0f}%, {c['volume']:.1f}x): {why}")
     return found, notes
+
+
+def quality_facts(symbol: str, day: date, cik, key: str, agent: str) -> dict:
+    """The quality test's facts for a signal: the return over the 250 sessions to ``day`` and
+    cash less debt at the last report filed before it."""
+    since = day - timedelta(days=swing_run.YEAR_DAYS)
+    route = (
+        f"/v2/aggs/ticker/{urllib.parse.quote(symbol)}/range/1/day/"
+        f"{since.isoformat()}/{day.isoformat()}"
+    )
+    bars = massive(route, key, adjusted="true", sort="asc", limit="5000").get("results") or []
+    closes = [float(b["c"]) for b in bars if b.get("c")]
+    balance = None
+    if cik:
+        url = f"https://{SEC}/api/xbrl/companyfacts/CIK{int(cik):010d}.json"
+        balance = swing_paper.net_cash(get_json(url, SEC, {"User-Agent": agent}), day)
+        time.sleep(0.15)
+    return swing_paper.quality(swing_paper.year_return(closes), balance)
 
 
 def main() -> None:
@@ -141,12 +163,18 @@ def main() -> None:
         raise SystemExit('set SEC_USER_AGENT="Your Name your@email" (the SEC requires it)')
     settings, key = load_settings(), api_key()
     meta, cfg = swing_run.load_config(STRATEGY, CONFIG)
-    rule = swing_run.Rule(
-        **{k: int(v) if k == "hold" else float(v) for k, v in cfg["rule"].items()}
-    )
+    rule = swing_run.Rule.from_config(cfg["rule"])
     costs = cost_model.load(meta["cost_calibration"])
     folder = swing_paper.paper_dir(settings.runs_dir, STRATEGY)
     state = swing_paper.load_state(folder)
+    for track in state["tracks"]:
+        if "kept" not in track:  # recorded before the quality test: add its facts, once
+            day = date.fromisoformat(track["signal_day"])
+            route = f"/v3/reference/tickers/{urllib.parse.quote(track['symbol'])}"
+            details = massive(route, key, date=day.isoformat()).get("results") or {}
+            track.update(quality_facts(track["symbol"], day, details.get("cik"), key, agent))
+            print(f"{track['symbol']} ({track['signal_day']}):"
+                  f"{swing_paper.quality_note(track)}")  # fmt: skip
     last = date.fromisoformat(args.day) if args.day else latest_finished_session()
     window = fetch_window(last, key)
     sessions = sorted(window)
@@ -156,6 +184,9 @@ def main() -> None:
         todo = sessions[-1 - min(max(args.backfill, 0), MAX_CATCH_UP) :]
     if not todo:
         print(f"already done to {state['last_session']}; nothing to do")
+        if state["last_session"]:  # the facts added above are still worth saving
+            page = swing_paper.report(state, window, hold=rule.hold, books=cfg["books"])
+            swing_paper.save(folder, state, page)
     if len(todo) > MAX_CATCH_UP + 1:
         raise SystemExit(f"{len(todo)} sessions have been missed, more than {MAX_CATCH_UP}; "
                          "the ledger was not changed")  # fmt: skip

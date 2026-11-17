@@ -187,3 +187,89 @@ def test_the_report_sets_each_trade_beside_the_index_fund():
     assert "Against IWM over the same days (1 trades)" in swing_paper.report(
         state, window, hold=RULE.hold, books=BOOKS
     )
+
+
+# ---- The quality test in the ledger ----
+
+
+def test_the_years_return_needs_250_sessions_behind_the_close():
+    assert swing_paper.year_return([10.0] * 250 + [12.0]) == pytest.approx(0.2)
+    assert swing_paper.year_return([5.0] + [10.0] * 250 + [8.0]) == pytest.approx(-0.2)
+    assert swing_paper.year_return([10.0] * 250) is None and swing_paper.year_return([]) is None
+
+
+def _facts(**tags):
+    """Company facts with one value a tag: {tag: [(balance date, filed, value, form), ...]}."""
+    return {"facts": {"us-gaap": {
+        tag: {"units": {"USD": [{"end": end, "filed": filed, "val": val, "form": form}
+                                for end, filed, val, form in rows]}}
+        for tag, rows in tags.items()}}}  # fmt: skip
+
+
+Q2, Q3 = ("2026-06-30", "2026-08-05"), ("2026-09-30", "2026-11-04")
+
+
+def test_net_cash_uses_the_latest_balance_sheet_filed_before_the_signal():
+    facts = _facts(
+        CashAndCashEquivalentsAtCarryingValue=[(*Q2, 50e6, "10-Q"), (*Q3, 40e6, "10-Q")],
+        LongTermDebtNoncurrent=[(*Q2, 10e6, "10-Q"), (*Q3, 30e6, "10-Q")],
+        LongTermDebtCurrent=[(*Q3, 5e6, "10-Q")],
+        OperatingLeaseLiabilityCurrent=[(*Q3, 2e6, "10-Q")],
+        OperatingLeaseLiabilityNoncurrent=[(*Q3, 8e6, "10-Q")],
+    )
+    after = swing_paper.net_cash(facts, date(2026, 11, 6))
+    assert after == {"period": "2026-09-30", "cash": 40e6, "debt": 35e6, "leases": 10e6,
+                     "net_cash": -5e6}  # fmt: skip
+    # On the day the third quarter is filed it is not yet usable: the second quarter stands.
+    before = swing_paper.net_cash(facts, date(2026, 11, 4))
+    assert before["period"] == "2026-06-30" and before["net_cash"] == 40e6
+    assert swing_paper.net_cash(facts, date(2026, 8, 5)) is None  # nothing filed before that
+    assert swing_paper.net_cash({}, date(2026, 11, 6)) is None
+
+
+def test_debt_tagged_in_overlapping_ways_is_not_added_twice():
+    facts = _facts(
+        Cash=[(*Q3, 20e6, "10-Q")],
+        LongTermDebt=[(*Q3, 30e6, "10-Q")],  # the total, current part included
+        LongTermDebtNoncurrent=[(*Q3, 25e6, "10-Q")],
+        LongTermDebtCurrent=[(*Q3, 5e6, "10-Q")],
+        DebtCurrent=[(*Q3, 5e6, "10-Q")],
+        ConvertibleNotesPayable=[(*Q3, 12e6, "10-Q")],  # part of the long-term debt
+        CashAndCashEquivalentsAtCarryingValue=[("2026-09-30", "2026-11-04", 99e6, "8-K")],
+    )
+    balance = swing_paper.net_cash(facts, date(2026, 11, 6))
+    assert balance["debt"] == 30e6 and balance["cash"] == 20e6  # the 8-K's figure is not used
+    restated = _facts(Cash=[(*Q3, 20e6, "10-Q"), ("2026-09-30", "2026-11-05", 22e6, "10-Q/A")])
+    assert swing_paper.net_cash(restated, date(2026, 11, 6))["cash"] == 22e6
+
+
+def test_a_quality_book_takes_only_signals_that_pass_and_the_report_says_why():
+    books = {"all": {"account": 2000, "slots": 2},
+             "quality": {"account": 2000, "slots": 2, "skip_fallen_cash_rich": True}}  # fmt: skip
+    window = _window({s: _jumper(25) for s in ("AAA", "BBB", "CCC")})
+    state = swing_paper.new_state()
+    good = {**_signal("AAA", 7), **swing_paper.quality(0.3, {"net_cash": 5e6})}
+    bad = {**_signal("BBB", 9), **swing_paper.quality(-0.4, {"net_cash": 5e6})}
+    unknown = _signal("CCC", 8)  # recorded before the facts were collected
+    assert good["kept"] and not bad["kept"]
+    assert swing_paper.quality(-0.4, {"net_cash": -1.0})["kept"]  # net debt is enough
+    assert not swing_paper.quality(None, None)["kept"]
+
+    def step(i, signals=()):
+        return swing_paper.step(state, window, DAYS[i], list(signals), hold=RULE.hold,
+                                books=books, costs=COSTS, allowance_bps=[[0, 25]])  # fmt: skip
+
+    said = step(25, [good, bad, unknown])
+    assert any("AAA" in line and "passes the quality test: +30% over the year" in line
+               for line in said)  # fmt: skip
+    page = swing_paper.report(state, window, hold=RULE.hold, books=books)
+    assert "**BBB**" in page and "fails the quality test: -40% over the year, net cash $5M" in page
+    step(26)
+    taken = {t["symbol"]: sorted(t["books"]) for t in state["tracks"]}
+    assert taken == {"BBB": ["all"], "CCC": ["all"], "AAA": ["quality"]}  # "all" was full
+    for i in (27, 28):
+        step(i)
+    page = swing_paper.report(state, window, hold=RULE.hold, books=books)
+    assert "Signals that passed the quality test: 1 finished" in page
+    assert "Signals that failed the quality test: 1 finished" in page
+    assert "| quality | 1 |" in page and "| all | 2 |" in page

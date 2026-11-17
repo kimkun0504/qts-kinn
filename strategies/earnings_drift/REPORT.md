@@ -95,8 +95,45 @@ at the 15% boundary by rounding. Runs `…_71f5b45c` (`research`) and `…_f5006
 `tools/owner/paper_earnings_drift.py`, run by the owner each evening after the close, finds
 the day's signals from live data, fills the previous day's at the open, closes what has been
 held 15 sessions at the close, and writes `paper/earnings_drift/report.md` with the next
-morning's buys and the next close's sells. It keeps a 10-position and a 20-position book and
-follows every signal. It sends no order.
+morning's buys and the next close's sells. It keeps a 10-position and a 20-position book,
+the same two with the quality test applied (below), and follows every signal. It sends no
+order.
+
+## The quality test (rule A50Q, 2026-11-16): found after the holdout, not yet proven
+
+Some years of A50 are flat. The study in
+[swing_search's report](../swing_search/REPORT.md#the-flat-years-which-signals-fail-after-the-holdout-on-signals-of-2005-to-october-2023)
+found where the flat years come from: signals in companies that hold net cash and whose
+stock is down over the past year make nothing. **A50Q** is A50 that takes a signal only if
+the stock is up over the past 250 sessions or the company's debt is above its cash (plan:
+HYPOTHESIS.md, addendum of 2026-11-16 23:30 ET).
+
+The runner (`skip_fallen_cash_rich: true`) on the years already read, 10 positions, $20,000:
+
+| Run | Trades | A trade | Doubled | Spread crossed | Total | Kept signals, before costs | Skipped |
+|---|---|---|---|---|---|---|---|
+| `early_quality`, 2005–2009 | 277 | 5.65% | 5.27% | 4.49% | $31,208 | 321 at 6.18% | 109 at 2.20% |
+| `research_quality`, 2010–2022 | 711 | 4.27% | 3.89% | 3.09% | $60,672 | 805 at 5.03% | 254 at 1.44% |
+| `check_quality`, 2023 to 8 Nov | 45 | 6.41% | 6.02% | 5.23% | $5,753 | 57 at 8.24% | 14 at −2.41% |
+
+Every calendar year from 2005 to 2023 is positive at the allowance and at twice the
+allowance; the lowest are 2008 ($1,316) and 2011 ($1,465), then 2017 ($2,106). Rule A50's
+lowest on the same runner was 2011 at about nothing. The runner keeps 1,183 signals where
+the research script kept 1,177; the difference is the same handful of boundary cases as
+before. Runs `…_2df743f9`, `…_36506558`, `…_092e060e`.
+
+**This is not proof.** The test was found on these same years. The holdout was spent on A50
+before the test existed. Two things can still test it: the paper ledger, which now keeps two
+more books that apply it (`ten_quality`, `twenty_quality`), and, if the owner decides, one
+run of `holdout_quality` read by the terms the addendum sets.
+
+In the paper ledger the two facts come from live sources: the year's return from the
+vendor's daily bars, and cash less debt from the SEC's XBRL company facts (cash and
+equivalents, less borrowings and lease liabilities, at the last 10-Q or 10-K filed before
+the signal). These approximate Sharadar's fields rather than copy them, so each signal
+records the figures used, and the report says for every signal whether it passed and why.
+Signals already in the ledger get their facts on the next run; the new books start empty
+and take signals from then on.
 
 ## What it is not yet
 

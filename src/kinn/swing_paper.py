@@ -8,7 +8,10 @@ company details and 8-K filings, and hands them to these functions. The rule is 
 :mod:`kinn.swing_run`; a test holds the two to the same signals.
 
 Every signal is followed whether or not a book has room for it, so the ledger shows what the
-skipped ones did. Several books (say 10 positions and 20) can be kept side by side.
+skipped ones did. Several books (say 10 positions and 20) can be kept side by side. A book
+with ``skip_fallen_cash_rich: true`` takes only the signals that pass the quality test of
+:func:`kinn.swing_run.keeps` (up over the year, or net debt); the facts for it come from
+:func:`year_return` and :func:`net_cash` and are recorded with each signal.
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ from datetime import date
 from pathlib import Path
 
 from kinn.costs.model import CostModel
-from kinn.swing_run import MAX_GAP_DAYS, Rule, allowance
+from kinn.swing_run import MAX_GAP_DAYS, YEAR_SESSIONS, Rule, allowance, keeps
 
 COMMON_STOCK = ("CS", "ADRC")  # the vendor's types for common stock and common-stock ADRs
 EARNINGS_ITEM = "2.02"  # 8-K item: results of operations and financial condition
@@ -121,6 +124,92 @@ def confirm(
     }, ""
 
 
+def year_return(closes: list[float]) -> float | None:
+    """The return over the 250 sessions to the last close in ``closes`` (the stock's own
+    sessions, oldest first, adjusted for splits), or None with less history than that."""
+    if len(closes) <= YEAR_SESSIONS or closes[-1 - YEAR_SESSIONS] <= 0:
+        return None
+    return closes[-1] / closes[-1 - YEAR_SESSIONS] - 1
+
+
+# XBRL tags (us-gaap) for the balance sheet. Sharadar's fields, which the research used, are
+# cash and equivalents (investments not counted) and total debt including lease liabilities;
+# these tags approximate them. Each tuple is alternatives that must not be added together.
+CASH_TAGS = ("CashAndCashEquivalentsAtCarryingValue",
+             "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents", "Cash")  # fmt: skip
+REPORT_FORMS = ("10-Q", "10-K", "10-Q/A", "10-K/A", "10-KT", "10-QT")
+
+
+def _instants(facts: dict, tag: str, before: date) -> dict[str, float]:
+    """{balance date: value} for one tag, from quarterly and annual reports filed before
+    ``before``; where a date was reported more than once, the latest filing wins."""
+    units = ((facts.get("facts") or {}).get("us-gaap") or {}).get(tag, {}).get("units") or {}
+    found: dict[str, tuple[str, float]] = {}
+    for row in units.get("USD", []):
+        filed, end = row.get("filed"), row.get("end")
+        if (not filed or not end or "start" in row or row.get("form") not in REPORT_FORMS
+                or date.fromisoformat(filed) >= before or row.get("val") is None):  # fmt: skip
+            continue
+        if end not in found or filed > found[end][0]:
+            found[end] = (filed, float(row["val"]))
+    return {end: value for end, (_, value) in found.items()}
+
+
+def net_cash(facts: dict, before: date) -> dict | None:
+    """Cash less debt at the latest balance sheet filed before ``before``, from the SEC's
+    company-facts file. Returns the figures used ({period, cash, debt, leases, net_cash}), or
+    None when there is no cash figure (no XBRL filing, or a filer that does not report in
+    US GAAP)."""
+    cash_by_tag = [(tag, _instants(facts, tag, before)) for tag in CASH_TAGS]
+    periods = [max(values) for _, values in cash_by_tag if values]
+    if not periods:
+        return None
+    period = max(periods)
+    cash = next(values[period] for _, values in cash_by_tag if period in values)
+
+    def v(tag: str) -> float:
+        return _instants(facts, tag, before).get(period, 0.0)
+
+    def either(total: str, *parts: str) -> float:
+        return v(total) or sum(v(part) for part in parts)
+
+    # Borrowings: companies tag them in several overlapping ways, so take the largest of the
+    # ways of adding them up, never the sum of all.
+    current = max(v("DebtCurrent"), v("LongTermDebtCurrent") + v("ShortTermBorrowings"))
+    by_kind = (
+        either("ConvertibleNotesPayable", "ConvertibleNotesPayableCurrent",
+               "ConvertibleLongTermNotesPayable")
+        + either("LineOfCredit", "LinesOfCreditCurrent", "LongTermLineOfCredit")
+        + either("NotesPayable", "NotesPayableCurrent", "LongTermNotesPayable")
+        + either("LoansPayable", "LoansPayableCurrent", "LongTermLoansPayable")
+        + v("SeniorNotes") + v("SecuredDebt")
+    )  # fmt: skip
+    with_leases = max(
+        v("DebtAndCapitalLeaseObligations"),
+        v("LongTermDebtAndCapitalLeaseObligations")
+        + max(v("LongTermDebtAndCapitalLeaseObligationsCurrent"), v("DebtCurrent")),
+    )
+    without = max(
+        v("DebtLongtermAndShorttermCombinedAmount"),
+        v("LongTermDebt") + v("ShortTermBorrowings"),
+        v("LongTermDebtNoncurrent") + current,
+        by_kind,
+    )
+    finance = either("FinanceLeaseLiability", "FinanceLeaseLiabilityCurrent",
+                     "FinanceLeaseLiabilityNoncurrent")  # fmt: skip
+    operating = either("OperatingLeaseLiability", "OperatingLeaseLiabilityCurrent",
+                       "OperatingLeaseLiabilityNoncurrent")  # fmt: skip
+    debt = max(with_leases, without + finance)
+    return {"period": period, "cash": cash, "debt": debt, "leases": operating,
+            "net_cash": cash - debt - operating}  # fmt: skip
+
+
+def quality(year: float | None, balance: dict | None) -> dict:
+    """The quality test's facts for one signal, in the form the ledger keeps."""
+    cash = balance["net_cash"] if balance else None
+    return {"year_return": year, "net_cash": cash, "balance": balance, "kept": keeps(year, cash)}
+
+
 def new_state() -> dict:
     return {"schema": "paper-1", "last_session": None, "tracks": []}
 
@@ -151,6 +240,8 @@ def step(
             held = sum(1 for o in state["tracks"] if o["status"] == "open" and name in o["books"])
             size = book["account"] / book["slots"]
             shares = int(size // bar.open)
+            if book.get("skip_fallen_cash_rich") and not t.get("kept"):
+                continue  # fails the quality test, or its facts were never recorded
             if held < book["slots"] and shares > 0:
                 t["books"][name] = {"shares": shares, "notional": shares * bar.open}
         where = ", ".join(t["books"]) or "no book had room"
@@ -186,11 +277,26 @@ def step(
             "sessions": 0, "jump": s["jump"], "volume": s["volume"], "adv": s["adv"],
             "market_cap": s["market_cap"], "signal_close": s["close"],
             "filed": s["filed"].isoformat(), "filing": s["filing"], "books": {},
+            **{k: s[k] for k in ("year_return", "net_cash", "balance", "kept") if k in s},
         })  # fmt: skip
-        said.append(f"{s['symbol']}: signal, up {100 * s['jump']:.0f}% in two days on "
-                    f"{s['volume']:.1f}x volume; buy at the next open")  # fmt: skip
+        said.append(
+            f"{s['symbol']}: signal, up {100 * s['jump']:.0f}% in two days on "
+            f"{s['volume']:.1f}x volume; buy at the next open{quality_note(s)}"
+        )
     state["last_session"] = day.isoformat()
     return said
+
+
+def quality_note(t: dict) -> str:
+    """What the quality test made of a signal, in words (empty if it was never applied)."""
+    if "kept" not in t:
+        return ""
+    year, cash = t.get("year_return"), t.get("net_cash")
+    over = "no year of history" if year is None else f"{100 * year:+.0f}% over the year"
+    owes = ("balance sheet not found" if cash is None
+            else f"net {'debt' if cash < 0 else 'cash'} ${abs(cash) / 1e6:,.0f}M")  # fmt: skip
+    verdict = "passes the quality test" if t["kept"] else "fails the quality test"
+    return f" ({verdict}: {over}, {owes})"
 
 
 def _benchmark(window: Window, entry_day: date, day: date) -> float | None:
@@ -217,6 +323,7 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
             f"- **{t['symbol']}** closed {t['signal_close']:.2f}, up {100 * t['jump']:.0f}% in "
             f"two days on {t['volume']:.1f}x volume; ${t['market_cap'] / 1e6:,.0f}M; earnings "
             f"8-K filed {t['filed']} ({t['filing']}). {sizes}, if the book has room."
+            + (f" It{quality_note(t).replace(' (', ' ', 1).rstrip(')')}." if "kept" in t else "")
         )
     due = [t for t in tracks if t["status"] == "open" and t["sessions"] + 1 >= hold]
     lines += ["", "## Sell at the next close (an on-close order)", ""]
@@ -254,6 +361,11 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
         if ahead:
             lines.append(f"Against {BENCHMARK} over the same days ({len(ahead)} trades): "
                          f"{100 * statistics.fmean(ahead):+.2f}% a trade.")  # fmt: skip
+        for flag, name in ((True, "passed"), (False, "failed")):
+            some = [t["gross_return"] for t in closed if t.get("kept") is flag]
+            if some:
+                lines.append(f"Signals that {name} the quality test: {len(some)} finished, mean "
+                             f"{100 * statistics.fmean(some):+.2f}% before costs.")  # fmt: skip
         lines += ["", "| Book | Trades | A trade | A trade, costs doubled | Total | Doubled |",
                   "|---|---|---|---|---|---|"]  # fmt: skip
         for name in books:

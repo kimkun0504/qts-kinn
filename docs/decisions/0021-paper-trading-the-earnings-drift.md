@@ -16,6 +16,11 @@ any money moves it is paper traded: a nightly tool the owner runs,
 - **Two books side by side,** 10 positions of $2,000 and 20 of $1,000, and every signal is
   followed whether or not a book has room, so the choice of position count can be made on
   what happens.
+- **Added 2026-11-16:** two more books, the same sizes, that take only signals passing the
+  quality test (rule A50Q: up over the past 250 sessions, or debt above cash). For each
+  signal the tool fetches a year of the stock's daily bars from Massive and the company's
+  XBRL facts from the SEC, and records the figures. The test was found after the holdout, so
+  these two books are its forward test.
 - **Where it writes:** `paper/earnings_drift/` beside the run store (`state.json`,
   `report.md`). Nothing goes to the raw or processed data, and nothing in it is research
   data: it holds the prices of the rule's own trades only. Agents may read it.
