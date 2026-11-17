@@ -54,3 +54,7 @@ Chosen on signals of 2004 to 2014, tested on 2015 to October 2023, all 14 funds 
   family is closed: the idea is recorded as too thin to be worth the owner's capital.
 
 8 trials.
+
+**Result, 2026-11-17 00:04 ET.** No cell reaches 0.5% a trade where chosen (the best is
+0.37%); where tested they make 0.10% to 0.18% (one cell 0.50%). The books make $300 to $1,150
+a year with worst years of −$900 to −$2,600. The family is closed. 8 trials.

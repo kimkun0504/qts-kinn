@@ -1,7 +1,7 @@
 name: etf_reversal
 kind: swing               # a daily rule on index funds; research script first
-status: event-study       # plan written 2026-11-17; see HYPOTHESIS.md and REPORT.md
+status: parked            # 8 cells, none passes (0.1% to 0.4% a trade); closed 2026-11-17; see REPORT.md
 family: etf_swing
-prior_trials: 0
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
