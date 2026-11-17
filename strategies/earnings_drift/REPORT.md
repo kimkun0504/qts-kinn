@@ -152,6 +152,39 @@ resting on tests set beforehand ($7,601 against $10,366; $5,783 a year, Sharpe 1
 ledger's version of the exit gave the same exit day and return as the research's on 220
 real signals.
 
+## How much of the account it uses (2026-11-17)
+
+Counted day by day on 2006 to October 2023, the 10-position book of A50Q holds **3.3
+positions on average, a third of the account**. It is full on 5% of days and empty on 16%.
+Signals come with the reporting seasons: about six positions in February–March, May, August
+and November, one or two in between. With the 20-day-average exit it holds 4.2.
+
+Would fewer, larger positions use the money better? $20,000, A50Q, the most volume first.
+4 trials (5 and 7 positions, two exits). Code: `research/claude/swing_overnight.py` (`run_book`).
+
+| Positions | Each | Exit | A year | Sharpe | Worst drawdown | Worst year | Losing years | Spread crossed, a year |
+|---|---|---|---|---|---|---|---|---|
+| 10 | $2,000 | 15 sessions | $5,097 | 1.13 | $10,366 | +$1,929 | 0 | $3,808 |
+| 7 | $2,857 | 15 sessions | $6,298 | 1.10 | $14,487 | +$740 | 0 | $4,726 |
+| 5 | $4,000 | 15 sessions | $7,043 | 0.96 | $20,486 | −$1,133 | 2 | $5,234 |
+| 10 | $2,000 | 20-day average | $5,783 | 1.30 | $7,601 | +$1,161 | 0 | $4,529 |
+| 7 | $2,857 | 20-day average | $6,692 | 1.24 | $10,408 | −$603 | 1 | $5,216 |
+| 5 | $4,000 | 20-day average | $7,901 | 1.18 | $11,968 | −$2,470 | 2 | $6,248 |
+
+- **Larger positions buy dollars with risk, one for one.** Seven positions make 16% to 24%
+  more a year and the drawdown grows 37% to 40%; five make 37% to 38% more and the drawdown
+  of the plain exit reaches the whole account. The Sharpe ratio falls at every step. The
+  idle money is the price of the signals arriving together: a book sized for the busy weeks
+  is mostly empty in the quiet ones.
+- **Only the 10-position book with the 20-day exit keeps the drawdown under half the
+  account** (decision 0017). Seven positions with that exit is just over ($10,408).
+- **The idle cash can earn interest at no risk to the rule.** About $13,400 sits unused on
+  average ($11,600 with the 20-day exit). In Treasury bills at 4% that is roughly $500 a
+  year, a tenth more profit; at the near-zero rates of 2010 to 2021 it was nothing.
+
+Nothing here changes the paper books. The count is the owner's choice between dollars and
+drawdown, made on years already read.
+
 ## What it is not yet
 
 It has not traded. There is no broker connection, and the live sources (Massive for market

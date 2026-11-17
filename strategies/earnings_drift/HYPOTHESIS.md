@@ -169,3 +169,10 @@ account to work and make the result depend on fewer trades; the table shows the 
 that. If a count looks better it becomes one more paper book, since the choice is being made
 on years already read. Also reported, not a trial: what the idle cash would earn in Treasury
 bills.
+
+**Results, 2026-11-17 15:34 ET.** In REPORT.md. Fewer positions make more dollars and lose
+more: 7 positions $6,298 a year (drawdown $14,487), 5 positions $7,043 (drawdown $20,486,
+the whole account, two losing years), against 10 positions $5,097 ($10,366). With the
+20-day exit: $6,692 ($10,408, one losing year), $7,901 ($11,968, two) and $5,783 ($7,601,
+none). The Sharpe ratio falls with every step. No count is added to the paper ledger; the
+choice is the owner's. 4 trials.

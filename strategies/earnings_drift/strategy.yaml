@@ -2,7 +2,7 @@ name: earnings_drift
 kind: swing               # a daily event rule run by `kinn swing` (kinn.swing_run), not an intraday strategy
 status: developing        # passed its one holdout run 2026-11-16; fills measured from ticks; not yet traded; see REPORT.md
 family: swing_search
-prior_trials: 12298      # 12,017 in the search; about 280 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry, 4 on the timed rule)
+prior_trials: 12302      # 12,017 in the search; about 285 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry, 4 on the timed rule, 4 on position counts)
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -77,3 +77,4 @@ record:
     - {name: Autumn 2004, when: 2026-11-17, trials: 1, result: "33 signals; the 19 kept made 12.8% each", verdict: passed}
     - {name: Risk controls on the book, when: 2026-11-16, trials: 4, result: "None lowers the drawdown; only the exit does", verdict: failed}
     - {name: How much money it can carry, when: 2026-11-16, trials: 0, result: "Tops out near $20,000 to $25,000 a year", verdict: note}
+    - {name: How much of the account it uses, when: 2026-11-17, trials: 4, result: "A third of the account on average; fewer, larger positions add dollars and drawdown one for one", verdict: note}
