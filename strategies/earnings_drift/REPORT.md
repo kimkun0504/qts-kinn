@@ -135,6 +135,13 @@ records the figures used, and the report says for every signal whether it passed
 Signals already in the ledger get their facts on the next run; the new books start empty
 and take signals from then on.
 
+A fifth book, `ten_quality_trend`, applies the quality test and leaves by the 20-day-average
+exit (sell at the next open once a close is under the stock's 20-day exponential average,
+30 sessions at most). On the years already read that book has the lowest drawdown of those
+resting on tests set beforehand ($7,601 against $10,366; $5,783 a year, Sharpe 1.30). The
+ledger's version of the exit gave the same exit day and return as the research's on 220
+real signals.
+
 ## What it is not yet
 
 It has not traded. There is no broker connection, and the live sources (Massive for market

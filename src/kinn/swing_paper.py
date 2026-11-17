@@ -214,17 +214,54 @@ def new_state() -> dict:
     return {"schema": "paper-1", "last_session": None, "tracks": []}
 
 
+def ema(closes: list[float], sessions: int) -> float:
+    """The exponential average of ``closes`` (oldest first) with the usual 2 / (n + 1) weight,
+    started at the first close."""
+    alpha, average = 2 / (sessions + 1), closes[0]
+    for close in closes[1:]:
+        average = alpha * close + (1 - alpha) * average
+    return average
+
+
+def _live(t: dict) -> bool:
+    """A track still followed: waiting, held under the plain exit, or held by a book with
+    its own exit."""
+    return t["status"] in ("pending", "open") or any(p.get("open") for p in t["books"].values())
+
+
+def _held(t: dict, name: str) -> bool:
+    """Whether book ``name`` holds this track's stock now."""
+    position = t["books"].get(name)
+    if position is None:
+        return False
+    return position["open"] if "open" in position else t["status"] == "open"
+
+
+def _settle(position: dict, growth: float, forced: bool, a: float, costs: CostModel) -> None:
+    """Close one book's position at ``growth`` times its entry: fees and the allowance."""
+    n, exit_value = position["notional"], position["notional"] * growth
+    fees = sum(sum(costs.order_fees(side=side, value=value, marketable=0, passive=0,
+                                    auction=position["shares"]))
+               for side, value in (("buy", n), ("sell", exit_value)))  # fmt: skip
+    slip = a * n + (costs.forced_exit_bps / 1e4 if forced else a) * exit_value
+    position.update(net=exit_value - n - fees - slip, net_2x=exit_value - n - fees - 2 * slip)
+
+
 def step(
     state: dict, window: Window, day: date, signals: list[dict], *, hold: int,
     books: dict[str, dict], costs: CostModel, allowance_bps: list[list[float]],
 ) -> list[str]:  # fmt: skip
     """Advance the ledger by one session: enter yesterday's signals at the open, exit at the
-    close what has been held ``hold`` sessions, then add today's signals. Returns what happened."""
+    close what has been held ``hold`` sessions, then add today's signals. Returns what happened.
+
+    A book with ``exit: {average: 20, max_sessions: 30}`` leaves by its own rule instead: once
+    a close is under the stock's 20-day exponential average it sells at the next open, and at
+    the close of the 30th session at the latest (the exit study's variant)."""
     if state["last_session"] and date.fromisoformat(state["last_session"]) >= day:
         raise ValueError(f"{day} is not after the last session done, {state['last_session']}")
     said = []
     bars = window[day]
-    live = [t for t in state["tracks"] if t["status"] in ("pending", "open")]
+    live = [t for t in state["tracks"] if _live(t)]
     for t in live:
         t["sessions"] += 1
     waiting = sorted((t for t in live if t["status"] == "pending"),
@@ -237,15 +274,45 @@ def step(
             continue
         t.update(status="open", entry_day=day.isoformat(), entry_open=bar.open, missed=0, books={})
         for name, book in books.items():
-            held = sum(1 for o in state["tracks"] if o["status"] == "open" and name in o["books"])
+            held = sum(1 for o in state["tracks"] if _held(o, name))
             size = book["account"] / book["slots"]
             shares = int(size // bar.open)
             if book.get("skip_fallen_cash_rich") and not t.get("kept"):
                 continue  # fails the quality test, or its facts were never recorded
             if held < book["slots"] and shares > 0:
                 t["books"][name] = {"shares": shares, "notional": shares * bar.open}
+                if book.get("exit"):
+                    t["books"][name].update(open=True, exit=dict(book["exit"]), missed=0)
         where = ", ".join(t["books"]) or "no book had room"
         said.append(f"{t['symbol']}: bought at the open, {bar.open:.2f} ({where})")
+    for t in live:  # positions of books with their own exit
+        entry_day = date.fromisoformat(t["entry_day"]) if t.get("entry_day") else None
+        for name, position in t["books"].items():
+            if not position.get("open") or entry_day == day:
+                continue
+            bar, forced, at_open = bars.get(t["symbol"]), False, False
+            if bar is None:
+                position["missed"] = position.get("missed", 0) + 1
+                last = _own(window, t["symbol"], day)
+                if position["missed"] <= MISSED_LIMIT or not last:
+                    continue
+                price, forced, why = last[-1][1].close, True, "stopped trading"
+            elif position.get("leave"):
+                price, at_open, why = bar.open, True, "under its average"
+            elif t["sessions"] >= position["exit"]["max_sessions"]:
+                price, why = bar.close, "time"
+            else:
+                closes = [b.close for _, b in _own(window, t["symbol"], day)] + [bar.close]
+                if bar.close < ema(closes, position["exit"]["average"]):
+                    position["leave"] = True
+                continue
+            entry = window.get(entry_day, {}).get(t["symbol"])
+            growth = price / (entry.open if entry else t["entry_open"])
+            _settle(position, growth, forced, allowance(allowance_bps, t["adv"]), costs)
+            position.update(open=False, exit_day=day.isoformat(), gross_return=growth - 1,
+                            reason=why)  # fmt: skip
+            said.append(f"{t['symbol']}: {name} sold at the {'open' if at_open else 'close'} "
+                        f"({why}), {100 * (growth - 1):+.1f}% before costs")  # fmt: skip
     for t in [t for t in live if t["status"] == "open" and t["sessions"] >= hold]:
         bar, forced = bars.get(t["symbol"]), False
         if bar is None:
@@ -261,12 +328,8 @@ def step(
         growth = bar.close / (entry.open if entry else t["entry_open"])
         a = allowance(allowance_bps, t["adv"])
         for result in t["books"].values():
-            n, exit_value = result["notional"], result["notional"] * growth
-            fees = sum(sum(costs.order_fees(side=side, value=value, marketable=0, passive=0,
-                                            auction=result["shares"]))
-                       for side, value in (("buy", n), ("sell", exit_value)))  # fmt: skip
-            slip = a * n + (costs.forced_exit_bps / 1e4 if forced else a) * exit_value
-            result.update(net=exit_value - n - fees - slip, net_2x=exit_value - n - fees - 2 * slip)
+            if "exit" not in result:  # books with their own exit are settled above
+                _settle(result, growth, forced, a, costs)
         t.update(status="closed", exit_day=day.isoformat(), gross_return=growth - 1,
                  benchmark_return=_benchmark(window, entry_day, day),
                  reason="stopped trading" if forced else "time")  # fmt: skip
@@ -325,37 +388,59 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
             f"8-K filed {t['filed']} ({t['filing']}). {sizes}, if the book has room."
             + (f" It{quality_note(t).replace(' (', ' ', 1).rstrip(')')}." if "kept" in t else "")
         )
-    due = [t for t in tracks if t["status"] == "open" and t["sessions"] + 1 >= hold]
+    leaving = [(t, [n for n, p in t["books"].items() if p.get("open") and p.get("leave")])
+               for t in tracks]  # fmt: skip
+    leaving = [(t, names) for t, names in leaving if names]
+    if leaving:
+        lines += ["", "## Sell at the next open (closed under its 20-day average)", ""]
+        lines += [f"- **{t['symbol']}**, bought {t['entry_day']}: {', '.join(names)}"
+                  for t, names in leaving]  # fmt: skip
+    due = []
+    for t in tracks:
+        names = [n for n, p in t["books"].items()
+                 if (t["status"] == "open" and "exit" not in p and t["sessions"] + 1 >= hold)
+                 or (p.get("open") and not p.get("leave")
+                     and t["sessions"] + 1 >= p["exit"]["max_sessions"])]  # fmt: skip
+        if names or (t["status"] == "open" and not t["books"] and t["sessions"] + 1 >= hold):
+            due.append(f"- **{t['symbol']}**, bought {t['entry_day']}"
+                       + (f": {', '.join(names)}" if names else " (followed only)"))  # fmt: skip
     lines += ["", "## Sell at the next close (an on-close order)", ""]
-    lines += [f"- **{t['symbol']}**, bought {t['entry_day']}" for t in due] or ["Nothing."]
+    lines += due or ["Nothing."]
     today = date.fromisoformat(day) if day else None
     lines += ["", "## Held now", "",
               f"| Stock | Signal | Bought | At | Now | {BENCHMARK} since | Sessions | Books |",
               "|---|---|---|---|---|---|---|---|"]  # fmt: skip
     unrealised = dict.fromkeys(books, 0.0)
     hedged = dict.fromkeys(books, 0.0)
-    for t in (t for t in tracks if t["status"] == "open"):
+    for t in (t for t in tracks if t["status"] == "open" or any(_held(t, n) for n in t["books"])):
         bar = bars.get(t["symbol"])
         change = bar.close / t["entry_open"] - 1 if bar else None
         fund = _benchmark(window, date.fromisoformat(t["entry_day"]), today)
-        for name, result in t["books"].items():
-            unrealised[name] += result["notional"] * (change or 0.0)
-            hedged[name] += result["notional"] * ((change or 0.0) - (fund or 0.0))
+        holding = [name for name in t["books"] if _held(t, name)]
+        for name in holding:
+            if name in unrealised:
+                result = t["books"][name]
+                unrealised[name] += result["notional"] * (change or 0.0)
+                hedged[name] += result["notional"] * ((change or 0.0) - (fund or 0.0))
         now = f"{bar.close:.2f} ({100 * change:+.1f}%)" if bar else "n/a"
         since = f"{100 * fund:+.1f}%" if fund is not None else "n/a"
         lines.append(f"| {t['symbol']} | {t['signal_day']} | {t['entry_day']} | "
                      f"{t['entry_open']:.2f} | {now} | {since} | {t['sessions']} of {hold} | "
-                     f"{', '.join(t['books']) or 'none (followed only)'} |")  # fmt: skip
+                     f"{', '.join(holding) or 'none (followed only)'} |")  # fmt: skip
     lines += ["", "Open positions, before costs: " + "; ".join(
         f"{name} ${unrealised[name]:+,.0f} (${hedged[name]:+,.0f} with the same dollars of "
         f"{BENCHMARK} sold short)" for name in books) + "."]  # fmt: skip
     closed = [t for t in tracks if t["status"] == "closed"]
+    settled = {name: [p for t in tracks for n, p in t["books"].items() if n == name and "net" in p]
+               for name in books}  # fmt: skip
     lines += ["", "## Results so far", ""]
-    if closed:
+    if closed or any(settled.values()):
         gross = [t["gross_return"] for t in closed]
-        lines.append(f"Every signal, whether or not a book took it: {len(closed)} finished, "
-                     f"mean {100 * statistics.fmean(gross):+.2f}% before costs, "
-                     f"{sum(g > 0 for g in gross)} winners.")  # fmt: skip
+        if closed:
+            lines.append(f"Every signal, whether or not a book took it, sold after {hold} "
+                         f"sessions: {len(closed)} finished, mean "
+                         f"{100 * statistics.fmean(gross):+.2f}% before costs, "
+                         f"{sum(g > 0 for g in gross)} winners.")  # fmt: skip
         ahead = [t["gross_return"] - t["benchmark_return"] for t in closed
                  if t.get("benchmark_return") is not None]  # fmt: skip
         if ahead:
@@ -369,7 +454,7 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
         lines += ["", "| Book | Trades | A trade | A trade, costs doubled | Total | Doubled |",
                   "|---|---|---|---|---|---|"]  # fmt: skip
         for name in books:
-            mine = [t["books"][name] for t in closed if name in t["books"]]
+            mine = settled[name]
             if not mine:
                 lines.append(f"| {name} | 0 | | | | |")
                 continue

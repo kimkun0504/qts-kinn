@@ -20,7 +20,8 @@ any money moves it is paper traded: a nightly tool the owner runs,
   quality test (rule A50Q: up over the past 250 sessions, or debt above cash). For each
   signal the tool fetches a year of the stock's daily bars from Massive and the company's
   XBRL facts from the SEC, and records the figures. The test was found after the holdout, so
-  these two books are its forward test.
+  these two books are its forward test. A fifth book adds the 20-day-average exit to the
+  10-position quality book (`ten_quality_trend`), the variant with the lowest drawdown.
 - **Where it writes:** `paper/earnings_drift/` beside the run store (`state.json`,
   `report.md`). Nothing goes to the raw or processed data, and nothing in it is research
   data: it holds the prices of the rule's own trades only. Agents may read it.

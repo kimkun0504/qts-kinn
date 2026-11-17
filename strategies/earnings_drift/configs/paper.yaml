@@ -1,12 +1,14 @@
-# Rule A50 for the paper ledger (tools/owner/paper_earnings_drift.py). Four books side by side:
-# two that take every signal, and two that take only signals passing the quality test (rule
-# A50Q: up over the year, or net debt; HYPOTHESIS.md, addendum of 2026-11-16 23:30 ET).
+# Rule A50 for the paper ledger (tools/owner/paper_earnings_drift.py). Five books side by side:
+# two that take every signal, two that take only signals passing the quality test (rule A50Q:
+# up over the year, or net debt; HYPOTHESIS.md, addendum of 2026-11-16 23:30 ET), and one that
+# also leaves by the 20-day-average exit (addendum of 2026-11-16 23:49 ET).
 rule: {jump: 0.15, volume: 5, cap_min: 50000000, cap_max: 300000000, hold: 15, min_close: 1.0, min_adv: 250000}
 books:
   ten: {account: 20000, slots: 10}
   twenty: {account: 20000, slots: 20}
   ten_quality: {account: 20000, slots: 10, skip_fallen_cash_rich: true}
   twenty_quality: {account: 20000, slots: 20, skip_fallen_cash_rich: true}
+  ten_quality_trend: {account: 20000, slots: 10, skip_fallen_cash_rich: true, exit: {average: 20, max_sessions: 30}}
 costs:
   allowance_bps: [[100000000, 2], [10000000, 5], [1000000, 10], [0, 25]]   # a side, by normal dollar volume
   spread_bps: [[100000000, 5], [10000000, 18], [1000000, 43], [0, 100]]    # half-spread, quote sample of 2026-11-15

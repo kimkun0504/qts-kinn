@@ -273,3 +273,91 @@ def test_a_quality_book_takes_only_signals_that_pass_and_the_report_says_why():
     assert "Signals that passed the quality test: 1 finished" in page
     assert "Signals that failed the quality test: 1 finished" in page
     assert "| quality | 1 |" in page and "| all | 2 |" in page
+
+
+# ---- A book with the 20-day-average exit ----
+
+TREND = {
+    "plain": {"account": 2000, "slots": 1},
+    "trend": {"account": 2000, "slots": 1, "exit": {"average": 5, "max_sessions": 6}},
+}
+
+
+def _trend_step(state, window, i, signals=()):
+    return swing_paper.step(state, window, DAYS[i], list(signals), hold=RULE.hold, books=TREND,
+                            costs=COSTS, allowance_bps=[[0, 25]])  # fmt: skip
+
+
+def _path(after: list[float], n=40):
+    """Flat at 10 to day 23, 11 and 12 on days 24 and 25 (the signal), then ``after``."""
+    closes = [10.0] * 24 + [11.0, 12.0] + after
+    closes += [closes[-1]] * (n - len(closes))
+    return closes, [1e6] * n
+
+
+def test_the_exponential_average_weights_recent_closes():
+    assert swing_paper.ema([10.0], 20) == 10.0
+    assert swing_paper.ema([10.0, 10.0, 16.0], 5) == pytest.approx(12.0)  # weight 1/3 on the last
+    assert swing_paper.ema([10.0, 16.0, 16.0], 5) == pytest.approx(10 + 6 / 3 + 4 / 3)
+
+
+def test_a_trend_book_sells_at_the_open_after_a_close_under_the_average():
+    # Bought day 26 at 12; closes 12.5, 13, 13.5, then 9 on day 29, under the average.
+    window = _window({"AAA": _path([12.5, 13.0, 13.5, 9.0, 9.5, 9.5]), "BBB": _jumper(29),
+                      "CCC": _jumper(30)})  # fmt: skip
+    state = swing_paper.new_state()
+    _trend_step(state, window, 25, [_signal("AAA")])
+    for i in (26, 27, 28):
+        _trend_step(state, window, i)
+    track = state["tracks"][0]
+    assert track["status"] == "closed" and track["gross_return"] == pytest.approx(13.5 / 12 - 1)
+    assert "net" in track["books"]["plain"]  # the plain book sold after three sessions
+    trend = track["books"]["trend"]
+    assert trend["open"] and "net" not in trend and not trend.get("leave")
+    said = _trend_step(state, window, 29, [_signal("BBB")])  # closes at 9: under its average
+    assert trend["open"] and trend["leave"] and not any("AAA" in line for line in said)
+    page = swing_paper.report(state, window, hold=RULE.hold, books=TREND)
+    assert "## Sell at the next open (closed under its 20-day average)" in page
+    assert "- **AAA**, bought 2020-03-28: trend" in page
+    assert "| 4 of 3 | trend |" in page  # still held by that book only
+    said = _trend_step(state, window, 30, [_signal("CCC")])  # sold at the open, 9 (the prior close)
+    assert any("AAA: trend sold at the open (under its average), -25.0%" in line for line in said)
+    assert not trend["open"] and trend["exit_day"] == DAYS[30].isoformat()
+    assert trend["gross_return"] == pytest.approx(9 / 12 - 1) and trend["net"] < -0.25 * 1992
+    # The slot was still taken at that open (BBB could not enter); it is free the day after.
+    taken = {t["symbol"]: sorted(t["books"]) for t in state["tracks"]}
+    assert taken["BBB"] == ["plain"]
+    _trend_step(state, window, 31)
+    taken = {t["symbol"]: sorted(t["books"]) for t in state["tracks"]}
+    assert taken["CCC"] == ["trend"]  # plain is full with BBB
+    page = swing_paper.report(state, window, hold=RULE.hold, books=TREND)
+    assert "| trend | 1 |" in page and "| plain | 1 |" in page
+
+
+def test_a_trend_book_holds_a_riser_to_its_last_session_and_sells_at_that_close():
+    rising = [12.0 + 0.5 * i for i in range(1, 12)]
+    window = _window({"AAA": _path(rising)})
+    state = swing_paper.new_state()
+    _trend_step(state, window, 25, [_signal("AAA")])
+    for i in range(26, 31):
+        _trend_step(state, window, i)
+    trend = state["tracks"][0]["books"]["trend"]
+    assert trend["open"] and not trend.get("leave")
+    page = swing_paper.report(state, window, hold=RULE.hold, books=TREND)
+    assert "- **AAA**, bought 2020-03-28: trend" in page.split("## Sell at the next close")[1]
+    said = _trend_step(state, window, 31)  # the sixth session after the signal
+    assert any("AAA: trend sold at the close (time)" in line for line in said)
+    assert trend["gross_return"] == pytest.approx(window[DAYS[31]]["AAA"].close / 12 - 1)
+    assert not swing_paper._live(state["tracks"][0])
+
+
+def test_an_old_ledger_without_exit_fields_still_steps():
+    window = _window({"AAA": _jumper(25)})
+    state = swing_paper.new_state()
+    _step(state, window, 25, [_signal("AAA")])
+    _step(state, window, 26)  # recorded by books that have no exit of their own
+    for i in (27, 28):
+        _trend_step(state, window, i)  # the config now has other books
+    track = state["tracks"][0]
+    assert track["status"] == "closed" and "net" in track["books"]["one"]
+    assert "| plain | 0 |" in swing_paper.report(state, window, hold=RULE.hold, books=TREND)

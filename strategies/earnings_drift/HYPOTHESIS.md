@@ -109,3 +109,22 @@ kept or skipped, to `signals.parquet` with what it did before costs.
    that take every signal. The facts come from the vendor's adjusted daily bars (the year's
    return) and the SEC's XBRL company facts (cash, debt and lease liabilities), which
    approximate Sharadar's fields; each signal records the figures used.
+
+## Addendum, 2026-11-16 23:49 ET: a fifth paper book with the 20-day-average exit
+
+Written before the ledger has taken a position by it. The study of A50Q's drawdown
+(swing_search REPORT.md, family 21) found that rules about what to open next do not lower
+it and the 20-day-average exit does ($10,366 to $7,601), because it acts on what is held.
+That exit had already passed the terms set for it in the exit study. With the quality test
+it gives the best book that rests on tests set beforehand ($5,783 a year, Sharpe 1.30, no
+losing year on either cost basis, on years already read).
+
+**Book `ten_quality_trend`:** A50Q's signals, 10 positions of $2,000. A position is sold at
+the next open once a close is under the stock's 20-day exponential average (checked from
+the session after the entry), and at the close of the 30th session after the signal at the
+latest. Costs as for the other books. Holds can run to six weeks, past the three the owner
+set for the search, which is why it is a separate book and not a change to the rule.
+
+The ledger's exit was checked against the research's on 220 real signals fed through it:
+the same exit day and return in all 220 with the research's own bars, and in 218 with the
+45-session window the nightly tool fetches (the average starts from a later bar).

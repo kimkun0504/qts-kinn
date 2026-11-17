@@ -337,7 +337,7 @@ Companies of $50M to $300M, hold 15, the auction basis, the test as fixed.
 - Weaker earnings jumps do not pass: lower volume has no edge, and the 10% to 15% jumps
   pass only under a stricter test on 40 to 60 trades a span.
 
-**The drawdown (family 21, plan of 23:50 ET; 4 trials).** No losing calendar year is not
+**The drawdown (family 21, plan of 23:45 ET; 4 trials).** No losing calendar year is not
 the same as never being under water. A50Q's book has two drawdowns of about $10,000 on the
 $20,000 account: June to November 2007, not made back until August 2009, and December 2019
 to April 2020, made back by August. Its longest spell under its own high is 445 sessions

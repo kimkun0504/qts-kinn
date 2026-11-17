@@ -435,7 +435,7 @@ raises the book to $6,044 a year with no losing year on the auction basis, and t
 losing years with the spread crossed. Not added. Family 20: failed (no cell with 100 trades a
 span clears 3%). 7 trials.
 
-## Addendum, 2026-11-16 23:50 ET: the drawdown of A50Q (family 21), written before any of it is measured
+## Addendum, 2026-11-16 23:45 ET: the drawdown of A50Q (family 21), written before any of it is measured
 
 "No losing calendar year" is not the same as never being under water. Described first, no
 trial: A50Q's book has two drawdowns of about $10,000 on a $20,000 account (June to November
@@ -461,7 +461,7 @@ description. Standing aside by the market's trend already failed, and the pause 
 the same reason (the rule's best trades follow sell-offs); it is tested because it is the
 control most people would reach for. 3 trials.
 
-**Results, 2026-11-16 23:58 ET.** In REPORT.md. None of the three controls brings the
+**Results, 2026-11-16 23:47 ET.** In REPORT.md. None of the three controls brings the
 drawdown of the 15-session book under $7,800 (smaller in wilder stocks $9,938; the pause
 $10,193; two a day $10,507). The pause as first written never resumed, because a book that
 opens nothing cannot recover its loss; it was re-run with the high reset when a pause ends,
