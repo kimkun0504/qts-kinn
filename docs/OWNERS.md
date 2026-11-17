@@ -35,6 +35,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/foreign_drift` | claude | 2026-11-17 | the earnings rule in companies that report on 6-K (measured 2026-11-17; closed) |
 | `strategies/stake_filings` | claude | 2026-11-17 | buying after a Schedule 13D (measured 2026-11-17; closed) |
 | `strategies/deal_spread` | claude | 2026-11-17 | takeover targets held to the close of the deal (measured 2026-11-17; closed) |
+| `strategies/etf_trend` | claude | 2026-11-17 | trend following across asset-class index funds |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

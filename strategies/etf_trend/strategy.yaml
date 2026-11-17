@@ -1,0 +1,9 @@
+name: etf_trend
+kind: swing               # a monthly allocation rule on index funds; research script first
+status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+engine: daily
+universe: nine index funds (stocks, Treasuries, gold, commodities, property) and a cash fund
+family: etf_trend
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
