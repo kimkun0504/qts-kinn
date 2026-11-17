@@ -88,3 +88,33 @@ close, at a cost of 0.10% a trade for the fund's commission, spread and borrow. 
 mean a trade by year for each rule, and the two-sleeve book's profit, Sharpe ratio, drawdown
 and losing years, hedged and not. This is a measurement. Selling an index fund short needs
 the owner's decision (the brief is long only) and a margin account.
+
+## Addendum, 2026-11-17 00:01 ET: which insider signals fail (the method that found A50Q)
+
+Written before anything is measured. Rule I's edge halved after 2017 and 2021 and 2022 made
+nothing. The earnings rule's flat years turned out to come from one kind of signal, found by
+splitting its trades on facts known at the signal and keeping only what held in every span.
+The same is done here. Unlike the earnings rule, **this family's holdout is untouched**, so a
+refinement that survives can still be tested properly, once, by the owner.
+
+**Signals:** rule I ($50M to $300M, $100,000 or more bought on a filing date, hold 15, one
+signal a company in 21 days), 2006 to September 2023, the auction basis. Spans: 2010–2017,
+2006–2009, 2018–2023, and 2018–2023 without 2020.
+
+**Ten facts, each known at the signal's close:** the stock is down over the past 250
+sessions; the company holds net cash; it lost money last quarter; free cash flow is
+negative; it issued over 10% more shares in a year; the price is under $5; the stock is not
+at a 250-day high; an officer is among the buyers; the purchase is 0.2% or more of the
+company's market value; the buyer is only a ten-percent owner.
+
+1. **Single splits (20 groups).** A split counts only if one side beats all trades in every
+   span, with and without 2020.
+2. **Pairs (45 pairs, 180 groups),** ranked on 2010–2017 alone, groups of 150 trades or more
+   there. Then how the best and worst tenth of groups did in the other spans, and the rank
+   correlation, as for the earnings rule.
+3. **A refined rule** is written down only if a group chosen by steps 1 and 2 makes 3% or
+   more a trade in each span and without 2020, on 300 trades or more in each, with 2021 and
+   2022 both positive and at least 16 of 18 years positive. It is then fixed and left for
+   the holdout. If nothing meets that, the insider rule stays as it is: a weak second sleeve.
+
+About 200 trials, in family `insider_buying`.
