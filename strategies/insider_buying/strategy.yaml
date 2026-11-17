@@ -5,3 +5,27 @@ family: insider_buying
 prior_trials: 623       # 438 in the grid and its tests; 4 stronger cells and 181 in the study of which signals fail (2026-11-16/17)
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: Insider buying
+  idea: Insider buying
+  horizon: 15 sessions
+  verdict: weak
+  label: "Weak, holdout untouched"
+  result: "3.2% to 3.9% a trade before 2018, 1.5% since. Lost in 2022"
+  summary: >-
+    A company worth $50M to $300M; insiders report open-market purchases of $100,000 or more
+    on one filing date. Buy at the next open, hold 15 sessions.
+  weaknesses:
+    - The edge halved after 2017.
+    - Added to the earnings book it brings losing years back.
+    - Since 2018 what is left is in stocks under $5, where costs are least certain.
+  evidence:
+    - {when: 2026-11-16, title: Grid chosen on 2010 to 2017, kind: found, text: "Rule I: 3.18% a trade."}
+    - {when: 2026-11-16, title: Tests passed, kind: passed, text: "2006 to 2009: 3.86%. 2018 to 2022: 1.54%. 2023: 1.73%."}
+    - {when: 2026-11-16, title: Book with the earnings rule, kind: failed, text: "More dollars, the same Sharpe, a losing year in 2008."}
+    - {when: 2026-11-17, title: Which signals fail, kind: failed, text: "No group meets the terms for a refined rule; every strong group lost in 2022."}
+  studies:
+    - {name: Insider grid and its tests, when: 2026-11-16, trials: 438, result: "Rule I: 3.2% to 3.9% before 2018, 1.5% since", verdict: lead}
+    - {name: Stronger cells, when: 2026-11-16, trials: 4, result: "Two insiders about a point better; all lost in 2022", verdict: failed}
+    - {name: Which insider signals fail, when: 2026-11-17, trials: 181, result: "Edge left is under $5; no refined rule", verdict: failed}

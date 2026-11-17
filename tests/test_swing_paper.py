@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date, timedelta
 
 import pyarrow as pa
@@ -361,3 +362,31 @@ def test_an_old_ledger_without_exit_fields_still_steps():
     track = state["tracks"][0]
     assert track["status"] == "closed" and "net" in track["books"]["one"]
     assert "| plain | 0 |" in swing_paper.report(state, window, hold=RULE.hold, books=TREND)
+
+
+def test_the_snapshot_holds_what_the_page_says_as_numbers(tmp_path):
+    window = _window({"AAA": _path([12.5, 13.0, 13.5, 9.0, 9.5, 9.5]), "BBB": _jumper(27),
+                      "IWM": ([100.0] * 40, [1e9] * 40)})  # fmt: skip
+    state = swing_paper.new_state()
+    good = {**_signal("AAA"), **swing_paper.quality(0.3, {"net_cash": -5e6})}
+    _trend_step(state, window, 25, [good])
+    for i in (26, 27):
+        _trend_step(state, window, i, [_signal("BBB")] if i == 27 else [])
+    snap = swing_paper.snapshot(state, window, hold=RULE.hold, books=TREND)
+    assert snap["schema"] == "paper-snapshot-1" and snap["last_session"] == DAYS[27].isoformat()
+    (held,) = snap["positions"]
+    assert held["symbol"] == "AAA" and held["change"] == pytest.approx(13.0 / 12 - 1)
+    assert held["books"] == ["plain", "trend"] and held["kept"] is True
+    assert held["benchmark"] == pytest.approx(0.0) and "passes the quality test" in held["note"]
+    assert snap["buy_next_open"][0]["symbol"] == "BBB" and snap["buy_next_open"][0]["kept"] is None
+    assert snap["sell_next_close"] == [{"symbol": "AAA", "books": ["plain"]}]  # session 3 is next
+    plain = next(b for b in snap["books"] if b["name"] == "plain")
+    assert plain["open"] == 1 and plain["unrealised"] == pytest.approx(1992 * (13 / 12 - 1))
+    assert plain["trades"] == 0 and plain["mean"] is None and snap["followed"]["finished"] == 0
+    _trend_step(state, window, 28)  # the plain book sells; the trend book holds on
+    snap = swing_paper.snapshot(state, window, hold=RULE.hold, books=TREND)
+    assert [p["books"] for p in snap["positions"] if p["symbol"] == "AAA"] == [["trend"]]
+    plain = next(b for b in snap["books"] if b["name"] == "plain")
+    assert plain["trades"] == 1 and plain["net"] > 0 and snap["followed"]["passed"]["finished"] == 1
+    swing_paper.save(tmp_path, state, "page", snap)
+    assert json.loads((tmp_path / "snapshot.json").read_text()) == json.loads(json.dumps(snap))

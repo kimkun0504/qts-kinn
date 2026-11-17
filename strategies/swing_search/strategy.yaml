@@ -6,3 +6,22 @@ cost_calibration: ibkr_pro_tiered
 owner: claude
 family: swing_search
 prior_trials: 12282      # 12,017 in the search; about 260 since the holdout (23 exits, about 230 in the flat-years study)
+
+# What the Workbench shows (the search itself; the rule it found is strategies/earnings_drift).
+record:
+  title: Swing search
+  idea: Swing search across daily conditions
+  horizon: 1 to 3 weeks
+  verdict: closed
+  board: false
+  result: "One rule survived: the earnings drift"
+  summary: About 12,000 combinations of daily conditions, searched on 2010 to 2022 and tested on 2005 to 2009.
+  studies:
+    - {name: "Families 1 to 8: reversal, drift, breakouts, pullbacks, volume, lows, short interest, fundamentals", when: 2026-11-16, trials: 2505, result: None passes, verdict: failed}
+    - {name: "Families 10 to 15: market state, technical state, calendar, fundamental state, 8-K items, industry", when: 2026-11-16, trials: 7299, result: "Edges of 0.5% to 1%, under the cost of the small stocks they sit in", verdict: failed}
+    - {name: Combined models, when: 2026-11-16, trials: 60, result: "Top picks unsteady; 0.4% a trade at best", verdict: failed}
+    - {name: "Family 17: earnings drift refined", when: 2026-11-16, trials: 1944, result: "2.00% where chosen, 0.76% where tested", verdict: failed}
+    - {name: "Family 18: jumps on other news", when: 2026-11-16, trials: 108, result: "The $50M floor for the earnings rule; nothing else at 2%", verdict: lead}
+    - {name: "Rules B and C: sell-off buying, pullbacks in winners", when: 2026-11-16, trials: 2, result: "B failed 2005 to 2009; C made the book worse", verdict: failed}
+    - {name: "Families 19 and 20: the quality test on other jumps", when: 2026-11-16, trials: 7, result: "Only the same-day earnings jump clears the trade bar; it fails the book term", verdict: lead}
+    - {name: "Family 22: larger companies", when: 2026-11-16, trials: 6, result: "The drift there ended after 2017", verdict: failed}

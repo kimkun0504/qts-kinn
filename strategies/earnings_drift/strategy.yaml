@@ -5,3 +5,75 @@ family: swing_search
 prior_trials: 12282      # 12,017 in the search; about 260 since the holdout (23 exits, about 230 in the flat-years study)
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+# What the Workbench shows for this strategy (apps/workbench reads this block; docs/NEW_STRATEGY.md).
+record:
+  title: Earnings drift
+  idea: Earnings drift in small companies
+  horizon: 15 sessions
+  verdict: passed_holdout
+  result: "Holdout: +5.04% a trade, $26,716 on $20,000"
+  summary: >-
+    A company worth $50M to $300M reports earnings. If its two-day return is 15% or more on
+    at least five times normal volume, buy at the next open and sell at the close 15 sessions
+    later. Ten positions of $2,000.
+  short: >-
+    Buy a company worth $50M to $300M after it jumps 15% on earnings with five times its
+    normal volume. Hold 15 sessions.
+  paper: earnings_drift
+  periods:
+    - {key: holdout, label: Holdout, config: holdout, note: "9 Nov 2023 to 6 Nov 2026, run once on 16 Nov 2026"}
+    - {key: search, label: Search years, config: research, note: "2010 to 2022, the years the rule was found on"}
+    - {key: test, label: Test years, config: early, note: "2005 to 2009, tested after the rule was fixed"}
+  chart_note: >-
+    Separate runs joined end to end. January to October 2023 was not run for this rule and
+    is drawn flat.
+  fills: "Opening cross in 99% of entries, closing cross in 93% of exits (ticks for 150 trades)"
+  weaknesses:
+    - "2026 was flat: +0.1% a trade."
+    - About half the trades lose; a few large winners carry it.
+    - It tops out near $20,000 to $25,000 of profit a year, because the stocks are small.
+    - Not yet traded with real orders.
+  variants_note: 10 positions, 2006 to 2023
+  variants:
+    - {rule: The frozen rule, evidence: Passed holdout, a_year: 4974, sharpe: 1.05, drawdown: 10113, worst_year: 209}
+    - {rule: With the quality test, evidence: "Unproven, in paper", a_year: 5097, sharpe: 1.13, drawdown: 10366, worst_year: 1929}
+    - {rule: Quality test and 20-day exit, evidence: "Unproven, in paper", a_year: 5783, sharpe: 1.30, drawdown: 7601, worst_year: 1161}
+  variants_footnote: >-
+    The quality test skips companies with more cash than debt whose stock is down over the
+    past year. It was found after the holdout was spent.
+  in_test:
+    - title: Quality test on the earnings drift
+      verdict: testing
+      label: "Unproven, in paper"
+      result: "2005 to 2023: 4.9% a trade, no losing year. Found on years already read"
+      summary: >-
+        Skip a signal when the company holds more cash than debt and its stock is down over
+        the past year. Found after the holdout was spent.
+      stats:
+        - {label: "A trade, 2005 to 2023", value: "4.9%"}
+        - {label: Losing years, value: 0 of 18}
+        - {label: Worst drawdown, value: "$10,366"}
+      settle:
+        - {text: "Paper books with the test. Months of signals needed.", state: running}
+        - {text: "One run on the holdout, a second look. The owner's decision, not taken.", state: open}
+  waiting:
+    - Run the paper ledger after the close each evening.
+    - Decide whether to run the quality test on the holdout.
+  evidence:
+    - {when: 2026-11-16, title: Found, kind: found, text: "One of about 12,000 cells searched on 2010 to 2022: 3.60% a trade."}
+    - {when: 2026-11-16, title: Test years passed, kind: passed, text: "2005 to 2009, never used in the search: 4.49% a trade, five years of five."}
+    - {when: 2026-11-16, title: 2023 check passed, kind: passed, text: "63 trades at 5.95%."}
+    - {when: 2026-11-16, title: Holdout passed, kind: passed, text: "Run once by the owner: 266 trades at 5.04%, $26,716."}
+    - {when: 2026-11-16, title: Fills measured, kind: passed, text: "Ticks for 150 trades: the auction prices are real and fair."}
+    - {when: 2026-11-16, title: Paper ledger started, kind: running, text: "Every signal is followed; five books side by side."}
+    - {when: 2026-11-16, title: Quality test found, kind: open, text: "Removes the flat years on 2005 to 2023. Unproven: found on years already read."}
+    - {when: 2026-11-17, title: An unseen season checked, kind: open, text: "Autumn 2004: 19 kept signals at 12.8% each. Consistent, too few to prove it."}
+  studies:
+    - {name: Holdout run of the frozen rule, when: 2026-11-16, trials: 1, result: "266 trades, +5.04% a trade, $26,716", verdict: passed}
+    - {name: Fill measurement from ticks, when: 2026-11-16, trials: 0, result: "Crosses in 99% of entries and 93% of exits, within 0.1% of the quotes", verdict: passed}
+    - {name: Entries and exits, when: 2026-11-16, trials: 23, result: "The 20-day-average exit beat the plain exit on every measure set beforehand", verdict: lead}
+    - {name: "The flat years: which signals fail", when: 2026-11-16, trials: 210, result: "Fallen, cash-rich companies make nothing; skipping them leaves no losing year on read years", verdict: lead}
+    - {name: Autumn 2004, when: 2026-11-17, trials: 1, result: "33 signals; the 19 kept made 12.8% each", verdict: passed}
+    - {name: Risk controls on the book, when: 2026-11-16, trials: 4, result: "None lowers the drawdown; only the exit does", verdict: failed}
+    - {name: How much money it can carry, when: 2026-11-16, trials: 0, result: "Tops out near $20,000 to $25,000 a year", verdict: note}

@@ -201,7 +201,8 @@ def main() -> None:
         print(f"already done to {state['last_session']}; nothing to do")
         if state["last_session"]:  # the facts added above are still worth saving
             page = swing_paper.report(state, window, hold=rule.hold, books=cfg["books"])
-            swing_paper.save(folder, state, page)
+            snap = swing_paper.snapshot(state, window, hold=rule.hold, books=cfg["books"])
+            swing_paper.save(folder, state, page, snap)
     if len(todo) > MAX_CATCH_UP + 1:
         raise SystemExit(f"{len(todo)} sessions have been missed, more than {MAX_CATCH_UP}; "
                          "the ledger was not changed")  # fmt: skip
@@ -216,7 +217,8 @@ def main() -> None:
             print(f"    not a signal: {note}")
         # Saved after every session, so an interrupted catch-up resumes where it stopped.
         page = swing_paper.report(state, window, hold=rule.hold, books=cfg["books"])
-        swing_paper.save(folder, state, page)
+        snap = swing_paper.snapshot(state, window, hold=rule.hold, books=cfg["books"])
+        swing_paper.save(folder, state, page, snap)
     print(f"\nledger: {folder / 'report.md'}\n")
     print(swing_paper.report(state, window, hold=rule.hold, books=cfg["books"]))
 

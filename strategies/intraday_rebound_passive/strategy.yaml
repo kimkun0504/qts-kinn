@@ -6,3 +6,6 @@ cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_rebound
 prior_trials: 9
+
+record:
+  board: false    # shown under strategies/rebound_limit, the form of this idea that went furthest

@@ -6,3 +6,17 @@ cost_calibration: ibkr_pro_tiered
 owner: claude
 family: recent_search
 prior_trials: 2689   # cells measured in the overnight search, 2026-11-16
+
+record:
+  title: News and short interest
+  idea: "News and short interest, 2018 on"
+  horizon: Intraday to days
+  verdict: parked
+  result: No long candidate
+  summary: Conditions on gaps, 8-K news, timed news, premarket volume, trade size and short interest, measured on 2018 to 2022.
+  weaknesses:
+    - The large, repeatable moves in these years are downward; only a short seller collects them.
+  evidence:
+    - {when: 2026-11-16, title: Search finished, kind: failed, text: "2,689 cells, none near 3% a trade for a long-only account."}
+  studies:
+    - {name: Overnight search on 2018 to 2022, when: 2026-11-16, trials: 2689, result: No long candidate, verdict: failed}

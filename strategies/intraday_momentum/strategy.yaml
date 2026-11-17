@@ -6,3 +6,18 @@ cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_momentum
 prior_trials: 169    # measured offline in the development study and its cuts, 2026-11-16
+
+record:
+  title: Intraday momentum
+  idea: Intraday momentum and VWAP
+  horizon: Intraday
+  verdict: parked
+  result: "Opening range breakout breaks even at 6 to 9 basis points a side; real fills cost 7.9"
+  summary: Opening range breakouts in stocks in play, VWAP trend and moving-average rules on stocks and on QQQ and SPY.
+  weaknesses:
+    - Marginal once real fills were measured; the profit is on the short side and depends on speed.
+  evidence:
+    - {when: 2026-11-16, title: Development study, kind: found, text: "169 rules on 2003 to 2016: only the opening range breakout has a return before slippage."}
+    - {when: 2026-11-16, title: Fills measured, kind: failed, text: "7.9 basis points a side, at the rule's break-even."}
+  studies:
+    - {name: Momentum and VWAP rules, when: 2026-11-16, trials: 169, result: "Breakout breaks even at 6 to 9 bp a side", verdict: failed}

@@ -6,3 +6,6 @@ universe: liquid common stocks (see strategy.py)
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: canary_random_entry
+
+record:
+  board: false    # a canary that must lose money, not an idea

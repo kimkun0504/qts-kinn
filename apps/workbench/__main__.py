@@ -9,7 +9,10 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote
 
-from apps.workbench import api
+import yaml
+
+from apps.workbench import api, record
+from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
 from kinn.run import strategies_dir
 
@@ -30,9 +33,37 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/runs/"):
             detail = api.run_detail(self.runs_dir, path.rsplit("/", 1)[1])
             return self._json(detail, 200 if detail else 404)
+        if path == "/api/board":
+            return self._json(record.board(self.runs_dir, strategies_dir()))
+        if path == "/api/studies":
+            return self._json(record.studies(strategies_dir()))
+        if path.startswith("/api/strategy/"):
+            parts = path.split("/")[3:]
+            if len(parts) == 2 and parts[1] == "documents":
+                found = record.documents(strategies_dir(), parts[0])
+            elif len(parts) == 2 and parts[1] == "paper":
+                found = self._paper(parts[0])
+            else:
+                found = record.strategy_page(self.runs_dir, strategies_dir(), parts[0])
+            return self._json(found, 200 if found else 404)
+        if path.startswith("/api/trades/"):
+            found = record.trades(self.runs_dir, path.rsplit("/", 1)[1])
+            return self._json(found, 200 if found else 404)
         if path == "/api/info":
             return self._json({"runs_dir": str(self.runs_dir)})
         return super().do_GET()
+
+    def _paper(self, name: str):
+        """The paper ledger of a strategy that names one in its record."""
+        if not record.NAME.match(name):
+            return None
+        try:
+            _, cfg = swing_run.load_config(name, "paper")
+        except (FileNotFoundError, yaml.YAMLError):
+            return None
+        folder = swing_paper.paper_dir(self.runs_dir, name)
+        hold = int((cfg.get("rule") or {}).get("hold") or 0) or None
+        return record.paper(folder, cfg.get("books"), hold)
 
     def _json(self, payload, status=200):
         body = json.dumps(payload, default=str).encode()

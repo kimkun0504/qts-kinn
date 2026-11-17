@@ -4,3 +4,15 @@ family: momentum_12_1
 prior_trials: 0
 cost_calibration: ibkr_pro_tiered
 status: parked             # failed validation, see REPORT.md
+
+record:
+  title: Twelve-month momentum
+  idea: "Twelve-month momentum, long and short"
+  horizon: Monthly
+  verdict: parked
+  result: "Failed validation: Sharpe 0.25, drawdown 34%"
+  summary: The published 12-1 momentum signal as a long-short daily book of $25,000, used to prove the daily engine.
+  evidence:
+    - {when: 2026-11-15, title: Validation failed, kind: failed, text: "Two of three bars missed on 2017 to 2023."}
+  studies:
+    - {name: Three variants and one validation run, when: 2026-11-15, trials: 4, result: "Sharpe 0.25 on validation", verdict: failed}

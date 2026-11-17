@@ -5,3 +5,17 @@ family: etf_swing
 prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: Dips in index funds
+  idea: Dips in index funds
+  horizon: 1 to 10 sessions
+  verdict: closed
+  result: "0.1% to 0.4% a trade"
+  summary: Buy one of 14 index funds at the open after a short fall; sell at the first close above its 5-day average.
+  weaknesses:
+    - A book makes 2% to 6% a year with a bad year of -$900 to -$2,600.
+  evidence:
+    - {when: 2026-11-17, title: Eight cells measured, kind: failed, text: "None reaches 0.5% a trade where chosen; 0.10% to 0.18% where tested."}
+  studies:
+    - {name: Short falls in 14 index funds, when: 2026-11-17, trials: 8, result: "0.1% to 0.4% a trade", verdict: failed}

@@ -6,3 +6,26 @@ cost_calibration: ibkr_pro_tiered
 owner: claude
 family: intraday_rebound
 prior_trials: 107    # 9 early + 98 measured offline in the reversal-confirmation study, 2026-11-16
+
+record:
+  title: Intraday rebound
+  idea: Intraday rebound with limit orders
+  horizon: Intraday
+  verdict: failed_holdout
+  result: "+0.52% a trade on 2017 to 2023, then lost money on its holdout"
+  summary: >-
+    After a stock's first close 10% below the prior close with no news, rest a buy limit 2%
+    lower for 10 minutes; if filled, sell in the closing auction.
+  weaknesses:
+    - Lost money on the holdout, so it is parked with no re-test.
+    - 2022 and 2023 both lost; the worst drawdown was larger than the account.
+  evidence:
+    - {when: 2026-11-15, title: Validation passed narrowly, kind: passed, text: "2017 to 2023: +0.52% a trade at 1x, +0.41% at 2x."}
+    - {when: 2026-11-15, title: Holdout failed, kind: failed, text: "Run once by the owner: negative net per trade and Sharpe."}
+    - {when: 2026-11-16, title: Reversal signals and fast falls, kind: failed, text: "Indicator entries did not help; fast falls cost too much to buy."}
+  studies:
+    - {name: Market-order rebound (event study), when: 2026-11-15, trials: 9, result: "-0.09% a trade after costs", verdict: failed}
+    - {name: Passive entry (tick study), when: 2026-11-15, trials: 1, result: "+0.56% a fill, interval includes zero", verdict: failed}
+    - {name: Limit-order variants and validation, when: 2026-11-15, trials: 56, result: "+0.52% a trade on validation", verdict: lead}
+    - {name: Holdout run, when: 2026-11-15, trials: 1, result: Lost money, verdict: failed}
+    - {name: Reversal confirmation and fast-fall cost, when: 2026-11-16, trials: 98, result: "No entry or exit rescues it", verdict: failed}

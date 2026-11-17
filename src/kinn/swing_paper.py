@@ -471,6 +471,81 @@ def report(state: dict, window: Window, *, hold: int, books: dict[str, dict]) ->
     return "\n".join(lines) + "\n"
 
 
+def snapshot(state: dict, window: Window, *, hold: int, books: dict[str, dict]) -> dict:
+    """The ledger as data, for the Workbench: what :func:`report` says, with numbers left as
+    numbers. Written beside the state after every session."""
+    day = state["last_session"]
+    today = date.fromisoformat(day) if day else None
+    bars = window.get(today, {}) if today else {}
+    tracks = state["tracks"]
+    positions = []
+    totals = {name: {"open": 0, "unrealised": 0.0, "hedged": 0.0} for name in books}
+    for t in tracks:
+        holding = [name for name in t["books"] if _held(t, name)]
+        if t["status"] != "open" and not holding:
+            continue
+        bar = bars.get(t["symbol"])
+        change = bar.close / t["entry_open"] - 1 if bar else None
+        fund = _benchmark(window, date.fromisoformat(t["entry_day"]), today)
+        for name in holding:
+            if name in totals:
+                n = t["books"][name]["notional"]
+                totals[name]["open"] += 1
+                totals[name]["unrealised"] += n * (change or 0.0)
+                totals[name]["hedged"] += n * ((change or 0.0) - (fund or 0.0))
+        positions.append({
+            "symbol": t["symbol"], "signal_day": t["signal_day"], "entry_day": t["entry_day"],
+            "entry_open": t["entry_open"], "last": bar.close if bar else None, "change": change,
+            "benchmark": fund, "sessions": t["sessions"], "books": holding,
+            "kept": t.get("kept"), "note": quality_note(t).strip(" ()") or None,
+        })  # fmt: skip
+    out_books = []
+    for name, book in books.items():
+        done = [p for t in tracks for n, p in t["books"].items() if n == name and "net" in p]
+        out_books.append({
+            "name": name, "account": book["account"], "slots": book["slots"],
+            "quality": bool(book.get("skip_fallen_cash_rich")), "exit": book.get("exit"),
+            **totals[name], "trades": len(done),
+            "net": sum(p["net"] for p in done), "net_2x": sum(p["net_2x"] for p in done),
+            "mean": statistics.fmean(p["net"] / p["notional"] for p in done) if done else None,
+        })  # fmt: skip
+    closed = [t for t in tracks if t["status"] == "closed"]
+    gross = [t["gross_return"] for t in closed]
+    ahead = [t["gross_return"] - t["benchmark_return"] for t in closed
+             if t.get("benchmark_return") is not None]  # fmt: skip
+
+    def group(flag: bool) -> dict | None:
+        some = [t["gross_return"] for t in closed if t.get("kept") is flag]
+        return {"finished": len(some), "mean_gross": statistics.fmean(some)} if some else None
+
+    return {
+        "schema": "paper-snapshot-1", "last_session": day, "hold": hold, "benchmark": BENCHMARK,
+        "buy_next_open": [
+            {"symbol": t["symbol"], "signal_close": t["signal_close"], "jump": t["jump"],
+             "volume": t["volume"], "market_cap": t["market_cap"], "kept": t.get("kept"),
+             "note": quality_note(t).strip(" ()") or None}
+            for t in tracks if t["status"] == "pending"
+        ],
+        "sell_next_open": [
+            {"symbol": t["symbol"],
+             "books": [n for n, p in t["books"].items() if p.get("open") and p.get("leave")]}
+            for t in tracks if any(p.get("open") and p.get("leave") for p in t["books"].values())
+        ],
+        "sell_next_close": [
+            {"symbol": t["symbol"], "books": [n for n in t["books"] if "exit" not in t["books"][n]]}
+            for t in tracks if t["status"] == "open" and t["sessions"] + 1 >= hold
+        ],
+        "positions": positions, "books": out_books,
+        "followed": {
+            "signals": len(tracks), "finished": len(closed),
+            "mean_gross": statistics.fmean(gross) if gross else None,
+            "winners": sum(g > 0 for g in gross),
+            "vs_benchmark": statistics.fmean(ahead) if ahead else None,
+            "passed": group(True), "failed": group(False),
+        },
+    }  # fmt: skip
+
+
 def paper_dir(runs_dir: Path, name: str) -> Path:
     """Where a strategy's paper ledger lives: beside the run store, outside the repository."""
     return Path(os.environ.get("KINN_PAPER_DIR") or runs_dir.parent / "paper") / name
@@ -481,9 +556,14 @@ def load_state(folder: Path) -> dict:
     return json.loads(path.read_text()) if path.exists() else new_state()
 
 
-def save(folder: Path, state: dict, page: str) -> None:
+def save(folder: Path, state: dict, page: str, data: dict | None = None) -> None:
+    """Write the ledger: its state, the page, and (when given) the snapshot the Workbench reads."""
     folder.mkdir(parents=True, exist_ok=True)
     tmp = folder / "state.json.tmp"
     tmp.write_text(json.dumps(state, indent=1) + "\n")
     os.replace(tmp, folder / "state.json")
     (folder / "report.md").write_text(page)
+    if data is not None:
+        tmp = folder / "snapshot.json.tmp"
+        tmp.write_text(json.dumps(data, indent=1) + "\n")
+        os.replace(tmp, folder / "snapshot.json")
