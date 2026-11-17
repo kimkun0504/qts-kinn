@@ -325,3 +325,28 @@ at least +3% net over all completed trades at base costs overall and
 separately from 2022 through 2023-11-08. Keep the recency sample and 2×
 stress requirements. Count each run in `intraday_rebound`. This is one
 data-informed development look and the sealed holdout remains excluded.
+
+## Addendum, 2026-11-16: owner-requested 2017–2023 check
+
+The size-group portfolio missed the preregistered stressed development
+Sharpe gate. The original park decision stands. After reviewing the
+development result, the owner requested a single later-period run of
+that exact configuration. This is an owner-directed exception to the
+original advancement rule. Its later-period numbers will be reported
+alongside the original thresholds as a diagnostic, with the selection
+exception disclosed.
+
+Run the existing `validation_liquid_size_peers` config exactly once, on
+2017-01-03 through 2023-11-08. Use the original size-group signal,
+two-hour exit, order sizing, capital and participation rules,
+`ibkr_pro_tiered`, and original data build `447e58e098`. Compare
+full-period and 2022-01-03 through 2023-11-08 arithmetic mean net per
+completed trade at base and doubled slippage. Report 2017–2021
+separately, and include yearly counts and returns, daily dollar
+P&L t-statistics, annualised daily Sharpe, end-of-day drawdowns
+and conditional winner and loser means. Include zero-trade dates
+in daily statistics. Use the original validation thresholds at
+their exact precision and record the outcome of each. This check
+adds one trial to `intraday_rebound`. No code or parameter changes
+are planned, and there is no second attempt. The sealed holdout
+remains excluded.
