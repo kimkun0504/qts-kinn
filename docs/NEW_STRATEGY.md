@@ -71,7 +71,7 @@ record:
   evidence:                        # what was found, in order
     - {when: 2026-11-16, title: ..., kind: found, text: "..."}   # found | passed | failed | running | open
   studies:                         # every search or test, with its trial count, scripts included
-    - {name: ..., when: 2026-11-16, trials: 438, result: "...", verdict: lead}   # lead | passed | failed
+    - {name: ..., when: 2026-11-16, trials: 438, result: "...", verdict: lead}   # lead | passed | failed | note
 ```
 
 `board: false` keeps a strategy off the board (a control, or a folder that only holds studies);
