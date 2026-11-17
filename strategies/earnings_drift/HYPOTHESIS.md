@@ -149,3 +149,23 @@ One trial.
 (7.2%). 17 trades, 12.57% a trade, $4,263 ($4,077 doubled). Consistent, by the reading set
 above; the skipped are under 20 (and six of them were skipped only because the prices do not yet
 reach back a year), so the gap between kept and skipped is not read as evidence.
+
+## Addendum, 2026-11-17 15:34 ET: how much of the account the book uses, and fewer, larger positions
+
+Written before the books below are measured. Counting positions held day by day (2006 to
+October 2023) shows the 10-position book is mostly empty: A50Q holds 3.3 positions on average,
+a third of the account; it is full on 5% of days and holds nothing on 16%. Signals come in
+the four reporting seasons (about 6 held in February–March, May, August and November; 1 to 2
+in between). The owner has said $1,000 positions feel small.
+
+**Measured:** the $20,000 book of A50Q with 5, 7 and 10 positions ($4,000, $2,857, $2,000
+each), with the 15-session exit and with the 20-day-average exit, on the auction basis and
+with the spread crossed: dollars a year, Sharpe, worst drawdown, worst year, losing years,
+signals taken. The priority within a day stays the most volume against normal. 4 new trials
+(5 and 7 positions, two exits), charged to `swing_search`.
+
+**How it will be read.** Nothing is adopted from this table. Fewer positions put more of the
+account to work and make the result depend on fewer trades; the table shows the price of
+that. If a count looks better it becomes one more paper book, since the choice is being made
+on years already read. Also reported, not a trial: what the idle cash would earn in Treasury
+bills.
