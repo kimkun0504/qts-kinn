@@ -23,3 +23,14 @@ def test_quarters_run_from_2006_to_the_last_one_before_the_seal():
 def test_only_the_sec_over_https_is_called(url):
     with pytest.raises(SystemExit):
         tool.fetch(url, "Test test@example.com")
+
+
+def test_the_filing_index_download_also_stops_before_the_seal():
+    path = TOOL.with_name("download_edgar_index.py")
+    spec = importlib.util.spec_from_file_location("download_edgar_index", path)
+    index = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(index)
+    found = index.quarters()
+    assert found[0] == (2005, 1) and found[-1] == (2023, 3) and len(found) == 75
+    with pytest.raises(SystemExit):
+        index.fetch("https://example.com/Archives/edgar/full-index/2015/QTR1/form.gz", "a@b")
