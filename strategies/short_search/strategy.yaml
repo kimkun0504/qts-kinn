@@ -1,0 +1,9 @@
+name: short_search
+kind: swing               # research scripts first; no runner yet
+status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+engine: daily
+universe: listed common stock, market value >= $50M, close >= $3, 20-day dollar volume >= $1M
+family: swing_short
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
