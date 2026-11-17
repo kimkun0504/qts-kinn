@@ -37,6 +37,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/deal_spread` | claude | 2026-11-17 | takeover targets held to the close of the deal (measured 2026-11-17; closed) |
 | `strategies/etf_trend` | claude | 2026-11-17 | trend following across asset-class index funds |
 | `strategies/after_hours` | claude | 2026-11-17 | buying an earnings reaction in extended hours, small size (owner's idea) |
+| `strategies/runner_close` | claude | 2026-11-17 | a stock that has run on the day, into the close and overnight (owner's observation) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

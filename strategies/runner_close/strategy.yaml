@@ -1,0 +1,9 @@
+name: runner_close
+kind: swing               # research script first; no runner yet
+status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+engine: intraday
+universe: listed common stock up 30% or more on the day by 15:00 on five times volume, market value >= $50M
+family: runner_close
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
