@@ -467,3 +467,23 @@ $10,193; two a day $10,507). The pause as first written never resumed, because a
 opens nothing cannot recover its loss; it was re-run with the high reset when a pause ends,
 and both runs are counted (4 trials). The 20-day-average exit remains the only control that
 lowers the drawdown ($7,601), since it acts on positions already held.
+
+## Addendum, 2026-11-16 23:53 ET: is there a version in larger companies? (family 22)
+
+Written before anything is measured. A50Q cannot carry much money (REPORT.md: it stops
+growing at about $20,000 to $25,000 a year, because the stocks are small). A version in
+companies of $300M to $2B would trade at a third of the cost and carry ten times the money,
+so a smaller edge would be worth having. Already seen in an earlier cross-check: with a 15%
+jump on 5 times volume those companies show no edge, with or without the test (about −0.7%
+for all and −0.1% for "up or net debt" in 2018–2023), and the fallen, cash-rich group is the
+worst there too. Earnings drift is known to be weaker in larger companies, so the question
+is only whether the strict groups keep any of it.
+
+Companies of $300M to $2B, earnings 8-K since the previous session (A50's kind), hold 15, the
+auction basis (0.10% to 0.05% a side at these sizes), spans as before with and without 2020.
+Six cells: a two-day jump of 10% or more, and of 15% or more, on 5 times volume, each for
+three groups: up over the year and net debt; at a 250-day high; up over the year or net debt.
+
+**What counts.** A cell goes forward only if it makes 2% or more a trade in each of the three
+spans and without 2020, on 100 trades or more in each, with at least 15 of 19 years positive.
+6 trials. A pass would be a lead to fix and test forward, not a result.
