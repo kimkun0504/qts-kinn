@@ -128,3 +128,19 @@ set for the search, which is why it is a separate book and not a change to the r
 The ledger's exit was checked against the research's on 220 real signals fed through it:
 the same exit day and return in all 220 with the research's own bars, and in 218 with the
 45-session window the nightly tool fetches (the average starts from a later bar).
+
+## Addendum, 2026-11-16 23:59 ET: one season nobody has looked at (autumn 2004)
+
+Written before the run. Every study of this family used signals from 2005 on. The data
+begin in September 2003, and the 8-K item for earnings (2.02) exists from 23 August 2004;
+before that date earnings releases cannot be told apart in the events table. So the months
+from 24 August to 31 December 2004 hold one earnings season (October and November 2004)
+that no rule here has been fitted on or tested on, and the 250-session return exists for it.
+
+**Run:** `autumn_2004_quality`, rule A50Q, the usual book, once. About 30 signals are
+expected, so this cannot settle anything: a mean is known to perhaps ±6 points and the
+skipped group will be a handful. It is recorded as one more unseen season and read only
+this way: **consistent** if the kept signals' mean before costs is positive and the book's
+total at doubled costs is positive; **a warning** if the kept signals lose. The kept against
+the skipped is reported and not read as evidence either way unless 20 or more are skipped.
+One trial.
