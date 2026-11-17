@@ -102,3 +102,11 @@ once: 0.5%, t of 2.5, four years of five, in both. For any cell that goes forwar
 gives the worst trade and the worst 1%, since a short's loss has no limit. Whether the
 shares can be borrowed after hours at a retail broker is not known and is the first thing to
 check if anything passes.
+
+**Results of the short side, 2026-11-17 17:44 ET.** In REPORT.md. Search: two cells met the
+bar, both in companies of $300M to $2B down 15% or more after hours: bought back at the next
+open (2.82%, 251 trades, weekly t 3.89, six years of eight) and at the next close (3.41%, t
+3.03). Tests, each run once: 2005–2009 passed (2.98%, t 3.79, five years of five; 4.42%, t
+3.12, five of five); 2018–2022 was positive in all five years and missed the weekly t (1.60%,
+t 1.15; 2.10%, t 1.87). **Not passed** by the rule set beforehand. 12 cells and 4 test runs;
+`after_hours` has 56 trials in all. The 2023 check has not been looked at for these cells.

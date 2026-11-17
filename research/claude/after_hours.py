@@ -147,6 +147,95 @@ def collect(first: int, last: int) -> None:
         print(f"{year}: {len(found)} entries", flush=True)
 
 
+def collect_lows(first: int, last: int) -> None:
+    """The low of each entry minute (what a short seller would have received), for the
+    entries already collected."""
+    store = DataStore(load_settings())
+    out = folder()
+    events_by = {(r["day"], r["symbol"], r["timing"]): r for r in pq.read_table(out / "events.parquet").to_pylist()}
+    for year in range(first, last + 1):
+        target = out / f"lows_{year}.parquet"
+        if target.exists():
+            continue
+        entries = [e for e in pq.read_table(out / f"entries_{year}.parquet").to_pylist() if e["timing"] == "after"]
+        by_day = defaultdict(list)
+        for e in entries:
+            by_day[e["day"]].append(e)
+        found = []
+        for day, rows in sorted(by_day.items()):
+            bars = store.minute(day, symbols=list({r["symbol"] for r in rows}), columns="symbol, minute_et, low, close")
+            symbol = bars.column("symbol").to_pylist()
+            cols = {n: bars.column(n).to_numpy(zero_copy_only=False) for n in ("minute_et", "low", "close")}
+            where: dict = {}
+            for i, s in enumerate(symbol):
+                where.setdefault(s, [i, i])[1] = i
+            for r in rows:
+                span = where[r["symbol"]]
+                minute, low, price = (cols[n][span[0] : span[1] + 1].astype(float) for n in ("minute_et", "low", "close"))
+                regular = np.flatnonzero((minute >= OPEN) & (minute <= CLOSE))
+                at = min(max(events_by[(day, r["symbol"], "after")]["minute"] + 30, 990), 1170)
+                e = int(np.searchsorted(minute, at))
+                found.append({"day": day, "symbol": r["symbol"], "rel_low": float(low[e] / price[regular[-1]])})
+        pq.write_table(pa.Table.from_pylist(found, schema=pa.schema([("day", pa.date32()), ("symbol", pa.string()), ("rel_low", pa.float64())])), target)
+        print(f"{year}: {len(found)}", flush=True)
+
+
+SHORT_REACTIONS = {"down5": (-0.15, -0.05), "down15": (-9.0, -0.15)}
+BORROW_NIGHT = 0.10 / 252
+
+
+def load_short() -> dict[str, np.ndarray]:
+    out = folder()
+    table = duckdb.sql(
+        f"""select n.day, year(n.day) as yr, (date_diff('day', DATE '2003-12-29', n.day) // 7) as week,
+                   v.mcap, n.reaction, n.bar_dollars,
+                   1 - exp(v.c_next - v.c) * v.oc_next / w.rel_low as g_open,
+                   1 - exp(v.c_next - v.c) / w.rel_low as g_close,
+                   case when v.adv < 1e6 then 0.0025 when v.adv < 1e7 then 0.0010
+                        when v.adv < 1e8 then 0.0005 else 0.0002 end
+                   + 2 * least(0.01, greatest(0.000175, 0.0035 / n.paid)) + {BORROW_NIGHT} as cost
+            from read_parquet('{out}/entries_*.parquet') n
+            join read_parquet('{out}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
+            join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+            where n.timing = 'after'"""
+    ).to_arrow_table()
+    d = {n: table.column(n).to_numpy(zero_copy_only=False) for n in table.column_names}
+    d["timing"] = np.array(["after"] * len(d["day"]))
+    return d
+
+
+def tail(d, keep, exit_) -> str:
+    net = np.sort(d[f"g_{exit_}"][keep].astype(float) - d["cost"][keep])
+    return f"worst {100 * net[0]:.0f}%, worst 1% {100 * net[: max(1, len(net) // 100)].mean():.0f}%"
+
+
+def search_short() -> None:
+    d = load_short()
+    print(f"{len(d['day'])} entries after the close. Sold short at the minute's low. Search years 2010 to 2017.")
+    passed = []
+    for size in SIZES:
+        for reaction in SHORT_REACTIONS:
+            keep = pick(d, "after", size, reaction, "search", SHORT_REACTIONS)
+            for exit_ in ("open", "close"):
+                m = measure(d, keep, exit_)
+                label = f"short {size} {reaction} {exit_}"
+                print(show(label, m) + (f"  {tail(d, keep, exit_)}" if m["n"] >= 3 else ""))
+                if m["n"] >= 150 and m["net"] >= 0.01 and m["t"] >= 3 and m["pos"] >= 6:
+                    passed.append(label)
+    print("\nMeet the search bar:", passed or "none")
+
+
+def test_short(size, reaction, exit_) -> None:
+    d = load_short()
+    for period in ("early", "late"):
+        keep = pick(d, "after", size, reaction, period, SHORT_REACTIONS)
+        print(show(f"short {size} {reaction} {exit_} {period}", measure(d, keep, exit_)) + f"  {tail(d, keep, exit_)}")
+        net = d[f"g_{exit_}"].astype(float) - d["cost"]
+        for year in sorted(set(d["yr"][keep])):
+            mine = keep & (d["yr"] == year)
+            print(f"    {year}: {mine.sum():>5}  {100 * net[mine].mean():>6.2f}%")
+
+
 def load() -> dict[str, np.ndarray]:
     out = folder()
     table = duckdb.sql(
@@ -242,6 +331,12 @@ if __name__ == "__main__":
         events()
     elif command == "collect":
         collect(int(sys.argv[2]), int(sys.argv[3]))
+    elif command == "lows":
+        collect_lows(int(sys.argv[2]), int(sys.argv[3]))
+    elif command == "search_short":
+        search_short()
+    elif command == "test_short":
+        test_short(*sys.argv[2:5])
     elif command == "search":
         search()
     else:

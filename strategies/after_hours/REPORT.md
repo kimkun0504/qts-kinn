@@ -51,16 +51,52 @@ Pass was 0.5%, weekly t of 2.5 and four years of five positive, in both test per
 - **A reaction of 15% or more after hours does not continue overnight** (0.3% to 0.5%); its
   15-session drift (5%) is rule A50's ground, on few trades.
 
+## The other side: selling short after hours on a bad report (12 cells, 4 test runs)
+
+Same events and reading. Sold short at the **low** of the minute, bought back at the next
+open or the next close; the auction allowance, commission and a night's borrow at 10% a year.
+
+| $300M–$2B, down 15% or more after hours | 2010–2017 (search) | 2005–2009 | 2018–2022 |
+|---|---|---|---|
+| Bought back at the next open | +2.82% (251; t 3.89; 6 of 8) | +2.98% (143; t 3.79; 5 of 5) | +1.60% (201; t 1.15; 5 of 5) |
+| Bought back at the next close | +3.41% (t 3.03; 6 of 8) | +4.42% (t 3.12; 5 of 5) | +2.10% (t 1.87; 5 of 5) |
+| Worst trade / worst 1% (to the open) | −25% / −22% | −12% / −12% | −26% / −24% |
+
+After costs, to the short seller. No other short cell met the search bar (a fall of 5% to 15%
+makes 0.1% to 0.6%; small and large companies down 15% make about 1% on few trades).
+
+- **By the rule set beforehand this is not passed:** in 2018–2022 the weekly t is 1.2 and 1.9
+  against the 2.5 required.
+- **It is still the steadiest thing found since the earnings drift.** A company of $300M to
+  $2B whose stock is down 15% or more half an hour after its report was lower again by the
+  next open in 16 of the 18 years, and in every one of the ten test years, by 1.6% to 3.0% a
+  trade after costs, about 30 to 40 trades a year. The fall in the mean since 2018 (1.6%
+  against 3%) and the wide spread of single trades are why the t fails.
+- **Why it might be real:** the same reason as the long side. After hours the first price is
+  set by few traders; the funds that must sell a broken story do it at the open and through
+  the next day.
+- **What would make it untrue or unusable:**
+  1. The fill: sold at the low of the minute is harsh, but a quarter of the entries are in a
+     minute with under $5,000 traded, and there are no after-hours quotes on disk.
+  2. Borrow and the rules for short sales after hours at a retail broker. These are mid-sized
+     companies that are normally borrowable, but that has not been checked for one night
+     after bad news.
+  3. A short's tail: single trades lost 20% to 35% overnight.
+
 ## What it is worth
 
-Nothing here is a strategy yet. Two things are worth carrying forward:
+Nothing here has passed. Three leads, in the order I rate them:
 
-1. **The large-company cell is a lead for the paper ledger**, not for money: it is positive
-   everywhere, cheap to trade, takes any size, and comes in different stocks from the
-   earnings book. It failed its test on the t-statistic, so it stays a lead.
-2. **The fills are the weak point of everything on this page.** There are no after-hours
-   quotes on disk. Before any of this is trusted, a sample of after-hours quotes around
-   reports is needed to see what a $5,000 order would have paid.
+1. **Short after hours on a fall of 15% or more, $300M to $2B, bought back at the next open
+   or close.** Positive in every test year; failed only on the t since 2018.
+2. **Long after hours on a rise of 5% to 15%, $2B and over, held 15 sessions.** Positive in
+   all three periods on 2,300 trades; cheap, any size.
+3. **Long after hours, $300M to $2B, sold at the next open.** Worked in 14 of 15 years to
+   2019, lost in 2020 to 2022.
+
+**What they need before money:** after-hours quotes around reports (to see what $5,000 really
+pays or receives), the broker's rules and borrow for short sales after hours, and a forward
+record. All three can be followed on paper each evening at no cost.
 
 ## Reproduce
 
@@ -70,4 +106,7 @@ uv run python after_hours.py events
 uv run python after_hours.py collect 2005 2023
 uv run python after_hours.py search
 uv run python after_hours.py test after mid up5 open
+uv run python after_hours.py lows 2005 2023
+uv run python after_hours.py search_short
+uv run python after_hours.py test_short mid down15 open
 ```
