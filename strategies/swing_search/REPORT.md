@@ -515,6 +515,31 @@ and called that a short sale. Splitting the loss by day shows it is all taken on
 of the jump; sold short at the next open the same events lose money
 (`strategies/short_search/REPORT.md`).
 
+## The rule read on the report's own session (family 24, 2026-11-17)
+
+A50 waits for the close of the session after the 8-K's date and reads two days, because the
+data gave only dates. With the SEC's acceptance times one rule can read the first session
+the report could move the stock (R: the same day if accepted before 16:00, else the next
+session), require a one-day jump of 15% on 5 times volume at R's close, and buy the next
+open. For reports filed before the open that is a session earlier than A50. T50Q adds the
+quality test. Code: `research/claude/swing_timed.py`. 4 trials.
+
+**Verdict: failed; A50's two days stay.**
+
+| | 2005–2009 | 2010–2017 | 2018–2023 | without 2020 | Book a year | Worst year | Drawdown |
+|---|---|---|---|---|---|---|---|
+| A50Q | 5.58% | 4.10% | 5.35% | 5.49% | $5,097 | +$1,929 | $10,366 |
+| T50Q | 7.13% | 4.43% | 3.75% | 3.05% | $4,344 | −$2,774 (2019) | $13,372 |
+| A50Q, 20-day exit | | | | | $5,783 | +$1,161 | $7,601 |
+| T50Q, 20-day exit | | | | | $5,372 | +$43 | $7,389 |
+
+T50 has 1,384 signals: 687 are A50's on the same day, 398 are A50's taken a session earlier,
+and 299 are jumps A50 does not take because they did not last a second session. It also
+drops the 466 A50 signals whose jump took two days to build. The trade was better before
+2018 and worse since. With family 23 this says the same thing twice: the second session is
+not delay, it is the test. A jump that is still there after the market has slept on it is
+the one that drifts.
+
 ## Reproduce
 
 ```
@@ -528,6 +553,7 @@ uv run python research/claude/swing_book.py A50 early search 10 20 --by-volume
 uv run python research/claude/swing_news.py choose     # family 18; then: test <cell>
 uv run --with lightgbm python research/claude/swing_model.py fit --small --no-market --name small
 cd research/claude && uv run python swing_intraday_entry.py candidates  # family 23; then: collect 2005 2023, report, split
+cd research/claude && uv run python swing_timed.py table   # family 24; then: measure
 cd research/claude && uv run python swing_overnight.py quality   # then: books, cross, filtered, chance,
                                                               # pairs, cutoffs, who, wider, insider, final
 ```

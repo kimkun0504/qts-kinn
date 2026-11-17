@@ -595,3 +595,9 @@ a year than A50Q's on both cost bases, has no losing year from 2006 to 2023 on t
 basis, and a worst drawdown no deeper than A50Q's ($10,366; $7,601 with the 20-day exit).
 Anything less is noted and A50Q's books stay as they are. Found on years already read: a
 pass is a candidate for the forward test, not a result. The holdout is not touched.
+
+**Results, 2026-11-17 15:38 ET.** In REPORT.md. Failed both terms. T50Q a trade: 7.13%, 4.43%,
+3.75% (3.05% without 2020) against A50Q's 5.58%, 4.10%, 5.35% (5.49%); its book makes $4,344
+a year against $5,097, with a losing year (2019, −$2,774) and a deeper drawdown ($13,372).
+Of T50's 1,384 signals 687 are A50's on the same day, 398 are A50's a session earlier and
+299 A50 does not take. 4 trials. A50Q's books stay as they are.

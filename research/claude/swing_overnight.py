@@ -65,6 +65,9 @@ def load(rule: str = "A50") -> list[dict]:
                       left join (select permaticker as p0, day as d0
                                  from '{base}/earn0{"_early" if name == "early" else ""}.parquet') e0
                         on e0.p0 = d.permaticker and e0.d0 = d.day
+                      left join (select permaticker as pt, day as dt
+                                 from '{base}/timed.parquet') t0
+                        on t0.pt = d.permaticker and t0.dt = d.day
                       join p on p.permaticker = d.permaticker and p.date = d.day
                       where {dates} and next_open is not null and ({RULES[rule]}))
                 select s.day, s.symbol, s.adv, s.dvr2, s.commission, {", ".join("s." + n for n in names)},

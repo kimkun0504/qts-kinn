@@ -24,6 +24,9 @@ RULES = {
     # Family 19: an earnings 8-K dated the day of the jump itself, read on that day's move
     # (needs the join to earn0 that swing_overnight.load makes).
     "S50": "e0.p0 is not null and ret1 >= 0.15 and dvr >= 5 and mcap >= 5e7 and mcap < 3e8",
+    # Family 24: the report's own session by the SEC's acceptance time (needs the join to the
+    # timed table that swing_overnight.load makes).
+    "T50": "t0.pt is not null and ret1 >= 0.15 and dvr >= 5 and mcap >= 5e7 and mcap < 3e8",
     # Family 4's cell: a pullback in a small winner.
     "C": """ret120 >= 0.50 and ret120 < 1.00 and ret5 <= -0.05 and ret5 >= -0.10
             and history >= 120 and mcap >= 3e8 and mcap < 2e9""",
