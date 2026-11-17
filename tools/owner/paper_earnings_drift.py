@@ -136,7 +136,18 @@ def signals_for(window, day: date, rule, key: str, agent: str) -> tuple[list[dic
 
 def quality_facts(symbol: str, day: date, cik, key: str, agent: str) -> dict:
     """The quality test's facts for a signal: the return over the 250 sessions to ``day`` and
-    cash less debt at the last report filed before it."""
+    cash less debt at the last report filed before it. If a source cannot be reached the
+    signal is recorded without them (the quality books then pass it by) and the next run
+    tries again; the ledger of the frozen rule is never held up by this."""
+    try:
+        return _quality_facts(symbol, day, cik, key, agent)
+    except FetchError as error:
+        print(f"    {symbol}: the quality facts could not be fetched ({error}); "
+              "the next run tries again")  # fmt: skip
+        return {}
+
+
+def _quality_facts(symbol: str, day: date, cik, key: str, agent: str) -> dict:
     since = day - timedelta(days=swing_run.YEAR_DAYS)
     route = (
         f"/v2/aggs/ticker/{urllib.parse.quote(symbol)}/range/1/day/"
@@ -171,10 +182,14 @@ def main() -> None:
         if "kept" not in track:  # recorded before the quality test: add its facts, once
             day = date.fromisoformat(track["signal_day"])
             route = f"/v3/reference/tickers/{urllib.parse.quote(track['symbol'])}"
-            details = massive(route, key, date=day.isoformat()).get("results") or {}
+            try:
+                details = massive(route, key, date=day.isoformat()).get("results") or {}
+            except FetchError:
+                continue  # tried again on the next run
             track.update(quality_facts(track["symbol"], day, details.get("cik"), key, agent))
-            print(f"{track['symbol']} ({track['signal_day']}):"
-                  f"{swing_paper.quality_note(track)}")  # fmt: skip
+            if "kept" in track:
+                print(f"{track['symbol']} ({track['signal_day']}):"
+                      f"{swing_paper.quality_note(track)}")  # fmt: skip
     last = date.fromisoformat(args.day) if args.day else latest_finished_session()
     window = fetch_window(last, key)
     sessions = sorted(window)
