@@ -460,3 +460,10 @@ lower in either half (2006–2014, 2015–2023). Each is also shown with the 20-
 description. Standing aside by the market's trend already failed, and the pause may fail for
 the same reason (the rule's best trades follow sell-offs); it is tested because it is the
 control most people would reach for. 3 trials.
+
+**Results, 2026-11-16 23:58 ET.** In REPORT.md. None of the three controls brings the
+drawdown of the 15-session book under $7,800 (smaller in wilder stocks $9,938; the pause
+$10,193; two a day $10,507). The pause as first written never resumed, because a book that
+opens nothing cannot recover its loss; it was re-run with the high reset when a pause ends,
+and both runs are counted (4 trials). The 20-day-average exit remains the only control that
+lowers the drawdown ($7,601), since it acts on positions already held.

@@ -337,10 +337,42 @@ Companies of $50M to $300M, hold 15, the auction basis, the test as fixed.
 - Weaker earnings jumps do not pass: lower volume has no edge, and the 10% to 15% jumps
   pass only under a stricter test on 40 to 60 trades a span.
 
+**The drawdown (family 21, plan of 23:50 ET; 4 trials).** No losing calendar year is not
+the same as never being under water. A50Q's book has two drawdowns of about $10,000 on the
+$20,000 account: June to November 2007, not made back until August 2009, and December 2019
+to April 2020, made back by August. Its longest spell under its own high is 445 sessions
+(21 months). That is over the half of the account decision 0017 allows.
+
+| A50Q's book, auction basis | A year | Sharpe | Worst drawdown | Longest under water | Worst year |
+|---|---|---|---|---|---|
+| 15-session exit | $5,097 | 1.13 | $10,366 | 445 sessions | +$1,929 |
+| Smaller positions in wilder stocks | $4,095 | 1.10 | $9,938 | 581 | +$1,487 |
+| Pause 20 sessions after a $3,000 loss | $5,301 | 1.19 | $10,193 | 429 | +$1,929 |
+| At most two new positions a day | $5,336 | 1.17 | $10,507 | 443 | +$1,675 |
+| **20-day-average exit** | **$5,783** | **1.30** | **$7,601** | **247** | **+$1,161** |
+| 20-day exit, smaller in wilder stocks | $4,301 | 1.43 | $4,149 | 309 | +$1,848 |
+| 20-day exit, pause after a $3,000 loss | $5,472 | 1.32 | $5,211 | 239 | +$1,161 |
+
+- **None of the three controls passes** the term set (drawdown of $7,800 or less on the
+  15-session exit). The losses come from positions already held when the market breaks, so
+  a rule about what to open next arrives too late, and scaling down the wilder stocks trims
+  profit as much as risk.
+- **The exit is what moves the drawdown.** The 20-day-average exit sells a position when its
+  own price breaks, which is the only control here that acts on what is held. It had already
+  passed the terms set for it in the exit study; with the quality test it gives the best
+  book that rests on tests set beforehand: $5,783 a year, Sharpe 1.30, drawdown $7,601 (38%
+  of the account), no losing year on either cost basis.
+- On top of that exit, smaller positions in wilder stocks bring the drawdown to $4,149 with
+  no losing year on either basis ($3,285 a year with the spread crossed). That row is
+  description, a third choice stacked on two, and is a lead only.
+- The first version of the pause never resumed (a book that opens nothing cannot make its
+  loss back, so the pause re-armed for good); the row above resets the high when a pause
+  ends. Both are counted.
+
 ### What this is worth
 
 The filter was found by looking at years already read, among eight splits, their pairs and
-24 cut-offs, then seven more cells on other jumps (about 220 trials added). The checks say it is unlikely to be chance and is not
+24 cut-offs, then seven more cells on other jumps and four risk controls (about 225 trials added). The checks say it is unlikely to be chance and is not
 a knife edge, and the failing group shows up in a second universe. It is still a finding
 from data that has been seen. Two honest tests remain:
 

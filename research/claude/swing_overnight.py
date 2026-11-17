@@ -644,10 +644,106 @@ def same_day(signals, fund) -> None:
                   f"worst {min(totals, key=totals.get)} ${min(v):6,.0f}, losing {sum(x < 0 for x in v)}")  # fmt: skip
 
 
+def run_controlled(trades, basis="auction", slots=SLOTS, *, size=None, max_new=None,
+                   pause=None, sessions=None):  # fmt: skip
+    """run_book with the three controls of family 21. ``size(t)`` scales a position's
+    dollars; ``max_new`` caps entries a day; ``pause=(loss, days)`` opens nothing for ``days``
+    sessions once the marked profit is ``loss`` under its high (judged on yesterday's close)."""
+    budget = ACCOUNT / slots
+    by_entry = defaultdict(list)
+    for x in trades:
+        by_entry[x["dates"][0]].append(x)
+    open_until: list = []
+    daily: dict = defaultdict(float)
+    taken, paused_until, equity, high, pointer = 0, None, 0.0, 0.0, 0
+    order = sorted(sessions)
+    place = {d: i for i, d in enumerate(order)}
+    for day in sorted(by_entry):
+        while order[pointer] < day:  # marks up to yesterday are final: later entries add later
+            equity += daily.get(order[pointer], 0.0)
+            high = max(high, equity)
+            if pause and paused_until is not None and order[pointer] == paused_until:
+                high = equity  # the pause is over: the next one needs a fresh loss
+            if pause and high - equity >= pause[0] and (
+                paused_until is None or order[pointer] > paused_until
+            ):
+                paused_until = order[min(pointer + pause[1], len(order) - 1)]
+            pointer += 1
+        if paused_until is not None and day <= paused_until:
+            continue
+        open_until = [last for last in open_until if last >= day]
+        new = 0
+        for x in sorted(by_entry[day], key=lambda x: (-x["t"]["volume"], x["t"]["symbol"])):
+            if len(open_until) >= slots or (max_new and new >= max_new):
+                continue
+            open_until.append(x["dates"][-1])
+            taken += 1
+            new += 1
+            dollars = budget * (size(x["t"]) if size else 1.0)
+            c = side_costs(x["t"], basis)
+            daily[x["dates"][0]] -= dollars * c
+            before = 1.0
+            for d, v in zip(x["dates"], x["stock"], strict=True):
+                daily[d] += dollars * (v - before)
+                before = v
+            daily[x["dates"][-1]] -= dollars * x["stock"][-1] * (c + x["extra"])
+    _ = place
+    return daily, taken
+
+
+def controls(signals, fund) -> None:
+    keep = GROUPS["up or net debt"]
+    sets = {"15-session exit": build(signals, fund, keep=keep),
+            "20-day exit": build(signals, fund, keep=keep, ema=20)}  # fmt: skip
+
+    def vol_size(t):
+        return 1.0 if not t["vol60"] else min(1.0, 0.04 / float(t["vol60"]))
+
+    options = {
+        "A50Q as it is": {},
+        "smaller in wilder stocks": {"size": vol_size},
+        "pause 20 sessions after -$3,000": {"pause": (3000.0, 20)},
+        "two new positions a day at most": {"max_new": 2},
+    }
+    for exit_name, trades in sets.items():
+        print(exit_name)
+        for label, option in options.items():
+            line = f"  {label:34}"
+            for basis in ("auction", "crossed"):
+                daily, taken = run_controlled(trades, basis, sessions=fund.keys(), **option)
+                days = sorted(d for d in daily if d.year >= 2006)
+                pnl = np.array([daily[d] for d in days])
+                equity = np.cumsum(pnl)
+                under = np.maximum.accumulate(equity) - equity
+                longest, run = 0, 0
+                for u in under:
+                    run = run + 1 if u > 0 else 0
+                    longest = max(longest, run)
+                totals = defaultdict(float)
+                for d, x in zip(days, pnl, strict=True):
+                    totals[d.year] += x
+                halves = []
+                for a, b in ((2006, 2014), (2015, 2023)):
+                    part = np.array([x for d, x in zip(days, pnl, strict=True) if a <= d.year <= b])
+                    halves.append(part.mean() / part.std(ddof=1) * math.sqrt(252))
+                span = (days[-1] - days[0]).days / 365.25
+                line += (f" | {basis[:4]} n={taken:4d} ${equity[-1] / span:5,.0f}/yr Sh "
+                         f"{pnl.mean() / pnl.std(ddof=1) * math.sqrt(252):4.2f} "
+                         f"({halves[0]:4.2f}, {halves[1]:4.2f}) DD ${under.max():6,.0f} "
+                         f"under water {longest:4d} days, worst yr ${min(totals.values()):6,.0f} "
+                         f"lose {sum(v < 0 for v in totals.values())}")  # fmt: skip
+            print(line)
+    vols = np.array([float(t["vol60"]) for t in signals if keep(t) and t["vol60"]])
+    print(f"daily volatility of the kept signals: median {100 * np.median(vols):.1f}%, "
+          f"share over 4%: {100 * (vols > 0.04).mean():.0f}%, mean size factor "
+          f"{np.minimum(1, 0.04 / vols).mean():.2f}")  # fmt: skip
+
+
 if __name__ == "__main__":
     what = sys.argv[1]
     data, market = load(), index()
     print(len(data), "signals;", len(market), "sessions of the index")
     {"quality": quality, "books": books, "cross": cross, "filtered": filtered, "chance": chance,
      "pairs": pairs, "cutoffs": cutoffs, "who": who, "wider": wider, "insider": insider,
-     "final": final, "same_day": same_day}[what](data, market)  # fmt: skip
+     "final": final, "same_day": same_day,
+     "controls": controls}[what](data, market)  # fmt: skip
