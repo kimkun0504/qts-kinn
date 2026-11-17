@@ -65,3 +65,11 @@ Cells: after the close 3 sizes × 2 reactions × 3 exits = 18; before the open 3
 At 09:35 after a report before the session, a stock up 5% or more makes 0.6% to 0.9% over a
 week after costs (`news_hours`); buying A50's jump during the next session does not beat
 waiting (`swing_search`, family 23). Nothing from extended hours has been measured.
+
+**Results, 2026-11-17 17:37 ET.** In REPORT.md. Search: five cells met the bar, all after the
+close with a reaction of 5% to 15% (small held 15 sessions; mid to the next open, the next
+close and 15 sessions; large held 15 sessions). Tests, each run once on 2005–2009 and
+2018–2022: none passes both. Mid to the next open passed 2005–2009 (0.76%, t 2.71, five
+years of five) and failed 2018–2022 (0.11%; negative in 2020, 2021 and 2022). Large for 15
+sessions passed 2005–2009 (1.86%, t 4.37) and missed 2018–2022 on the t (1.35%, t 1.95,
+three years of five). 30 cells and 10 test runs: 40 trials.

@@ -1,9 +1,30 @@
 name: after_hours
 kind: swing               # research script first; no runner yet
-status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+status: parked            # five cells met the search bar, none passed both tests; leads in REPORT.md
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
-prior_trials: 0
+prior_trials: 40
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: Buying after hours on results
+  idea: Buying an earnings reaction after hours
+  horizon: Overnight to 15 sessions
+  verdict: weak
+  label: "Lead, not passed"
+  result: "Up 5% to 15% after hours kept rising overnight every year to 2019, then stopped"
+  summary: >-
+    The owner's idea. After results released after the close, buy 30 minutes later in after-
+    hours trading at the worst price of the minute; sell at the next open, the next close or
+    15 sessions on.
+  weaknesses:
+    - The overnight gain in mid-sized companies lost money in 2020, 2021 and 2022.
+    - No after-hours quotes on disk, so the price a small order would pay is assumed.
+    - The small-company figures rest on about 165 trades a period, half in minutes with under $5,000 traded.
+  evidence:
+    - {when: 2026-11-17, title: 30 cells on 2010 to 2017, kind: found, text: "Five met the bar, all after the close with a reaction of 5% to 15%."}
+    - {when: 2026-11-17, title: Tests, kind: failed, text: "None passed both. Mid to the next open: +0.76% in 2005-2009, +0.11% in 2018-2022. Large for 15 sessions: +1.86% and +1.35%, short on steadiness."}
+  studies:
+    - {name: After-hours and premarket entries after results, when: 2026-11-17, trials: 40, result: "A real overnight gain to 2019, gone since; large companies for 15 sessions the nearest miss", verdict: lead}
