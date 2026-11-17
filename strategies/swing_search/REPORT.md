@@ -393,10 +393,27 @@ ceiling is about four times higher, but orders that size would be larger than mo
 crosses and the modelled costs would no longer hold. **It is a rule for an account of about
 $20,000 to $100,000.**
 
+**Is there a version in larger companies? (family 22, plan of 23:53 ET; 6 cells.)** No.
+In companies of $300M to $2B the same earnings jump made 1.2% to 2.2% a trade before 2018
+and nothing since, in every group:
+
+| $300M to $2B, 15% on 5× volume | 2010–17 | 2005–09 | 2018–23 | Without 2020 |
+|---|---|---|---|---|
+| All | 1.62% (1,417) | 1.72% (906) | −0.70% (1,213) | −0.82% |
+| Up over the year and net debt | 1.90% | 1.77% | 0.43% | 0.30% |
+| At a 250-day high | 1.77% | 1.23% | 0.33% | 0.87% |
+| Up over the year, or net debt | 1.62% | 2.18% | −0.10% | −0.14% |
+| Down over the year, net cash | 2.15% | 0.49% | −3.65% | −3.70% |
+
+Jumps of 10% or more are weaker still. No cell reaches the 2% set. The drift after earnings
+has been traded away where money can follow it and survives where it cannot, which is why
+the rule that works is small. (One 2005–2009 figure for the 10% jumps is spoiled by a single
+bad price and is not used.)
+
 ### What this is worth
 
 The filter was found by looking at years already read, among eight splits, their pairs and
-24 cut-offs, then seven more cells on other jumps and four risk controls (about 225 trials added). The checks say it is unlikely to be chance and is not
+24 cut-offs, then seven more cells on other jumps, four risk controls and six cells in larger companies (about 230 trials added). The checks say it is unlikely to be chance and is not
 a knife edge, and the failing group shows up in a second universe. It is still a finding
 from data that has been seen. Two honest tests remain:
 

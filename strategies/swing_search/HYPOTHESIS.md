@@ -487,3 +487,7 @@ three groups: up over the year and net debt; at a 250-day high; up over the year
 **What counts.** A cell goes forward only if it makes 2% or more a trade in each of the three
 spans and without 2020, on 100 trades or more in each, with at least 15 of 19 years positive.
 6 trials. A pass would be a lead to fix and test forward, not a result.
+
+**Results, 2026-11-16 23:54 ET.** In REPORT.md. Failed: no cell makes 2% in each span. With
+a 15% jump the three groups made 1.2% to 2.2% before 2018 and 0.3% to 0.9% or less since;
+with a 10% jump less. 6 trials.

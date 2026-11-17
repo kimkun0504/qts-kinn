@@ -95,5 +95,57 @@ def main() -> None:
                   f"  crossed 2018-23 {100 * crossed.mean() if len(crossed) else float('nan'):5.2f}%")  # fmt: skip
 
 
+def larger() -> None:
+    """Family 22: A50's kind of jump in companies of $300M to $2B."""
+    base = load_settings().data_dir / "research" / "swing"
+    con = duckdb.connect()
+    con.execute(
+        f"set threads=3; set memory_limit='1500MB'; set temp_directory='{tempfile.mkdtemp()}'"
+    )
+    data = {}
+    for period, (name, dates) in PERIODS.items():
+        table = con.sql(
+            f"""select yr, ret2, dvr2, ret250, netcash_price, high250,
+                       exp(first_day + c_exit15 - c_next) - 1 - ({AUCTION}) as net,
+                       exp(first_day + c_exit15 - c_next) - 1 - 2 * (half_spread + commission)
+                           as crossed
+                from read_parquet('{base}/{name}_*.parquet') d
+                where {dates} and next_open is not null and earn and mcap >= 3e8 and mcap < 2e9
+                  and ret2 >= 0.10 and dvr2 >= 5"""
+        ).to_arrow_table()
+        d = {n: table.column(n).to_numpy(zero_copy_only=False) for n in table.column_names}
+        year, cash = d["ret250"].astype(float), d["netcash_price"].astype(float)
+        d["up"], d["debt"], d["high"] = year > 0, cash < 0, d["high250"].astype(float) > 0
+        d["fallen_rich"] = (year <= 0) & (cash >= 0)
+        data[period] = d
+    groups = {
+        "all": lambda d: np.ones(len(d["net"]), bool),
+        "up and net debt": lambda d: d["up"] & d["debt"],
+        "at a 250-day high": lambda d: d["high"],
+        "up or net debt": lambda d: d["up"] | d["debt"],
+        "down and net cash": lambda d: d["fallen_rich"],
+    }
+    for jump in (0.10, 0.15):
+        print(f"$300M to $2B, earnings, two-day jump of {100 * jump:.0f}% or more on 5x volume")
+        for group, test in groups.items():
+            cells, by_year = [], {}
+            for period, d in data.items():
+                keep = (d["ret2"].astype(float) >= jump) & test(d)
+                net = d["net"][keep].astype(float)
+                cells.append(f"{period} {100 * net.mean() if len(net) else float('nan'):6.2f}% "
+                             f"({len(net):4d})")  # fmt: skip
+                if period == "2018-23":
+                    no20 = net[d["yr"][keep] != 2020]
+                    cells.append(f"no-2020 {100 * no20.mean() if len(no20) else float('nan'):6.2f}%")
+                    crossed = d["crossed"][keep].astype(float)
+                for y in sorted(set(d["yr"][keep])):
+                    by_year[int(y)] = float(net[d["yr"][keep] == y].mean())
+            wins = sum(v > 0 for v in by_year.values())
+            print(f"   {group:18} " + "  ".join(cells) + f"  yrs+ {wins}/{len(by_year)}"
+                  f"  crossed 2018-23 {100 * crossed.mean() if len(crossed) else float('nan'):5.2f}%")  # fmt: skip
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    larger() if sys.argv[1:] == ["larger"] else main()

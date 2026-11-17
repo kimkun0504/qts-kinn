@@ -2,6 +2,6 @@ name: earnings_drift
 kind: swing               # a daily event rule run by `kinn swing` (kinn.swing_run), not an intraday strategy
 status: developing        # passed its one holdout run 2026-11-16; fills measured from ticks; not yet traded; see REPORT.md
 family: swing_search
-prior_trials: 12275      # 12,017 in the search; about 255 since the holdout (23 exits, about 225 in the flat-years study)
+prior_trials: 12281      # 12,017 in the search; about 260 since the holdout (23 exits, about 230 in the flat-years study)
 cost_calibration: ibkr_pro_tiered
 owner: claude
