@@ -39,7 +39,7 @@ const LABELS: Record<NavPage, string> = {
   runs: "Runs",
   compare: "Compare",
   parameters: "Parameters",
-  trials: "Trials and overfitting",
+  trials: "Trials",
 };
 const GROUPS: NavPage[][] = [
   ["home", "strategies", "studies", "paper"],
@@ -64,23 +64,23 @@ export function AppShell(props: AppShellProps) {
   const current: NavPage = page === "strategy" ? "strategies" : page;
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="flex shrink-0 flex-col gap-1 border-b border-line bg-rail px-3 py-4 md:sticky md:top-0 md:h-screen md:w-[216px] md:border-r md:border-b-0">
-        <div className="flex items-center gap-2.5 px-3 pt-0.5 pb-4">
+      <aside className="flex shrink-0 flex-col gap-1 border-b border-line bg-rail px-3 py-2 md:sticky md:top-0 md:h-screen md:w-[224px] md:border-r md:border-b-0 md:py-4">
+        <div className="flex items-center gap-2.5 px-3 pt-0.5 pb-1 md:pb-4">
           <span aria-hidden="true" className="inline-flex size-[26px] items-center justify-center rounded-[7px] bg-ink font-bold text-rail">
             K
           </span>
           <span className="text-base font-semibold">Kinn Research</span>
         </div>
-        <nav aria-label="Sections" className="flex flex-col gap-1">
+        <nav aria-label="Sections" className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {GROUPS.map((group, g) => (
-            <div key={g} className={`flex flex-col gap-1 ${g ? "mt-2 border-t border-line pt-3" : ""}`}>
+            <div key={g} className={`flex gap-1 md:flex-col ${g ? "md:mt-2 md:border-t md:border-line md:pt-3" : ""}`}>
               {group.map((key) => (
                 <button
                   key={key}
                   type="button"
                   aria-current={current === key ? "page" : undefined}
                   onClick={() => onNavigate(key)}
-                  className={`flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-3 text-left font-medium focus-visible:outline-2 focus-visible:outline-accent ${
+                  className={`flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-3 text-left font-medium whitespace-nowrap focus-visible:outline-2 focus-visible:outline-accent ${
                     current === key ? "bg-raised text-ink" : "text-ink-2 hover:text-ink"
                   }`}
                 >
@@ -94,9 +94,11 @@ export function AppShell(props: AppShellProps) {
             </div>
           ))}
         </nav>
-        <div className="mt-auto flex flex-col gap-1 border-t border-line px-3 pt-3 text-[13px] text-ink-3">
+        <div className="mt-auto hidden flex-col gap-1 border-t border-line px-3 pt-3 text-[13px] text-ink-3 md:flex">
           <span>Holdout sealed from 9 Nov 2023</span>
-          <span className="break-all">{props.runsDir}</span>
+          <span title={props.runsDir} className="truncate">
+            Runs: {props.runsDir.split("/").filter(Boolean).slice(-2).join("/")}
+          </span>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">

@@ -188,7 +188,7 @@ function Targets({ period, fills }: { period: Period; fills?: string }) {
   const rows = (period.targets ?? []).map((t) => {
     if (t.key === "net_per_trade") return { met: t.met, value: `${pct(t.value)} a trade at double cost`, need: `Needs ${plainPct(t.bar, 1)} or more` };
     if (t.key === "sharpe") return { met: t.met, value: `Sharpe ${num(t.value)} at double cost`, need: `Needs more than ${num(t.bar, 0)}` };
-    return { met: t.met, value: `Drawdown ${dollars((t.value ?? 0) * equity)} at double cost`, need: `Needs under ${dollars(t.bar * equity)}, half the account` };
+    return { met: t.met, value: `Drawdown ${dollars((t.value ?? 0) * equity)} at double cost`, need: `Needs under ${dollars(t.bar * equity)}, half the account. Counted when trades close` };
   });
   return (
     <Card title="Targets, on the holdout">

@@ -10,6 +10,8 @@ export interface Column<Row> {
   signed?: boolean;
   muted?: boolean;
   strong?: boolean;
+  /** Cut text longer than this many pixels with an ellipsis; the full text shows on hover. */
+  max?: number;
 }
 
 interface DataTableProps<Row> {
@@ -33,7 +35,7 @@ export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey,
             <th
               key={column.key}
               scope="col"
-              className={`border-b border-line px-3 py-2 text-[13px] font-medium whitespace-nowrap text-ink-2 ${
+              className={`sticky top-0 z-[1] border-b border-line bg-surface px-3 py-2 text-[13px] font-medium whitespace-nowrap text-ink-2 ${
                 column.align === "left" ? "text-left" : "text-right"
               }`}
             >
@@ -63,11 +65,17 @@ export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey,
                 return (
                   <td
                     key={column.key}
-                    className={`border-b border-line-soft px-3 py-2 whitespace-nowrap ${
+                    className={`border-b border-line-soft px-3 py-2 text-sm whitespace-nowrap ${
                       column.align === "left" ? "text-left" : "text-right"
                     } ${negative ? "text-neg" : column.muted ? "text-ink-2" : ""} ${column.strong ? "font-semibold" : ""}`}
                   >
-                    {content}
+                    {column.max && typeof content === "string" ? (
+                      <span title={content} className="block truncate" style={{ maxWidth: column.max }}>
+                        {content}
+                      </span>
+                    ) : (
+                      content
+                    )}
                   </td>
                 );
               })}

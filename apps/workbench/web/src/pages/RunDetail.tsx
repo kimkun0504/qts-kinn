@@ -122,6 +122,7 @@ function BacktestView({ detail, metrics: m }: { detail: Detail; metrics: Metrics
     { name: "Trades", value: m.trades },
     { name: "Lookahead replays passed", value: m.counts.lookahead_checks },
   ];
+  const marked = m.swing?.marked_to_market?.max_drawdown ?? null;
   const pairColumns = (label: string, digits: number): Column<{ name: string; value: number | null }>[] => [
     { key: "name", header: label, align: "left", render: (r) => r.name },
     { key: "value", header: digits ? "bps" : "Count", render: (r) => (digits ? num(r.value, digits) : int(r.value)) },
@@ -134,7 +135,9 @@ function BacktestView({ detail, metrics: m }: { detail: Detail; metrics: Metrics
           { label: "Trades", value: int(m.trades), note: `${num(m.trades_per_session, 1)} a session` },
           { label: "Total net", value: money(a.total_net), note: `2× ${money(b.total_net)}` },
           { label: "t-stat, daily P&L", value: num(a.t_stat_daily), note: `2× ${num(b.t_stat_daily)}` },
-          { label: "Worst drawdown", value: money(a.max_drawdown), note: `on $${int(m.equity)} equity` },
+          marked != null
+            ? { label: "Worst drawdown", value: money(marked), note: `marked daily, on $${int(m.equity)}` }
+            : { label: "Worst drawdown", value: money(a.max_drawdown), note: `on $${int(m.equity)} equity` },
           { label: "Win rate", value: plainPct(a.win_rate, 1), note: `gross ${pct(m.gross_mean_return)} a trade` },
         ]}
       />

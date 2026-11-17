@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { niceTicks } from "../../lib/series";
 
 export interface Series {
   name: string;
@@ -21,7 +22,7 @@ interface LineChartProps {
 }
 
 const W = 780;
-const PAD = { left: 64, right: 124, top: 12, bottom: 30 };
+const PAD = { left: 74, right: 136, top: 12, bottom: 32 };
 
 /** Lines on one shared axis, with direct end labels, a legend and a hover readout. */
 export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, caption }: LineChartProps) {
@@ -31,11 +32,11 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
   const all = series.flatMap((s) => s.values).concat(band ? [...band.low, ...band.high] : [], [0]);
   const low = Math.min(...all);
   const high = Math.max(...all);
+  const ticks = niceTicks(low, high);
   const span = high - low || 1;
   const x = (i: number) => PAD.left + ((W - PAD.left - PAD.right) * i) / (n - 1);
   const y = (v: number) => PAD.top + (height - PAD.top - PAD.bottom) * (1 - (v - low) / span);
   const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const ticks = [0, 1, 2, 3, 4].map((k) => low + (span * k) / 4);
 
   const xLabels: { i: number; text: string }[] = [];
   if (everyLabel) labels.forEach((text, i) => xLabels.push({ i, text }));
@@ -47,7 +48,9 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
     labels.forEach((label, i) => {
       const year = label.slice(0, 4);
       if (year !== last) {
-        if (seen % every === 0) xLabels.push({ i, text: year });
+        // A first year of only a few sessions would sit on top of the next label.
+        const room = !xLabels.length || x(i) - x(xLabels[xLabels.length - 1].i) >= 44;
+        if (seen % every === 0 && room) xLabels.push({ i, text: year });
         seen += 1;
         last = year;
       }
@@ -59,7 +62,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
     .sort((a, b) => a.y - b.y);
   let previous = -99;
   for (const end of ends) {
-    end.y = Math.max(end.y, previous + 13);
+    end.y = Math.max(end.y, previous + 16);
     previous = end.y;
   }
 
@@ -80,7 +83,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
           viewBox={`0 0 ${W} ${height}`}
           role="img"
           aria-label={title}
-          className="block h-auto w-full text-[11px]"
+          className="block h-auto w-full text-[13px]"
           onMouseLeave={() => setHover(null)}
           onMouseMove={(event) => {
             const box = event.currentTarget.getBoundingClientRect();

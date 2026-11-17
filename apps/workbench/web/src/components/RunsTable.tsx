@@ -52,8 +52,8 @@ export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, co
   }
   columns.push(
     { key: "started", header: "Started (UTC)", align: "left", muted: true, render: (run) => shortTime(run.started_at) },
-    { key: "strategy", header: "Strategy", align: "left", strong: true, render: (run) => run.strategy },
-    { key: "config", header: "Config", align: "left", muted: true, render: (run) => run.config },
+    { key: "strategy", header: "Strategy", align: "left", strong: true, max: 210, render: (run) => run.strategy },
+    { key: "config", header: "Config", align: "left", muted: true, max: 230, render: (run) => run.config },
     { key: "kind", header: "Kind", align: "left", render: (run) => KIND[run.kind] ?? run.kind },
     { key: "phase", header: "Period", align: "left", muted: true, render: (run) => (run.phase ? PHASE[run.phase] : "–") },
   );
@@ -78,7 +78,7 @@ export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, co
       rowKey={(run) => run.run_id}
       onRowClick={onOpen}
       selectedKey={selected}
-      minWidth={compact ? 800 : 1160}
+      minWidth={compact ? 800 : 1080}
       empty="No runs yet. Start one with: uv run kinn run <strategy> --config <name>"
     />
   );

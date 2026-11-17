@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { dollars, money } from "../../lib/format";
-import { MONTHS, type Timeline } from "../../lib/series";
+import { MONTHS, niceTicks, type Timeline } from "../../lib/series";
 
 interface ProfitChartProps {
   timeline: Timeline;
@@ -9,16 +9,6 @@ interface ProfitChartProps {
   height?: number;
   /** A small chart for the home page: no axis, no hover, no drawdown. */
   compact?: boolean;
-}
-
-function scale(low: number, high: number): number[] {
-  const span = high - low || 1;
-  const rough = span / 4;
-  const power = 10 ** Math.floor(Math.log10(rough));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * power).find((s) => s >= rough) ?? rough;
-  const ticks = [];
-  for (let v = Math.ceil(low / step) * step; v <= high + 1e-9; v += step) ticks.push(v);
-  return ticks;
 }
 
 const short = (v: number) => (v === 0 ? "$0" : `${v < 0 ? "−" : ""}$${Math.abs(v) >= 1000 ? `${Math.abs(v) / 1000}k` : Math.abs(v)}`);
@@ -52,7 +42,7 @@ export function ProfitChart({ timeline, highlight = "holdout", height = 300, com
     .join("");
   const area = `${months.map((m, i) => `${i ? "L" : "M"}${(x(i) * 10).toFixed(1)} ${(y(m.total) * 3).toFixed(1)}`).join("")}L1000 300L0 300Z`;
   const lit = starts.find((s) => s.key === highlight);
-  const ticks = scale(low, top);
+  const ticks = niceTicks(low, top);
   const deepest = timeline.deepest || -1;
   const under = `M0 0${months.map((m, i) => `L${(x(i) * 10).toFixed(1)} ${((m.under / deepest) * 92).toFixed(1)}`).join("")}L1000 0Z`;
   const years: { label: string; left: number }[] = [];
@@ -70,11 +60,11 @@ export function ProfitChart({ timeline, highlight = "holdout", height = 300, com
   };
   const last = months[n - 1];
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 pr-[70px] ${compact ? "" : "pl-11"}`}>
       <div
         role="img"
         aria-label={`Cumulative profit by month from ${months[0].year} to ${last.year}, ending at ${dollars(last.total)}`}
-        className={`relative ${compact ? "" : "mt-5"}`}
+        className="relative mt-5"
         style={{ height }}
         onMouseMove={compact ? undefined : move}
         onMouseLeave={compact ? undefined : () => setHover(null)}
@@ -83,13 +73,13 @@ export function ProfitChart({ timeline, highlight = "holdout", height = 300, com
         {!compact &&
           ticks.map((tick) => (
             <div key={tick} className="absolute inset-x-0 border-t border-line" style={{ top: `${y(tick)}%` }}>
-              <span className="absolute left-0 -translate-y-full text-[12.5px] text-ink-3">{short(tick)}</span>
+              <span className="absolute right-full -translate-y-1/2 pr-2 text-[12.5px] text-ink-3">{short(tick)}</span>
             </div>
           ))}
         {starts.map((start, i) => (
           <div key={start.key} className="absolute inset-y-0" style={{ left: `${x(start.index)}%` }}>
             {(i > 0 || start.key === highlight) && <div className="absolute inset-y-0 border-l border-dashed border-ink-3" />}
-            <span className={`absolute whitespace-nowrap text-[13px] ${compact ? "top-1.5" : "-top-5"} ${i > 0 ? "pl-1.5" : ""} ${start.key === highlight ? "font-semibold text-ink" : "text-ink-2"}`}>
+            <span className={`absolute whitespace-nowrap text-[13px] -top-5 ${i > 0 ? "pl-1.5" : ""} ${start.key === highlight ? "font-semibold text-ink" : "text-ink-2"}`}>
               {compact && start.key !== highlight ? "" : start.label}
             </span>
           </div>
@@ -99,7 +89,7 @@ export function ProfitChart({ timeline, highlight = "holdout", height = 300, com
           <path d={solid.join("")} fill="none" stroke="var(--series-1)" strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
           {dashed && <path d={dashed} fill="none" stroke="var(--ink-3)" strokeWidth="1.5" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />}
         </svg>
-        <span className="absolute right-1.5 -translate-y-[130%] text-sm font-semibold" style={{ top: `${y(last.total)}%` }}>
+        <span className="absolute left-full -translate-y-1/2 pl-2 text-sm font-semibold whitespace-nowrap" style={{ top: `${y(last.total)}%` }}>
           {dollars(last.total)}
         </span>
         {at && hover != null && (
@@ -124,8 +114,8 @@ export function ProfitChart({ timeline, highlight = "holdout", height = 300, com
         )}
       </div>
       <div className="relative h-[18px] text-[12.5px] text-ink-3">
-        {years.map((year) => (
-          <span key={year.label} className="absolute -translate-x-1/2" style={{ left: `${Math.min(Math.max(year.left, 2), 97)}%` }}>
+        {years.map((year, k) => (
+          <span key={year.label} className={`absolute -translate-x-1/2 ${k % 2 ? "max-sm:hidden" : ""}`} style={{ left: `${Math.min(Math.max(year.left, 2), 97)}%` }}>
             {year.label}
           </span>
         ))}

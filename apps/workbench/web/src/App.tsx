@@ -89,7 +89,7 @@ export default function App() {
       counts={{
         strategies: board ? board.rows.filter((row) => !row.variant).length : undefined,
         runs: live.length || undefined,
-        paper: ledgers ? `${ledgers} ledger${ledgers > 1 ? "s" : ""}` : undefined,
+        paper: ledgers || undefined,
         compare: compare.length || undefined,
       }}
       runsDir={runsDir}

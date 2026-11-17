@@ -84,3 +84,14 @@ export function byYear(months: Month[]): Year[] {
 }
 
 export const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Round axis ticks (1, 2, 2.5 or 5 times a power of ten apart) that cover low to high. */
+export function niceTicks(low: number, high: number, about = 4): number[] {
+  const span = high - low || 1;
+  const rough = span / about;
+  const power = 10 ** Math.floor(Math.log10(rough));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * power).find((size) => size >= rough) ?? rough;
+  const ticks = [];
+  for (let v = Math.ceil(low / step - 1e-9) * step; v <= high + step * 1e-9; v += step) ticks.push(Math.abs(v) < step * 1e-9 ? 0 : v);
+  return ticks;
+}

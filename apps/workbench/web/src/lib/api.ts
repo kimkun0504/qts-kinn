@@ -151,6 +151,8 @@ export interface Metrics {
   by_year: Record<string, { trades: number; mean_return_1x: number; mean_return_2x: number; net_1x: number }>;
   counts: Record<string, number>;
   equity: number;
+  /** Swing runs: the book marked at every close, which shows drawdowns that closed trades hide. */
+  swing?: { marked_to_market?: { max_drawdown?: number | null } };
 }
 
 export interface BookSide {

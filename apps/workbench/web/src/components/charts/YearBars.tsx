@@ -26,7 +26,7 @@ export function YearBars({ years, highlight = "holdout" }: { years: Year[]; high
                 style={{ bottom: `${up ? zero : zero - size}%`, height: `${Math.max(size, 0.6)}%` }}
               />
               {lit(y) && full && (
-                <span className="absolute -inset-x-3 text-center text-xs font-semibold" style={{ bottom: `${zero + (up ? size : 0) + 1.5}%` }}>
+                <span className="absolute -inset-x-4 z-10 text-center text-xs font-semibold whitespace-nowrap" style={{ bottom: `${zero + (up ? size : 0) + 1.5}%` }}>
                   {`${y.total < 0 ? "−" : ""}$${(Math.abs(y.total) / 1000).toFixed(1)}k`}
                 </span>
               )}

@@ -11,7 +11,7 @@ export function Histogram({ counts, edges, label }: { counts: number[]; edges: n
   const high = edges[n];
   const zero = 6 + ((0 - low) / (high - low)) * (W - 12);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className="block h-auto w-full max-w-[520px] text-[11px]">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className="block h-auto w-full max-w-[520px] text-[13px]">
       {counts.map((count, k) => {
         const h = ((H - 26) * count) / peak;
         return (

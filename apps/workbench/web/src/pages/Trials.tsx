@@ -9,9 +9,6 @@ export function Trials({ families, runs }: { families: Family[]; runs: RunRow[] 
   if (!families.length) return <EmptyState title="No runs yet" />;
   return (
     <>
-      <p className="m-0 max-w-[80ch] text-ink-2">
-        Every counted run by any agent is a trial. The more trials a family has, the better its best result must be before it means anything. Scratch and abandoned runs are never counted.
-      </p>
       {families.map((family) => {
         const o = family.overfitting;
         const agents = Object.entries(family.by_agent).map(([agent, n]) => `${agent} ${n}`).join(", ") || "none";

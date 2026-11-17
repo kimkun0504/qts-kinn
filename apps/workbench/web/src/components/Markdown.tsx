@@ -15,7 +15,7 @@ function inline(text: string, key: string): ReactNode[] {
     else if (token.startsWith("`")) out.push(<code key={id} className="rounded bg-raised px-1 py-px text-[0.92em]">{token.slice(1, -1)}</code>);
     else {
       const [, label, href] = /\[([^\]]+)\]\(([^)]+)\)/.exec(token) ?? [];
-      out.push(/^https?:/.test(href) ? <a key={id} href={href} target="_blank" rel="noreferrer" className="text-accent underline">{label}</a> : <span key={id}>{label}</span>);
+      out.push(/^https?:/.test(href) ? <a key={id} href={href} target="_blank" rel="noreferrer" className="text-accent underline">{label}</a> : <span key={id}>{inline(label, id)}</span>);
     }
     last = match.index + token.length;
   }
