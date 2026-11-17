@@ -38,3 +38,14 @@ def test_only_8ks_before_the_seal_are_kept(tmp_path):
 
 def test_a_document_without_the_lists_gives_nothing():
     assert list(tool.rows({"filings": {"recent": {"form": ["8-K"]}}}, 1)) == []
+
+
+def test_other_forms_are_kept_on_request(tmp_path):
+    document = lists(
+        ("c-1", "2015-06-01", "2015-06-01T20:01:00.000Z", "SC 13D", ""),
+        ("c-2", "2015-06-02", "2015-06-02T20:01:00.000Z", "8-K", "8.01"),
+        ("c-3", "2015-06-03", "2015-06-03T20:01:00.000Z", "SC TO-T", ""),
+    )
+    forms = tool.KINDS["other"][2]
+    assert [r["form"] for r in tool.rows(document, 9, forms)] == ["SC 13D", "SC TO-T"]
+    assert [r["form"] for r in tool.rows(document, 9)] == ["8-K"]

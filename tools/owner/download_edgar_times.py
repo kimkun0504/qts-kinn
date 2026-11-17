@@ -1,22 +1,29 @@
-"""OWNER-ONLY: download the time of day at which the SEC accepted every 8-K.
+"""OWNER-ONLY: download the time of day at which the SEC accepted every 8-K, or every
+filing of a few other kinds.
 
 Run it yourself on the Mac. It writes to the raw data folder, which agents must not touch
 (AGENTS.md). The file is free and needs no key; the SEC asks who is calling:
 
     export SEC_USER_AGENT="Your Name your@email"
-    uv run python tools/owner/download_edgar_times.py
+    uv run python tools/owner/download_edgar_times.py                 # 8-K
+    uv run python tools/owner/download_edgar_times.py --what other    # stakes, tender offers...
 
 Why: the 8-K data on disk gives the day of a filing, not the minute. With the minute, what a
 stock does in the first hours after any kind of company news can be tested on 2005 to 2023.
+`--what other` keeps the filings that are not 8-Ks and are events for a stock: a holder
+crossing 5% (SC 13D, SC 13G), tender offers (SC TO-I, SC TO-T, SC 14D9), merger proxies
+(DEFM14A, PREM14A), spin-offs (10-12B), share sales (S-1, S-3, 424B5) and late-report notices
+(NT 10-K, NT 10-Q).
 
 What it does: fetches the SEC's nightly bulk file of every filer's filing list
-(`submissions.zip`, about 1.5 GB) to a temporary folder, keeps the 8-K rows filed before the
-holdout seal (2023-11-09), writes them to $KINN_RAW_DIR/sec/filing_times/8k.jsonl.gz with a
-small manifest, and deletes the bulk file. Rows from the seal onward are never written.
+(`submissions.zip`, about 1.5 GB) to a temporary folder, keeps the chosen rows filed before
+the holdout seal (2023-11-09), writes them to $KINN_RAW_DIR/sec/filing_times/ with a small
+manifest, and deletes the bulk file. Rows from the seal onward are never written.
 """
 
 from __future__ import annotations
 
+import argparse
 import gzip
 import json
 import os
@@ -36,20 +43,27 @@ from kinn.core.settings import HOLDOUT_START, load_settings
 HOST = "www.sec.gov"
 ROUTE = "/Archives/edgar/daily-index/bulkdata/submissions.zip"
 FIRST = date(2003, 1, 1)
-FORMS = {"8-K", "8-K/A"}
+KINDS = {
+    "8k": ("8k.jsonl.gz", "manifest.json", frozenset({"8-K", "8-K/A"})),
+    "other": ("other_forms.jsonl.gz", "other_forms.manifest.json", frozenset({
+        "SC 13D", "SC 13D/A", "SC 13G", "SC 13G/A", "SC TO-I", "SC TO-T", "SC 14D9",
+        "DEFM14A", "PREM14A", "10-12B", "S-1", "S-3", "424B5", "NT 10-K", "NT 10-Q",
+    })),
+}  # fmt: skip
+FORMS = KINDS["8k"][2]
 FILER = re.compile(r"CIK(\d{10})")
 FIELDS = ("accessionNumber", "filingDate", "acceptanceDateTime", "form", "items")
 
 
-def rows(document: dict, cik: int) -> Iterator[dict]:
-    """The 8-K rows of one filer's document that were filed before the seal. The main
+def rows(document: dict, cik: int, forms: frozenset[str] = FORMS) -> Iterator[dict]:
+    """The rows of one filer's document, of the wanted forms, filed before the seal. The main
     document holds its lists under filings.recent; the overflow documents hold them at the
     top."""
     lists = (document.get("filings") or {}).get("recent") or document
     if not all(isinstance(lists.get(name), list) for name in FIELDS):
         return
     for accession, filed, accepted, form, items in zip(*(lists[n] for n in FIELDS), strict=False):
-        if form not in FORMS:
+        if form not in forms:
             continue
         try:
             day = date.fromisoformat(filed)
@@ -60,8 +74,8 @@ def rows(document: dict, cik: int) -> Iterator[dict]:
                    "accepted": accepted, "items": items or ""}  # fmt: skip
 
 
-def extract(archive: Path) -> Iterator[dict]:
-    """Every pre-seal 8-K row in the bulk file."""
+def extract(archive: Path, forms: frozenset[str] = FORMS) -> Iterator[dict]:
+    """Every pre-seal row of the wanted forms in the bulk file."""
     with zipfile.ZipFile(archive) as bulk:
         for name in bulk.namelist():
             match = FILER.search(name)
@@ -71,7 +85,7 @@ def extract(archive: Path) -> Iterator[dict]:
                 document = json.loads(bulk.read(name))
             except (ValueError, KeyError):
                 continue
-            yield from rows(document, int(match.group(1)))
+            yield from rows(document, int(match.group(1)), forms)
 
 
 def download(url: str, agent: str, target: Path) -> None:
@@ -97,6 +111,9 @@ def download(url: str, agent: str, target: Path) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("--what", choices=sorted(KINDS), default="8k")
+    file_name, manifest_name, forms = KINDS[parser.parse_args().what]
     agent = os.environ.get("SEC_USER_AGENT", "").strip()
     if "@" not in agent:
         raise SystemExit('set SEC_USER_AGENT="Your Name your@email" (the SEC requires it)')
@@ -108,7 +125,7 @@ def main() -> None:
             f"cannot create {out}: its parent is read-only. Create it yourself, e.g.\n"
             f"  chmod u+w {out.parent} && mkdir -p {out} && chmod u-w {out.parent}"
         ) from None
-    path = out / "8k.jsonl.gz"
+    path = out / file_name
     if path.exists():
         raise SystemExit(f"{path} is already there; delete it first to download again")
     with tempfile.TemporaryDirectory() as scratch:
@@ -119,19 +136,19 @@ def main() -> None:
         count, first, last = 0, None, None
         tmp = Path(str(path) + ".tmp")
         with gzip.open(tmp, "wt", encoding="utf-8") as handle:
-            for row in extract(archive):
+            for row in extract(archive, forms):
                 handle.write(json.dumps(row, separators=(",", ":")) + "\n")
                 count += 1
                 first = row["filed"] if first is None or row["filed"] < first else first
                 last = row["filed"] if last is None or row["filed"] > last else last
     if not count:
         tmp.unlink(missing_ok=True)
-        raise SystemExit("no 8-K rows were found; the bulk file's layout may have changed")
+        raise SystemExit("no rows were found; the bulk file's layout may have changed")
     os.replace(tmp, path)
     manifest = {"source": f"https://{HOST}{ROUTE}", "downloaded": datetime.now(UTC).isoformat(),
                 "rows": count, "first_filed": first, "last_filed": last,
-                "kept": f"8-K and 8-K/A filed before {HOLDOUT_START.isoformat()}"}  # fmt: skip
-    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+                "forms": sorted(forms), "filed_before": HOLDOUT_START.isoformat()}  # fmt: skip
+    (out / manifest_name).write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"{count:,} filings from {first} to {last} written to {path}")
 
 
