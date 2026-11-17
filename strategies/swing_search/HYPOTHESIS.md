@@ -491,3 +491,45 @@ spans and without 2020, on 100 trades or more in each, with at least 15 of 19 ye
 **Results, 2026-11-16 23:54 ET.** In REPORT.md. Failed: no cell makes 2% in each span. With
 a 15% jump the three groups made 1.2% to 2.2% before 2018 and 0.3% to 0.9% or less since;
 with a 10% jump less. 6 trials.
+
+## Addendum, 2026-11-17 14:41 ET: buying during the first session after the report (family 23)
+
+Written before anything is measured. The owner's question: there should be a pattern right
+after news, within the day. The intraday tests so far (family 11 here, `recent_search`, and
+Astra's) found nothing for a buyer, but they sold by the close and used news stamps that
+cover two years and one wire. The one news type where a drift is established is the earnings
+report in a company of $50M to $300M. A50 waits for the close of the session after the 8-K
+and buys at the next open. This asks whether buying *during* that session is better.
+
+**No look ahead.** S is the session after the date of an earnings 8-K, so the filing is public
+before S opens (the platform's rule for `form8k`). Everything else in the trigger is known at
+the minute it fires.
+
+**Universe at S:** common stock, market value $50M to under $300M and normal dollar volume
+$250,000 or more (both as of the previous close), last price $1 or more at the trigger.
+Sessions 2005-01-03 to 2023-10-13, the years A50's studies have read. Minute bars, all prints
+from 04:00.
+
+**Trigger at time t on S:** the last trade before t is 15% or more above the close of S−2
+(A50's two-day jump, measured at t), and the larger of two volume figures is 5 or more: the
+dollar volume of S−1 over normal, or the dollar volume of S up to t over normal. Buy at the
+open of the first minute bar from t (none within 10 minutes: no trade). Sell at the close 15
+sessions after S, as A50 does.
+
+**Six cells:** t = 09:35, 10:00, 11:00, 13:00, 15:30, and "first touch" (the first minute from
+09:35 to 15:30 at which the trigger holds). 6 trials, charged to `swing_search`.
+
+**Costs.** Entry: the modelled half spread (1.00%, 0.43%, 0.18% by normal volume) plus
+commission, since a buyer during the session crosses the spread. Exit: the closing auction
+allowance plus commission, as A50. A50 for comparison: the auction allowance on both sides.
+
+**What is reported for each cell:** trades, the share that also meet A50's test at the close,
+the mean a trade before and after costs in 2005–2009, 2010–2017 and 2018–2023 (and 2018–2023
+without 2020), the same events bought at A50's time where A50 takes them, and the events that
+trigger during the session but fail A50's test at the close.
+
+**What counts.** An earlier entry is a lead only if (a) after costs it makes more a trade
+than A50 makes on its own signals in each of the three spans, and (b) the events that trigger
+but fail A50's test at the close do not lose after costs in any span. Otherwise A50's entry
+stands. A lead would go to the paper ledger as one more book, not into the frozen rule. The
+holdout is not touched.
