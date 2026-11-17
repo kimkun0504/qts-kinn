@@ -1,0 +1,8 @@
+name: late_rally_selloff
+status: parked
+engine: intraday
+universe: late_rally_selloff
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
