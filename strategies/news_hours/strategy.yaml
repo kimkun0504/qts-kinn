@@ -1,9 +1,26 @@
 name: news_hours
 kind: swing               # research scripts first; no runner yet
-status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+status: parked            # 360 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k
 family: news_hours
-prior_trials: 0
+prior_trials: 360
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: The hours after company news
+  idea: Buying in the hours after company news
+  horizon: Same day to 5 sessions
+  verdict: closed
+  result: "After the first minutes 0.2% to 0.6% is left; only results keep going"
+  summary: >-
+    Every 8-K since 2005, timed by the SEC to the second. Buy five minutes after a filing
+    during the session, or at 09:35 after one before it; sell at the close or a week later.
+  weaknesses:
+    - The move is made before a reader of the filing can act; costs are larger than what is left.
+    - The press release often comes before the filing and is not timed in this data.
+  evidence:
+    - {when: 2026-11-17, title: 360 cells on 2010 to 2017, kind: failed, text: "None reaches 1% a trade after costs. Results up 5% make 0.6% to 0.9% over a week; other news gives its rise back."}
+  studies:
+    - {name: "Reaction to 776,000 filings by kind, size and timing", when: 2026-11-17, trials: 360, result: "News is priced within minutes; only results drift, by under 1%", verdict: failed}

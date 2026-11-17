@@ -72,3 +72,9 @@ results do not drift over 15 sessions on daily bars (family 18); a release in 20
 bought one or five minutes after its stamp earned nothing by the close (`recent_search`).
 Not seen: any reaction measured from the SEC's acceptance time, any fall after news bought,
 anything in companies over $300M within the day.
+
+**Results, 2026-11-17 15:18 ET.** In REPORT.md. No cell meets the search bar, so no test was
+run. 360 trials. Detail added when the entries were built and not in the plan above: a
+during-session reading against the last trade before the filing needs a trade in the 30
+minutes before it; entries need the stock to have traded since 09:30 and a bar within 10
+minutes; filings accepted between 09:25 and 09:30 are left out.
