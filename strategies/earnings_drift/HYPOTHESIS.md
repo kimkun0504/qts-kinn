@@ -200,3 +200,12 @@ is made on years already read, so a pass is a candidate for the forward test.
 down deeper. V3: $6,241 a year with a drawdown of $13,696 (15 sessions); $6,253 with $8,577
 (20-day exit), against $5,097 / $10,366 and $5,783 / $7,601. V5 turns out to be the
 5-position book (five positions of $4,000 fill the account). Noted; no paper book. 4 trials.
+
+**Results of `holdout_quality`, 2026-11-17 16:48 ET** (the owner's run
+`20261117T214645Z_human_earnings_drift_fa675408`, once, the second look at this holdout).
+By the reading set above: **in between, unproven.** The skipped signals made 4.17% before
+costs (82 finished) and the kept 5.11% (366): a gap of 0.94 points, under the one point that
+would have supported the test, and not the "as well or better" that would have counted
+against it. The gap is known to ±3.5 points. The kept book's total at doubled costs is
+positive ($25,426). The book: 237 trades, 5.76% a trade, $27,189, against A50's 266, 5.04%,
+$26,716. One more trial for `swing_search`. Detail in REPORT.md.

@@ -5,7 +5,7 @@ universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: swing_search
-prior_trials: 12306      # 12,017 in the search; about 290 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry, 4 on the timed rule, 8 on position counts and sizes)
+prior_trials: 12306      # 12,017 in the search; about 290 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry, 4 on the timed rule, 8 on position counts and sizes); the two holdout runs are counted as runs
 
 # What the Workbench shows (the search itself; the rule it found is strategies/earnings_drift).
 record:

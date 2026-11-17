@@ -152,6 +152,45 @@ resting on tests set beforehand ($7,601 against $10,366; $5,783 a year, Sharpe 1
 ledger's version of the exit gave the same exit day and return as the research's on 220
 real signals.
 
+## The quality test on the holdout (2026-11-17, the owner's run, a second look)
+
+Run `20261117T214645Z_human_earnings_drift_fa675408`, config `holdout_quality`, 2023-11-09
+to 2026-11-06, once. This holdout had already been read once by A50, so this is not a clean
+test; how it would be read was fixed beforehand (HYPOTHESIS.md, addendum of 2026-11-16).
+
+**By that reading: in between, unproven.** The skipped signals were not worthless here.
+
+| Signals, before costs | Skipped by the test | Kept |
+|---|---|---|
+| All (finished) | 82 at **4.17%** | 366 at **5.11%** |
+| Late 2023 | 5 at −0.2% | 6 at +18.8% |
+| 2024 | 23 at −0.2% | 120 at +9.5% |
+| 2025 | 34 at +8.0% | 111 at +4.2% |
+| 2026 | 20 at +3.8% | 129 at +1.2% |
+
+The gap is 0.94 points and is known only to ±3.5 (t 0.3). "Supports" needed a point or more;
+"against" needed the skipped to do as well as the kept. In 2023 and 2024 the skipped group
+made nothing, as on the earlier years; in 2025 and 2026 it did better than the kept.
+
+| The book, 10 positions | A50 (run 16 Nov) | A50Q (this run) |
+|---|---|---|
+| Trades | 266 | 237 |
+| A trade, 1× / 2× | 5.04% / 4.67% | 5.76% / 5.38% |
+| Total, 1× / 2× | $26,716 / $24,765 | $27,189 / $25,426 |
+| Sharpe, 1× | 1.47 | 1.62 |
+| Worst drawdown, marked daily | $6,784 | $6,032 |
+| Late 2023 / 2024 / 2025 / 2026 | $1,457 / $16,581 / $8,570 / $108 | $1,544 / $17,394 / $4,193 / $4,057 |
+
+- **The filtered book did a little better on every book measure and did not have the flat
+  2026.** It also made half as much in 2025.
+- **That is not the filter working as designed.** In 2026 the skipped signals did better
+  than the kept ones; the filtered book's better year comes from which signals found a free
+  slot, which is partly luck.
+- **What stands:** the filter did not hurt the book on years it was not chosen on, and its
+  premise (the skipped group makes nothing) held in two of the four holdout periods and
+  failed in two. On the past years the gap was 4.1 points; here 0.9. The evidence for the
+  filter is weaker after this run than before it, and too noisy to reject it.
+
 ## What the forward test can and cannot tell (2026-11-17)
 
 From the spread of the 1,551 past trades (mean 3.9% a trade, standard deviation 23%; no new
@@ -171,7 +210,7 @@ rule is measured here).
   or less, in four spells (2010–2011, 2018, 2019, 2021); the 84 signals after such a run
   averaged 5.7%. That does not show the edge is intact in 2026. It shows a flat year is not
   evidence that it has gone.
-- **Neither remaining test can settle the quality test.** It skips 24% of signals; in the
+- **(Written before the holdout run above.) Neither remaining test can settle the quality test.** It skips 24% of signals; in the
   past those made 0.8% a trade against 4.9% for the rest, a gap of 4.1 points. One run on
   the holdout (about 111 skipped signals) would measure that gap to ±2.2 points; a year of
   paper to ±3.9; three years to ±2.3. Even if the gap is as large as it was, none of these

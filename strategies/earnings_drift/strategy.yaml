@@ -2,7 +2,7 @@ name: earnings_drift
 kind: swing               # a daily event rule run by `kinn swing` (kinn.swing_run), not an intraday strategy
 status: developing        # passed its one holdout run 2026-11-16; fills measured from ticks; not yet traded; see REPORT.md
 family: swing_search
-prior_trials: 12306      # 12,017 in the search; about 290 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry, 4 on the timed rule, 8 on position counts and sizes)
+prior_trials: 12306      # 12,017 in the search; about 290 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry, 4 on the timed rule, 8 on position counts and sizes); the two holdout runs are counted as runs
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -46,7 +46,7 @@ record:
     - title: Quality test on the earnings drift
       verdict: testing
       label: "Unproven, in paper"
-      result: "2005 to 2023: 4.9% a trade, no losing year. Found on years already read"
+      result: "2005 to 2023: 4.9% a trade, no losing year. On the holdout: did not hurt, not confirmed"
       summary: >-
         Skip a signal when the company holds more cash than debt and its stock is down over
         the past year. Found after the holdout was spent.
@@ -56,10 +56,10 @@ record:
         - {label: Worst drawdown, value: "$10,366"}
       settle:
         - {text: "Paper books with the test. Years of signals would be needed to be sure.", state: running}
-        - {text: "One run on the holdout, a second look. Suggestive at best; the owner's decision, not taken.", state: open}
+        - {text: "One run on the holdout, done 17 Nov: unproven. Skipped signals made 4.2%, kept 5.1%; the book was slightly better.", state: open}
   waiting:
     - Run the paper ledger after the close each evening.
-    - Decide whether to run the quality test on the holdout.
+    - "Choose the rule for live trading: the frozen rule, or with the quality test."
   evidence:
     - {when: 2026-11-16, title: Found, kind: found, text: "One of about 12,000 cells searched on 2010 to 2022: 3.60% a trade."}
     - {when: 2026-11-16, title: Test years passed, kind: passed, text: "2005 to 2009, never used in the search: 4.49% a trade, five years of five."}
@@ -69,12 +69,14 @@ record:
     - {when: 2026-11-16, title: Paper ledger started, kind: running, text: "Every signal is followed; five books side by side."}
     - {when: 2026-11-16, title: Quality test found, kind: open, text: "Removes the flat years on 2005 to 2023. Unproven: found on years already read."}
     - {when: 2026-11-17, title: An unseen season checked, kind: open, text: "Autumn 2004: 19 kept signals at 12.8% each. Consistent, too few to prove it."}
+    - {when: 2026-11-17, title: Quality test on the holdout, kind: open, text: "A second look, run once by the owner: unproven. Skipped signals 4.2%, kept 5.1%. The filtered book made $27,189 against $26,716, with no flat 2026."}
   studies:
     - {name: Holdout run of the frozen rule, when: 2026-11-16, trials: 1, result: "266 trades, +5.04% a trade, $26,716", verdict: passed}
     - {name: Fill measurement from ticks, when: 2026-11-16, trials: 0, result: "Crosses in 99% of entries and 93% of exits, within 0.1% of the quotes", verdict: passed}
     - {name: Entries and exits, when: 2026-11-16, trials: 23, result: "The 20-day-average exit beat the plain exit on every measure set beforehand", verdict: lead}
     - {name: "The flat years: which signals fail", when: 2026-11-16, trials: 210, result: "Fallen, cash-rich companies make nothing; skipping them leaves no losing year on read years", verdict: lead}
     - {name: Autumn 2004, when: 2026-11-17, trials: 1, result: "33 signals; the 19 kept made 12.8% each", verdict: passed}
+    - {name: Quality test on the holdout (second look), when: 2026-11-17, trials: 1, result: "Unproven: skipped 4.2%, kept 5.1%; book $27,189 against $26,716", verdict: note}
     - {name: Risk controls on the book, when: 2026-11-16, trials: 4, result: "None lowers the drawdown; only the exit does", verdict: failed}
     - {name: How much money it can carry, when: 2026-11-16, trials: 0, result: "Tops out near $20,000 to $25,000 a year", verdict: note}
     - {name: How much of the account it uses, when: 2026-11-17, trials: 8, result: "A third of the account on average; larger positions, always or only while the book is empty, add dollars and drawdown together", verdict: note}
