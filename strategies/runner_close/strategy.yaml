@@ -1,9 +1,26 @@
 name: runner_close
 kind: swing               # research script first; no runner yet
-status: developing        # plan written 2026-11-17; see HYPOTHESIS.md
+status: parked            # 16 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: intraday
 universe: listed common stock up 30% or more on the day by 15:00 on five times volume, market value >= $50M
 family: runner_close
-prior_trials: 0
+prior_trials: 16
 cost_calibration: ibkr_pro_tiered
 owner: claude
+
+record:
+  title: A stock that has run, into the close
+  idea: Trading a 30% runner in the last hour and overnight
+  horizon: Hours to overnight
+  verdict: closed
+  result: "No trade: runners slip a quarter of a percent into the close and recover it overnight"
+  summary: >-
+    The owner's observation. A stock up 30% or more on the day at 15:00, either still at its
+    high or already fading: bought, or sold short, to the close and to the next open.
+  weaknesses:
+    - A runner of $50M or more that is already collapsing at 15:00 turned up 52 times in eight years.
+    - Most such collapses are in companies under $50M, which were left out and are rarely borrowable.
+  evidence:
+    - {when: 2026-11-17, title: 16 cells on 2010 to 2017, kind: failed, text: "None reaches 1% a trade. Buying a runner at 15:00 lost in every year; shorting it overnight lost too."}
+  studies:
+    - {name: Runners at 15:00 into the close and overnight, when: 2026-11-17, trials: 16, result: "No cell meets the bar", verdict: failed}

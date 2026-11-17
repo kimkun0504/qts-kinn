@@ -54,3 +54,8 @@ Stocks up 50% before the open fade by the close (`recent_search`, about 5% to a 
 seller before borrow); a 30% jump with no filing in a small company fell 12% in three weeks
 on 115 trades (`short_search`). The last hour and the overnight after a run have not been
 measured.
+
+**Results, 2026-11-17 17:41 ET.** In REPORT.md. No cell meets the bar, so no test was run. 16
+trials. Of the runners at 15:00 in 2010 to 2017, 1,690 were holding and only 52 were fading
+by the plan's definition (25% under the day's high), too few to say anything; 3,400 across
+all years sat between the two and were not traded.
