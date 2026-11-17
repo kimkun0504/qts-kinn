@@ -1,0 +1,8 @@
+name: one_dollar_reclaim
+status: parked
+engine: intraday
+universe: one_dollar_reclaim
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
