@@ -385,6 +385,14 @@ made of losing months.
   debt and those fell hardest. With the plain exit the worst quarter takes nearly half the
   account. The 20-day exit brings it back to A50's level. If a credit squeeze is what the
   owner expects, this is the risk to watch: the book would be in indebted small companies.
+- **The crash risk sits in the "net debt" half of the test.** Books already run, one for
+  each half (auction basis): signals up over the year lost $3,529 in the first quarter of
+  2020 and made $2,132 in 2008; signals in net debt lost $8,232 and made $467. "Up over the
+  year" alone makes 5.1% a trade with every year positive (lowest 2.2%) and no losing year
+  on either cost basis, on fewer trades ($3,927 a year against $5,097). It is the cautious
+  half of A50Q. Choosing it now would be one more choice on the same years, so it is noted,
+  not adopted; the ledger records both facts for every signal, so either half can be read
+  from the forward record later.
 - The test also leaves more room for cost: with the modelled spread paid twice over A50Q
   still makes 1.3% to 2.9% a trade and 15 of 19 years are positive (A50: 0.5% to 1.8%, 13).
 
