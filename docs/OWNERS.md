@@ -32,6 +32,8 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/rebound_confirmed_recovery` | gpt | 2026-11-15 | buy after a deep selloff starts recovering |
 | `strategies/short_search` | claude | 2026-11-17 | short sales held one to three weeks (owner allowed short research 2026-11-17) |
 | `strategies/news_hours` | claude | 2026-11-17 | the hours and days after an 8-K becomes public (SEC acceptance times) |
+| `strategies/foreign_drift` | claude | 2026-11-17 | the earnings rule in companies that report on 6-K (plan only; waiting for data) |
+| `strategies/stake_filings` | claude | 2026-11-17 | buying after a Schedule 13D (plan only; waiting for data) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

@@ -1,0 +1,9 @@
+name: foreign_drift
+kind: swing               # research script first; no runner yet
+status: developing        # plan written 2026-11-17; waiting for the 6-K dates; see HYPOTHESIS.md
+engine: daily
+universe: listed common stock and ADRs of companies that file 6-Ks, $50M-$300M, close >= $1, 20-day dollar volume >= $250k
+family: foreign_drift
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
