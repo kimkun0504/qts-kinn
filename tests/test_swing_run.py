@@ -170,3 +170,75 @@ def test_the_holdout_is_refused_without_the_owners_token(built, tmp_path, monkey
         swing_run.run("drift", "late", settings=built, scratch=True, agent="test")
     with pytest.raises(HoldoutError):
         swing_run.run("drift", "late", settings=built, scratch=True, agent="test", unseal=True)
+
+
+# ---- The quality test: up over the year, or net debt ----
+
+HISTORY = 255
+LONG = [date(2019, 1, 1) + timedelta(days=i) for i in range(HISTORY + len(JUMP))]
+QUALITY = Rule(jump=0.15, volume=5, cap_min=5e7, cap_max=3e8, hold=3, skip_fallen_cash_rich=True)
+
+
+def _with_history(base):
+    """The jump of ``JUMP`` after 255 sessions at ``base``; the signal's close is 12."""
+    closes, volume = [base] * HISTORY + JUMP, [1e6] * HISTORY + BUSY
+    rows, previous = [], closes[0]
+    for day, close, dollars in zip(LONG, closes, volume, strict=True):
+        rows.append({
+            "date": day, "permaticker": 1, "symbol": "AAA", "category": "Domestic Common Stock",
+            "open": previous, "low": min(previous, close), "close": close,
+            "prev_close": previous, "prev_date": day - timedelta(days=1),
+            "dollar_volume": dollars, "adv20_prev": 1e6, "marketcap_prev": 1e8,
+        })  # fmt: skip
+        previous = close
+    return pa.Table.from_pylist(rows)
+
+
+def _reports(cash, debt, *, filed=LONG[100]):
+    return pa.table({"permaticker": [1], "datekey": [filed], "cashnequsd": [float(cash)],
+                     "debtusd": [float(debt)]})  # fmt: skip
+
+
+def _quality(base, reports, rule=QUALITY):
+    events = _events(LONG[HISTORY + 2])
+    first = LONG[HISTORY]  # the two sessions before the jump are loaded but not signal days
+    return swing_run.find_signals(_with_history(base), events, rule, first, LONG[-1], LONG[-1],
+                                  reports)  # fmt: skip
+
+
+def test_a_signal_carries_its_years_return_and_net_cash():
+    (signal,) = _quality(15, _reports(5, 1), rule=RULE)  # the plain rule takes everything
+    assert signal.day == LONG[HISTORY + 3]
+    assert signal.year_return == pytest.approx(12 / 15 - 1) and signal.net_cash == 4
+    (bare,) = swing_run.find_signals(_with_history(15), _events(LONG[HISTORY + 2]), RULE,
+                                     LONG[HISTORY], LONG[-1], LONG[-1])  # fmt: skip
+    assert bare.net_cash is None and bare.year_return == pytest.approx(-0.2)
+
+
+def test_fallen_and_cash_rich_is_skipped_and_either_fact_alone_is_enough():
+    assert _quality(15, _reports(5, 1)) == []  # down 20% over the year, net cash
+    assert len(_quality(8, _reports(5, 1))) == 1  # up 50%, net cash
+    assert len(_quality(15, _reports(1, 5))) == 1  # down, but net debt
+    assert _quality(15, _reports(5, 5)) == []  # cash equal to debt is not net debt
+    assert _quality(12, _reports(5, 1)) == []  # flat over the year is not up
+
+
+def test_a_missing_fact_does_not_qualify_and_a_report_filed_that_day_is_not_used():
+    assert _quality(15, None) == []  # down, and nothing known about the balance sheet
+    signal_day = LONG[HISTORY + 3]
+    assert _quality(15, _reports(1, 5, filed=signal_day)) == []  # filed on the signal day
+    assert len(_quality(15, _reports(1, 5, filed=signal_day - timedelta(days=1)))) == 1
+    # Too little history for a year's return: only net debt can qualify it.
+    short = _with_history(8).slice(100)
+    events = _events(LONG[HISTORY + 2])
+    args = (events, QUALITY, LONG[HISTORY], LONG[-1], LONG[-1])
+    assert swing_run.find_signals(short, *args, _reports(5, 1)) == []
+    assert len(swing_run.find_signals(short, *args, _reports(1, 5))) == 1
+
+
+def test_the_rule_reads_its_switch_from_a_config():
+    rule = Rule.from_config({"jump": 0.15, "volume": 5, "cap_min": 5e7, "cap_max": 3e8,
+                             "hold": 15, "skip_fallen_cash_rich": True})  # fmt: skip
+    assert rule.hold == 15 and rule.skip_fallen_cash_rich is True and rule.jump == 0.15
+    assert Rule.from_config({"jump": 0.15, "volume": 5, "cap_min": 5e7, "cap_max": 3e8,
+                             "hold": 15}).skip_fallen_cash_rich is False  # fmt: skip

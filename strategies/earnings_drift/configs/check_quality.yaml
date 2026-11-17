@@ -1,0 +1,8 @@
+# Rule A50 with the quality test on the 2023 check months (HYPOTHESIS.md, addendum of
+# 2026-11-16 23:30 ET). Signals from `start`; every trade ends by `end`.
+period: {start: 2023-01-03, end: 2023-11-08}
+rule: {jump: 0.15, volume: 5, cap_min: 50000000, cap_max: 300000000, hold: 15, min_close: 1.0, min_adv: 250000, skip_fallen_cash_rich: true}
+book: {account: 20000, slots: 10}
+costs:
+  allowance_bps: [[100000000, 2], [10000000, 5], [1000000, 10], [0, 25]]   # a side, by normal dollar volume
+  spread_bps: [[100000000, 5], [10000000, 18], [1000000, 43], [0, 100]]    # half-spread, quote sample of 2026-11-15

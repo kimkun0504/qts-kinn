@@ -392,7 +392,7 @@ Written before any of them is run.
 Trials added: 16 (splits) + 13 (book configurations) + 9 (2×2 and unions) + 24 (filtered
 books) + 4 (insider cells) + 112 (pairs) + 24 (cut-offs) + 2 + 1 + about 6 (books) = about 211.
 
-**Results, 2026-11-16 23:40 ET.** In REPORT.md, "The flat years". The filter survived all
+**Results, 2026-11-16 23:25 ET.** In REPORT.md, "The flat years". The filter survived all
 seven checks' terms: chance (0 of 5,000 random filters as good; 1 of 5,000 when dropping the
 same number in each year), the first span (sixth worst of 75 groups in 2010–2017 and the only
 one of the eight worst that stayed bad), the cut-offs (all 24 leave every year positive), and

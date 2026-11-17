@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import math
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -46,6 +46,7 @@ PANEL_COLUMNS = (
     "dollar_volume, adv20_prev, marketcap_prev"
 )
 TRADE_FIELDS = [f for f in Trade.__dataclass_fields__]
+YEAR_SESSIONS, YEAR_DAYS = 250, 400  # the year's return, and the calendar days that hold it
 # The tear sheet's counts (shared with intraday runs), then this module's own.
 COUNT_KEYS = (
     "signals",
@@ -69,6 +70,15 @@ class Rule:
     hold: int  # sessions from the signal day to the exit
     min_close: float = 1.0
     min_adv: float = 250_000.0
+    # Take a signal only if the stock is up over the past 250 sessions or the company owes
+    # more than it holds in cash (swing_search REPORT.md, "The flat years"). Off in rule A50
+    # as it was frozen and tested on the holdout.
+    skip_fallen_cash_rich: bool = False
+
+    @classmethod
+    def from_config(cls, values: dict) -> Rule:
+        kinds = {"hold": int, "skip_fallen_cash_rich": bool}
+        return cls(**{k: kinds.get(k, float)(v) for k, v in values.items()})
 
 
 @dataclass(frozen=True)
@@ -83,6 +93,15 @@ class Signal:
     entry_price: float
     complete: bool  # every session of the hold exists
     forced: bool  # the stock stopped trading before the hold ended
+    # Known at the signal's close: the return over the 250 sessions to it (None with less
+    # history), and cash less debt at the last quarterly report filed before the signal day.
+    year_return: float | None = None
+    net_cash: float | None = None
+
+
+def keeps(year_return: float | None, net_cash: float | None) -> bool:
+    """The quality test: up over the year, or net debt. A missing fact does not qualify."""
+    return (year_return is not None and year_return > 0) or (net_cash is not None and net_cash < 0)
 
 
 def strategies_dir() -> Path:
@@ -97,39 +116,63 @@ def load_config(name: str, config: str) -> tuple[dict, dict]:
 
 
 def find_signals(
-    panel: pa.Table, events: pa.Table, rule: Rule, start: date, end: date, last_session: date
+    panel: pa.Table,
+    events: pa.Table,
+    rule: Rule,
+    start: date,
+    end: date,
+    last_session: date,
+    fundamentals: pa.Table | None = None,
 ) -> list[Signal]:
     """Signals read at a close in [start, end], each with the sessions it would be held.
 
     ``panel`` must reach back two sessions before ``start`` and forward past the holds.
     ``last_session`` is the last session the data has: a hold cut short there is incomplete,
     one cut short earlier belongs to a stock that stopped trading.
+
+    Each signal carries its year's return (when ``panel`` reaches back 250 sessions) and its
+    net cash (when ``fundamentals`` is given: permaticker, datekey, cashnequsd, debtusd, one
+    row a quarterly report). With ``rule.skip_fallen_cash_rich`` only signals that pass
+    :func:`keeps` are returned.
     """
     con = duckdb.connect()
     con.register("panel", panel)
     con.register("events", events)
+    if fundamentals is None:
+        fundamentals = pa.table({
+            "permaticker": pa.array([], pa.int64()), "datekey": pa.array([], pa.date32()),
+            "cashnequsd": pa.array([], pa.float64()), "debtusd": pa.array([], pa.float64()),
+        })  # fmt: skip
+    con.register("fundamentals", fundamentals)
     rows = con.execute(
         f"""with p as (
                 select *, ln(close / prev_close) as lr,
                        dollar_volume / nullif(adv20_prev, 0) as dvr,
+                       sum(ln(close / prev_close)) over (partition by permaticker order by date)
+                           as c,
                        row_number() over (partition by permaticker order by date) as rn
                 from panel
                 where prev_close > 0 and close > 0 and low > 0 and open > 0
                   and category like '%Common Stock%'),
-            q as (select *, lag(lr) over w as lr_prev, lag(dvr) over w as dvr_prev
+            q as (select *, lag(lr) over w as lr_prev, lag(dvr) over w as dvr_prev,
+                         exp(c - lag(c, {YEAR_SESSIONS}) over w) - 1 as year_return
                   from p window w as (partition by permaticker order by date)),
             e as (select distinct permaticker, date from events
                   where regexp_matches('|' || eventcodes || '|', '[|]22[|]')),
-            s as (select q.permaticker, q.symbol, q.date as day, q.rn, q.adv20_prev as adv,
-                         greatest(q.dvr, q.dvr_prev) as volume
+            s0 as (select q.permaticker, q.symbol, q.date as day, q.rn, q.adv20_prev as adv,
+                         greatest(q.dvr, q.dvr_prev) as volume, q.year_return
                   from q
                   where q.date between ? and ? and q.close >= ? and q.adv20_prev >= ?
                     and date_diff('day', q.prev_date, q.date) <= {MAX_GAP_DAYS}
                     and q.marketcap_prev >= ? and q.marketcap_prev < ?
                     and exp(q.lr + q.lr_prev) - 1 >= ? and greatest(q.dvr, q.dvr_prev) >= ?
                     and exists (select 1 from e where e.permaticker = q.permaticker
-                                and e.date >= q.prev_date and e.date < q.date))
-            select s.day, s.permaticker, s.symbol, s.volume, s.adv, p.date, p.open,
+                                and e.date >= q.prev_date and e.date < q.date)),
+            s as (select s0.*, f.cashnequsd - f.debtusd as net_cash
+                  from s0 asof left join fundamentals f
+                    on f.permaticker = s0.permaticker and f.datekey < s0.day)
+            select s.day, s.permaticker, s.symbol, s.volume, s.adv, s.year_return, s.net_cash,
+                   p.date, p.open,
                    case when p.rn = s.rn + 1 then ln(p.close / p.open) else p.lr end as r
             from s join p on p.permaticker = s.permaticker
                          and p.rn between s.rn + 1 and s.rn + {int(rule.hold)}
@@ -138,10 +181,13 @@ def find_signals(
          rule.volume],
     ).fetchall()  # fmt: skip
     grouped: dict[tuple, list] = {}
-    for day, permaticker, symbol, volume, adv, session, opened, r in rows:
-        grouped.setdefault((day, permaticker, symbol, volume, adv), []).append((session, opened, r))
+    for day, permaticker, symbol, volume, adv, year, cash, session, opened, r in rows:
+        key = (day, permaticker, symbol, volume, adv, year, cash)
+        grouped.setdefault(key, []).append((session, opened, r))
     found = []
-    for (day, permaticker, symbol, volume, adv), path in grouped.items():
+    for (day, permaticker, symbol, volume, adv, year, cash), path in grouped.items():
+        if rule.skip_fallen_cash_rich and not keeps(year, cash):
+            continue
         complete = len(path) == rule.hold
         found.append(
             Signal(
@@ -155,6 +201,8 @@ def find_signals(
                 entry_price=float(path[0][1]),
                 complete=complete,
                 forced=not complete and path[-1][0] < last_session,
+                year_return=None if year is None else float(year),
+                net_cash=None if cash is None else float(cash),
             )  # fmt: skip
         )
     return found
@@ -275,7 +323,7 @@ def run(
     start = date.fromisoformat(str(cfg["period"]["start"]))
     end = date.fromisoformat(str(cfg["period"]["end"]))
     sessions = store.sessions(start, end)  # raises if the period reaches the holdout
-    rule = Rule(**{k: float(v) if k != "hold" else int(v) for k, v in cfg["rule"].items()})
+    rule = Rule.from_config(cfg["rule"])
     costs = cost_model.load(meta["cost_calibration"])
     agent = agent or os.environ.get("KINN_AGENT", "human")
     short = registry.config_hash(
@@ -300,14 +348,26 @@ def run(
     registry.write_json(run_dir / "manifest.json", manifest)
 
     signals: list[Signal] = []
+    # The quality test needs a year of prices behind each signal and the quarterly reports.
+    back = timedelta(days=YEAR_DAYS if rule.skip_fallen_cash_rich else 14)
+    reports = (
+        store.fundamentals(end, fields=("cashnequsd", "debtusd"), dimension="ARQ")
+        if rule.skip_fallen_cash_rich
+        else None
+    )
     for year in range(start.year, end.year + 1):  # a year at a time, to bound memory
         first, last = max(start, date(year, 1, 1)), min(end, date(year, 12, 31))
         if first > last:
             continue
         ahead = min(end, last + timedelta(days=5 * rule.hold + 30))
-        panel = store.panel(first - timedelta(days=14), ahead, columns=PANEL_COLUMNS)
+        panel = store.panel(first - back, ahead, columns=PANEL_COLUMNS)
         events = store.events(first - timedelta(days=14), last)
-        signals += find_signals(panel, events, rule, first, last, sessions[-1])
+        everything = replace(rule, skip_fallen_cash_rich=False)  # filtered below, and counted
+        signals += find_signals(panel, events, everything, first, last, sessions[-1], reports)
+    quality = None
+    if rule.skip_fallen_cash_rich:
+        quality = _write_signals(run_dir / "signals.parquet", signals)
+        signals = [s for s in signals if keeps(s.year_return, s.net_cash)]
     trades, counts, extra = simulate(
         signals, account=float(cfg["book"]["account"]), slots=int(cfg["book"]["slots"]),
         costs=costs, allowance_bps=cfg["costs"]["allowance_bps"],
@@ -324,6 +384,8 @@ def run(
     summary = metrics_module.summarize(
         trades, sessions, equity=float(cfg["book"]["account"]), counts=counts
     )
+    if quality:
+        extra["quality"] = quality
     summary.update(schema=registry.METRICS_SCHEMA, swing=extra)
     registry.write_json(run_dir / "metrics.json", summary)
     manifest["status"] = "complete"
@@ -331,6 +393,28 @@ def run(
     registry.write_json(run_dir / "manifest.json", manifest)
     tearsheet.write(run_dir)
     return run_dir
+
+
+def _write_signals(path: Path, signals: list[Signal]) -> dict:
+    """Every signal the plain rule found, kept by the quality test or not, with what it did
+    before costs over its hold. Returns the comparison of the kept and the skipped."""
+    rows = [
+        {
+            "day": s.day, "symbol": s.symbol, "permaticker": s.permaticker,
+            "year_return": s.year_return, "net_cash": s.net_cash,
+            "kept": keeps(s.year_return, s.net_cash), "finished": s.complete or s.forced,
+            "entry_day": s.dates[0], "exit_day": s.dates[-1],
+            "gross_return": math.exp(sum(s.returns)) - 1,
+        }
+        for s in sorted(signals, key=lambda s: (s.day, s.symbol))
+    ]  # fmt: skip
+    pq.write_table(pa.Table.from_pylist(rows), path)
+    out = {}
+    for name, flag in (("kept", True), ("skipped", False)):
+        done = [r["gross_return"] for r in rows if r["kept"] is flag and r["finished"]]
+        out[name] = {"signals": sum(r["kept"] is flag for r in rows),
+                     "mean_gross_return": float(np.mean(done)) if done else None}  # fmt: skip
+    return out
 
 
 def headline(run_dir: Path) -> str:
@@ -341,11 +425,20 @@ def headline(run_dir: Path) -> str:
     def pct(v):
         return "n/a" if v is None else f"{100 * v:.2f}%"
 
+    quality = m["swing"].get("quality")
+    note = ""
+    if quality:
+        kept, skipped = quality["kept"], quality["skipped"]
+        note = (
+            f" The quality test kept {kept['signals']} signals (before costs "
+            f"{pct(kept['mean_gross_return'])} each) and skipped {skipped['signals']} "
+            f"({pct(skipped['mean_gross_return'])} each)."
+        )
     return (
         f"{m['trades']} trades ({m['counts']['signals']} signals, "
         f"{m['counts']['rejected_capital']} without a free slot, "
         f"{m['counts']['open_at_end']} still open at the end). A trade: auction allowance "
         f"{pct(one['mean_return'])}, allowance doubled {pct(two['mean_return'])}, spread "
         f"crossed {pct(crossed)}. Total ${one['total_net']:,.0f} "
-        f"(doubled ${two['total_net']:,.0f})."
+        f"(doubled ${two['total_net']:,.0f})." + note
     )

@@ -68,3 +68,44 @@ if at least nine trades in ten have a cross on both sides and the mean of questi
 within the allowance. Otherwise the figure to use is question 3's. Either way the reports
 state the measured numbers. The ticks cannot show what the order's own size does to a cross;
 with the median cross size they bound it.
+
+## Addendum, 2026-11-16 23:30 ET: the quality test (rule A50Q), written before any run of it
+
+The flat-years study (strategies/swing_search/REPORT.md) found that A50's signals in fallen,
+cash-rich companies make nothing. The rule with that test added is fixed here, before the
+runner has produced a number for it.
+
+**A50Q.** Rule A50, and the signal is taken only if at least one of these holds at the
+signal's close:
+
+1. the stock's return over the 250 sessions to that close is above zero;
+2. the company's debt is above its cash at the last quarterly report filed before the
+   signal day (Sharadar's `debtusd` and `cashnequsd`, dimension ARQ; since 2019 that debt
+   includes operating leases).
+
+A fact that is missing does not qualify the signal. Everything else is A50: entry at the
+next open, exit at the close 15 sessions after the signal day, the same book and costs.
+In the runner it is `skip_fallen_cash_rich: true` on the rule; a run writes every signal,
+kept or skipped, to `signals.parquet` with what it did before costs.
+
+**Runs.**
+
+1. `research_quality`, `early_quality`, `check_quality`: the years already read, to check
+   that the runner reproduces the research script (which found 1,177 kept of 1,551 signals
+   and a book of about $5,100 a year). No new trial: same rule, same data.
+2. `holdout_quality`: 2023-11-09 to 2026-11-06, **only if the owner decides to**, once, with
+   `--unseal`. The holdout is already spent for this family: rule A50 was run on it once and
+   made 5.04% a trade, and its years are known (2026 was flat). This would be a second look.
+   What keeps it worth something is that the 460 holdout signals have never been split by
+   this test and the test is fixed above. Set now, how it is read:
+   - **Supports the test** if the skipped signals' mean return before costs is under the
+     kept signals' mean by one point or more, and the kept book's total at doubled costs is
+     positive.
+   - **Against the test** if the skipped signals did as well as or better than the kept.
+   - In between, unproven. With about 110 skipped signals the difference is known to about
+     ±3 points, so only a clear gap means anything.
+   Whatever it shows, the forward record on the paper ledger is the cleaner evidence.
+3. **Paper ledger:** two more books, the same sizes with the test applied, beside the two
+   that take every signal. The facts come from the vendor's adjusted daily bars (the year's
+   return) and the SEC's XBRL company facts (cash, debt and lease liabilities), which
+   approximate Sharadar's fields; each signal records the figures used.
