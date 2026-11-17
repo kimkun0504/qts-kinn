@@ -57,7 +57,7 @@ def candidates() -> None:
                   and category like '%Common Stock%'
                 window w as (partition by permaticker order by date)),
             q as (
-                select *, lag(c, 2) over w as c2,
+                select *, lag(c, 2) over w as c2, lag(c) over w as c1,
                        lag(dv) over w / nullif(lag(adv) over w, 0) as dvr_prev,
                        last_value(c) over (partition by permaticker order by date
                                            rows between current row and {HOLD} following) as c_exit,
@@ -66,7 +66,7 @@ def candidates() -> None:
                 window w as (partition by permaticker order by date)),
             e as (select permaticker, day from '{base}/earn.parquet'
                   union select permaticker, day from '{base}/earn_early.parquet')
-            select q.date as day, q.symbol, q.permaticker, q.close, q.adv, q.mcap, q.c, q.c2,
+            select q.date as day, q.symbol, q.permaticker, q.close, q.adv, q.mcap, q.c, q.c1, q.c2,
                    q.dvr_prev, q.dv / nullif(q.adv, 0) as dvr, q.c_exit, q.c_next, q.next_open
             from q join e on e.permaticker = q.permaticker and e.day = q.date
             where q.date between DATE '{FIRST}' and DATE '{LAST}'
@@ -269,11 +269,51 @@ def report() -> None:
             print(line("  fails A50's test at the close", failed))
 
 
+def split() -> None:
+    """The first-touch entries by what is known when they fire (the addendum of 14:45 ET)."""
+    settings = load_settings()
+    out = folder(settings)
+    cand = {
+        (r["day"], r["symbol"]): r for r in pq.read_table(out / "candidates.parquet").to_pylist()
+    }
+    entries = duckdb.sql(
+        f"select * from read_parquet('{out}/entries_*.parquet') where cell = 'first touch'"
+    ).to_arrow_table().to_pylist()  # fmt: skip
+    groups = {
+        "held a close already": lambda r, e: np.exp(r["c1"] - r["c2"]) - 1 >= JUMP,
+        "first seen on S": lambda r, e: np.exp(r["c1"] - r["c2"]) - 1 < JUMP,
+        "by 09:40": lambda r, e: e["minute"] <= 580,
+        "09:41 to 10:30": lambda r, e: 580 < e["minute"] <= 630,
+        "10:31 to 13:00": lambda r, e: 630 < e["minute"] <= 780,
+        "after 13:00": lambda r, e: e["minute"] > 780,
+    }
+    for name, test in groups.items():
+        print(f"\n{name}")
+        for label, lo, hi, skip in SPANS:
+            nets, failed = [], []
+            for e in entries:
+                key = (e["day"], e["symbol"])
+                r = cand[key]
+                if not (lo <= key[0].year <= hi) or key[0].year == skip or not test(r, e):
+                    continue
+                g = float(np.exp(r["c_exit"] - r["c"])) / e["rel"] - 1
+                net = g - spread(r["adv"]) - allow(r["adv"]) - 2 * commission(e["paid"])
+                nets.append(net)
+                heavy = max(r["dvr"] or 0, r["dvr_prev"] or 0) >= VOLUME
+                if not (np.exp(r["c"] - r["c2"]) - 1 >= JUMP and heavy and r["close"] >= 1):
+                    failed.append(net)
+            print(f"  {label}")
+            print(line("after costs", nets))
+            print(line("  of which fail A50's test", failed))
+
+
 if __name__ == "__main__":
     command = sys.argv[1]
     if command == "candidates":
         candidates()
     elif command == "collect":
         collect(int(sys.argv[2]), int(sys.argv[3]))
+    elif command == "split":
+        split()
     else:
         report()

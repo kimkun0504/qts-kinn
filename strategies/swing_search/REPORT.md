@@ -451,6 +451,65 @@ from data that has been seen. Two honest tests remain:
    been split this way. Running it is the owner's decision; it would be a second look at a
    spent holdout and should be read as such.
 
+## Buying during the first session after the report (family 23, 2026-11-17)
+
+The owner's question: is there a pattern right after news, within the day? Asked of the one
+news type where a drift is established. S is the session after the earnings 8-K's date, so
+the filing is public before S opens. The trigger is A50's, read at a moment during S: the
+last trade is 15% or more above the close of S−2, on five times normal volume (the day before,
+or so far today). Buy at the next minute's open, sell at the close 15 sessions after S.
+Entry pays the modelled spread; exit is the closing auction. 2005 to October 2023, 4,627
+candidate sessions, minute bars. Code: `research/claude/swing_intraday_entry.py`.
+
+**Verdict: A50's entry stands.** No cell passes the bar set beforehand (12 trials).
+
+| After costs, a trade | 2005–2009 | 2010–2017 | 2018–2023 | 2018–2023 without 2020 |
+|---|---|---|---|---|
+| **A50 as it stands** (next open; 1,560 signals) | 4.53% | 3.26% | 4.35% | 3.89% |
+| Bought at 09:35 | 7.38% | 1.97% | 3.22% | 2.49% |
+| Bought at 10:00 | 6.66% | 3.26% | 3.27% | 2.70% |
+| Bought at 11:00 | 4.91% | 3.16% | 4.75% | 4.84% |
+| Bought at 13:00 | 4.67% | 3.15% | 4.29% | 4.76% |
+| Bought at 15:30 | 4.33% | 3.20% | 3.95% | 3.07% |
+| Bought at the first touch (1,776 entries) | 4.73% | 2.75% | 3.74% | 2.89% |
+
+The averages hide two opposite effects, and both are large.
+
+- **Where the jump holds to the close, the early buyer does make more.** On the events A50
+  also takes, buying at the first touch made 6.05%, 4.90% and 6.73% against 4.69%, 3.73% and
+  4.68% at A50's time: 1.2 to 2.3 points more a trade after paying the spread. The gain is
+  made in the morning. Bought at 13:00 it is 0.7 points or less, and at 15:30 it is negative:
+  nothing is earned between the afternoon and the next open that the spread does not take.
+- **About a fifth of early buys are jumps given back by the close, and those keep falling.**
+  368 of the 1,776 first-touch entries fail A50's test at the close. Over the next 15
+  sessions they lose 0.8%, 5.3% and 7.3% by span (8.6% without 2020); bought at 09:35 or
+  10:00 they lose 5% to 15% since 2010. Waiting for the close costs a point or two on the
+  jumps that hold and avoids these.
+
+**Second part: can the buys that hold be told apart when they fire?** Two facts known at the
+first touch, each looked at once.
+
+| First-touch entries, after costs | 2005–2009 | 2010–2017 | 2018–2023 | without 2020 |
+|---|---|---|---|---|
+| The jump had already held a close | 5.82% (185) | 3.07% (211) | 3.93% (204) | 4.07% |
+| First seen on S | 4.05% (297) | 2.62% (489) | 3.64% (390) | 2.32% |
+| First touch by 09:40 | 6.25% (240) | 2.05% (267) | 2.62% (254) | 1.96% |
+| 09:41 to 10:30 | 4.81% (76) | 4.66% (127) | 5.07% (106) | 5.35% |
+| 10:31 to 13:00 | 3.30% (102) | 3.58% (167) | 4.47% (109) | 4.93% |
+| After 13:00 | 1.20% (64) | 1.37% (139) | 4.26% (125) | 0.91% |
+
+None beats A50 by a point in every span on 100 trades. The nearest is a first touch between
+09:41 and 10:30 (0.3 to 1.5 points better, 76 trades in the first span); it is noted and not
+taken forward. A jump that has already held one close is not safer: its failures lose 7% to
+18% since 2010.
+
+**What it says about news within the day.** The reaction to an earnings report is not over
+at the open: stocks that will hold their jump keep rising through the first morning. But at
+the moment of buying they cannot be told from the ones that will give it back, and those
+lose more than the others gain. The close is the cheapest test of which is which. The
+steadiest effect in the tables is the fall after a jump that is given back the same day,
+which is a short sale and is not tested here.
+
 ## Reproduce
 
 ```
@@ -463,6 +522,7 @@ uv run python research/claude/swing_reprice.py A50 early
 uv run python research/claude/swing_book.py A50 early search 10 20 --by-volume
 uv run python research/claude/swing_news.py choose     # family 18; then: test <cell>
 uv run --with lightgbm python research/claude/swing_model.py fit --small --no-market --name small
+cd research/claude && uv run python swing_intraday_entry.py candidates  # family 23; then: collect 2005 2023, report, split
 cd research/claude && uv run python swing_overnight.py quality   # then: books, cross, filtered, chance,
                                                               # pairs, cutoffs, who, wider, insider, final
 ```

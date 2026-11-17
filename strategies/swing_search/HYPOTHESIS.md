@@ -557,3 +557,8 @@ First-touch entries, the same costs, the same spans. 6 trials.
 **What counts.** A group is a lead only if after costs it beats A50's own figure by a point
 or more in each of the three spans and without 2020, on 100 trades or more in each span.
 A lead would become one more paper book. Nothing else is read into the tables.
+
+**Results, 2026-11-17 14:49 ET.** In REPORT.md. No group passes. A first touch between 09:41
+and 10:30 is the nearest (0.3 to 1.5 points over A50, 76 trades in 2005–2009); noted, not
+taken forward. A jump that had already held a close is no safer. 6 trials; family 23 has
+12 in all.

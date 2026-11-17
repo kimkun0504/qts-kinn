@@ -5,7 +5,7 @@ universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: swing_search
-prior_trials: 12282      # 12,017 in the search; about 260 since the holdout (23 exits, about 230 in the flat-years study)
+prior_trials: 12294      # 12,017 in the search; about 275 since the holdout (23 exits, about 230 in the flat-years study, 12 on intraday entry)
 
 # What the Workbench shows (the search itself; the rule it found is strategies/earnings_drift).
 record:
@@ -25,3 +25,4 @@ record:
     - {name: "Rules B and C: sell-off buying, pullbacks in winners", when: 2026-11-16, trials: 2, result: "B failed 2005 to 2009; C made the book worse", verdict: failed}
     - {name: "Families 19 and 20: the quality test on other jumps", when: 2026-11-16, trials: 7, result: "Only the same-day earnings jump clears the trade bar; it fails the book term", verdict: lead}
     - {name: "Family 22: larger companies", when: 2026-11-16, trials: 6, result: "The drift there ended after 2017", verdict: failed}
+    - {name: "Family 23: buying during the first session after the report", when: 2026-11-17, trials: 12, result: "Jumps that hold gain 1 to 2 points more in the morning; a fifth are given back and lose 5% to 15%. The next-open entry stands", verdict: failed}
