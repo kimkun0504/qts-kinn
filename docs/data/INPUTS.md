@@ -54,4 +54,57 @@ Disclosures are matched to the session's universe by trading symbol. The same vi
 to the look-ahead replay, and `tests/test_inputs_form4.py` checks that building a newer
 input with later filings does not change what a past session saw.
 
-Not included yet: derivative transactions, footnotes, and typed 8-K earnings events.
+Not included yet: derivative transactions and footnotes.
+
+## `form8k`: 8-K filings by item, with earnings marked
+
+Source: Sharadar's EVENTS table, which is already part of the data build, so there is nothing
+to build or download: `kinn inputs show form8k` prints what the current build holds (2.2
+million company-days with a filing, 1993-11-08 to the seal). Its id is a hash of the code
+version (`form8k-1`) and the data build's id; a run is pinned to its build, so it is pinned
+to this input as well.
+
+One record per company and filing date, `kinn.core.types.CurrentReport`:
+
+| Field | Meaning |
+|---|---|
+| `symbol`, `permaticker` | The company, under the symbol it trades with that session |
+| `filed` | Filing date |
+| `codes` | Sharadar's event codes for that date, as integers: `(22, 91)` |
+| `items` | The 8-K items among them: code XY is item X.0Y, so `("2.02", "9.01")` |
+| `earnings` | True when item 2.02 (results of operations and financial condition) is among them |
+
+Codes that are not items of Form 8-K (34, 35, 37 and 40 occur in this data) are Sharadar's
+own additions. They stay in `codes` and are left out of `items`; read Sharadar's EVENTS
+documentation before using them.
+
+**When a strategy may use it.** The same rule as `form4`: a filing is available from the
+first trading session after its filing date. `DataStore.form8k(day, sessions=N)` returns
+filings dated before `day` and on or after the Nth session before it. The table has dates
+and no times of day, so a release filed before the open of `day` is hidden until the next
+session, and the session it moved the price is seen only in that session's bars. Earnings
+released after the close and filed the same evening are visible the next morning.
+
+**In the intraday engine.**
+
+```python
+class MyStrategy:
+    inputs = {"form8k": {"sessions": 1}}  # what became usable this morning
+
+    def signals(self, view, features):
+        for symbol, reports in view.reports.items():  # tuples of CurrentReport, oldest first
+            if any(r.earnings for r in reports):
+                ...
+```
+
+A strategy may declare both inputs. The run's manifest records
+`inputs.form8k = {input_id, version, last_filed, rows}`, and the id is part of the config
+hash. `tests/test_inputs_form8k.py` checks the next-session rule, the typing, the seal, the
+manifest, and that a filing is hidden when its own day is replayed.
+
+**What it is not.** It says a company reported, not whether the report was good. There are
+no analyst estimates on disk (Sharadar's fundamentals are as reported, dated by the 10-Q or
+10-K, which often arrives days after the earnings 8-K), so an earnings beat cannot be
+measured against a consensus. The price move on the day of the report is the nearest
+measure available: `strategies/earnings_drift` uses a two-day jump of 15% on five times
+normal volume.

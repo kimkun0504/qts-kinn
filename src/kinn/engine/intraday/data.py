@@ -9,7 +9,8 @@ from datetime import date
 
 import numpy as np
 
-from kinn.core.types import RTH_CLOSE, RTH_OPEN, Disclosure
+from kinn.core.types import RTH_CLOSE, RTH_OPEN, CurrentReport, Disclosure
+from kinn.data.inputs import EARNINGS_CODE, FORM8K_ITEMS, item
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
 
@@ -59,6 +60,9 @@ class DayView:
     # Insider (Form 4) disclosures by symbol, for strategies that declare the ``form4`` input:
     # only filings dated before ``day``, so all of it was public before the open.
     disclosures: Mapping[str, tuple[Disclosure, ...]] = field(default_factory=dict)
+    # 8-K filings by symbol, oldest first, for strategies that declare the ``form8k`` input:
+    # again only filings dated before ``day``.
+    reports: Mapping[str, tuple[CurrentReport, ...]] = field(default_factory=dict)
 
     def upto(self, last_minute: int) -> DayView:
         return DayView(
@@ -67,6 +71,7 @@ class DayView:
             self.close_minute,
             {s: sd.upto(last_minute) for s, sd in self.symbols.items()},
             self.disclosures,
+            self.reports,
         )
 
 
@@ -105,11 +110,42 @@ def load_disclosures(
     return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
 
 
+def load_reports(
+    store: DataStore, day: date, sessions: int, members: Mapping[str, Mapping]
+) -> dict[str, tuple[CurrentReport, ...]]:
+    """8-K filings available on ``day`` for the session's members, matched by company
+    (permaticker) and keyed by the symbol the company trades under that day."""
+    symbol_of = {row["permaticker"]: symbol for symbol, row in members.items()}
+    found: dict[str, list[CurrentReport]] = {}
+    for row in store.form8k(day, sessions=sessions).to_pylist():
+        symbol = symbol_of.get(row["permaticker"])
+        if symbol is None:
+            continue
+        codes = tuple(sorted({int(c) for c in row["eventcodes"].split("|") if c.isdigit()}))
+        found.setdefault(symbol, []).append(
+            CurrentReport(
+                symbol,
+                int(row["permaticker"]),
+                row["filed"],
+                codes,
+                tuple(item(c) for c in codes if c in FORM8K_ITEMS),
+                EARNINGS_CODE in codes,
+            )
+        )
+    return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
+
+
 def load_day(
-    store: DataStore, day: date, universe: Universe, *, form4_sessions: int = 0
+    store: DataStore,
+    day: date,
+    universe: Universe,
+    *,
+    form4_sessions: int = 0,
+    form8k_sessions: int = 0,
 ) -> DayData:
-    """Load the universe's members for ``day`` with their minute bars, and, when
-    ``form4_sessions`` is positive, the insider disclosures of that many sessions."""
+    """Load the universe's members for ``day`` with their minute bars, and, when asked for,
+    that many sessions of insider disclosures (``form4_sessions``) and of 8-K filings
+    (``form8k_sessions``)."""
     calendar = store.calendar(day, day).to_pylist()
     close_minute = calendar[0]["close_minute_et"] if calendar else RTH_CLOSE
     built = set(store.panel_columns())
@@ -154,5 +190,8 @@ def load_day(
                 _EMPTY_I, {k: row[k] for k in PRIOR_COLUMNS},
             )  # fmt: skip
     disclosures = load_disclosures(store, day, form4_sessions, members) if form4_sessions else {}
-    view = DayView(day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())), disclosures)
+    reports = load_reports(store, day, form8k_sessions, members) if form8k_sessions else {}
+    view = DayView(
+        day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())), disclosures, reports
+    )
     return DayData(view, {s: r["close"] for s, r in members.items() if r["close"] is not None})

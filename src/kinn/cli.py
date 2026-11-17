@@ -111,6 +111,13 @@ def _inputs(args: argparse.Namespace) -> int:
 
     settings = load_settings()
     try:
+        if args.name == "form8k":
+            from kinn.data.store import DataStore
+
+            if args.action == "build":
+                print("form8k is read from the data build; there is nothing to build")
+            print(json.dumps(DataStore(settings).form8k_info(), indent=2))
+            return 0
         if args.action == "build":
             input_id = inputs.build_form4(settings)
             print(f"form4 input {input_id}: built and current")
@@ -431,10 +438,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     run.set_defaults(func=_run)
     extra = sub.add_parser(
-        "inputs", help="versioned inputs beside the data build: kinn inputs build form4"
+        "inputs", help="versioned inputs: kinn inputs build form4, kinn inputs show form8k"
     )
     extra.add_argument("action", choices=("build", "show"))
-    extra.add_argument("name", choices=("form4",))
+    extra.add_argument("name", choices=("form4", "form8k"))
     extra.set_defaults(func=_inputs)
     swing = sub.add_parser(
         "swing", help="run a daily event rule as a book: kinn swing <strategy> --config <name>"

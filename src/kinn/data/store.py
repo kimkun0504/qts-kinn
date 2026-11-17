@@ -131,7 +131,56 @@ class DataStore:
 
     def input_id(self, name: str) -> str:
         """The version of a versioned input this store reads."""
+        if name == "form8k":  # read from the data build, so the build pins it
+            return inputs_module.form8k_id(self.build_id)
         return self._inputs.get(name) or inputs_module.current(self._settings, name)
+
+    def _filed_since(self, day: date, sessions: int) -> date:
+        """The first filing date a strategy asking for ``sessions`` sessions sees on ``day``:
+        the ``sessions``-th session before it (filings dated then became usable the session
+        after)."""
+        earlier = [
+            d for d in self.sessions(day - timedelta(days=14 + 3 * sessions), day) if d < day
+        ]
+        return earlier[-sessions] if len(earlier) >= sessions else day - timedelta(days=7)
+
+    def form8k(self, day: date, *, sessions: int = 1) -> pa.Table:
+        """8-K filings a strategy may use on session ``day``: one row per company and filing
+        date (``permaticker``, ``filed``, ``eventcodes`` as Sharadar writes them, "22|91").
+
+        The rule is the one :meth:`form4` follows: a filing is available from the first
+        session after its filing date, so this returns filings dated before ``day`` and on or
+        after the ``sessions``-th session before it. Nothing filed on ``day`` or later is ever
+        returned, whatever time of day it was filed.
+        """
+        self._check(day, day, "form8k")
+        return self._query(
+            f"""select s.permaticker, e.date as filed, e.eventcodes
+                from '{self.root}/sharadar/events.parquet' e
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where e.date >= ? and e.date < ? and {self._date_guard("e.date")}
+                order by e.date, s.permaticker""",
+            [self._filed_since(day, sessions), day],
+        )
+
+    def form8k_info(self) -> dict:
+        """What a run records about the form8k input: its id and version, and what the build
+        holds (filings before the seal only)."""
+        rows, first, last = (
+            self._query(
+                f"""select count(*), min(e.date)::varchar, max(e.date)::varchar
+                from '{self.root}/sharadar/events.parquet' e
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where {self._date_guard("e.date")}"""
+            )
+            .to_pylist()[0]
+            .values()
+        )
+        return {
+            "input": "form8k", "input_id": self.input_id("form8k"),
+            "version": inputs_module.FORM8K_VERSION, "data_build_id": self.build_id,
+            "rows": rows, "first_filed": first, "last_filed": last,
+        }  # fmt: skip
 
     def form4(self, day: date, *, sessions: int = 1) -> pa.Table:
         """Insider (Form 4) transactions a strategy may use on session ``day``.
@@ -149,10 +198,7 @@ class DataStore:
                 f"the form4 input {input_id} ends at {meta['last_filed']}; it has nothing to "
                 f"say about {day}. End the run earlier or build a newer input."
             )
-        earlier = [
-            d for d in self.sessions(day - timedelta(days=14 + 3 * sessions), day) if d < day
-        ]
-        first = earlier[-sessions] if len(earlier) >= sessions else day - timedelta(days=7)
+        first = self._filed_since(day, sessions)
         path = inputs_module.root(self._settings, "form4") / input_id / "transactions.parquet"
         return self._query(
             f"""select * from '{path}'

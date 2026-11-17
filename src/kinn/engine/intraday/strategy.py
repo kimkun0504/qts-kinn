@@ -10,6 +10,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Protocol
 
 from kinn.core.types import Signal
+from kinn.data.inputs import NAMES as INPUT_NAMES
 from kinn.data.universe import Universe
 from kinn.engine.intraday.data import DayView
 from kinn.features.base import Feature, LookaheadError, compute
@@ -20,7 +21,9 @@ FeatureValues = Mapping[str, Mapping[str, Any]]  # symbol -> feature name -> val
 class Strategy(Protocol):
     """``inputs`` is optional: a strategy that reads a versioned input declares it, e.g.
     ``inputs = {"form4": {"sessions": 5}}`` for five sessions of insider disclosures in
-    ``view.disclosures``. The run records the input's version in its manifest."""
+    ``view.disclosures``, or ``inputs = {"form8k": {"sessions": 1}}`` for the 8-K filings that
+    became usable this morning in ``view.reports``. The run records each input's version in
+    its manifest."""
 
     name: str
     universe: Universe
@@ -29,10 +32,23 @@ class Strategy(Protocol):
     def signals(self, view: DayView, features: FeatureValues) -> list[Signal]: ...
 
 
+def input_sessions(strategy: Strategy, name: str) -> int:
+    """How many sessions of a versioned input the strategy asked for (0: none)."""
+    wanted = getattr(strategy, "inputs", None) or {}
+    unknown = set(wanted) - set(INPUT_NAMES)
+    if unknown:
+        raise ValueError(f"unknown inputs {sorted(unknown)}; there are {list(INPUT_NAMES)}")
+    return int((wanted[name] or {}).get("sessions", 1)) if name in wanted else 0
+
+
 def form4_sessions(strategy: Strategy) -> int:
     """How many sessions of Form 4 disclosures the strategy asked for (0: none)."""
-    wanted = getattr(strategy, "inputs", None) or {}
-    return int(wanted["form4"].get("sessions", 1)) if "form4" in wanted else 0
+    return input_sessions(strategy, "form4")
+
+
+def form8k_sessions(strategy: Strategy) -> int:
+    """How many sessions of 8-K filings the strategy asked for (0: none)."""
+    return input_sessions(strategy, "form8k")
 
 
 def compute_features(strategy: Strategy, view: DayView) -> dict[str, dict[str, Any]]:

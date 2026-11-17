@@ -9,6 +9,11 @@ run that uses an input records its id in the manifest and reads exactly that one
 transactions), one row per filing, transaction code and direction. A strategy may use a
 filing from the first session after its filing date; :meth:`kinn.data.store.DataStore.form4`
 enforces that. Rows dated on or after the holdout seal are never written.
+
+``form8k`` is different in one way: the 8-K item codes are already part of the data build
+(Sharadar's EVENTS table), so nothing is built for it. Its id is a hash of its code version
+and the build's id, and :meth:`kinn.data.store.DataStore.form8k` reads the build the run is
+pinned to, under the same next-session rule.
 """
 
 from __future__ import annotations
@@ -26,6 +31,15 @@ import duckdb
 from kinn.core.settings import HOLDOUT_START, Settings
 
 FORM4_VERSION = "form4-1"
+FORM8K_VERSION = "form8k-1"
+# The items of Form 8-K, as Sharadar's event codes (item X.0Y is code XY). Other codes in the
+# EVENTS table are Sharadar's own and are passed through without an item number.
+FORM8K_ITEMS = frozenset(
+    (11, 12, 13, 14, 15, 21, 22, 23, 24, 25, 26, 31, 32, 33, 41, 42, 51, 52, 53, 54, 55, 56,
+     57, 58, 61, 62, 63, 64, 65, 71, 81, 91)
+)  # fmt: skip
+EARNINGS_CODE = 22  # item 2.02, results of operations and financial condition
+NAMES = ("form4", "form8k")
 CURRENT_NAME = "CURRENT"
 _TABLES = ("SUBMISSION", "REPORTINGOWNER", "NONDERIV_TRANS")
 _READ = "read_csv('{}/{}.tsv', delim='\t', header=true, all_varchar=true, quote='')"
@@ -53,6 +67,17 @@ def form4_id(settings: Settings) -> str:
         )
     text = json.dumps({"version": FORM4_VERSION, "files": files}, sort_keys=True)
     return hashlib.sha256(text.encode()).hexdigest()[:10]
+
+
+def form8k_id(build_id: str) -> str:
+    """The id of the form8k input as read from one data build."""
+    text = json.dumps({"version": FORM8K_VERSION, "build": build_id}, sort_keys=True)
+    return hashlib.sha256(text.encode()).hexdigest()[:10]
+
+
+def item(code: int) -> str:
+    """The 8-K item a Sharadar event code stands for: 22 is "2.02"."""
+    return f"{code // 10}.{code % 10:02d}"
 
 
 def build_form4(settings: Settings) -> str:

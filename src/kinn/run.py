@@ -36,6 +36,7 @@ from kinn.engine.intraday.strategy import (
     compute_features,
     day_signals,
     form4_sessions,
+    form8k_sessions,
 )
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
@@ -120,8 +121,12 @@ def run_month_multi(job: dict) -> str:
         [f.name for f in r["strategy"].features] == [f.name for f in first.features] for r in runs
     )
     insider_sessions = max(form4_sessions(r["strategy"]) for r in runs)
+    report_sessions = max(form8k_sessions(r["strategy"]) for r in runs)
     for day in (date.fromisoformat(d) for d in job["sessions"]):
-        data = load_day(store, day, first.universe, form4_sessions=insider_sessions)
+        data = load_day(
+            store, day, first.universe,
+            form4_sessions=insider_sessions, form8k_sessions=report_sessions,
+        )  # fmt: skip
         shared = compute_features(first, data.view) if share_features and len(runs) > 1 else None
         for r in runs:
             strategy, counts = r["strategy"], r["counts"]
@@ -198,9 +203,13 @@ def start_run(
     agent = agent or os.environ.get("KINN_AGENT", "human")
     # Versioned inputs the strategy declares: the run is pinned to today's version of each.
     used = {}
-    if form4_sessions(load_strategy(strategy, cfg.get("params", {}))):
+    declared = load_strategy(strategy, cfg.get("params", {}))
+    if form4_sessions(declared):
         found = input_info(settings, "form4")
         used["form4"] = {k: found[k] for k in ("input_id", "version", "last_filed", "rows")}
+    if form8k_sessions(declared):  # read from the data build this run is pinned to
+        found = store.form8k_info()
+        used["form8k"] = {k: found[k] for k in ("input_id", "version", "last_filed", "rows")}
     short = registry.config_hash(
         {
             "meta": meta,

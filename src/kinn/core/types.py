@@ -78,6 +78,24 @@ class Disclosure:
 
 
 @dataclass(frozen=True, slots=True)
+class CurrentReport:
+    """A company's 8-K filings of one filing date, as the items they reported.
+
+    ``codes`` are Sharadar's event codes as they stand in the data build; ``items`` are the
+    8-K items among them ("2.02", "9.01"), where code XY is item X.0Y. ``earnings`` is item
+    2.02, results of operations and financial condition. ``filed`` is the filing date; a
+    strategy sees the report from the first session after it.
+    """
+
+    symbol: str
+    permaticker: int
+    filed: date
+    codes: tuple[int, ...]
+    items: tuple[str, ...]
+    earnings: bool
+
+
+@dataclass(frozen=True, slots=True)
 class Order:
     symbol: str
     side: str  # "buy" | "sell"
