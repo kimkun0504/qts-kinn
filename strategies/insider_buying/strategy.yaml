@@ -2,6 +2,6 @@ name: insider_buying
 kind: swing               # a daily event rule; research scripts first, `kinn swing` if a rule survives
 status: event-study       # rule I passed its tests on 2006-2009, 2018-2022 and 2023; edge halved since 2018; holdout untouched; see REPORT.md
 family: insider_buying
-prior_trials: 438
+prior_trials: 442       # 438 in the grid and its tests; 4 stronger cells tested 2026-11-16 (swing_search REPORT.md, "Stronger insider signals")
 cost_calibration: ibkr_pro_tiered
 owner: claude

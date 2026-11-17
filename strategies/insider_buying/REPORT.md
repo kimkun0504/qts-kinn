@@ -79,6 +79,16 @@ margin account; it is the owner's decision.
   of stock); not measured for these trades.
 - The hedge is priced from the fund's daily bars with an assumed cost.
 
+## Stronger cells and the quality test (2026-11-16 night)
+
+Four cells that were eligible on 2010–2017 but not among the five tested ($500,000 or more
+bought; two or three insiders) were tested on 2006–2009 and 2018–2022. Two or more insiders
+is about a point better than rule I since 2018 (2.5% against 1.5%); every cell lost in 2022
+and none removes the fall-off after 2017. The quality test that fixes the earnings rule's
+flat years does not carry over: insider purchases in fallen, cash-rich companies do no worse
+than the rest. In the earnings rule's idle slots rule I adds dollars and brings back losing
+years. Tables: `strategies/swing_search/REPORT.md`, "The flat years".
+
 ## Reproduce
 
 ```
