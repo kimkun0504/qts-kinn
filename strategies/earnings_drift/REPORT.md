@@ -166,6 +166,11 @@ rule is measured here).
   zero and 8% below −3%; the worst averaged −22% (January 2020). After a run under −3% the
   next 24 averaged +6.7%. The ledger's first 24 signals (October–November 2026) are down a
   few percent with most still open.
+- **A flat stretch like 2026 has happened before and passed.** The holdout's 84 trades of
+  2026 made 0.1% each. Of all runs of 84 consecutive past signals, one in ten averaged that
+  or less, in four spells (2010–2011, 2018, 2019, 2021); the 84 signals after such a run
+  averaged 5.7%. That does not show the edge is intact in 2026. It shows a flat year is not
+  evidence that it has gone.
 - **Neither remaining test can settle the quality test.** It skips 24% of signals; in the
   past those made 0.8% a trade against 4.9% for the rest, a gap of 4.1 points. One run on
   the holdout (about 111 skipped signals) would measure that gap to ±2.2 points; a year of
