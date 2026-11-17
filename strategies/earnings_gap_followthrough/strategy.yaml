@@ -1,0 +1,8 @@
+name: earnings_gap_followthrough
+status: parked
+engine: intraday
+universe: earnings_gap_followthrough
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: opening_gap_continuation
+prior_trials: 0
