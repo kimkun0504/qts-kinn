@@ -1,0 +1,8 @@
+name: distributed_morning_selloff
+status: parked
+engine: intraday
+universe: distributed_morning_selloff
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
