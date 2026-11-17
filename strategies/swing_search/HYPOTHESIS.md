@@ -359,3 +359,35 @@ Written before any of it is measured.
 
 A book "solves the flat years" here if its worst year of 2006 to 2023 is a gain of at least
 5% of the account on the auction basis and no year loses with the spread crossed.
+
+## Addendum, 2026-11-16 23:08 ET: checks on the quality filter, before anything is built on it
+
+Steps 1 to 4 above are measured (results in REPORT.md). One filter stood out: A50 signals in
+companies that hold **net cash and whose stock is down over the past year** make nothing;
+skipping them ("up or net debt") leaves 4% to 5.6% a trade in every span and a book with no
+losing year. It was found by looking at eight splits of years already read, so it is a
+finding to distrust until it survives the checks below. None of them chooses anything new.
+Written before any of them is run.
+
+1. **Chance.** 5,000 random filters that drop the same number of trades: how often does
+   chance give a mean without 2020, and a count of winning years, as good as the filter's?
+2. **Would the first span alone have found it?** All pairs of the eight facts (28 pairs, four
+   groups each, 112 groups) ranked on 2010–2017 only, groups of 60 trades or more. Where does
+   "down and net cash" rank, and how do the five worst groups of 2010–2017 do in 2005–2009
+   and 2018–2023? If the filter is real, the worst groups of one span stay bad in the others.
+3. **Cut-offs.** The year's return at −30%, −20%, −10%, 0, +10%, +20% and net cash at −10%,
+   0, +10%, +25% of market value. A real effect changes smoothly; a knife edge is a fit.
+4. **What the failing group is:** sector, share with a loss, price, size, and how the stock
+   did over the following year (description only, no rule).
+5. **The same filter on insider buying** (rule I, and the cell of $100,000 or more by two or
+   more insiders): 2 trials. Insider buying in a fallen stock is the classic case, so the
+   filter may well not carry over; if it does not, that is recorded and the insider sleeve
+   stays unfiltered.
+6. **Jumps of 10% to 15%** with the filter (seen once already for 2018–2023 in the
+   cross-check: 2.85%): all three spans. Kept as extra signals only if the trade clears 3%
+   in each span, with and without 2020.
+7. **The book** (step 6 of the previous addendum): the filtered rule alone and with the
+   insider sleeve in the idle slots, year by year, both cost bases, with and without 2020.
+
+Trials added: 16 (splits) + 13 (book configurations) + 9 (2×2 and unions) + 24 (filtered
+books) + 4 (insider cells) + 112 (pairs) + 24 (cut-offs) + 2 + 1 + about 6 (books) = about 211.
