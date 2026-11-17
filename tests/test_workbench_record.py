@@ -195,5 +195,12 @@ def test_the_paper_ledger_is_read_from_its_snapshot_or_rebuilt_from_an_older_led
     assert old["sell_next_close"] == [{"symbol": "AAA", "books": ["ten"]}]
     assert old["buy_next_open"] == [{"symbol": "CCC", "note": None}]
     assert old["followed"]["finished"] == 1 and old["followed"]["mean_gross"] == -0.1
-    (tmp_path / "snapshot.json").write_text(json.dumps({"schema": "paper-snapshot-1"}))
-    assert record.paper(tmp_path, books, 15) == {"schema": "paper-snapshot-1"}
+    fresh = {"schema": "paper-snapshot-1", "last_session": "2026-11-16"}
+    (tmp_path / "snapshot.json").write_text(json.dumps(fresh))
+    assert record.paper(tmp_path, books, 15) == fresh
+    # A snapshot from an earlier night than the ledger is not shown; nor is a broken one.
+    stale = {"schema": "paper-snapshot-1", "last_session": "2026-11-13"}
+    (tmp_path / "snapshot.json").write_text(json.dumps(stale))
+    assert record.paper(tmp_path, books, 15)["schema"] == "paper-snapshot-0"
+    (tmp_path / "snapshot.json").write_text("{half")
+    assert record.paper(tmp_path, books, 15)["schema"] == "paper-snapshot-0"

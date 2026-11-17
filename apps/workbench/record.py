@@ -250,13 +250,19 @@ def _held_from_page(page: str) -> dict[str, float]:
 def paper(folder: Path, books: dict | None, hold: int | None) -> dict | None:
     """The paper ledger of one strategy: the snapshot its nightly run wrote, or, for a ledger
     from before snapshots, the same shape rebuilt from its state and report."""
-    snapshot = folder / "snapshot.json"
-    if snapshot.exists():
-        return json.loads(snapshot.read_text())
     state_path = folder / "state.json"
     if not state_path.exists():
         return None
     state = json.loads(state_path.read_text())
+    snapshot = folder / "snapshot.json"
+    if snapshot.exists():
+        try:
+            data = json.loads(snapshot.read_text())
+        except ValueError:
+            data = None
+        # A snapshot older than the ledger (a night it could not be built) is not shown.
+        if data and data.get("last_session") == state.get("last_session"):
+            return data
     page = (folder / "report.md").read_text() if (folder / "report.md").exists() else ""
     changes = _held_from_page(page)
     names = list(books or {}) or sorted({n for t in state["tracks"] for n in t["books"]})

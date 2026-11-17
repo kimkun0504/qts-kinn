@@ -67,6 +67,8 @@ def get_json(url: str, host: str, headers: dict) -> dict:
         try:
             with urllib.request.urlopen(request, timeout=90) as response:
                 return json.load(response)
+        except ValueError:  # an answer that is not JSON
+            raise FetchError(f"an unreadable answer from {host}") from None
         except urllib.error.HTTPError as error:
             if error.code == 404:
                 return {}
@@ -145,6 +147,10 @@ def quality_facts(symbol: str, day: date, cik, key: str, agent: str) -> dict:
         print(f"    {symbol}: the quality facts could not be fetched ({error}); "
               "the next run tries again")  # fmt: skip
         return {}
+    except Exception as error:  # noqa: BLE001  a figure in a shape not met before
+        print(f"    {symbol}: the quality facts could not be read ({type(error).__name__}: "
+              f"{error}); the next run tries again. Please report this line.")  # fmt: skip
+        return {}
 
 
 def _quality_facts(symbol: str, day: date, cik, key: str, agent: str) -> dict:
@@ -161,6 +167,17 @@ def _quality_facts(symbol: str, day: date, cik, key: str, agent: str) -> dict:
         balance = swing_paper.net_cash(get_json(url, SEC, {"User-Agent": agent}), day)
         time.sleep(0.15)
     return swing_paper.quality(swing_paper.year_return(closes), balance)
+
+
+def snapshot_of(state: dict, window, rule, books: dict) -> dict | None:
+    """The Workbench's view of the ledger. It is a convenience: if it cannot be built the
+    ledger is saved without it (the Workbench then reads the ledger's own files)."""
+    try:
+        return swing_paper.snapshot(state, window, hold=rule.hold, books=books)
+    except Exception as error:  # noqa: BLE001
+        print(f"    the Workbench snapshot could not be built ({type(error).__name__}: {error}); "
+              "the ledger itself is saved. Please report this line.")  # fmt: skip
+        return None
 
 
 def main() -> None:
@@ -201,8 +218,7 @@ def main() -> None:
         print(f"already done to {state['last_session']}; nothing to do")
         if state["last_session"]:  # the facts added above are still worth saving
             page = swing_paper.report(state, window, hold=rule.hold, books=cfg["books"])
-            snap = swing_paper.snapshot(state, window, hold=rule.hold, books=cfg["books"])
-            swing_paper.save(folder, state, page, snap)
+            swing_paper.save(folder, state, page, snapshot_of(state, window, rule, cfg["books"]))
     if len(todo) > MAX_CATCH_UP + 1:
         raise SystemExit(f"{len(todo)} sessions have been missed, more than {MAX_CATCH_UP}; "
                          "the ledger was not changed")  # fmt: skip
@@ -217,8 +233,7 @@ def main() -> None:
             print(f"    not a signal: {note}")
         # Saved after every session, so an interrupted catch-up resumes where it stopped.
         page = swing_paper.report(state, window, hold=rule.hold, books=cfg["books"])
-        snap = swing_paper.snapshot(state, window, hold=rule.hold, books=cfg["books"])
-        swing_paper.save(folder, state, page, snap)
+        swing_paper.save(folder, state, page, snapshot_of(state, window, rule, cfg["books"]))
     print(f"\nledger: {folder / 'report.md'}\n")
     print(swing_paper.report(state, window, hold=rule.hold, books=cfg["books"]))
 
