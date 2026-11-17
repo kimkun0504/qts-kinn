@@ -135,6 +135,16 @@ records the figures used, and the report says for every signal whether it passed
 Signals already in the ledger get their facts on the next run; the new books start empty
 and take signals from then on.
 
+**One season nobody had looked at (autumn 2004).** The earnings item exists in the events
+table from 23 August 2004 and every study began in 2005, so the season of October and
+November 2004 was unseen by any rule here. Run once (`autumn_2004_quality`, run `…_4f729bcf`,
+plan in the addendum of 23:59 ET): 33 signals; the 19 kept made 12.8% each before costs
+and the 14 skipped 7.2%; the book took 17 trades at 12.57% each, $4,263 ($4,077 at doubled
+costs). By the reading set beforehand that is **consistent**, and no more than that: late
+2004 was a strong market for small stocks, 14 skipped signals are too few to say the test
+added anything, and six of them were skipped only because the prices did not yet reach back
+a year. Of the 19 kept, 15 made money. For rule A50 itself it is one more unseen season that made money.
+
 A fifth book, `ten_quality_trend`, applies the quality test and leaves by the 20-day-average
 exit (sell at the next open once a close is under the stock's 20-day exponential average,
 30 sessions at most). On the years already read that book has the lowest drawdown of those

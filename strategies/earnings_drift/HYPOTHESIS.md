@@ -144,3 +144,8 @@ this way: **consistent** if the kept signals' mean before costs is positive and 
 total at doubled costs is positive; **a warning** if the kept signals lose. The kept against
 the skipped is reported and not read as evidence either way unless 20 or more are skipped.
 One trial.
+
+**Result, 2026-11-16 23:59 ET.** 33 signals, 19 kept (12.8% each before costs), 14 skipped
+(7.2%). 17 trades, 12.57% a trade, $4,263 ($4,077 doubled). Consistent, by the reading set
+above; the skipped are under 20 (and six of them were skipped only because the prices do not yet
+reach back a year), so the gap between kept and skipped is not read as evidence.

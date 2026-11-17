@@ -5,4 +5,4 @@ universe: listed common stock, prior close >= $1, 20-day dollar volume >= $250k
 cost_calibration: ibkr_pro_tiered
 owner: claude
 family: swing_search
-prior_trials: 12281      # 12,017 in the search; about 260 since the holdout (23 exits, about 230 in the flat-years study)
+prior_trials: 12282      # 12,017 in the search; about 260 since the holdout (23 exits, about 230 in the flat-years study)
