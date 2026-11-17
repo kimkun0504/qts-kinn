@@ -739,6 +739,38 @@ def controls(signals, fund) -> None:
           f"{np.minimum(1, 0.04 / vols).mean():.2f}")  # fmt: skip
 
 
+def capacity(signals, fund) -> None:
+    """Description, no trial: what A50Q's book earns at larger accounts when a position is
+    limited to a share of the stock's normal daily dollar volume (costs unchanged, which is
+    generous: an order's own effect on the auction is not modelled)."""
+    trades = build(signals, fund, keep=GROUPS["up or net debt"], ema=20)
+    adv = np.array([float(x["t"]["adv"]) for x in trades])
+    print(f"normal daily dollars of the kept signals: 10th percentile ${np.percentile(adv, 10):,.0f}, "
+          f"median ${np.median(adv):,.0f}, 90th ${np.percentile(adv, 90):,.0f}")  # fmt: skip
+    for share in (0.01, 0.05):
+        print(f"a position is at most {100 * share:.0f}% of the stock's normal daily dollars")
+        for account in (20_000, 50_000, 100_000, 250_000, 500_000):
+            full = account / SLOTS
+
+            def size(t, full=full, share=share):
+                return min(1.0, share * float(t["adv"]) / full)
+
+            cut = np.mean([size(x["t"]) < 1 for x in trades])
+            mean_size = full * np.mean([size(x["t"]) for x in trades])
+            line = (f"  ${account:>7,}: full position ${full:>6,.0f}, cut in {100 * cut:3.0f}% of "
+                    f"signals, mean position ${mean_size:>6,.0f}")  # fmt: skip
+            for basis in ("auction", "crossed"):
+                daily, _ = run_controlled(trades, basis, sessions=fund.keys(), size=size)
+                totals = defaultdict(float)
+                for d, v in daily.items():
+                    if d.year >= 2006:
+                        totals[d.year] += v * account / ACCOUNT
+                year = np.mean(list(totals.values()))
+                line += (f" | {basis[:4]} ${year:>7,.0f} a year ({100 * year / account:4.1f}% of the "
+                         f"account), worst year ${min(totals.values()):>7,.0f}")  # fmt: skip
+            print(line)
+
+
 if __name__ == "__main__":
     what = sys.argv[1]
     data, market = load(), index()
@@ -746,4 +778,4 @@ if __name__ == "__main__":
     {"quality": quality, "books": books, "cross": cross, "filtered": filtered, "chance": chance,
      "pairs": pairs, "cutoffs": cutoffs, "who": who, "wider": wider, "insider": insider,
      "final": final, "same_day": same_day,
-     "controls": controls}[what](data, market)  # fmt: skip
+     "controls": controls, "capacity": capacity}[what](data, market)  # fmt: skip

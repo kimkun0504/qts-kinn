@@ -369,6 +369,30 @@ to April 2020, made back by August. Its longest spell under its own high is 445 
   loss back, so the pause re-armed for good); the row above resets the high when a pause
   ends. Both are counted.
 
+**How much money the rule can carry (description, no trial).** The owner finds $1,000 to
+$2,000 positions small. The stocks set the limit: the kept signals trade a median of $861,000
+on a normal day (a tenth of them under $344,000), and the tick study found a median opening
+cross of $36,000 in stocks under $1M a day. A $2,000 order is about 6% of that cross; a
+$10,000 order would be over a quarter of it.
+
+A50Q with the 20-day exit, 10 positions, when a position may be at most 1% of the stock's
+normal daily dollars (about a quarter of a typical opening cross), costs left as modelled:
+
+| Account | Signals cut down | Mean position | A year, auction basis | Of the account | Spread crossed |
+|---|---|---|---|---|---|
+| $20,000 | none | $2,000 | $5,733 | 28.7% | $4,490 |
+| $50,000 | 25% | $4,665 | $13,222 | 26.4% | $10,395 |
+| $100,000 | 57% | $7,534 | $19,695 | 19.7% | $15,529 |
+| $250,000 | 86% | $11,208 | $23,333 | 9.3% | $17,942 |
+| $500,000 | 95% | $13,097 | $26,469 | 5.3% | $20,515 |
+
+The rule stops growing at about $20,000 to $25,000 a year however large the account, and
+past $100,000 a losing year returns, because the money then sits mostly in the larger
+stocks, where the edge is thinner. With orders allowed up to 5% of normal daily dollars the
+ceiling is about four times higher, but orders that size would be larger than most opening
+crosses and the modelled costs would no longer hold. **It is a rule for an account of about
+$20,000 to $100,000.**
+
 ### What this is worth
 
 The filter was found by looking at years already read, among eight splits, their pairs and
