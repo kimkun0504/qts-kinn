@@ -1,0 +1,8 @@
+name: form4_opening_confirmation
+status: parked
+engine: intraday
+universe: form4_opening_confirmation
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_form4_followthrough
+prior_trials: 0
