@@ -102,6 +102,8 @@ def index() -> dict:
 
 
 def side_costs(t: dict, basis: str) -> float:
+    if "side" in t:
+        return t["side"][basis]
     spread = float(t["half_spread"]) if basis == "crossed" else exits.allow(t["adv"])
     return float(t["commission"]) + spread
 
@@ -309,8 +311,285 @@ def filtered(signals, fund) -> None:
             describe(f"{name}: {label}"[:44], build(signals, fund, keep=keep, **options))
 
 
+# ---- Checks on the filter (HYPOTHESIS.md, addendum of 2026-11-16 23:08 ET) ----
+
+FACTS = {
+    "issued over 10%": lambda t: None if t["issue"] is None else t["issue"] > 0.10,
+    "loss-making": lambda t: None if t["ni_pos"] is None else not t["ni_pos"],
+    "free cash flow negative": lambda t: None if t["fcf_price"] is None else t["fcf_price"] < 0,
+    "net cash": lambda t: None if t["netcash_price"] is None else t["netcash_price"] >= 0,
+    "under $5": lambda t: t["close"] < 5,
+    "not at a high": lambda t: None if t["high250"] is None else t["high250"] <= 0,
+    "down over the year": lambda t: None if t["ret250"] is None else t["ret250"] <= 0,
+}  # fmt: skip
+
+
+def table(signals, fund):
+    base = build(signals, fund)
+    rows = per_trade(base)
+    return base, np.array([y for y, _ in rows]), np.array([r for _, r in rows])
+
+
+def chance(signals, fund) -> None:
+    base, years, r = table(signals, fund)
+    kept = np.array([GROUPS["up or net debt"](x["t"]) for x in base])
+    labels = sorted(set(years))
+
+    def measures(mask):
+        by = [r[mask & (years == y)].mean() for y in labels if (mask & (years == y)).any()]
+        return r[mask & (years != 2020)].mean(), sum(v > 0 for v in by), min(by)
+
+    real = measures(kept)
+    print(f"the filter drops {(~kept).sum()} of {len(kept)}: mean without 2020 {100 * real[0]:.2f}%, "
+          f"winning years {real[1]} of {len(labels)}, worst year {100 * real[2]:.2f}%")  # fmt: skip
+    rng = np.random.default_rng(20261116)
+    for name in ("anywhere", "the same number in each year"):
+        got = []
+        for _ in range(5000):
+            mask = np.ones(len(r), bool)
+            if name == "anywhere":
+                mask[rng.choice(len(r), (~kept).sum(), replace=False)] = False
+            else:
+                for y in labels:
+                    index = np.flatnonzero(years == y)
+                    drop = (~kept[index]).sum()
+                    mask[rng.choice(index, drop, replace=False)] = False
+            got.append(measures(mask))
+        got = np.array(got)
+        print(f"random drops, {name}: mean without 2020 averages {100 * got[:, 0].mean():.2f}% "
+              f"(best of 5,000: {100 * got[:, 0].max():.2f}%); as good as the filter in "
+              f"{(got[:, 0] >= real[0]).mean():.4f}; worst year as good in "
+              f"{(got[:, 2] >= real[2]).mean():.4f}; all years winning in "
+              f"{(got[:, 1] == len(labels)).mean():.4f}")  # fmt: skip
+
+
+def pairs(signals, fund) -> None:
+    import itertools
+
+    base, years, r = table(signals, fund)
+    values = {name: np.array([f(x["t"]) for x in base], dtype=object) for name, f in FACTS.items()}
+    first = (years >= 2010) & (years <= 2017)
+    rest = ~first & (years != 2020)
+    found = []
+    for a, b in itertools.combinations(FACTS, 2):
+        for va, vb in itertools.product((True, False), repeat=2):
+            mask = np.array([x is va and y is vb for x, y in zip(values[a], values[b], strict=True)])
+            if (mask & first).sum() < 60 or (mask & rest).sum() < 30:
+                continue
+            label = f"{a if va else 'not ' + a} & {b if vb else 'not ' + b}"
+            found.append((r[mask & first].mean(), r[mask & rest].mean(), r[mask & (years <= 2009)].mean(),
+                          r[mask & (years >= 2018) & (years != 2020)].mean(),
+                          int((mask & first).sum()), int((mask & rest).sum()), label))  # fmt: skip
+    found.sort()
+    print(f"{len(found)} groups; all trades 2010-17 {100 * r[first].mean():.2f}%, the other years "
+          f"without 2020 {100 * r[rest].mean():.2f}%")  # fmt: skip
+    a, b = np.array([f[0] for f in found]), np.array([f[1] for f in found])
+    rank = lambda v: np.argsort(np.argsort(v))  # noqa: E731
+    print(f"rank correlation between a group's mean in 2010-17 and in the other years: "
+          f"{np.corrcoef(rank(a), rank(b))[0, 1]:.2f}")  # fmt: skip
+    print("  2010-17  other  2005-09 2018-23x    n   n  group (worst of 2010-17 first)")
+    for i, f in enumerate(found):
+        if i < 8 or i >= len(found) - 5 or "net cash & down" in f[6]:
+            print(f"{i + 1:3d} {100 * f[0]:6.2f} {100 * f[1]:6.2f} {100 * f[2]:7.2f} {100 * f[3]:7.2f} "
+                  f"{f[4]:5d} {f[5]:4d}  {f[6]}")  # fmt: skip
+    worst = found[: len(found) // 4]
+    print(f"the worst quarter of groups in 2010-17 averaged {100 * np.mean([f[0] for f in worst]):.2f}% "
+          f"then and {100 * np.mean([f[1] for f in worst]):.2f}% in the other years; the best quarter "
+          f"{100 * np.mean([f[0] for f in found[-len(worst):]]):.2f}% and "
+          f"{100 * np.mean([f[1] for f in found[-len(worst):]]):.2f}%")  # fmt: skip
+
+
+def cutoffs(signals, fund) -> None:
+    base, years, r = table(signals, fund)
+    ret = np.array([np.nan if x["t"]["ret250"] is None else x["t"]["ret250"] for x in base], float)
+    cash = np.array([np.nan if x["t"]["netcash_price"] is None else float(x["t"]["netcash_price"])
+                     for x in base], float)  # fmt: skip
+    labels = sorted(set(years))
+    print("keep if the year's return is over A, or net cash is under B of market value")
+    print("     A      B     n  2010-17 2005-09 2018-23 no-2020  yrs+  worst year")
+    for a in (-0.30, -0.20, -0.10, 0.0, 0.10, 0.20):
+        for b in (-0.10, 0.0, 0.10, 0.25):
+            keep = (ret > a) | (cash < b)
+            by = {y: r[keep & (years == y)].mean() for y in labels}
+            print(f"{100 * a:5.0f}% {100 * b:5.0f}% {keep.sum():5d} "
+                  f"{100 * r[keep & (years >= 2010) & (years <= 2017)].mean():7.2f} "
+                  f"{100 * r[keep & (years <= 2009)].mean():7.2f} "
+                  f"{100 * r[keep & (years >= 2018)].mean():7.2f} "
+                  f"{100 * r[keep & (years != 2020)].mean():7.2f} "
+                  f"{sum(v > 0 for v in by.values()):3d}/{len(by)} "
+                  f"{min(by, key=by.get)} {100 * min(by.values()):5.1f}%")  # fmt: skip
+    print("dropped group alone, by cut-off (mean of the trades skipped):")
+    for a in (-0.30, -0.20, -0.10, 0.0, 0.10, 0.20):
+        cells = []
+        for b in (-0.10, 0.0, 0.10, 0.25):
+            drop = ~((ret > a) | (cash < b)) & ~np.isnan(ret) & ~np.isnan(cash)
+            cells.append(f"B {100 * b:4.0f}%: {100 * r[drop].mean():6.2f}% ({drop.sum():3d})")
+        print(f"  A {100 * a:4.0f}%  " + "   ".join(cells))
+
+
+def who(signals, fund) -> None:
+    from collections import Counter
+
+    base, years, r = table(signals, fund)
+    bad = np.array([GROUPS["down and net cash"](x["t"]) for x in base])
+    for name, mask in (("down and net cash", bad), ("everything else", ~bad)):
+        ts = [x["t"] for x, m in zip(base, mask, strict=True) if m]
+        sectors = Counter(t["sector"] for t in ts)
+        share = lambda f: 100 * np.mean([bool(f(t)) for t in ts if f(t) is not None])  # noqa: E731
+        med = lambda k: float(np.median([float(t[k]) for t in ts if t[k] is not None]))  # noqa: E731
+        print(f"{name}: {len(ts)} trades, mean {100 * r[mask].mean():.2f}%, median "
+              f"{100 * np.median(r[mask]):.2f}%, winners {100 * (r[mask] > 0).mean():.0f}%")  # fmt: skip
+        print("   sectors: " + ", ".join(f"{s} {100 * n / len(ts):.0f}%" for s, n in sectors.most_common(6)))
+        print(f"   loss-making {share(FACTS['loss-making']):.0f}%, free cash flow negative "
+              f"{share(FACTS['free cash flow negative']):.0f}%, issued over 10% "
+              f"{share(FACTS['issued over 10%']):.0f}%, under $5 {share(FACTS['under $5']):.0f}%; "
+              f"median size ${med('mcap') / 1e6:.0f}M, price ${med('close'):.2f}, year's return "
+              f"{100 * med('ret250'):.0f}%, net cash {100 * med('netcash_price'):.0f}% of value, "
+              f"jump {100 * med('ret2'):.0f}%")  # fmt: skip
+        paths = [x for x, m in zip(base, mask, strict=True) if m]
+        marks = {k: 100 * np.mean([x["stock"][min(k, len(x["stock"])) - 1] - 1 for x in paths])
+                 for k in (1, 3, 5, 10, 15)}  # fmt: skip
+        print("   gross since the entry, by session: " + "  ".join(f"{k}: {v:5.2f}%" for k, v in marks.items()))
+        by_sector = {s: (100 * np.mean([q for q, t in zip(r[mask], ts, strict=True) if t["sector"] == s]), n)
+                     for s, n in sectors.most_common(5)}  # fmt: skip
+        print("   mean by sector: " + ", ".join(f"{s} {v:.2f}% ({n})" for s, (v, n) in by_sector.items()))
+
+
+def wider(signals, fund) -> None:
+    more = [t for t in load("A2") if t["ret2"] < 0.15]
+    print(len(more), "signals with a jump of 10% to 15%")
+    for name in ("all", "up or net debt", "down and net cash", "high or net debt"):
+        keep = None if name == "all" else GROUPS[name]
+        rows = per_trade(build(more, fund, keep=keep))
+        cells = [f"{n} {100 * np.mean([x for y, x in rows if ok(y)]):5.2f}% "
+                 f"({sum(ok(y) for y, _ in rows):3d})" for n, ok in SPANS]  # fmt: skip
+        by = {y: np.mean([x for yy, x in rows if yy == y]) for y in sorted({y for y, _ in rows})}
+        print(f"{name:18} " + "  ".join(cells) + f"  yrs+ {sum(v > 0 for v in by.values())}/{len(by)}")
+        print("      " + " ".join(f"{y % 100:02d}:{100 * v:5.1f}" for y, v in by.items()))
+
+
+def insider_trades(cell=("$50M-$300M", 1e5, 1, False, False), hold=15) -> list[dict]:
+    """An insider cell's trades in this script's form, with the two facts the filter needs."""
+    import insider_study as study
+
+    kept = []
+    for period in ("early", "choose", "late", "check"):
+        d = study.rows(period)
+        keep = study.pick(d, *cell)
+        kept += [(int(p), str(day)[:10], float(dollars), float(c) / 2, float(c1) / 2)
+                 for p, day, dollars, c, c1 in zip(d["permaticker"][keep], d["day"][keep],
+                                                   d["dollars"][keep], d["cost"][keep],
+                                                   d["cost1"][keep], strict=True)]  # fmt: skip
+    settings = load_settings()
+    store = DataStore(settings)
+    base = settings.data_dir / "research" / "swing"
+    con = duckdb.connect()
+    con.execute(
+        f"set threads=3; set memory_limit='1500MB'; set temp_directory='{tempfile.mkdtemp()}'"
+    )
+    con.execute("create table s (permaticker bigint, day date, dollars double, c0 double, c1 double)")
+    con.executemany("insert into s values (?, ?, ?, ?, ?)", kept)
+    facts = {}
+    for name in ("early", "wide"):
+        for p, day, a, b, c in con.sql(
+            f"""select w.permaticker, w.day, w.ret250, w.netcash_price, w.high250
+                from read_parquet('{base}/{name}_*.parquet') w join s
+                  on s.permaticker = w.permaticker and s.day = w.day"""
+        ).fetchall():
+            facts[(p, day)] = (a, b, c)
+    rows = con.sql(
+        f"""with p as (
+                select permaticker, date, symbol, ln(close / prev_close) as lr,
+                       ln(close / open) as first,
+                       row_number() over (partition by permaticker order by date) as rn
+                from read_parquet('{store.root}/panel/*.parquet')
+                where prev_close > 0 and close > 0 and low > 0 and open > 0
+                  and category like '%Common Stock%'),
+            k as (select s.*, p.rn, p.symbol from s join p
+                  on p.permaticker = s.permaticker and p.date = s.day)
+            select k.permaticker, k.day, k.symbol, k.dollars, k.c0, k.c1, p.date,
+                   case when p.rn = k.rn + 1 then p.first else p.lr end as r
+            from k join p on p.permaticker = k.permaticker
+                         and p.rn between k.rn + 1 and k.rn + {hold}
+            order by k.day, k.symbol, p.date"""
+    ).fetchall()
+    found: dict = {}
+    for p, day, symbol, dollars, c0, c1, session, lr in rows:
+        ret, cash, top = facts.get((p, day), (None, None, None))
+        x = found.setdefault((day, symbol), {
+            "t": {"day": day, "symbol": symbol, "volume": dollars / 1e12, "ret250": ret,
+                  "netcash_price": cash, "high250": top, "side": {"auction": c0, "crossed": c1}},
+            "dates": [], "stock": [], "fund": [], "hedge": 0.0, "extra": 0.0})  # fmt: skip
+        x["dates"].append(session)
+        x["stock"].append((x["stock"][-1] if x["stock"] else 1.0) * math.exp(lr))
+        x["fund"].append(1.0)
+    return list(found.values())
+
+
+def insider(signals, fund) -> None:
+    for label, cell in (("rule I ($100k+, one insider)", ("$50M-$300M", 1e5, 1, False, False)),
+                        ("$100k+, two or more insiders", ("$50M-$300M", 1e5, 2, False, False))):  # fmt: skip
+        trades = insider_trades(cell)
+        for name in ("all", "up or net debt", "down and net cash", "up over the year", "net debt"):
+            keep = (lambda t: True) if name == "all" else GROUPS[name]
+            rows = per_trade([x for x in trades if keep(x["t"])])
+            spans = (("2010-17", lambda y: 2010 <= y <= 2017), ("2006-09", lambda y: y <= 2009),
+                     ("2018-23", lambda y: y >= 2018), ("2018-23 ex-2020", lambda y: y >= 2018 and y != 2020))  # fmt: skip
+            cells = [f"{n} {100 * np.mean([x for y, x in rows if ok(y)]):5.2f}% "
+                     f"({sum(ok(y) for y, _ in rows):4d})" for n, ok in spans]  # fmt: skip
+            print(f"{label[:28]:28} {name:18} " + "  ".join(cells))
+
+
+def by_year(label, trades) -> None:
+    print(label)
+    for basis in ("auction", "crossed"):
+        daily, taken = run_book(trades, basis)
+        totals = defaultdict(float)
+        for d, x in daily.items():
+            if d.year >= 2006:
+                totals[d.year] += x
+        print(f"   {basis:8} taken {taken:5d}  " + " ".join(f"{y % 100:02d}:{v:6,.0f}" for y, v in sorted(totals.items())))
+
+
+def final(signals, fund) -> None:
+    keep = GROUPS["up or net debt"]
+    plain = build(signals, fund)
+    kept = build(signals, fund, keep=keep)
+    kept20 = build(signals, fund, keep=keep, ema=20)
+    rule_i = insider_trades()
+    two = insider_trades(("$50M-$300M", 1e5, 2, False, False))
+    print(len(plain), "earnings trades;", len(kept), "after the filter;", len(rule_i), "rule I;", len(two), "two insiders")
+    books = {
+        "A50 as it is": plain,
+        "A50, filtered": kept,
+        "A50, filtered, 20-day exit": kept20,
+        "rule I alone": rule_i,
+        "A50 + rule I": plain + rule_i,
+        "A50 filtered + rule I": kept + rule_i,
+        "A50 filtered + two insiders": kept + two,
+        "A50 filtered, 20-day exit + rule I": kept20 + rule_i,
+    }
+    for label, trades in books.items():
+        describe(label, trades)
+    for label in ("A50 as it is", "A50, filtered", "A50 filtered + rule I"):
+        by_year(label, books[label])
+    for slots in (5, 20):
+        for label in ("A50, filtered", "A50 filtered + rule I"):
+            for basis in ("auction", "crossed"):
+                daily, taken = run_book(books[label], basis, slots)
+                totals = defaultdict(float)
+                for d, x in daily.items():
+                    if d.year >= 2006:
+                        totals[d.year] += x
+                v = list(totals.values())
+                print(f"{slots:2d} positions, {label:24} {basis:8} taken {taken:5d} ${np.mean(v):6,.0f} a year, "
+                      f"worst {min(totals, key=totals.get)} ${min(v):6,.0f}, losing {sum(x < 0 for x in v)}")  # fmt: skip
+
+
 if __name__ == "__main__":
     what = sys.argv[1]
     data, market = load(), index()
     print(len(data), "signals;", len(market), "sessions of the index")
-    {"quality": quality, "books": books, "cross": cross, "filtered": filtered}[what](data, market)
+    {"quality": quality, "books": books, "cross": cross, "filtered": filtered, "chance": chance,
+     "pairs": pairs, "cutoffs": cutoffs, "who": who, "wider": wider, "insider": insider,
+     "final": final}[what](data, market)  # fmt: skip
