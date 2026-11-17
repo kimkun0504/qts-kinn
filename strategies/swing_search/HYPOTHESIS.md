@@ -391,3 +391,14 @@ Written before any of them is run.
 
 Trials added: 16 (splits) + 13 (book configurations) + 9 (2×2 and unions) + 24 (filtered
 books) + 4 (insider cells) + 112 (pairs) + 24 (cut-offs) + 2 + 1 + about 6 (books) = about 211.
+
+**Results, 2026-11-16 23:40 ET.** In REPORT.md, "The flat years". The filter survived all
+seven checks' terms: chance (0 of 5,000 random filters as good; 1 of 5,000 when dropping the
+same number in each year), the first span (sixth worst of 75 groups in 2010–2017 and the only
+one of the eight worst that stayed bad), the cut-offs (all 24 leave every year positive), and
+a second universe (the same group loses among 10% to 15% jumps). It does not carry over to
+insider buying. The 10% to 15% jumps stay under 3% and are not added. The filtered book has
+no losing year on either cost basis; adding the insider rule brings losing years back. The
+note in check 2 said eight facts: short interest exists only from 2018 and the two price
+splits are one fact, so seven facts and 75 groups of 60 trades or more were ranked. Trials
+added by the two addenda: about 210, all in family `swing_search`.

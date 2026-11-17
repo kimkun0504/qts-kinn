@@ -213,6 +213,113 @@ Limits: a stop or target is judged from each day's high and low, so the order wi
 is assumed (the stop first), and a target is assumed to fill as a limit order, which is
 generous in thin stocks.
 
+## The flat years: which signals fail (after the holdout, on signals of 2005 to October 2023)
+
+The owner's question: some years are flat, and a flat year is no better than a bank account.
+2020 is treated as an outlier; every figure is also given without it, and nothing below was
+chosen because of 2020. Plan and the checks: HYPOTHESIS.md, addenda of 2026-11-16 22:53 and
+23:08 ET. All of this is on years already read. The holdout is spent, so none of it is proof;
+see [what it is worth](#what-this-is-worth).
+
+**The finding.** A50's signals in companies that hold **net cash and whose stock is down over
+the past year** make nothing. Skipping them leaves a rule that made money in every year.
+
+| A50 signals (auction basis, a trade) | 2010–17 | 2005–09 | 2018–23 | 2018–23 without 2020 |
+|---|---|---|---|---|
+| All | 3.25% | 4.48% | 4.27% | 3.79% |
+| Up over the year, net debt | 6.67% (132) | 4.72% (84) | 9.91% (114) | 11.11% |
+| Up over the year, net cash | 2.32% (201) | 6.88% (122) | 1.96% (117) | 1.27% |
+| Down over the year, net debt | 4.14% (114) | 4.62% (107) | 4.55% (160) | 4.68% |
+| **Down over the year, net cash** | **0.56%** (117) | **−0.44%** (93) | **−0.32%** (104) | **−3.01%** |
+| **Kept: up over the year, or net debt** | **4.10%** (464) | **5.58%** (319) | **5.35%** (394) | **5.49%** |
+
+"Up over the year" is the stock's return over the 250 sessions to the signal's close; "net
+debt" is debt above cash at the last quarterly report filed before the signal. The kept
+trades are positive in each of the 19 years 2005 to 2023; the lowest is 1.9% (2011). Over all
+years the mean rises from 3.93% to 4.92% (4.91% without 2020) and 374 of 1,551 signals are
+skipped.
+
+The group that fails is half technology and health care, 71% loss-making, down 38% over the
+year at the median, with cash of about a fifth of its market value. Its jump gains 0.6% in
+three sessions and then stops; the other signals keep rising to 5.5% by the fifteenth.
+
+**Eight splits were looked at to find it.** Three beat all trades in every span: net debt,
+at a 250-day high, and up over the year. Share issuance (the idea the plan began with),
+profit, free cash flow, price and short interest did not split the trades the same way twice.
+
+**Checks, set before they were run.**
+
+- *Chance.* Of 5,000 random filters dropping the same number of trades, none reached the
+  filter's mean without 2020 (4.91%; the best was 4.81%). Dropping the same number in each
+  year, one in 5,000 did.
+- *Would 2010–2017 alone have found it?* Of 75 groups made from pairs of seven facts, "net
+  cash and down over the year" is the sixth worst of 2010–2017 (0.56%), and the only one of
+  the eight worst that also lost in the other years (−1.66% without 2020). Four of the eight
+  worst hold net cash. The worst group of 2010–2017 (heavy issuers priced over $5, −0.98%)
+  made 4.19% elsewhere, so a single span would have misled. Across all groups the ranking in
+  2010–2017 and in the other years correlates at 0.53.
+- *Cut-offs.* Moving the year's return between −30% and +20% and net cash between −10% and
+  +25% of market value (24 combinations) leaves every year positive in all 24, with a mean
+  without 2020 of 4.0% to 5.0%. It is not a knife edge.
+- *Other universes.* In jumps of 10% to 15% the same group loses (−0.66%, 5.40%, −9.89% by
+  span) and the kept trades make 2.0% to 2.9%, under the 3% set for adding them, so they are
+  not added. In companies of $300M to $2B the rule has no edge with or without the filter.
+- *Insider buying.* The filter does not carry over: rule I's "down, net cash" trades do no
+  worse than the rest (2.94%, 4.12%, 1.52%). The insider rule stays unfiltered.
+
+**As a book** (10 positions, $20,000, 2006 to 2023; each cell is dollars a year, Sharpe
+ratio, worst drawdown, worst year):
+
+| Book | Auction basis | Spread crossed | Losing years |
+|---|---|---|---|
+| A50 as it is | $4,974, 1.05, $10,113, +$209 | $3,459, 0.73, $10,896, −$1,440 | 0 and 2 |
+| **A50, filtered** | **$5,097, 1.13, $10,366, +$1,929** | **$3,808, 0.84, $11,638, +$700** | **0 and 0** |
+| A50, filtered, 20-day-average exit | $5,783, 1.30, $7,601, +$1,161 | $4,529, 1.02, $8,066, +$236 | 0 and 0 |
+| A50 with the inverse fund bought beside every position | $2,334, 1.12, $4,765, +$207 | $1,576, 0.76, $4,842, −$581 | 0 and 1 |
+| A50, no new trades while the index is under its 200-day average | $2,776, 0.79, $11,488, −$2,542 | $1,683, 0.48, $12,162, −$2,869 | 2 and 5 |
+| A50 filtered, plus insider rule I in idle slots | $8,279, 1.08, $16,013, −$2,752 | $4,821, 0.63, $21,037, −$6,050 | 1 and 4 |
+
+The filtered book by year, auction basis: 2006 $6,973, 2007 $6,496, 2008 $1,929, 2009 $8,630,
+2010 $7,973, 2011 $2,254, 2012 $3,705, 2013 $8,134, 2014 $2,792, 2015 $2,337, 2016 $4,164,
+2017 $2,163, 2018 $4,156, 2019 $2,523, 2020 $5,090, 2021 $9,323, 2022 $6,126, 2023 $6,112.
+With the spread crossed the worst are 2011 ($700), 2008 ($950) and 2017 ($1,000). Without
+2020 the book averages $5,046 a year, so 2020 is an ordinary year for it.
+
+It meets what the plan set as "solving the flat years": the worst year gains at least 5% of
+the account on the auction basis (9.6%) and no year loses with the spread crossed.
+
+What did not help: standing aside in a downtrend (the rule's best trades come then), and the
+purchased hedge (it halves the drawdown and more than halves the profit). The insider rule
+adds dollars and brings back losing years, so it is not a fix for them. With 20 positions
+the filtered book makes $2,984 a year (worst year +$1,068), and with rule I added $7,835
+(worst +$2,246 on the auction basis, two losing years with the spread crossed).
+
+**Stronger insider signals** (step 5; companies of $50M to $300M, hold 15, auction basis):
+
+| Cell | 2006–09 | 2018–22 | 2022 | 2023 check |
+|---|---|---|---|---|
+| $500,000 or more, one insider | 3.43% | 2.17% | −1.8% | 2.71% |
+| $500,000 or more, two or more | 4.50% | 2.49% | −4.4% | 2.49% |
+| $100,000 or more, two or more | 4.98% | 2.53% | −1.5% | 2.92% |
+| $100,000 or more, three or more | 5.49% | 1.43% | −1.2% | 4.34% |
+
+Two or more insiders is about one point better than rule I since 2018. Every cell lost in
+2022, and none removes the fall-off after 2017.
+
+### What this is worth
+
+The filter was found by looking at years already read, among eight splits, their pairs and
+24 cut-offs (about 210 trials added). The checks say it is unlikely to be chance and is not
+a knife edge, and the failing group shows up in a second universe. It is still a finding
+from data that has been seen. Two honest tests remain:
+
+1. **Forward.** The paper ledger, with the filtered rule as its own books.
+2. **The holdout, a second time.** The rule is now fixed in writing: skip an A50 signal when
+   the stock's 250-session return is zero or less and cash is at least debt, or when either
+   fact is missing and the other does not qualify it. The holdout's 460 signals have never
+   been split this way. Running it is the owner's decision; it would be a second look at a
+   spent holdout and should be read as such.
+
 ## Reproduce
 
 ```
@@ -225,4 +332,6 @@ uv run python research/claude/swing_reprice.py A50 early
 uv run python research/claude/swing_book.py A50 early search 10 20 --by-volume
 uv run python research/claude/swing_news.py choose     # family 18; then: test <cell>
 uv run --with lightgbm python research/claude/swing_model.py fit --small --no-market --name small
+cd research/claude && uv run python swing_overnight.py quality   # then: books, cross, filtered, chance,
+                                                              # pairs, cutoffs, who, wider, insider, final
 ```
