@@ -567,3 +567,31 @@ taken forward. A jump that had already held a close is no safer. 6 trials; famil
 keep falling". They do not: the buyer's loss is all between the purchase and that day's
 close (−4.3%, −5.0%, −7.0% by span); from that close they make +4.9%, +1.1%, +0.9%. This is
 a split of trades already measured, not a new cell. REPORT.md is corrected.
+
+## Addendum, 2026-11-17 15:33 ET: the rule read on the session the report could first move the stock (family 24)
+
+Written before it is measured. A50 reads a two-day return at the close of the session after
+the 8-K's *date*, because the data gave only the date. A report filed before the open and a
+report filed after the close are then treated alike, and the first is bought a session later
+than it needs to be. The lead of family 19 (an 8-K dated the day of the jump) patched that
+with a second rule beside A50. The SEC's acceptance times (downloaded today) allow one rule
+instead of two.
+
+**Rule T50.** R is the first session whose close comes after the earnings 8-K (item 2.02)
+was accepted: the same day if accepted before 16:00 on a session day, otherwise the next
+session. At the close of R: the one-day return (close of R−1 to close of R) is 15% or more
+and R's dollar volume is 5 times normal. Universe as A50 ($50M to under $300M, close $1,
+$250,000 a day). Buy at the open of R+1, sell at the close 15 sessions after R. **T50Q** adds
+A50Q's quality test (up over 250 sessions, or net debt).
+
+**Measured:** T50 and T50Q a trade on the auction basis in 2005–2009, 2010–2017, 2018–2023
+and 2018–2023 without 2020; how many T50 signals A50 also takes (and a day later or not);
+the 10-position $20,000 book of T50Q with the 15-session exit and with the 20-day-average
+exit, on the auction basis and with the spread crossed. 4 trials, charged to `swing_search`.
+
+**What counts.** T50Q becomes a paper book only if (a) a trade it makes at least what A50Q
+makes in each of the three spans and without 2020, and (b) its 10-position book makes more
+a year than A50Q's on both cost bases, has no losing year from 2006 to 2023 on the auction
+basis, and a worst drawdown no deeper than A50Q's ($10,366; $7,601 with the 20-day exit).
+Anything less is noted and A50Q's books stay as they are. Found on years already read: a
+pass is a candidate for the forward test, not a result. The holdout is not touched.
