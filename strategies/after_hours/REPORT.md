@@ -1,4 +1,4 @@
-# After hours: the edge was there until about 2019
+# After hours: an overnight gain in most years, missing in 2020 to 2022
 
 **Verdict: not passed; the nearest thing to a new result today.** 30 cells on 2010 to 2017,
 five met the bar, none passed both tests. 40 trials. The holdout is untouched.
@@ -33,10 +33,13 @@ A stock up 5% to 15% on its report was, even bought at the worst price of the mi
 
 Pass was 0.5%, weekly t of 2.5 and four years of five positive, in both test periods.
 
-- **The overnight gain was real for fifteen years and then stopped.** In companies of $300M
-  to $2B, buying after hours and selling at the next open made money in every year from 2005
-  to 2019 (0.45% to 1.48% a trade) and lost in 2020, 2021 and 2022. Far more people trade
-  after hours since 2020; the simplest reading is that the gap they left has been closed.
+- **The overnight gain was there in most years and absent in 2020 to 2022.** In companies of
+  $300M to $2B, buying after hours and selling at the next open made money in 14 of the 15
+  years from 2005 to 2019 (0.2% to 2.3% a trade; 2014 lost 0.1%), lost 0.3% to 0.6% in each of
+  2020, 2021 and 2022, and made 1.6% in the first ten months of 2023 (a figure seen while
+  checking this sentence, so not a clean check). The three losing years are the years when
+  after-hours trading by the public was at its height; whether the gain is back is what a
+  forward test would show.
 - **Large companies held for three weeks came closest:** positive in all three periods
   (1.5%, 1.9%, 1.4%) on 2,300 trades, and short of the bar only on steadiness since 2018
   (2020 and 2021 were slightly negative). This is the drift after results again, entered

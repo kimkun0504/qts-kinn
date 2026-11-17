@@ -73,3 +73,8 @@ close and 15 sessions; large held 15 sessions). Tests, each run once on 2005–2
 years of five) and failed 2018–2022 (0.11%; negative in 2020, 2021 and 2022). Large for 15
 sessions passed 2005–2009 (1.86%, t 4.37) and missed 2018–2022 on the t (1.35%, t 1.95,
 three years of five). 30 cells and 10 test runs: 40 trials.
+
+**Note, 2026-11-17 17:38 ET.** While checking the report's year-by-year sentence I printed
+every year for one cell (mid, up 5% to 15%, sold at the next open), which showed its 2023
+figure: +1.59% on 101 trades. The 2023 check was reserved for a cell that passed, and this
+one had not. It is recorded here as seen; for this cell 2023 is no longer an unseen check.
