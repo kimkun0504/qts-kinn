@@ -19,8 +19,9 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Why: [docs/decisions/](do
 | `src/kinn/validation` | Walk-forward, purged CV, DSR, PBO, permutation, canaries | |
 | `src/kinn/registry` | Run manifests + DuckDB index | |
 | `src/kinn/reporting` | Standard tearsheet | |
+| `src/kinn/lab` | The owner's Lab: data tables, daily simulator, worker (decision 0023) | |
 | `strategies/<name>/` | One strategy: universe, signals, parameters. Nothing else | `kinn` |
-| `apps/workbench/` | Research UI; reads only the run store through the schemas | `kinn` |
+| `apps/workbench/` | Research UI; reads the run store through the schemas; the Lab page starts the owner's runs | `kinn` |
 | `research/<agent>/` | Sandbox. Never imported, never a source of results | anything |
 | `tests/` | Unit, canary, regression | |
 | `docs/` | Architecture, owners, salvage log, decisions, retired strategies, checkpoints | |
