@@ -44,3 +44,8 @@ after hours on its results, which **open 2% (or 3%) or more higher**, should kee
 Trigger: the after-hours events of `after_hours` with a rise of 15% or more, $300M or more.
 Peers, trade, costs and bar as above (bought at the open, sold at the close or five sessions
 later). **4 cells**, charged to `sympathy`.
+
+**Results of the other direction, 2026-11-17 23:17 ET.** **None of the 4 cells meets the bar.** Peers that
+opened 2% or more up after an industry name jumped 15%+ after hours: −0.01% by the close and
++0.70% in five sessions (156 trades; t −1.21 and −0.22); 3%: −0.16% and +0.63% (83). Good news
+does not spread the way bad news does. 4 trials; `sympathy` has 8.

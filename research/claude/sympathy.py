@@ -31,7 +31,7 @@ def folder():
     return out
 
 
-def table() -> None:
+def table(direction: str = "down") -> None:
     settings = load_settings()
     store = DataStore(settings)
     swing = settings.data_dir / "research" / "swing"
@@ -47,7 +47,7 @@ def table() -> None:
                 join (select day, symbol, industry from read_parquet('{swing}/wide_*.parquet')
                       union all select day, symbol, industry from read_parquet('{swing}/early_*.parquet')) w
                   on w.day = n.day and w.symbol = n.symbol
-                where n.timing = 'after' and v.mcap >= 3e8 and n.reaction <= -0.15 and w.industry is not null),
+                where n.timing = 'after' and v.mcap >= 3e8 and {'n.reaction <= -0.15' if direction == 'down' else 'n.reaction >= 0.15'} and w.industry is not null),
             peers as (
                 select distinct t.day, w.permaticker, w.symbol
                 from trig t join (select day, symbol, permaticker, industry, mcap, adv, close, category
@@ -73,16 +73,18 @@ def table() -> None:
                                when q.adv < 1e8 then 0.0005 else 0.0002 end) as cost
             from peers join q on q.permaticker = peers.permaticker and q.date = peers.day
             where q.c5 is not null and peers.day <= DATE '2023-10-13'
-        ) to '{folder()}/peers.parquet' (format parquet)"""
+        ) to '{folder()}/{'peers' if direction == 'down' else 'peers_up'}.parquet' (format parquet)"""
     )
-    print(con.sql(f"select count(*), count(*) filter (where gap <= -0.02), count(*) filter (where gap <= -0.03) from '{folder()}/peers.parquet'").fetchall())
+    name = "peers" if direction == "down" else "peers_up"
+    print(con.sql(f"select count(*), count(*) filter (where abs(gap) >= 0.02), count(*) filter (where abs(gap) >= 0.03) from '{folder()}/{name}.parquet'").fetchall())
 
 
-def run(gap: int, hold: int, period: str):
+def run(gap: int, hold: int, period: str, direction: str = "down"):
     a, b = PERIODS[period]
     t = duckdb.sql(
         f"""select day, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week, g{hold} - cost as net
-            from '{folder()}/peers.parquet' where gap <= {-gap / 100} and year(day) between {a} and {b}"""
+            from '{folder()}/{"peers" if direction == "down" else "peers_up"}.parquet'
+            where {f"gap <= {-gap / 100}" if direction == "down" else f"gap >= {gap / 100}"} and year(day) between {a} and {b}"""
     ).to_arrow_table()
     d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
     net = d["net"].astype(float)
@@ -101,6 +103,12 @@ def run(gap: int, hold: int, period: str):
 if __name__ == "__main__":
     if sys.argv[1] == "table":
         table()
+    elif sys.argv[1] == "table_up":
+        table("up")
+    elif sys.argv[1] == "search_up":
+        for gap in (2, 3):
+            for hold in (1, 5):
+                print(run(gap, hold, "search", "up")[0])
     elif sys.argv[1] == "search":
         for gap in (2, 3):
             for hold in (1, 5):

@@ -1,18 +1,26 @@
 name: sympathy
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 8 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $300M or more, industry peers of a company down 15%+ after hours on results
 family: sympathy
-prior_trials: 0
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
 record:
   title: Sympathy
-  idea: Buying the peers that gap down after an industry name collapses on its results
+  idea: Buying the peers that gap after an industry name moves on its results
   horizon: One to five sessions
-  verdict: planned
+  verdict: closed
+  result: "No long trade: peers dragged down keep falling (−1% to −1.8%); good news does not spread"
   summary: >-
-    When a company collapses after hours on its results, its peers often open lower on no news
-    of their own. Buy those gaps at the open.
+    When a company collapses (or jumps) after hours on its results, its peers often open lower
+    (or higher) on no news of their own. Bought at that open.
+  weaknesses:
+    - Peers that gap down keep falling; that would be a short.
+  evidence:
+    - {when: 2026-11-17, title: 8 cells on 2010 to 2017, kind: failed, text: "After a collapse peers lose 1% to 1.8% more; after a jump peers make nothing steady."}
+  studies:
+    - {name: Peers after a collapse, when: 2026-11-17, trials: 4, result: "They keep falling", verdict: failed}
+    - {name: Peers after a jump, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
