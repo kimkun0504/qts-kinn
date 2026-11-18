@@ -6,7 +6,7 @@ follow it on paper.** A company of $50M to $300M that, on a quiet day with no 8-
 bought at the next open and held 20 sessions: +1.85% (2005–2009, t 4.21) and +1.77% (2018–2022,
 t 3.09) over the average small stock, +2.08% in 2023; the same days with an ordinary trade size
 make nothing. Against it: chosen as a follow-up; 0.94% in 2010–2017 with delisted stocks kept;
-tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 47 trials.
+tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 48 trials.
 
 Code: `research/claude/big_prints.py`.
 
@@ -374,3 +374,19 @@ A50 signals with a footprint of 2+ on one of the five sessions before: +2.21% (5
 2010–2017 against +3.26% for all A50, +6.69% (50) against +4.53% in 2005–2009, +4.45% (57)
 against +4.13% in 2018–2022, +2.63% (12) against +5.95% in 2023. Worse in 2010–2017 and 2023:
 not a filter. A50 is unchanged. 1 trial (family 47).
+
+## Follow-up 15: a report due by last year's calendar (read 18 November 2026, 00:46 ET)
+
+| Period | Passed cell | Due by last year (a report 336–364 days before) | Not due |
+|---|---|---|---|
+| 2010–2017 | +0.94% (2,155) | +1.92% (558; t 2.20; 8 of 8) | +0.60% |
+| 2005–2009 | +1.78% (2,633) | +1.29% (560; t −0.10; 4 of 5) | +1.92% |
+| 2018–2022 | +1.83% (1,906) | **+4.66%** (310; t 2.79; 5 of 5) | +1.28% |
+| 2023 | +2.10% (405) | +3.22% (49) | +1.94% |
+
+Better since 2010 (twice the passed cell, and 4.7% a trade in 2018–2022), worse in 2005–2009
+with a t near zero: by the rule set beforehand, **not used**. Note: results 8-Ks carry item 2.02
+only from August 2004, so the 2005 anniversaries are partly missing, which may weaken the first
+period. Together with check 8 it points the same way: big prints ahead of a report are the best
+of them. With a real calendar of report dates (the Benzinga question) this is the first thing to
+test forward. 1 trial (family 48).
