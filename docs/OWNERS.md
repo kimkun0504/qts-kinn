@@ -65,6 +65,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/index_deletion` | claude | 2026-11-17 | companies dropped from the S&P 500 that stay listed |
 | `strategies/spin_off` | claude | 2026-11-17 | newly spun-off companies and their parents |
 | `strategies/self_tender` | claude | 2026-11-17 | companies filing an issuer tender offer |
+| `strategies/after_hours_other` | claude | 2026-11-17 | large after-hours moves that are not results |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
