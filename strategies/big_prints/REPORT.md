@@ -230,3 +230,27 @@ With ten positions: 2005 +$5,455, 2006 +$8,111, 2007 +$863, 2008 −$2,708, 2009
 The losing years are years small stocks fell (2008, 2018, 2022, 2023); against the small-stock
 average 14 of 19 years are positive at every cap. About 15% a year on the money tied up with
 ten positions, before any hedge: smaller than A50, and it does not need the same events.
+
+## Check 7: the price a buyer gets, and the largest winners (read 18 November 2026, 00:22 ET)
+
+**Bought at the first 30 minutes' volume-weighted price** of D+1 instead of the official open
+(`research/claude/big_prints_fill.py`), over the average small stock:
+
+| Period | Signals priced | From the open | From the 30-minute VWAP | Median VWAP against the open |
+|---|---|---|---|---|
+| 2010–2017 | 2,075 | +0.93% | +0.88% (t 2.92) | 0.00% |
+| 2018–2022 | 1,532 | +1.96% | +1.85% (t 3.06) | 0.00% |
+| 2023 | 268 | +2.08% | +1.87% (t 1.56) | 0.00% |
+
+A buyer spread over the first half hour does about as well as the auction: the edge is not in
+the opening print.
+
+**The ten largest winners** (+131% to +406% in 20 sessions) are, with one exception, real: a
+2022 small-stock squeeze (IMTE), drug-trial and approval news (FULC, FPRX, MIRM, SRNE, VRUS,
+BCAB), a SPAC that squeezed after its merger vote (TVAC), EMES. The exception is SUPR in April
+2008, where the price table jumps from $4.58 to $14.90 across a month with no rows (an
+unrecorded share change or a reused identifier): a data error. Signals whose hold spans a gap
+of more than seven days in the price table are 124 of 7,099; without them the cell reads
++0.95% (t 3.28), +1.78% (t 4.10), +1.87% (t 3.10) and +2.02% in 2023 — unchanged.
+
+2 trials (family 32).
