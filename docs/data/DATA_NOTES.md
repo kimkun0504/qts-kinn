@@ -82,6 +82,24 @@ dividends not added back; empty until a company has 60 sessions), `sessions_prio
 `category`. A `Universe` may filter on these only (a test enforces it). The same-day columns
 (`open` … `dollar_volume`) are outcomes.
 
+## Transaction counts in the intraday view
+
+The owner-authorized view change on 2026-11-18 exposes the
+existing minute `transactions` column as `SymbolDay.transactions`.
+It is available at bar close like volume and truncates with the
+same price-bar prefix in replay. Missing observations remain
+missing; legacy or synthetic views can declare the entire field
+unavailable with None. Observed zeros are preserved rather than
+treated as inferred trades. The supplied array must align with
+the minute array.
+
+This is an existing build column, not a new external input.
+The run's data build and code commit pin its source and view
+semantics. No ingestion or rebuild is part of the change.
+Volume divided by aggregate count is a proxy, not identification
+of a parent order, institution or signed order flow. Sale-condition
+eligibility and aggregate reporting can affect its interpretation.
+
 ## Findings from the audit
 
 1. **Identity matching is sound; the unmatched days are OTC.** 85–94% of Sharadar common-stock

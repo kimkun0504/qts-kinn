@@ -1,5 +1,5 @@
 name: earnings_trade_size_shift
-status: event-study
+status: parked
 engine: intraday
 universe: domestic common stocks after an available typed earnings disclosure
 cost_calibration: ibkr_pro_tiered
@@ -10,9 +10,9 @@ record:
   title: Trade-size expansion after earnings
   idea: Expanding average shares per print alongside increasing activity
   horizon: Two hours before the first liquidation attempt
-  verdict: event-study
-  label: Development study ready
-  result: Untested
+  verdict: parked
+  label: Only two development events
+  result: Two events averaged +2.52% net and +2.23% at doubled slippage; insufficient sample
   summary: >-
     After an available earnings disclosure, compare two short
     regular-session windows for expanding average shares per
@@ -21,4 +21,4 @@ record:
     - Print size does not identify an institution or a parent order.
     - Minute bars cannot verify opening-print depth or quoted execution costs.
   waiting:
-    - The clean committed development study and its frozen gate decision.
+    - A separately preregistered hypothesis; this rule cannot advance.
