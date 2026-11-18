@@ -1,0 +1,22 @@
+name: quiet_size_breakout
+status: hypothesis
+engine: intraday
+universe: domestic common stocks with active narrow-range trading
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: big_prints
+prior_trials: 49
+record:
+  title: Larger prints at a narrow-range breakout
+  idea: Test large-print participation before a large price expansion
+  horizon: Two hours after first fill
+  verdict: hypothesis
+  label: Preregistered primary and control
+  result: Untested
+  summary: >-
+    At a fixed morning time, test a small breakout on active
+    trading, then compare a larger-print condition with the
+    identical base events without that condition.
+  weaknesses:
+    - Aggregate print size does not reveal trader identity or signed demand.
+    - The event study approximates execution and ignores account constraints.

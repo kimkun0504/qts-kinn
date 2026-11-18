@@ -46,6 +46,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/auction_gap_repair` | gpt | 2026-11-18 | opening discount to an active premarket reference, one rebound rule |
 | `strategies/earnings_trade_size_shift` | gpt | 2026-11-18 | typed earnings and expanding trade size; count view authorized and tested |
 | `strategies/fragmented_selloff_exhaustion` | gpt | 2026-11-18 | smaller-print selloff exhaustion with a frozen unfiltered control |
+| `strategies/quiet_size_breakout` | gpt | 2026-11-18 | larger-print narrow-range breakout at one fixed clock time |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
