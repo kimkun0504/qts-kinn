@@ -339,3 +339,9 @@ way, in all three periods; 2023 a check), and reported beside the after-hours fi
 How many of the small-company long's large-piece signals (bought at the next open) are also
 A50 signals (the same company, an A50 signal day one to three sessions after the evening), and
 what the rest make on their own, in each period.
+
+## Addendum, 2026-11-18 00:44 ET: who buys after hours in mid-sized companies (1 trial)
+
+The same split for $300M–$2B, up 5% to 15% after hours on results, bought at the next open
+(the auction, no after-hours fill), held 15 sessions. **1 cell:** the larger-piece half,
+judged as a filter: better per trade than the whole cell in all three periods, 2023 a check.
