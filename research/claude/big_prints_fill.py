@@ -55,7 +55,7 @@ def fills(first: int, last: int) -> None:
         price = bars.column("close").to_numpy()
         volume = bars.column("volume").to_numpy().astype(float)
         for g in group:
-            k = np.array([s == g[3] for s in sym]) & (minute >= 570) & (minute < 600)
+            k = np.array([s == g[3] for s in sym], dtype=bool) & (minute >= 570) & (minute < 600)
             if volume[k].sum() > 0:
                 out.append({"signal_day": g[0], "permaticker": g[1], "vwap30": float(np.dot(price[k], volume[k]) / volume[k].sum()),
                             "next_open": g[4]})  # fmt: skip
