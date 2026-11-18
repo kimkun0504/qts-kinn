@@ -42,3 +42,9 @@ weekly t (of that) of 3, six years of eight, positive after costs. Tests on 2005
 2018–2022, each cell that goes forward run once: half those, t of 2.5, four years of five, in
 both. 2023 is a check (its holds run into the sealed period and are cut at 2023-11-08). The
 holdout stays sealed.
+
+**Results, 2026-11-17 23:02 ET.** In REPORT.md. **None of the 8 cells meets the bar.** 1,962 events before
+the one-a-year rule (832 of them companies located in China or Hong Kong). In 2010–2017 the
+means against the average small stock range from −2% to +22% but the **medians are −6% to
+−23%** and every t is under 1.1: a few net-nets multiply and most trail. 8 trials. No tests
+run.

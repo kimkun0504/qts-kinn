@@ -1,10 +1,10 @@
 name: net_net
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 8 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $30M and under its net current assets, $250k a day
 family: net_net
-prior_trials: 0
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Net-nets
   idea: Small companies priced under their current assets less all liabilities
   horizon: 6 to 12 months
-  verdict: planned
+  verdict: closed
+  result: "Most trail other small companies (median −6% to −23%); a few multiply"
   summary: >-
-    Graham's rule: buy a company whose market value is under its current assets less all its
-    liabilities, after its quarterly report, and hold six or twelve months.
+    Graham's rule: bought after a quarterly report when market value is under current assets
+    less all liabilities, held six or twelve months.
+  weaknesses:
+    - The median net-net trails other small companies; every t is under 1.1.
+  evidence:
+    - {when: 2026-11-17, title: 8 cells on 2010 to 2017, kind: failed, text: "Means −2% to +22%, medians −6% to −23% against the average small stock."}
+  studies:
+    - {name: Graham net-nets, when: 2026-11-17, trials: 8, result: "No cell meets the bar", verdict: failed}
