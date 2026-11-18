@@ -39,3 +39,13 @@ size ($300M–$2B, $2B and over) × hold (10, 20) = **4**, family `big_prints`.
 Search 2010–2017: 150 trades, 1% a trade over the average, weekly t of 3, six years of eight,
 positive after costs. Tests on 2005–2009 and 2018–2022 at 0.5%, t of 2.5, four years of five.
 2023 is a check. The holdout stays sealed.
+
+## Follow-up: a stronger footprint, and smaller companies (written 2026-11-18 00:02 ET, after the 4 cells)
+
+The mid-sized cells beat the average in all eight years by about half a point. If the reading
+is a large buyer, a larger footprint, and companies where a fund's order is a larger part of
+the volume, should show more. **4 cells, held 20 sessions only:** $300M–$2B with a footprint
+of 3 or more, and of 4 or more; $50M–$300M ($250,000 a day, $2 or more) with a footprint of 2
+or more, and of 3 or more. Every other condition as above (the share of footprint days is
+counted within each size). Same bars. These were chosen after seeing the first four cells, so
+the search years carry less weight than the tests.
