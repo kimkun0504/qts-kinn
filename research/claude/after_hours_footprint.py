@@ -40,12 +40,14 @@ def main(side: str = "short") -> None:
             f"""select n.day, n.symbol from read_parquet('{folder()}/entries_*.parquet') n
                 join read_parquet('{folder()}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
                 join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
-                where n.timing = 'after'"""
+                where n.timing = 'after'
+                order by n.day, n.symbol, n.timing"""
         ).fetchall()
     else:
         names = duckdb.sql(
             f"""select n.day, n.symbol from read_parquet('{folder()}/entries_*.parquet') n
-                join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing"""
+                join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+                order by n.day, n.symbol, n.timing"""
         ).fetchall()
     assert len(names) == len(d["day"])
     picked = [(i, names[i][0], names[i][1]) for i in np.flatnonzero(keep)]

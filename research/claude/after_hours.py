@@ -197,7 +197,8 @@ def load_short() -> dict[str, np.ndarray]:
             from read_parquet('{out}/entries_*.parquet') n
             join read_parquet('{out}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
             join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
-            where n.timing = 'after'"""
+            where n.timing = 'after'
+            order by n.day, n.symbol, n.timing"""
     ).to_arrow_table()
     d = {n: table.column(n).to_numpy(zero_copy_only=False) for n in table.column_names}
     d["timing"] = np.array(["after"] * len(d["day"]))
@@ -253,7 +254,8 @@ def load() -> dict[str, np.ndarray]:
                         when v.adv < 1e8 then 0.0005 else 0.0002 end
                    + 2 * least(0.01, greatest(0.000175, 0.0035 / n.paid)) as cost
             from read_parquet('{out}/entries_*.parquet') n
-            join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing"""
+            join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+            order by n.day, n.symbol, n.timing"""
     ).to_arrow_table()
     return {n: table.column(n).to_numpy(zero_copy_only=False) for n in table.column_names}
 
