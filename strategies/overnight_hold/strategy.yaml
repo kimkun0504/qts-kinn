@@ -4,7 +4,7 @@ status: event-study       # plan written 2026-11-17; nothing measured yet
 engine: daily
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, price >= $5, no results due
 family: overnight_hold
-prior_trials: 0
+prior_trials: 30
 cost_calibration: ibkr_pro_tiered
 owner: claude
 

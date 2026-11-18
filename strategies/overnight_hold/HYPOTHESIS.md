@@ -108,3 +108,12 @@ reading, at prices a market-on-close and market-on-open order do receive:
 The six night cells, the same bar. **6 cells.** A cell that passes is "auction-dependent"
 in the sense of the swing search's rule of 16 November and is a lead to confirm with ticks,
 not a finding.
+
+**Results of the auction-price reading, 2026-11-17 22:17 ET.** In REPORT.md. Three cells met the search
+bar: under $300M with the 20-session score (0.235% a night, t 3.05, seven years of eight)
+and the 60-session score (0.306%, t 4.28, eight of eight), and $300M to $2B with the
+60-session score (0.162%, t 3.34, seven of eight). Tested once each: **all three pass
+2005–2009** (0.57%, 0.67%, 0.32% a night; t 3.10, 4.72, 3.26) and **all three fail 2018–2022**
+(−0.12%, +0.02%, +0.05%; two years of five positive; 2021 and 2022 lost 22% to 87%). Not
+passed. 6 cells and 6 test runs; `overnight_hold` has 30 trials. The night gain is real
+to 2017 and in 2020, and gone in 2018–2019 and 2021–2022.

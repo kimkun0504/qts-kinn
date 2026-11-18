@@ -211,11 +211,37 @@ def repriced(window: int, size: str) -> dict[str, np.ndarray]:
     return {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
 
 
-def reprice(*periods) -> None:
+def crossed(window: int, size: str) -> dict[str, np.ndarray]:
+    t = duckdb.sql(
+        f"""with k as (
+                select k.day, k.night, k.price
+                from '{folder()}/picks.parquet' k
+                join read_parquet('{folder()}/prints_*.parquet') c1 on c1.date = k.day and c1.symbol = k.symbol
+                join read_parquet('{folder()}/prints_*.parquet') c2 on c2.date = k.next_date and c2.symbol = k.next_symbol
+                where k.in{window} and k.size = '{size}'
+                  and k.raw_close between c1.close_low and c1.close_high
+                  and abs(c2.open_first / k.next_open - 1) <= 0.002)
+            select day, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week,
+                   avg(night - {REPRICE_COST}) as net, avg(night) as gross, avg(night) as official,
+                   count(*) as n, 1.0 as opened
+            from k group by day order by day"""
+    ).to_arrow_table()
+    return {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+
+
+def crossed_test(window, size) -> None:
+    b = crossed(int(window), size)
+    for name in ("early", "late"):
+        m = measure(b, period(b, name))
+        print(show(f"night {window} {size} {name}", m) + f"  stocks a night {b['n'][period(b, name)].mean():.1f}")
+        print("    " + "  ".join(f"{y} {100 * v:.1f}%" for y, v in m["yearly"].items()))
+
+
+def reprice(*periods, source=repriced) -> None:
     passed = []
     for window in (20, 60):
         for size in SIZES:
-            b = repriced(window, size)
+            b = source(window, size)
             for name in periods:
                 keep = period(b, name)
                 m = measure(b, keep)
@@ -238,6 +264,10 @@ if __name__ == "__main__":
         minutes(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == "reprice":
         reprice(*sys.argv[2:])
+    elif sys.argv[1] == "crossed_test":
+        crossed_test(*sys.argv[2:4])
+    elif sys.argv[1] == "crossed":
+        reprice(*sys.argv[2:], source=crossed)
     elif sys.argv[1] == "table":
         table()
     elif sys.argv[1] == "search":
