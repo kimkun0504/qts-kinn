@@ -128,7 +128,11 @@ The ledger is ready; it sends no order and needs no borrow:
 export SEC_USER_AGENT="Your Name your@email"
 uv run python tools/owner/paper_big_prints.py --since 2026-10-20   # first run: four weeks back
 uv run python tools/owner/paper_big_prints.py                      # then each evening after 16:30
+uv run python tools/owner/paper_big_prints.py --since 2026-10-20 --redo   # read recorded evenings again
 ```
+
+Evenings the rule skips as index days are still read: their signals are recorded apart, marked
+"index day", outside the rule's figures (follow-up 17).
 
 Each evening it fetches the vendor's grouped daily bars (unadjusted, with the trade counts),
 keeps them in `paper/big_prints/bars/` so later evenings fetch one day, reads every stock's
