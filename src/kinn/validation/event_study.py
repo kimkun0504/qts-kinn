@@ -212,6 +212,14 @@ def summarize(events: pa.Table) -> dict:
     everything = np.ones(n, dtype=bool)
     out: dict = {"events": n, "horizons": list(HORIZONS)}
     if n == 0:
+        if "completed" in table:
+            out.update(
+                execution_profile="extended_v1",
+                horizons=[],
+                unresolved_positions=0,
+                eligible_for_portfolio=False,
+                curve={},
+            )
         return out
     years = np.array([d.year for d in table["day"]])
     adv = table["adv20_prev"].astype(float)

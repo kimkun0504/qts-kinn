@@ -155,9 +155,17 @@ def render(run_dir: Path) -> tuple[str, str]:
         f"`{manifest['git']['commit'][:8]}`"
     )
     if not s["events"]:
+        counts = s.get("counts", {})
+        facts = (
+            f"No filled events. Signals: {counts.get('signals', 0)}; "
+            f"unfilled entries: {counts.get('unfilled', 0)}; "
+            f"unresolved positions: {counts.get('unresolved_positions', 0)}. "
+            "No return, daily P&L t-statistic or drawdown estimate is available."
+        )
         return (
-            f"<html><body><h1>{title}</h1><p>No events.</p></body></html>",
-            f"# {title}\n\nNo events.\n",
+            f"<html><body><h1>{html.escape(title)}</h1><p>{html.escape(head)}</p>"
+            f"<p>{html.escape(facts)}</p></body></html>",
+            f"# {title}\n\n{head}\n\n{facts}\n",
         )
     curve = s["curve"]
     primary = next(iter(curve), "r_close") if s.get("execution_profile") else "r_close"

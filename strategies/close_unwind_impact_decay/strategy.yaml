@@ -1,5 +1,5 @@
 name: close_unwind_impact_decay
-status: event-study
+status: parked
 engine: intraday
 universe: domestic common stocks with a rally before the close
 cost_calibration: ibkr_pro_tiered
@@ -10,9 +10,9 @@ record:
   title: Closing unwind and impact decay
   idea: Recovery as selling impact subsides after the close
   horizon: 15 minutes after the entry fill
-  verdict: event-study
-  label: Execution implementation under test
-  result: Candidate calculation tested, empirical returns unmeasured
+  verdict: parked
+  label: Too sparse in development
+  result: One signal and no executable entries; no return estimate
   summary: >-
     After a sharp drop following a regular-session rally, enter on
     the first uptick when price impact per dollar of down-closing
@@ -21,4 +21,4 @@ record:
     - Turnover in down-closing minutes approximates selling activity.
     - After-hours spread, depth and execution remain unmeasured.
   waiting:
-    - Execution tests and a clean committed development study.
+    - A separately preregistered hypothesis; this rule cannot advance.

@@ -250,6 +250,12 @@ def test_unresolved_events_stay_visible_and_invalidate_the_study():
     assert not summary["eligible_for_portfolio"] and summary["curve"] == {}
 
 
+def test_empty_extended_study_does_not_advertise_unmeasured_horizons():
+    summary = event_study.summarize(event_study.EXTENDED_SCHEMA.empty_table())
+    assert summary["events"] == 0 and summary["execution_profile"] == "extended_v1"
+    assert summary["horizons"] == [] and not summary["eligible_for_portfolio"]
+
+
 def candidate_day(day, *, unresolved=False):
     prices = [9.8, 9.6, 9.4, 9, 8.98, 8.95, 8.97]
     rows = [flat(570, 9.4), flat(900, 10.3), flat(959, 10)]
