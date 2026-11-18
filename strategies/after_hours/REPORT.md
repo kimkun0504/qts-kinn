@@ -1,6 +1,6 @@
 # After hours: an overnight gain in most years, missing in 2020 to 2022
 
-**Verdict: not passed; the nearest thing to a new result on 17 November.** Five studies, 105
+**Verdict: not passed; the nearest thing to a new result on 17 November.** Seven studies, 109
 trials, nothing passed both tests. The holdout is untouched.
 
 Plan: [HYPOTHESIS.md](HYPOTHESIS.md). An earnings 8-K accepted after the close (or before
@@ -134,6 +134,23 @@ Nothing here has passed. Three leads, in the order I rate them:
 **What they need before money:** after-hours quotes around reports (to see what $5,000 really
 pays or receives), the broker's rules and borrow for short sales after hours, and a forward
 record. All three can be followed on paper each evening at no cost.
+
+## How robust the short is (2 trials, and a look at short interest)
+
+| Short, after costs | 2005–2009 | 2010–2017 | 2018–2022 | 2023 |
+|---|---|---|---|---|
+| As tested: the low of the first minute after the reading | +2.98% (143) | +2.82% (251) | +1.60% (201) | +6.66% (44) |
+| Only entries whose minute traded $5,000+ | +3.20% (108) | +2.66% (186) | +1.61% (151) | +6.48% (29) |
+| Sold at the lowest price of five minutes | +2.17% | +2.23% | +0.70% (t 0.11) | +5.28% |
+
+- **Thin minutes do not carry it**: dropping them changes nothing.
+- **The price the order gets does.** With the worst of five minutes, 2018–2022 is left with 0.7%
+  a trade. A paper or live order must be quick, at or near the first after-hours price after
+  the reading.
+- **The shorts are crowded before the report.** For 2018–2023 signals, short interest at the
+  last report was a median 8.2% of shares (7.0 days to cover), three times the 2.7% of other
+  companies of the size; a tenth were above 23%. Those are the ones a broker may not lend, or
+  lend dearly. Code: `research/claude/after_hours_robust.py`.
 
 ## Following the short on paper (built 2026-11-17)
 

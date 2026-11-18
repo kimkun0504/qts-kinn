@@ -221,3 +221,11 @@ Each is read on 2005–2009, 2010–2017, 2018–2022 and 2023 together with the
 trials. And, as a description that counts no trial: for the signals of 2018–2023 (the years
 with short-interest data on disk), the short interest as a share of shares and as days to cover
 at the last report before the signal, against all stocks of the same size.
+
+**Results of the harsher fills, 2026-11-17 23:11 ET.** In REPORT.md. Only entries with $5,000 or more in
+the minute: 3.20%, 2.66%, 1.61%, 6.48% (2005–09, 2010–17, 2018–22, 2023), about the same as the
+plain rule. Sold at the worst of five minutes: 2.17%, 2.23%, **0.70%** (t 0.11), 5.28%. The thin
+minutes do not carry the result; the price the order gets does, most in 2018–2022. Short
+interest before the signal (2018–2023, 244 signals): median 8.2% of shares and 7.0 days to cover
+against 2.7% and 4.6 for all stocks of the size; a tenth above 23%. 2 trials; `after_hours`
+has 109.
