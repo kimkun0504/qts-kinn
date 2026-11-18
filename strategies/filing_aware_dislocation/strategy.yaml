@@ -1,5 +1,5 @@
 name: filing_aware_dislocation
-status: parked
+status: developing
 engine: intraday
 universe: filing_aware_dislocation
 cost_calibration: ibkr_pro_tiered
