@@ -54,3 +54,8 @@ trade (bought at the open of the first session on or after the split, held 20 or
 same bar against the average stock of the size. Splits are rare in small companies, so the
 sizes are $300M to $2B and $2B or more (the average stock of $2B or more measured the same
 way). **4 cells**, family `dividend_signal`.
+
+**Results for forward splits, 2026-11-17 22:51 ET.** **None of the 4 cells meets the bar.** 1,131 splits
+of 1.5 or more (2005–2023), 389 in the search years. Against the average stock: $300M to $2B
++0.39% (20 sessions) and +1.16% (60), t under 1; $2B or more −0.71% and +0.23%. 4 trials;
+`dividend_signal` has 12.

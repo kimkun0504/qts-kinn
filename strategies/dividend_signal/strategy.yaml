@@ -1,18 +1,26 @@
 name: dividend_signal
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 12 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $2B, a dividend initiation or a raise of a quarter or more
 family: dividend_signal
-prior_trials: 0
+prior_trials: 12
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
 record:
   title: Dividend signal
-  idea: A small company that starts paying a dividend, or raises it by a quarter or more
+  idea: A company that starts or raises a dividend, or splits its stock
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: closed
+  result: "No steady edge over other stocks after initiations, raises or splits"
   summary: >-
-    A dividend started or raised is a promise the company cannot easily take back. Buy at the
-    ex-date and hold 20 or 60 sessions.
+    A dividend started or raised, or a forward split, bought at the ex-date or split date and
+    held 20 or 60 sessions, against the average stock of its size.
+  weaknesses:
+    - About a point over three months against other stocks, with a t under 2 in every cell.
+  evidence:
+    - {when: 2026-11-17, title: 12 cells on 2010 to 2017, kind: failed, text: "Initiations, raises and splits: no cell near the bar."}
+  studies:
+    - {name: Dividend initiations and raises, when: 2026-11-17, trials: 8, result: "No cell meets the bar", verdict: failed}
+    - {name: Forward splits, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
