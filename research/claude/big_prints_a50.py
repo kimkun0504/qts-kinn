@@ -20,7 +20,7 @@ from swing_earnings import weekly
 SMALLER = "earn and ret2 >= 0.05 and ret2 < 0.15 and dvr2 >= 3 and mcap >= 5e7 and mcap < 3e8"
 
 
-def main(rule: str = A50, floor: float = 1.0) -> None:
+def main(rule: str = A50, floor: float = 1.0, before: bool = False) -> None:
     settings = load_settings()
     store = DataStore(settings)
     base = settings.data_dir / "research" / "swing"
@@ -43,12 +43,14 @@ def main(rule: str = A50, floor: float = 1.0) -> None:
             b as (select p.*, d.volume / d.transactions as ats
                   from p left join read_parquet('{bars}/*.parquet') d on d.symbol = p.symbol and d.date = p.date
                   and d.transactions > 0 and d.volume > 0),
-            q as (select *, ats / exp(avg(ln(ats)) over (partition by permaticker order by date
-                                rows between 60 preceding and 1 preceding)) as fp,
+            f0 as (select *, ats / exp(avg(ln(ats)) over (partition by permaticker order by date
+                                rows between 60 preceding and 1 preceding)) as fp_day from b),
+            q as (select *, case when {before} then max(fp_day) over (partition by permaticker order by date
+                                rows between 5 preceding and 1 preceding) else fp_day end as fp,
                          lead(c, 1) over w as c1, lead(oc, 1) over w as oc1,
                          last_value(c) over (partition by permaticker order by date
                                              rows between current row and 15 following) as c15
-                  from b window w as (partition by permaticker order by date))
+                  from f0 window w as (partition by permaticker order by date))
             select s.day, year(s.day) as yr, (date_diff('day', DATE '2003-12-29', s.day) // 7) as week,
                    q.fp, exp(q.c15 - q.c1) / q.oc1 - 1 - {AUCTION} as net
             from s join q on q.permaticker = s.permaticker and q.date = s.day
@@ -74,5 +76,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "smaller":
         main(SMALLER, 1.5)
+    elif len(sys.argv) > 1 and sys.argv[1] == "before":
+        main(A50, 2.0, True)
     else:
         main()
