@@ -1,10 +1,10 @@
 name: spin_off
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: closed            # failed the search period 2026-11-17
 engine: daily
 universe: companies newly spun off, and their parents
 family: spin_off
-prior_trials: 0
+prior_trials: 3
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,8 @@ record:
   title: Spin-off
   idea: The new company in its first weeks, after the parent's holders sell it
   horizon: 60 sessions
-  verdict: planned
+  verdict: failed
+  result: New companies beat the average stock by 3.6% a quarter in 2010–17, t under 2
   summary: >-
     Holders of the parent receive shares they did not choose and many must sell. Buy the new
     company after the selling, or straight away, and hold three months.
