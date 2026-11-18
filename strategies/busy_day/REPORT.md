@@ -1,6 +1,6 @@
 # Busy day: report
 
-Read on 17 November 2026 (23:59 ET), after the plan. Code: `research/claude/busy_day.py`.
+Read on 17 November 2026 (23:57 ET), after the plan. Code: `research/claude/busy_day.py`.
 
 | 2010–2017, $300M–$2B up 5% on results | Trades | Over the average stock | Weekly t | Years positive | After costs |
 |---|---|---|---|---|---|
