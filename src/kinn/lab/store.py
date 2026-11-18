@@ -3,6 +3,8 @@
 <KINN_LAB_DIR or beside the run store>/lab/
     algorithms/<name>.py        the owner's algorithms
     library/<name>.py           helper modules an algorithm imports as ``lab.<name>``
+    history/<name>/<time>.py    every earlier version of an algorithm, kept at each save
+    history/library-<name>/     the same for a helper module
     trash/                      deleted files (kept, never removed by the Lab)
     cache/                      prices kept between runs (rebuilt when missing)
     runs/<run_id>/              algorithm.py, pkg/lab/ (the library as it was), request.json,
@@ -30,6 +32,8 @@ NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 MODULE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")  # importable: lab.<name>
 RESERVED = {"library"}  # a path segment of the page
 MAX_CODE = 200_000  # characters
+KEEP_VERSIONS = 200  # earlier versions kept a file; the oldest go first
+VERSION = re.compile(r"^\d{8}T\d{12}Z$")
 TEMPLATES = Path(__file__).parent / "templates"
 STATES = ("queued", "running", "complete", "failed", "cancelled", "interrupted")
 FINAL = ("complete", "failed", "cancelled", "interrupted")
@@ -109,18 +113,65 @@ def read_algorithm(root: Path, name: str) -> str:
     return path.read_text()
 
 
-def save_algorithm(root: Path, name: str, code: str) -> dict:
-    check_name(name)
+def _replace(path: Path, code: str, history: Path) -> None:
+    """Write ``code`` to ``path`` so a reader never sees half a file, first keeping what was
+    there in ``history`` when it differs: no save can lose earlier work."""
     if not isinstance(code, str):
         raise LabError("The code must be text.")
     if len(code) > MAX_CODE:
         raise LabError(f"The code is longer than {MAX_CODE:,} characters.")
-    folder = root / "algorithms"
-    folder.mkdir(parents=True, exist_ok=True)
-    tmp = folder / f".{name}.py.tmp"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        before = path.read_text()
+        if before != code:
+            history.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+            (history / f"{stamp}.py").write_text(before)
+            for old in sorted(history.glob("*.py"))[:-KEEP_VERSIONS]:
+                old.unlink(missing_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
     tmp.write_text(code)
-    os.replace(tmp, folder / f"{name}.py")
+    os.replace(tmp, path)
+
+
+def save_algorithm(root: Path, name: str, code: str) -> dict:
+    check_name(name)
+    _replace(root / "algorithms" / f"{name}.py", code, root / "history" / name)
     return {"name": name, "description": describe(code)}
+
+
+def _versions(folder: Path) -> list[dict]:
+    out = []
+    for path in sorted(folder.glob("*.py"), reverse=True) if folder.exists() else []:
+        if not VERSION.match(path.stem):
+            continue
+        code = path.read_text()
+        stamp = path.stem
+        saved = datetime.strptime(stamp, "%Y%m%dT%H%M%S%fZ").replace(tzinfo=UTC)
+        first = (code.splitlines() or [""])[0][:120]
+        out.append({"version": stamp, "saved_at": saved.isoformat(),
+                    "lines": code.count("\n") + 1, "characters": len(code),
+                    "first_line": first})  # fmt: skip
+    return out
+
+
+def _version(folder: Path, version: str) -> str:
+    if not isinstance(version, str) or not VERSION.match(version):
+        raise LabError("Not a saved version.")
+    path = folder / f"{version}.py"
+    if not path.exists():
+        raise LabError("There is no such saved version.")
+    return path.read_text()
+
+
+def history(root: Path, name: str) -> list[dict]:
+    """Earlier versions of an algorithm, newest first: each is what the file held before a
+    save changed it."""
+    return _versions(root / "history" / check_name(name))
+
+
+def read_version(root: Path, name: str, version: str) -> str:
+    return _version(root / "history" / check_name(name), version)
 
 
 def delete_algorithm(root: Path, name: str) -> None:
@@ -152,16 +203,16 @@ def read_module(root: Path, name: str) -> str:
 
 def save_module(root: Path, name: str, code: str) -> dict:
     check_module(name)
-    if not isinstance(code, str):
-        raise LabError("The code must be text.")
-    if len(code) > MAX_CODE:
-        raise LabError(f"The code is longer than {MAX_CODE:,} characters.")
-    folder = root / "library"
-    folder.mkdir(parents=True, exist_ok=True)
-    tmp = folder / f".{name}.py.tmp"
-    tmp.write_text(code)
-    os.replace(tmp, folder / f"{name}.py")
+    _replace(root / "library" / f"{name}.py", code, root / "history" / f"library-{name}")
     return {"name": name, "description": describe(code)}
+
+
+def module_history(root: Path, name: str) -> list[dict]:
+    return _versions(root / "history" / f"library-{check_module(name)}")
+
+
+def read_module_version(root: Path, name: str, version: str) -> str:
+    return _version(root / "history" / f"library-{check_module(name)}", version)
 
 
 def delete_module(root: Path, name: str) -> None:

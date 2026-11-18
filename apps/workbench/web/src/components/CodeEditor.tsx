@@ -10,10 +10,9 @@ import { basicSetup } from "codemirror";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { Field, Finding } from "../lib/lab";
 
+/** Nothing outside the editor writes into the code: only typing (and Restore, which replaces
+ *  the whole file in a way ⌘Z undoes) changes it. */
 export interface CodeEditorHandle {
-  /** Put text at the cursor and focus the editor. False, and nothing changes, when the owner
-   *  has not put a cursor in the editor yet: text is never dropped at an unseen place. */
-  insert: (text: string) => boolean;
   /** Put the cursor on a line (1-based) and column (0-based) and show it. */
   reveal: (line: number, column?: number) => void;
   focus: () => void;
@@ -105,7 +104,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 ) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const touched = useRef(false);
   const handlers = useRef({ onChange, onSave, onRun, check, onFindings });
   handlers.current = { onChange, onSave, onRun, check, onFindings };
   const completions = useRef(new Compartment());
@@ -137,7 +135,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
         EditorView.contentAttributes.of({ "aria-label": label }),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) handlers.current.onChange?.(update.state.doc.toString());
-          if (update.focusChanged && update.view.hasFocus) touched.current = true;
         }),
         ...(readOnly
           ? []
@@ -186,14 +183,6 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
   }, [readOnly]);
 
   useImperativeHandle(ref, () => ({
-    insert: (text: string) => {
-      const current = view.current;
-      if (!current || !touched.current) return false;
-      const { from, to } = current.state.selection.main;
-      current.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length }, scrollIntoView: true });
-      current.focus();
-      return true;
-    },
     reveal: (line: number, column = 0) => {
       const current = view.current;
       if (!current) return;

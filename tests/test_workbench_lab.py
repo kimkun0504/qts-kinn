@@ -319,3 +319,18 @@ def test_the_library_endpoints(root):
     assert lab.route("DELETE", ["library", "helpers"], {}, None, root)[0] == 200
     assert lab.route("GET", ["library", "helpers"], {}, None, root)[0] == 404
     assert any(p.name.startswith("library-helpers-") for p in (root / "trash").iterdir())
+
+
+def test_the_history_endpoints(root):
+    lab.route("PUT", ["algorithms", "h"], {}, {"code": "first\n"}, root)
+    lab.route("PUT", ["algorithms", "h"], {}, {"code": "second\n"}, root)
+    status, versions = lab.route("GET", ["algorithms", "h", "history"], {}, None, root)
+    assert status == 200 and versions[0]["first_line"] == "first"
+    found = lab.route("GET", ["algorithms", "h", "history", versions[0]["version"]], {}, None, root)
+    assert found == (200, {"version": versions[0]["version"], "code": "first\n"})
+    assert lab.route("GET", ["algorithms", "h", "history", "nope"], {}, None, root)[0] == 404
+    lab.route("PUT", ["library", "m"], {}, {"code": "x = 1\n"}, root)
+    lab.route("PUT", ["library", "m"], {}, {"code": "x = 2\n"}, root)
+    assert (
+        lab.route("GET", ["library", "m", "history"], {}, None, root)[1][0]["first_line"] == "x = 1"
+    )

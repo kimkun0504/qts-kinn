@@ -115,6 +115,20 @@ def delete_module(root: Path, name: str) -> Response:
     return 200, {"deleted": name}
 
 
+def versions(root: Path, kind: str, name: str, version: str | None) -> Response:
+    """Earlier versions of an algorithm or a helper module, or the code of one of them."""
+    try:
+        if version is None:
+            found = store.history(root, name) if kind == "algorithm" else store.module_history(
+                root, name)  # fmt: skip
+            return 200, found
+        code = store.read_version(root, name, version) if kind == "algorithm" else \
+            store.read_module_version(root, name, version)  # fmt: skip
+    except store.LabError as error:
+        return _error(404, str(error))
+    return 200, {"version": version, "code": code}
+
+
 def save(root: Path, name: str, body: dict) -> Response:
     try:
         return 200, store.save_algorithm(root, name, body.get("code"))
@@ -305,6 +319,9 @@ def route(method: str, parts: list[str], query: dict, body: dict | None, root: P
             return module(root, parts[1])
         if head == "algorithms" and len(parts) == 2:
             return algorithm(root, parts[1])
+        if head in ("algorithms", "library") and len(parts) in (3, 4) and parts[2] == "history":
+            kind = "algorithm" if head == "algorithms" else "module"
+            return versions(root, kind, parts[1], parts[3] if len(parts) == 4 else None)
         if parts == ["runs"]:
             return runs(root, _first(query, "algorithm") or None)
         if head == "runs" and len(parts) == 2:

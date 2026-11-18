@@ -230,6 +230,15 @@ export interface Finding {
   end_column: number;
 }
 
+/** An earlier version of a file: what it held before a save changed it. */
+export interface Version {
+  version: string;
+  saved_at: string;
+  lines: number;
+  characters: number;
+  first_line: string;
+}
+
 export interface ModuleRow {
   name: string;
   description: string;
@@ -332,6 +341,9 @@ export const lab = {
   module: (name: string) => read<ModuleFile>(`/library/${id(name)}`),
   saveModule: (name: string, code: string) => write<{ name: string; description: string }>("PUT", `/library/${id(name)}`, { code }),
   removeModule: (name: string) => write<{ deleted: string }>("DELETE", `/library/${id(name)}`),
+  history: (kind: "algorithms" | "library", name: string) => read<Version[]>(`/${kind}/${id(name)}/history`),
+  version: (kind: "algorithms" | "library", name: string, version: string) =>
+    read<{ version: string; code: string }>(`/${kind}/${id(name)}/history/${id(version)}`),
 };
 
 /** A helper module's name: importable, so letters, digits and _ only. */

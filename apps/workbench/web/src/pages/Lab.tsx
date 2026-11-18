@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CodeEditor, type CodeEditorHandle } from "../components/CodeEditor";
+import { History } from "../components/lab/History";
 import { Inspector } from "../components/lab/Inspector";
 import { type RunRow, RunResults, STATE_LABEL, when } from "../components/lab/RunResults";
 import { Button } from "../components/ui/Button";
@@ -73,9 +74,9 @@ function keepDraft(name: string, draft: Draft) {
   }
 }
 
-function Message({ text, onClose }: { text: string; onClose: () => void }) {
+function Message({ text, onClose, tone = "bad" }: { text: string; onClose: () => void; tone?: "bad" | "note" }) {
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-lg border border-neg bg-surface px-4 py-3 text-sm">
+    <div role={tone === "bad" ? "alert" : "status"} className={`flex items-start gap-3 rounded-lg border bg-surface px-4 py-3 text-sm ${tone === "bad" ? "border-neg" : "border-line"}`}>
       <span className="flex-1 whitespace-pre-wrap">{text}</span>
       <button type="button" aria-label="Dismiss" onClick={onClose} className="cursor-pointer text-ink-3 hover:text-ink">
         ×
@@ -243,6 +244,8 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
   const [findings, setFindings] = useState<Finding[]>([]);
+  const [note, setNote] = useState<string | null>(null);
+  const [historyKey, setHistoryKey] = useState(0);
   const editor = useRef<CodeEditorHandle>(null);
   const results = useRef<HTMLDivElement>(null);
   const startedHere = useRef<string | null>(null); // a run this page started, to show when it ends
@@ -343,6 +346,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
     try {
       await lab.save(name, code);
       setSaved(code);
+      setHistoryKey((k) => k + 1);
       onChanged();
       return true;
     } catch (e) {
@@ -375,6 +379,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
       const started = await lab.start(name, code, patch);
       startedHere.current = started.run_id;
       setSaved(code);
+      setHistoryKey((k) => k + 1);
       setStatus(started.status);
       await refreshRuns();
       onChanged();
@@ -442,6 +447,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
       </header>
 
       {message && <Message text={message} onClose={() => setMessage(null)} />}
+      {note && <Message tone="note" text={note} onClose={() => setNote(null)} />}
 
       <section aria-label="Workspace" className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="relative flex min-h-12 flex-wrap items-center gap-3 border-b border-line px-4 py-2">
@@ -514,7 +520,18 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
             )}
           </div>
           <aside aria-label="Settings and data" className="min-h-0 border-t border-line lg:border-t-0 lg:border-l">
-            <Inspector meta={meta} base={base} draft={draft} onChange={setDraft} onInsert={(text) => editor.current?.insert(text) ?? false} />
+            <Inspector
+              meta={meta}
+              base={base}
+              draft={draft}
+              onChange={setDraft}
+              name={name}
+              historyKey={historyKey}
+              onRestore={(older, version) => {
+                setCode(older);
+                setNote(`Restored the version saved ${when(version.saved_at)}. Save to keep it; ⌘Z in the editor undoes the restore.`);
+              }}
+            />
           </aside>
         </div>
       </section>
@@ -543,6 +560,8 @@ function ModuleWorkspace({ module, meta, onOpen, onChanged }: { module: string; 
   const [message, setMessage] = useState<string | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [historyKey, setHistoryKey] = useState(0);
   const editor = useRef<CodeEditorHandle>(null);
   const dirty = code != null && code !== saved;
 
@@ -575,6 +594,7 @@ function ModuleWorkspace({ module, meta, onOpen, onChanged }: { module: string; 
     try {
       await lab.saveModule(module, code);
       setSaved(code);
+      setHistoryKey((k) => k + 1);
       onChanged();
     } catch (e) {
       setMessage((e as Error).message);
@@ -617,6 +637,7 @@ function ModuleWorkspace({ module, meta, onOpen, onChanged }: { module: string; 
         <h1 className="m-0 text-3xl leading-tight font-semibold tracking-tight">lab.{module}</h1>
       </header>
       {message && <Message text={message} onClose={() => setMessage(null)} />}
+      {note && <Message tone="note" text={note} onClose={() => setNote(null)} />}
       <section aria-label="Helper module" className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="flex min-h-12 flex-wrap items-center gap-3 border-b border-line px-4 py-2">
           <span className="text-[13px] text-ink-2">{dirty ? "Unsaved changes" : code == null ? "Opening" : "Saved"}</span>
@@ -646,12 +667,30 @@ function ModuleWorkspace({ module, meta, onOpen, onChanged }: { module: string; 
             Save
           </Button>
         </div>
-        <div className="h-[min(64vh,680px)]">
-          {code != null ? (
-            <CodeEditor ref={editor} value={code} onChange={setCode} onSave={save} fields={meta.fields} label={`lab/${module}.py`} check={checkCode} onFindings={setFindings} />
-          ) : (
-            <p className="m-0 px-4 py-6 text-ink-2">Opening {module}…</p>
-          )}
+        <div className="grid lg:h-[min(64vh,680px)] lg:grid-cols-[minmax(0,1fr)_336px]">
+          <div className="h-[460px] min-w-0 lg:h-full">
+            {code != null ? (
+              <CodeEditor ref={editor} value={code} onChange={setCode} onSave={save} fields={meta.fields} label={`lab/${module}.py`} check={checkCode} onFindings={setFindings} />
+            ) : (
+              <p className="m-0 px-4 py-6 text-ink-2">Opening {module}…</p>
+            )}
+          </div>
+          <aside aria-label="History" className="flex min-h-0 flex-col border-t border-line lg:border-t-0 lg:border-l">
+            <div className="flex h-11 shrink-0 items-end border-b border-line px-4">
+              <span className="border-b-2 border-ink pb-2.5 text-[13px] font-semibold text-ink">History</span>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <History
+                kind="library"
+                name={module}
+                refresh={historyKey}
+                onRestore={(older, version) => {
+                  setCode(older);
+                  setNote(`Restored the version saved ${when(version.saved_at)}. Save to keep it; ⌘Z in the editor undoes the restore.`);
+                }}
+              />
+            </div>
+          </aside>
         </div>
       </section>
     </div>

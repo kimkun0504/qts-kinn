@@ -42,6 +42,8 @@ const routes: Record<string, unknown> = {
   "/api/lab/templates": [],
   "/api/lab/algorithms": [{ name: "two_up", description: "Two up days", updated: "2026-11-18T19:00:00Z", runs: 1, trials: 1, last_run: null }],
   "/api/lab/algorithms/two_up": { name: "two_up", code: CODE, description: "", settings_in_code: null },
+  "/api/lab/algorithms/two_up/history": [{ version: "20261118T204100000000Z", saved_at: "2026-11-18T20:41:00+00:00", lines: 2, characters: 40, first_line: "def signal(data): # the old one" }],
+  "/api/lab/algorithms/two_up/history/20261118T204100000000Z": { version: "20261118T204100000000Z", code: "def signal(data): # the old one\n    return data.close > 0\n" },
   "/api/lab/runs?algorithm=two_up": [{ run_id: RUN, algorithm: "two_up", description: "", created_at: "2026-11-18T19:01:02+00:00", state: "complete", stage: "Done", error: null, trial: true, period: "2010–2017", headline: "4 trades" }],
   [`/api/lab/runs/${RUN}`]: detail,
   [`/api/lab/runs/${RUN}/stocks`]: [stock("WIN", 120), stock("LOSE", -40)],
@@ -120,15 +122,29 @@ describe("the Lab", () => {
     expect(calls.some((c) => c.url === "/api/lab/runs" && c.init?.method === "POST")).toBe(false);
   });
 
-  it("never drops a field into the code where there is no cursor: it copies it", async () => {
+  it("never writes a field into the code: the Data tab only shows and copies", async () => {
     const writeText = vi.fn(() => Promise.resolve());
     Object.assign(navigator, { clipboard: { writeText } });
     render(<Lab name="two_up" onOpen={() => undefined} />);
-    fireEvent.click(await screen.findByRole("tab", { name: "Data" }));
-    fireEvent.click(screen.getByTitle("Put data.close at the cursor in the code"));
+    const editor = await screen.findByRole("textbox", { name: "two_up.py" });
+    const before = editor.textContent;
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+    fireEvent.click(screen.getByText("close", { selector: "code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy data.close" }));
     expect(writeText).toHaveBeenCalledWith("data.close");
-    expect(screen.getByRole("status").textContent).toMatch(/Copied data.close/);
-    expect(screen.getByRole("textbox", { name: "two_up.py" }).textContent).not.toContain("data.closedef");
+    expect(screen.getByRole("status").textContent).toBe("Copied data.close");
+    expect(editor.textContent).toBe(before);
+  });
+
+  it("restores an earlier version into the editor without saving it", async () => {
+    render(<Lab name="two_up" onOpen={() => undefined} />);
+    await screen.findByRole("textbox", { name: "two_up.py" });
+    fireEvent.click(screen.getByRole("tab", { name: "History" }));
+    fireEvent.click(await screen.findByText("def signal(data): # the old one"));
+    fireEvent.click(await screen.findByRole("button", { name: "Restore this version" }));
+    expect(await screen.findByText(/Restored the version saved/)).toBeTruthy();
+    expect(screen.getByText("Unsaved changes")).toBeTruthy();
+    expect(calls.some((c) => c.init?.method === "PUT")).toBe(false);
   });
 
   it("refuses a bad setting before running", async () => {

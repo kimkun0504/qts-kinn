@@ -370,3 +370,25 @@ def test_the_selfcheck_passes_on_good_templates(fake):
     assert code == 0, lines
     assert lines[-1] == "self-check passed"
     assert any("caught a deliberate peek" in line for line in lines)
+
+
+def test_every_save_keeps_the_version_before_it(root):
+    store.save_algorithm(root, "kept", "one\n")
+    store.save_algorithm(root, "kept", "one\n")  # unchanged: nothing to keep
+    store.save_algorithm(root, "kept", "two\n")
+    store.save_algorithm(root, "kept", "three\n")
+    versions = store.history(root, "kept")
+    assert [v["first_line"] for v in versions] == ["two", "one"]
+    assert store.read_version(root, "kept", versions[-1]["version"]) == "one\n"
+    with pytest.raises(store.LabError):
+        store.read_version(root, "kept", "../../algorithms/kept")
+    store.save_module(root, "tools", "a = 1\n")
+    store.save_module(root, "tools", "a = 2\n")
+    assert [v["first_line"] for v in store.module_history(root, "tools")] == ["a = 1"]
+
+
+def test_history_keeps_a_bounded_number_of_versions(root, monkeypatch):
+    monkeypatch.setattr(store, "KEEP_VERSIONS", 3)
+    for k in range(6):
+        store.save_algorithm(root, "many", f"v{k}\n")
+    assert [v["first_line"] for v in store.history(root, "many")] == ["v4", "v3", "v2"]

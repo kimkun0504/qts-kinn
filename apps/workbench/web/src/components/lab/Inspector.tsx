@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
-import type { LabSettings, Meta } from "../../lib/lab";
+import type { Field, LabSettings, Meta, Version } from "../../lib/lab";
 import { changed, type Draft, NUMBERS, type NumberSpec, shown } from "../../lib/labSettings";
+import { History } from "./History";
 
 interface InspectorProps {
   meta: Meta;
@@ -8,8 +9,10 @@ interface InspectorProps {
   base: LabSettings;
   draft: Draft;
   onChange: (draft: Draft) => void;
-  /** Put text at the editor's cursor; false when the editor has no cursor yet. */
-  onInsert: (text: string) => boolean;
+  /** The algorithm, for its saved versions. */
+  name: string;
+  historyKey: number;
+  onRestore: (code: string, version: Version) => void;
 }
 
 // One control width and one row height for every setting, so the column reads as a table.
@@ -93,7 +96,7 @@ function NumberRow({ spec, base, draft, onChange }: { spec: NumberSpec; base: La
   );
 }
 
-function Settings({ meta, base, draft, onChange }: Omit<InspectorProps, "onInsert">) {
+function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" | "base" | "draft" | "onChange">) {
   const period = draft.period ?? base.period;
   const mode = draft.mode ?? base.entry.mode;
   const order = draft.rank_order ?? base.entry.rank_order;
@@ -200,22 +203,50 @@ function Settings({ meta, base, draft, onChange }: Omit<InspectorProps, "onInser
   );
 }
 
-function Fields({ meta, onInsert }: { meta: Meta; onInsert: (text: string) => boolean }) {
+const STATIC = new Set(["sector", "industry", "exchange", "name"]);
+const SERIES = new Set(["spy", "universe_return"]);
+const FLAGS = new Set(["earnings", "filing", "eligible"]);
+const EXAMPLES: Record<string, string> = {
+  close: "data.close > data.close.rolling(50).max().shift(1)",
+  open: "data.open / data.close.shift(1) - 1",
+  high: "data.close >= data.high * 0.98",
+  low: "(data.close - data.low) / (data.high - data.low)",
+  adj_close: "data.adj_close.pct_change(20)",
+  returns: "data.returns.rolling(5).sum()",
+  volume: "data.volume / data.volume.rolling(20).mean().shift(1)",
+  dollar_volume: "data.dollar_volume >= 2 * data.adv20",
+  transactions: "data.transactions.rolling(20).mean()",
+  trade_size: "data.trade_size / data.trade_size.rolling(60).median().shift(1)",
+  market_cap: "(data.market_cap >= 50e6) & (data.market_cap < 300e6)",
+  adv20: "data.adv20 >= 1e6",
+  eligible: "data.close.where(data.eligible)",
+  earnings: "data.earnings & (data.returns > 0.05)",
+  filing: "data.filing.astype(int).rolling(5).sum() == 0",
+  eps: "data.eps / data.eps.shift(252) - 1",
+};
+
+function example(f: Field): string {
+  if (EXAMPLES[f.name]) return EXAMPLES[f.name];
+  if (STATIC.has(f.name)) return `data.${f.name}["AAPL"]`;
+  if (SERIES.has(f.name)) return `data.${f.name}.pct_change(20)`;
+  if (FLAGS.has(f.name)) return `data.${f.name}.astype(int).rolling(5).sum() > 0`;
+  return `data.${f.name} / data.${f.name}.shift(252) - 1`;
+}
+
+/** The fields, as a reference. Nothing here writes into the code: a field is copied, or typed
+ *  in the editor, where data. offers every name. */
+function Fields({ meta }: { meta: Meta }) {
   const [search, setSearch] = useState("");
-  const [note, setNote] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   useEffect(() => {
-    if (!note) return;
-    const timer = window.setTimeout(() => setNote(null), 5000);
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(null), 2500);
     return () => window.clearTimeout(timer);
-  }, [note]);
-  const use = (text: string) => {
-    if (onInsert(text)) {
-      setNote(`Put ${text} at the cursor.`);
-      return;
-    }
-    // No cursor in the code yet: never write at an unseen place. Copy it instead.
+  }, [copied]);
+  const copy = (text: string) => {
     navigator.clipboard?.writeText(text).catch(() => undefined);
-    setNote(`Copied ${text}. Click where it goes in the code and paste.`);
+    setCopied(text);
   };
   const words = search.trim().toLowerCase();
   const rows = meta.fields.filter((f) => !words || f.name.includes(words) || f.description.toLowerCase().includes(words));
@@ -223,29 +254,44 @@ function Fields({ meta, onInsert }: { meta: Meta; onInsert: (text: string) => bo
     <div className="flex flex-col">
       <div className="sticky top-0 z-[1] border-b border-line-soft bg-surface px-4 py-3">
         <input type="search" aria-label="Find a field" placeholder="Find a field" value={search} onChange={(e) => setSearch(e.target.value)} className={`${control} px-2.5 placeholder:text-ink-3`} />
-        {note && (
-          <p role="status" className="m-0 mt-2 text-[13px] text-ink-2">
-            {note}
-          </p>
-        )}
+        <p role="status" className="m-0 mt-2 min-h-[18px] text-[12px] text-ink-3">
+          {copied ? `Copied ${copied}` : "Type data. in the code to pick a field."}
+        </p>
       </div>
       <ul className="m-0 list-none p-0">
-        {rows.map((f) => (
-          <li key={f.name}>
-            <button
-              type="button"
-              onClick={() => use(`data.${f.name}`)}
-              title={`Put data.${f.name} at the cursor in the code`}
-              className="flex w-full cursor-pointer flex-col gap-0.5 border-b border-line-soft px-4 py-2.5 text-left hover:bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
-            >
-              <span className="flex items-baseline justify-between gap-3">
-                <code className="font-mono text-[13px] font-semibold text-ink">{f.name}</code>
-                <span className="shrink-0 text-[12px] text-ink-3">{f.known}</span>
-              </span>
-              <span className="text-[13px] leading-snug text-ink-2">{f.description}</span>
-            </button>
-          </li>
-        ))}
+        {rows.map((f) => {
+          const expanded = open === f.name;
+          const sample = example(f);
+          return (
+            <li key={f.name} className="border-b border-line-soft">
+              <button
+                type="button"
+                aria-expanded={expanded}
+                onClick={() => setOpen(expanded ? null : f.name)}
+                className="flex w-full cursor-pointer flex-col gap-0.5 px-4 py-2.5 text-left hover:bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
+              >
+                <span className="flex items-baseline justify-between gap-3">
+                  <code className="font-mono text-[13px] font-semibold text-ink">{f.name}</code>
+                  <span className="shrink-0 text-[12px] text-ink-3">{f.known}</span>
+                </span>
+                <span className="text-[13px] leading-snug text-ink-2">{f.description}</span>
+              </button>
+              {expanded && (
+                <div className="flex flex-col gap-2 px-4 pb-3">
+                  <code className="block overflow-x-auto rounded-md bg-raised px-2.5 py-2 font-mono text-[12px] whitespace-pre text-ink">{sample}</code>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => copy(`data.${f.name}`)} className="h-7 cursor-pointer rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-ink hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
+                      Copy data.{f.name}
+                    </button>
+                    <button type="button" onClick={() => copy(sample)} className="h-7 cursor-pointer rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-ink hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
+                      Copy the example
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
         {!rows.length && <li className="px-4 py-6 text-[13px] text-ink-2">No field matches.</li>}
       </ul>
     </div>
@@ -253,8 +299,8 @@ function Fields({ meta, onInsert }: { meta: Meta; onInsert: (text: string) => bo
 }
 
 /** The panel beside the editor: the run's settings, and the data the code can use. */
-export function Inspector({ meta, base, draft, onChange, onInsert }: InspectorProps) {
-  const [tab, setTab] = useState<"settings" | "data">("settings");
+export function Inspector({ meta, base, draft, onChange, name, historyKey, onRestore }: InspectorProps) {
+  const [tab, setTab] = useState<"settings" | "data" | "history">("settings");
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div role="tablist" aria-label="Beside the editor" className="flex h-11 shrink-0 items-end gap-5 border-b border-line px-4">
@@ -262,6 +308,7 @@ export function Inspector({ meta, base, draft, onChange, onInsert }: InspectorPr
           [
             ["settings", "Settings"],
             ["data", "Data"],
+            ["history", "History"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -282,7 +329,15 @@ export function Inspector({ meta, base, draft, onChange, onInsert }: InspectorPr
           </button>
         )}
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">{tab === "settings" ? <Settings meta={meta} base={base} draft={draft} onChange={onChange} /> : <Fields meta={meta} onInsert={onInsert} />}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {tab === "settings" ? (
+          <Settings meta={meta} base={base} draft={draft} onChange={onChange} />
+        ) : tab === "data" ? (
+          <Fields meta={meta} />
+        ) : (
+          <History kind="algorithms" name={name} refresh={historyKey} onRestore={onRestore} />
+        )}
+      </div>
     </div>
   );
 }

@@ -92,3 +92,8 @@ written at the top of his file, and the syntax error was shown where he could no
     universe and window; 6 GB at most, least recently used dropped first).
 14. **The command line** (`kinn lab list | run | selfcheck`) runs through the same runner and
     folder, so a run from the terminal is counted and shown like one from the page.
+15. **Nothing but typing writes into the code** (the same evening: a field clicked in the Data
+    tab still went in at a remembered cursor and replaced a selection, wiping an algorithm that
+    was then saved). The Data tab is a reference with copy buttons, and **every save keeps the
+    version before it** (`lab/history/`, the last 200 a file), restorable from a History tab:
+    no click or save can lose code again.

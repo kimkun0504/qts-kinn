@@ -86,8 +86,9 @@ platform's sealed data store: **nothing on or after 2023-11-09 can be read**.
 
 Fields load the first time your code uses them, so an algorithm that reads only `close` and
 `volume` runs much faster than one that reads everything. `data.fields()` lists them, and the
-**Data** tab under the editor lists them with a search; click a name to put it in the code.
-Typing `data.` in the editor offers them too.
+**Data** tab beside the editor lists them with a search: click one for an example and a copy
+button. Nothing in the Data tab writes into your code; typing `data.` in the editor offers every
+field to pick from.
 
 Columns are the stocks that were in the universe on at least one day of the period, in the
 order of their company id. A stock is `eligible` on a morning when the universe's filters pass
@@ -124,6 +125,13 @@ line, with the count in the toolbar; click the count to go to the first one.
   lookahead test would mark the run), an import of a helper module that is not in the library.
 
 The server checks again when Run is pressed, so broken code never makes a run.
+
+## History
+
+Every save keeps the version before it (`lab/history/<name>/`, the last 200), and every run
+keeps the exact code it ran. The **History** tab beside the editor lists the saved versions,
+newest first; click one to see it and **Restore this version** to put it back in the editor
+(⌘Z undoes that; Save keeps it). A helper module has the same History beside its editor.
 
 ## Helper modules (the library)
 
