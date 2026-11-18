@@ -87,7 +87,8 @@ def main(side: str = "short") -> None:
             fp[i] = after[i] / normal[i]
     net = (d["g_open"] if side == "short" else d["g_fifteen"]) - d["cost"]
     if side == "small_open":
-        net = d["g_open15"] - d["cost_auction"] - 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / 10))
+        paid = d["paid"].astype(float)
+        net = d["g_open15"] - d["cost_auction"] - 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / paid))
     years = d["yr"]
     base = keep & ~np.isnan(fp)
     cut = np.median(fp[base & (years >= 2010) & (years <= 2017)])
