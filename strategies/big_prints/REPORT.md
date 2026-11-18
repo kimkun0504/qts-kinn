@@ -337,3 +337,11 @@ session of each month, 20 sessions, 2010–2017: small companies −0.08% over t
 t −0.20), mid-sized +0.10% (13,921; t 0.72). Nothing: the signal is the single quiet day with
 very large pieces, not a month of somewhat larger ones (the top tenth's footprint is only 1.2
 to 1.3). 2 trials (family 43).
+
+## Follow-up 12: smaller results jumps in large pieces (read 18 November 2026, 00:29 ET)
+
+$50M–$300M, results jump of 5% to 15% on 3x volume, plain 15-session exit, after costs,
+2010–2017: footprint 1.5+ +3.53% (138 trades; t 2.18; 6 of 8); the rest +1.39% (1,157; t 2.94).
+Large pieces mark the better jumps here too (2.5 times the rest), but on 17 trades a year and a
+t of 2.2 the cell misses the search bar (150 trades, t 3); the test years were not read.
+1 trial (family 44).
