@@ -53,6 +53,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/friday_reports` | claude | 2026-11-17 | the earnings rule on results first read on a Friday (inattention) |
 | `strategies/rebalance_flows` | claude | 2026-11-17 | stocks against bonds in the last days of the month (fund rebalancing) |
 | `strategies/dividend_signal` | claude | 2026-11-17 | dividend initiations and raises in small companies (Sharadar actions) |
+| `strategies/five_dollars` | claude | 2026-11-17 | a small company back over $5 after months under it (fund and margin eligibility) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

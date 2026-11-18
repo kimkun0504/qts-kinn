@@ -1,7 +1,7 @@
 # Intraday shape: a stock pushed up into the close, day after day, gives it back
 
-**Verdict: closed; one finding worth keeping as a warning, and an exit for the earnings rule to follow on paper.** 36 cells on 2010 to 2017, none
-meets the bar set in [HYPOTHESIS.md](HYPOTHESIS.md), so no test was run. 36 trials. The
+**Verdict: closed; one finding worth keeping as a warning, and an exit for the earnings rule to follow on paper.** 40 cells on 2010 to 2017, none
+meets the bar set in [HYPOTHESIS.md](HYPOTHESIS.md), so no test was run. 40 trials. The
 holdout is untouched.
 
 From minute bars, for every listed common stock of $50M or more and every session from 2005
@@ -61,6 +61,23 @@ somewhere, but the evidence is about 45 trades a period. **Not a change to the f
 the paper ledger can carry it as a column (a late push of 4% on a held name, and what selling
 at the next open would have done) until the forward record says more.
 
+## The warning as a filter on the two rules that work (4 cells)
+
+Skip a signal when the stock's 10-session last-half-hour score is in the top fifth (or tenth)
+of companies of $50M to $300M that day. Code: `research/claude/late_push_filter.py`.
+
+| After costs, a trade | 2010–2017 | 2005–2009 | 2018–2022 | 2023 |
+|---|---|---|---|---|
+| A50, every signal | 3.26% | 4.49% | 4.13% | 5.95% |
+| A50, top fifth skipped | 3.66% | 4.97% | 3.71% | 1.36% |
+| A50, top tenth skipped | 3.10% | 5.11% | 3.20% | 5.78% |
+| Rule I, every signal | 3.22% | 3.87% | 1.70% | 1.71% |
+| Rule I, top fifth skipped | 2.72% | 4.12% | 2.02% | 0.90% |
+| Rule I, top tenth skipped | 3.22% | 3.75% | 1.79% | 1.80% |
+
+No filter is better in all three periods. On a day with news, a push into the close is part of
+the news and does not reverse; the warning applies to ordinary days.
+
 ## Reproduce
 
 ```
@@ -72,4 +89,5 @@ uv run python intraday_shape.py search
 uv run python intraday_shape.py search_low
 uv run python intraday_shape.py pairs search
 uv run python a50_late_exit.py
+uv run python late_push_filter.py
 ```

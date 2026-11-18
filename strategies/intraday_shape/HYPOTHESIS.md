@@ -160,3 +160,10 @@ signal a company in 21 days, held 15 sessions; its research signals). Judged as 
 a filter is better only if the kept signals beat all signals, in the mean a trade after costs,
 in all three periods (2010–2017, 2005/2006–2009, 2018–2022; 2023 shown). The skipped group is
 shown. **4 cells** (2 rules × 2 cut-offs), charged to `intraday_shape`.
+
+**Results of the filters, 2026-11-17 22:54 ET.** In REPORT.md. **Neither filter is better in all three
+periods for either rule.** A50, skipping the top fifth: kept 3.66% against 3.26% (2010–2017),
+4.97% against 4.49% (2005–2009), **3.71% against 4.13% (2018–2022)**, and in 2023 the skipped
+did best. Rule I, skipping the top fifth: **2.72% against 3.22% (2010–2017)**, 4.12% against
+3.87%, 2.02% against 1.70%. On a day with news, buying into the close is part of the news and
+does not reverse. 4 trials; `intraday_shape` has 40.

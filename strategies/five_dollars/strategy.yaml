@@ -1,0 +1,18 @@
+name: five_dollars
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, market value >= $50M, back over $5 after 60 sessions under it
+family: five_dollars
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Back over five dollars
+  idea: A small company that climbs back over $5, where funds and margin can own it again
+  horizon: 20 to 60 sessions
+  verdict: planned
+  summary: >-
+    Many funds may not own a stock under $5 and brokers do not lend against one. Buy a company
+    that closes back over $5 after months under it.
