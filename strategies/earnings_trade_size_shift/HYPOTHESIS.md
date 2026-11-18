@@ -159,3 +159,15 @@ provisional until quote checks resolve the execution-selection
 assumption. It cannot by itself establish the requested
 tradable edge. No empirical run has begun and no threshold
 or exit changed during the audit.
+
+## Transaction-count authorization and implementation
+
+The owner explicitly authorized the scoped data-view change on
+2026-11-18. `SymbolDay.transactions` now exposes the existing
+minute column and truncates it with prices in `upto`. Missing
+counts remain unavailable; no value is imputed. Tests cover
+loader propagation and alignment, the full strategy prefix
+replay, and rejection of a deliberately future-count-dependent
+signal. The complete repository suite and import contracts pass.
+No signal, universe, threshold, cost or holding policy changed.
+The data build and Form 8-K input remain pinned by the run.

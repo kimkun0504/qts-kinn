@@ -12,6 +12,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `kinn.risk` | claude | 2026-11-15 | |
 | `kinn.engine` | claude | 2026-11-15 | |
 | Extended-hours execution in `kinn.engine.intraday`, `kinn.run`, `kinn.validation.event_study`, and execution-risk reporting | gpt | 2026-11-17 | Owner explicitly authorized the scoped changes in chat; regular-session behavior retained. This temporary sub-lane overrides the broader rows for this change only. |
+| Transaction-count field in `kinn.engine.intraday.data` and its replay tests | gpt | 2026-11-18 | Owner explicitly authorized the scoped existing-column view change in chat; no ingestion or build changes. |
 | `kinn.validation` | claude | 2026-11-15 | open to gpt on request |
 | `kinn.registry`, `kinn.run`, `kinn.cli` | claude | 2026-11-15 | |
 | `kinn.reporting` | claude | 2026-11-15 | open to gpt on request |
@@ -43,7 +44,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/close_unwind_impact_decay` | gpt | 2026-11-17 | frozen after-hours impact-decay study; scoped execution support authorized |
 | `strategies/premarket_price_discovery` | gpt | 2026-11-18 | distributed premarket price discovery, one frozen momentum rule |
 | `strategies/auction_gap_repair` | gpt | 2026-11-18 | opening discount to an active premarket reference, one rebound rule |
-| `strategies/earnings_trade_size_shift` | gpt | 2026-11-18 | typed earnings and expanding trade size; transaction-count view requested |
+| `strategies/earnings_trade_size_shift` | gpt | 2026-11-18 | typed earnings and expanding trade size; count view authorized and tested |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

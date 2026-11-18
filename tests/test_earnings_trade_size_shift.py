@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from dataclasses import replace
 from datetime import date
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -9,9 +10,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from kinn.core.types import CurrentReport
-from kinn.engine.intraday.data import DayView, make_symbol_day
-from kinn.engine.intraday.strategy import day_signals
+from kinn import run as runner
+from kinn.core.types import CurrentReport, Signal
+from kinn.engine.intraday.data import DayData, DayView, make_symbol_day
+from kinn.engine.intraday.simulator import FillConfig, simulate_day
+from kinn.engine.intraday.strategy import check_no_lookahead, day_signals
+from kinn.features.base import LookaheadError
+from kinn.risk.sizing import RiskConfig
+from kinn.validation.event_study import measure_extended
+from tests.test_simulator import COSTS
 
 SOURCE = Path(__file__).resolve().parents[1] / "strategies/earnings_trade_size_shift/strategy.py"
 SPEC = spec_from_file_location("earnings_trade_size_shift", SOURCE)
@@ -89,3 +96,121 @@ def test_fixed_parameters_and_isolated_cli_load(tmp_path):
         [sys.executable, "-I", "-c", code], cwd=tmp_path, capture_output=True, text=True, timeout=15
     )
     assert result.returncode == 0, result.stderr
+
+
+def complete_view(counts=None):
+    prices = np.r_[PRICES, 11, 12, 12, 99]
+    volume = np.r_[100000, VOLUME, 10000, 10000, 10000, 10000]
+    observed = np.r_[1000, COUNTS, 100, 100, 100, 100] if counts is None else counts
+    bars = make_symbol_day(
+        "ABC",
+        1,
+        np.r_[np.arange(570, 581), 581, 700, 701, 959],
+        prices,
+        prices,
+        prices,
+        prices,
+        volume,
+        {"prev_close": 10, "adv20_prev": 2e6},
+        transactions=observed,
+    )
+    report = CurrentReport("ABC", 1, date(2010, 1, 1), (22,), ("2.02",), True)
+    return DayView(date(2010, 1, 4), 570, 960, {"ABC": bars}, reports={"ABC": (report,)})
+
+
+def test_full_prefix_replay_truncates_future_counts_and_preserves_the_frozen_signal():
+    view = complete_view()
+    strategy = MODULE.build({})
+    (signal,) = day_signals(strategy, view)
+    assert signal.minute == 580 and signal.expire_minute == 581
+    assert signal.limit_price == pytest.approx(1.005 * 11)
+    check_no_lookahead(strategy, view, [signal], list(range(568, 703)))
+    assert not day_signals(strategy, replace(view, close_minute=780))
+    # Later print counts cannot alter a decision already made at 09:40.
+    changed = np.r_[1000, COUNTS, 99999999, 99999999, 99999999, 99999999]
+    assert day_signals(strategy, complete_view(changed)) == [signal]
+
+
+def test_prefix_canary_detects_deliberate_use_of_future_transaction_counts():
+    view = complete_view()
+    bars = view.symbols["ABC"]
+    counts = bars.transactions.copy()
+    counts[-1] = 1000000
+    changed = replace(view, symbols={"ABC": replace(bars, transactions=counts)})
+
+    class FutureCountBuyer:
+        name, features = "future_count_canary", ()
+
+        def signals(self, day, features):
+            stock = day.symbols["ABC"]
+            return (
+                [Signal("ABC", 570)]
+                if len(stock.minute) and stock.transactions[-1] > 100000
+                else []
+            )
+
+    cheat = FutureCountBuyer()
+    with pytest.raises(LookaheadError, match="later bars are removed"):
+        check_no_lookahead(cheat, changed, day_signals(cheat, changed), [580])
+
+
+@pytest.mark.parametrize("change", ["same_day", "wrong_company", "not_earnings"])
+def test_only_matching_pre_session_earnings_are_available(change):
+    view = complete_view()
+    (report,) = view.reports["ABC"]
+    bad = replace(
+        report,
+        **(
+            {"filed": view.day}
+            if change == "same_day"
+            else {"permaticker": 2}
+            if change == "wrong_company"
+            else {"earnings": False}
+        ),
+    )
+    assert not day_signals(MODULE.build({}), replace(view, reports={"ABC": (bad,)}))
+
+
+def test_missing_minute_and_missing_window_count_do_not_create_a_signal():
+    view = complete_view()
+    bars = view.symbols["ABC"]
+    missing = np.arange(len(bars.minute)) != 5
+    trimmed = replace(
+        bars,
+        **{
+            k: getattr(bars, k)[missing]
+            for k in ("minute", "open", "high", "low", "close", "volume", "transactions")
+        },
+    )
+    assert not day_signals(MODULE.build({}), replace(view, symbols={"ABC": trimmed}))
+    counts = bars.transactions.astype(float)
+    counts[5] = np.nan
+    assert not day_signals(
+        MODULE.build({}), replace(view, symbols={"ABC": replace(bars, transactions=counts)})
+    )
+
+
+def test_matched_entry_and_two_hour_liquidation_use_the_registered_execution_policy():
+    view = complete_view()
+    (signal,) = day_signals(MODULE.build({}), view)
+    _, cfg = runner.load_config("earnings_trade_size_shift", "development")
+    fills = FillConfig(**cfg["fills"])
+    risk = RiskConfig(**cfg["risk"])
+    result = simulate_day(
+        DayData(view, {"ABC": 99}), [signal], risk=risk, config=fills, costs=COSTS
+    )
+    (trade,) = result.trades
+    assert trade.entry_minute == 581 and trade.entry_price == 11
+    assert trade.exit_minute == 701 and trade.exit_price == 12 and not result.unresolved
+    row = measure_extended(
+        view.day,
+        view.symbols["ABC"],
+        signal,
+        config=fills,
+        costs=COSTS,
+        position_dollars=risk.position_dollars,
+    )
+    assert row["r_120"] - row["fees"] - row["slippage"] == pytest.approx(trade.net / trade.notional)
+    assert row["r_120"] - row["fees"] - 2 * row["slippage"] == pytest.approx(
+        trade.net_2x / trade.notional
+    )

@@ -65,3 +65,13 @@ The proposed strategy can use missing-data rejection and has
 no permission to infer a transaction count or bypass the view.
 Its empirical results remain unmeasured until this dependency
 and the lookahead replay tests are satisfied.
+
+## Owner authorization
+
+The owner selected “Authorize the scoped transaction-count
+view change” in this chat on 2026-11-18. The corresponding
+narrow lane is recorded in OWNERS.md. GPT may implement the
+field, loader propagation and replay tests specified above.
+The signal and research thresholds remain frozen. No data
+download, raw write, input rebuild or ingestion change is
+part of the authorization or implementation.

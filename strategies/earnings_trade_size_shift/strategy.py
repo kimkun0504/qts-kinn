@@ -1,4 +1,4 @@
-"""Frozen trade-size expansion rule; pending the authorized transaction-count view."""
+"""Frozen trade-size expansion rule using observed aggregate transaction counts."""
 
 from math import isfinite
 

@@ -39,6 +39,16 @@ class SymbolDay:
     close: np.ndarray
     volume: np.ndarray
     prior: Mapping[str, float] = field(default_factory=dict)
+    # Observed aggregate transaction counts, known at bar close like volume.
+    # None means unavailable (legacy or synthetic views); never inferred as zero.
+    transactions: np.ndarray | None = None
+
+    def __post_init__(self):
+        if self.transactions is not None:
+            counts = np.asarray(self.transactions)
+            if counts.ndim != 1 or counts.shape != np.shape(self.minute):
+                raise ValueError("transaction counts must align one-to-one with minute bars")
+            object.__setattr__(self, "transactions", counts)
 
     def upto(self, last_minute: int) -> SymbolDay:
         """The same symbol-day with only bars whose minute is at most ``last_minute``."""
@@ -46,6 +56,7 @@ class SymbolDay:
         return SymbolDay(
             self.symbol, self.permaticker, self.minute[:n], self.open[:n], self.high[:n],
             self.low[:n], self.close[:n], self.volume[:n], self.prior,
+            None if self.transactions is None else self.transactions[:n],
         )  # fmt: skip
 
 
@@ -83,7 +94,19 @@ class DayData:
     official_close: Mapping[str, float]
 
 
-def make_symbol_day(symbol, permaticker, minute, open_, high, low, close, volume, prior=None):
+def make_symbol_day(
+    symbol,
+    permaticker,
+    minute,
+    open_,
+    high,
+    low,
+    close,
+    volume,
+    prior=None,
+    *,
+    transactions=None,
+):
     return SymbolDay(
         symbol,
         int(permaticker),
@@ -94,6 +117,7 @@ def make_symbol_day(symbol, permaticker, minute, open_, high, low, close, volume
         np.asarray(close, dtype=float),
         np.asarray(volume, dtype=np.int64),
         dict(prior or {}),
+        transactions,
     )
 
 
@@ -162,11 +186,13 @@ def load_day(
         bars = store.minute(
             day,
             symbols=list(members),
-            columns="symbol, minute_et, open, high, low, close, volume",
+            columns="symbol, minute_et, open, high, low, close, volume, transactions",
         )
         names = bars["symbol"].to_numpy(zero_copy_only=False)
         minute = bars["minute_et"].to_numpy().astype(np.int64)
-        cols = [bars[c].to_numpy() for c in ("open", "high", "low", "close", "volume")]
+        cols = [
+            bars[c].to_numpy() for c in ("open", "high", "low", "close", "volume", "transactions")
+        ]
         if len(names):
             starts = np.flatnonzero(np.r_[True, names[1:] != names[:-1]])
             ends = np.r_[starts[1:], len(names)]
@@ -182,12 +208,13 @@ def load_day(
                     cols[3][a:b],
                     cols[4][a:b].astype(np.int64),
                     {k: row[k] for k in PRIOR_COLUMNS},
+                    cols[5][a:b],
                 )
     for symbol, row in members.items():
         if symbol not in symbols:  # a member with no trade today
             symbols[symbol] = SymbolDay(
                 symbol, row["permaticker"], _EMPTY_I, _EMPTY_F, _EMPTY_F, _EMPTY_F, _EMPTY_F,
-                _EMPTY_I, {k: row[k] for k in PRIOR_COLUMNS},
+                _EMPTY_I, {k: row[k] for k in PRIOR_COLUMNS}, _EMPTY_I,
             )  # fmt: skip
     disclosures = load_disclosures(store, day, form4_sessions, members) if form4_sessions else {}
     reports = load_reports(store, day, form8k_sessions, members) if form8k_sessions else {}

@@ -1,8 +1,9 @@
 # Trade-size expansion after an available earnings disclosure
 
-Status: awaiting the transaction-count view and its platform
-replay tests. Hypothesis commit `9160555` precedes every
-empirical run. The signal, entry, exit, dates and gates are frozen.
+Status: ready for the frozen development study after owner
+authorization and passing platform replay tests. Hypothesis
+commit `9160555` precedes every empirical run. The signal,
+entry, exit, dates and gates remain frozen.
 
 The prepared strategy compares average shares per transaction
 across two five-minute windows after an available typed earnings
@@ -12,17 +13,19 @@ not investor identity or evidence of informed demand.
 Synthetic tests cover the exact ratio boundary, count growth,
 missing or invalid counts, price and liquidity requirements,
 opening-auction exclusion and fail-fast behavior when the view
-has no counts. These do not substitute for the full prefix
-replay once the platform exposes the field.
+has no counts. The subsequent full prefix replay passes with
+the native field, and a deliberately cheating future-count
+strategy is detected.
 
 The exact platform request is in
 `docs/requests/2026-11-18-minute-transactions-view.md`. The
 source column already belongs to the built minute data.
 There is no request for a raw write, download or rebuild.
-The original platform restriction and the limited scope of
-the extended-hours reassignment require a separate owner
-decision before changing the data view. No empirical run
-has started and no return estimate is available.
+The owner supplied the separate data-view authorization, now
+recorded in OWNERS.md. The field and loader preserve count
+alignment and missing observations. The complete repository
+suite, Ruff and import contracts pass. No empirical run has
+started and no return estimate is available.
 
 Vendor documentation confirms that sale conditions can affect
 aggregate price and volume differently. The ratio is a vendor-
