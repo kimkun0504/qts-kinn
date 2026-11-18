@@ -4,7 +4,7 @@ status: event-study       # small-company cell passed both tests 2026-11-18; a l
 engine: daily
 universe: common stock $300M+ on a quiet up day traded in unusually large pieces
 family: big_prints
-prior_trials: 13
+prior_trials: 17
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -32,5 +32,5 @@ record:
     - {when: 2026-11-18, title: 2023 and delisted stocks, kind: note, text: "2023 +2.10% over small stocks; with delistings kept, 0.94% / 1.78% / 1.83%."}
   studies:
     - {name: Big prints in companies of $300M and over, when: 2026-11-18, trials: 4, result: "Mid-sized +0.5% in 8 of 8 years; under the bar", verdict: failed}
-    - {name: Small companies and larger footprints, when: 2026-11-18, trials: 4, result: "Small, trade size 3x: passed both tests", verdict: lead}
+    - {name: Small companies and larger footprints, when: 2026-11-18, trials: 8, result: "Small, trade size 3x: passed both tests", verdict: lead}
     - {name: Checks on the passed cell, when: 2026-11-18, trials: 5, result: "Control flat; 2023 +2.1%; search 0.94% with delistings; tail-heavy", verdict: note}

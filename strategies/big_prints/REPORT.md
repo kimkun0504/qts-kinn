@@ -95,5 +95,4 @@ make 27% to 69% of the excess. With each trade's excess capped at ±30%: +0.64% 
 - **Next:** follow it on paper from tonight's data, and decide on size only after a few
   months of signals. It was not run on the holdout.
 
-Trials: 4 + 4 (follow-up) + 5 (checks, counting the tests of two cells in the follow-up's
-four) = **13** (family `big_prints`).
+Trials: 4 cells + 4 follow-up cells + 4 test runs + 5 checks = **17** (family `big_prints`).
