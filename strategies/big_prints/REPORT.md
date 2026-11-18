@@ -6,7 +6,7 @@ follow it on paper.** A company of $50M to $300M that, on a quiet day with no 8-
 bought at the next open and held 20 sessions: +1.85% (2005–2009, t 4.21) and +1.77% (2018–2022,
 t 3.09) over the average small stock, +2.08% in 2023; the same days with an ordinary trade size
 make nothing. Against it: chosen as a follow-up; 0.94% in 2010–2017 with delisted stocks kept;
-tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 46 trials.
+tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 47 trials.
 
 Code: `research/claude/big_prints.py`.
 
@@ -367,3 +367,10 @@ steady difference: the signal is not the earnings drift seen another way. 1 tria
 28 sector and industry funds, footprint 2+, quiet relative up day, 20 sessions, 2010–2017:
 +0.25% over SPY (362 trades; t 0.80; 5 of 8). Nothing: in the most liquid funds, large pieces
 are ordinary. 1 trial (family 46).
+
+## Follow-up 14: large pieces before an A50 jump (read 18 November 2026, 00:40 ET)
+
+A50 signals with a footprint of 2+ on one of the five sessions before: +2.21% (54) in
+2010–2017 against +3.26% for all A50, +6.69% (50) against +4.53% in 2005–2009, +4.45% (57)
+against +4.13% in 2018–2022, +2.63% (12) against +5.95% in 2023. Worse in 2010–2017 and 2023:
+not a filter. A50 is unchanged. 1 trial (family 47).
