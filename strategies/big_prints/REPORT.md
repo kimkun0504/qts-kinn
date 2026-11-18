@@ -2,7 +2,7 @@
 
 Code: `research/claude/big_prints.py`.
 
-## The 4 cells, 2010–2017 (read 18 November 2026, 00:04 ET)
+## The 4 cells, 2010–2017 (read 18 November 2026, 00:01 ET)
 
 | Size | Hold | Trades | Over the average stock | Weekly t | Years positive | After costs |
 |---|---|---|---|---|---|---|
