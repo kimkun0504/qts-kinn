@@ -34,3 +34,19 @@ overnight in either direction. Two things stand out:
    reading; it is narrower than "after hours is slow" would suggest.
 
 Trials: 17 (family `after_hours_other`).
+
+## Follow-up: selling short a no-news rise (read 17 November 2026, 23:52 ET)
+
+Stricter events (no 8-K or 6-K from the day before to four days after), sold short at the low
+of the entry minute, 2010–2017, after costs and a night's borrow:
+
+| Size | To the next open | To the next close |
+|---|---|---|
+| $50M–$300M | +0.60% (158; t 0.28; 6 of 8) | **+3.27%** (158; t 2.41; **8 of 8**) |
+| $300M–$2B | +0.59% (254; t 1.35; 5 of 8) | +0.95% (254; t 2.06; 6 of 8) |
+
+No cell meets the search bar (t of 3), so no test was run. The nearest is small companies held
+to the next close: positive in all eight years, 3.3% a trade, but 20 trades a year in the
+hardest stocks to borrow, and a t of 2.4. Noted, not followed.
+
+Trials: 4 (family total 21).

@@ -56,3 +56,11 @@ after it (results filed late and foreign companies' results drop out).
 
 **4 cells:** size ($50M–$300M, $300M–$2B) × exit (next open, next close). Same bars: search
 150 trades, 1% after costs, t of 3, six years of eight; tests 0.5%, t 2.5, four of five.
+
+## Follow-up 2: buying a no-news fall (written 2026-11-17 23:52 ET, after follow-up 1 was read)
+
+The 16 cells showed that selling short after a no-news fall lost money overnight (it bounced).
+The opposite trade: the same stricter events (no 8-K or 6-K from the day before to four days
+after), a fall of 10% or more after hours, **bought at the high of the entry minute**, sold at
+the next open or close; the auction allowance and commission. **4 cells:** size × exit. Same
+bars as above; the search years have been seen in the mirror, so the test years are the evidence.

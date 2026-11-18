@@ -250,6 +250,29 @@ def fade(*periods) -> None:
                     print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in m["yearly"].items()))
 
 
+def bounce(*periods) -> None:
+    """Follow-up 2: no-news falls bought at the high of the entry minute."""
+    d = load()
+    paid = d["high_e"].astype(float)
+    adv = d["adv"].astype(float)
+    tier = np.where(adv < 1e6, 0.0025, np.where(adv < 1e7, 0.0010, np.where(adv < 1e8, 0.0005, 0.0002)))
+    commission = 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / paid))
+    for exit_ in ("next_open", "next_close"):
+        d[exit_ + "_net"] = d[exit_].astype(float) / paid - 1 - tier - commission
+    for period in periods or ("search",):
+        first, last = PERIODS[period]
+        for size in ("small", "mid"):
+            for exit_ in ("next_open", "next_close"):
+                keep = ((d["kind"] == "none") & d["quiet"].astype(bool) & (d["side"] == "short")
+                        & (d["size"] == size) & (d["yr"] >= first) & (d["yr"] <= last))  # fmt: skip
+                m = measure(d, keep, exit_)
+                bar = (0.01, 3, 6, 150) if period == "search" else (0.005, 2.5, 4, 0)
+                ok = m["n"] >= max(3, bar[3]) and m["mean"] >= bar[0] and m["t"] >= bar[1] and m["pos"] >= bar[2]
+                print(show(f"bounce {size} {exit_} {period}", m) + ("  MEETS THE BAR" if ok else ""))
+                if period != "search" and m["n"] >= 3:
+                    print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in m["yearly"].items()))
+
+
 def test(kind, side, size, exit_) -> None:
     d = load()
     for period in ("early", "late"):
@@ -267,6 +290,8 @@ if __name__ == "__main__":
         collect(int(sys.argv[2]), int(sys.argv[3]))
     elif command == "search":
         search()
+    elif command == "bounce":
+        bounce(*sys.argv[2:])
     elif command == "fade":
         fade(*sys.argv[2:])
     else:

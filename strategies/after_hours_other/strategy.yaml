@@ -4,7 +4,7 @@ status: event-study       # plan written 2026-11-17; nothing measured yet
 engine: minute
 universe: common stock $50M-$2B with a 10% after-hours move that is not a results release
 family: after_hours_other
-prior_trials: 0
+prior_trials: 21
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
