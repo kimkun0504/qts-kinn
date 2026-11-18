@@ -85,3 +85,15 @@ a year. **2 cells:** $50M–$300M and $300M–$2B, footprint 3 or more for the s
 more for the mid-sized (each size's first reading above). Search bar: 1% over the average,
 t of 3, six years of eight, positive after costs and borrow; tests at half, t 2.5, four of
 five. 2 trials.
+
+## Follow-up 3: the footprint as a filter on the earnings rule (written 2026-11-18 00:15 ET)
+
+Rule A50 (strategies/earnings_drift) buys small companies after a results jump of 15%+ on 5x
+volume. If large pieces mark institutional trading, A50 jumps traded in large pieces should
+drift more than jumps carried by small (retail) trades. The footprint is read on A50's signal
+day, as above (that day's shares per trade against the previous 60 sessions). **1 cell:** A50
+with a footprint of 1 or more (the trade at least its normal size), held as A50's plain exit
+(next open to the close 15 sessions later, after costs), against all A50 signals. Judged as
+A50's exits and filters are: **better only if better per trade in all three periods** (2005–
+2009, 2010–2017, 2018–2022), with 2023 as a check; the complement (footprint under 1) is
+printed beside it. 1 trial (charged here, not to earnings_drift; it changes nothing in A50).
