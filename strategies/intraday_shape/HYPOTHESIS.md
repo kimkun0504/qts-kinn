@@ -146,3 +146,17 @@ Short with SPY bought against it: 0.07% a trade for 5 sessions (t 1.48), 0.21% f
 2.74); long-short: −0.01% and 0.09%. In stocks of $50M a day and $10 or more the push into the
 close predicts almost nothing; the effect is in the thinner stocks, where the short costs too
 much. 4 trials; `intraday_shape` has 36. No tests run.
+
+## Addendum, 2026-11-17 22:53 ET: the warning as a filter on the two rules that work
+
+Written before it is measured. The one finding of this family that holds (a stock pushed up
+into the close for two weeks trails other stocks) could keep the two passed rules out of such
+stocks. **Filter:** skip a signal when the stock's last-half-hour score over the 10 sessions to
+the signal day is in the top fifth (or top tenth) of all stocks of $50M to $300M that day.
+
+Applied to **rule A50** (every signal 2005 to 13 October 2023, as in the exits above) and to
+**rule I** (insider buying: $50M to $300M, $100,000 or more bought on one filing date, one
+signal a company in 21 days, held 15 sessions; its research signals). Judged as the exits:
+a filter is better only if the kept signals beat all signals, in the mean a trade after costs,
+in all three periods (2010–2017, 2005/2006–2009, 2018–2022; 2023 shown). The skipped group is
+shown. **4 cells** (2 rules × 2 cut-offs), charged to `intraday_shape`.
