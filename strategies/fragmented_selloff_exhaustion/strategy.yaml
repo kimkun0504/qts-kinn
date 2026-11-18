@@ -1,5 +1,5 @@
 name: fragmented_selloff_exhaustion
-status: event-study
+status: parked
 engine: intraday
 universe: domestic common stocks after a fast regular-session decline
 cost_calibration: ibkr_pro_tiered
@@ -10,9 +10,9 @@ record:
   title: Smaller-print selloff exhaustion
   idea: Diminishing price impact with persistent activity and smaller average prints
   horizon: Two hours after first fill
-  verdict: event-study
-  label: Development studies ready
-  result: Untested
+  verdict: parked
+  label: Fragmentation filter too sparse
+  result: One primary event; the fixed control weakened in 2013–2016
   summary: >-
     After a shock, test whether smaller average shares per
     transaction and accelerating transaction activity improve
