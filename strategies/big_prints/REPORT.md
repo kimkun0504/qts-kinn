@@ -353,3 +353,9 @@ t of 2.2 the cell misses the search bar (150 trades, t 3); the test years were n
 Signals whose last results reacted 5 to 30 days before: +1.12% (2010–2017), +2.03%
 (2005–2009), +1.22% (2018–2022), +2.19% (2023); the rest +0.87%, +1.69%, +1.94%, +2.08%. No
 steady difference: the signal is not the earnings drift seen another way. 1 trial (family 45).
+
+## Follow-up 13: large pieces in sector funds (read 18 November 2026, 00:37 ET)
+
+28 sector and industry funds, footprint 2+, quiet relative up day, 20 sessions, 2010–2017:
++0.25% over SPY (362 trades; t 0.80; 5 of 8). Nothing: in the most liquid funds, large pieces
+are ordinary. 1 trial (family 46).
