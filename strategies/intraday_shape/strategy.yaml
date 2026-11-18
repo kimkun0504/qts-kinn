@@ -1,0 +1,18 @@
+name: intraday_shape
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: intraday
+universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k
+family: intraday_shape
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Intraday shape
+  idea: Stocks pushed up in the first or last half hour, session after session
+  horizon: 5 to 10 sessions
+  verdict: planned
+  summary: >-
+    An indicator of our own from minute bars: where in the session a stock moves. A stock
+    pushed up in the same half hour day after day may have a buyer who is not finished.
