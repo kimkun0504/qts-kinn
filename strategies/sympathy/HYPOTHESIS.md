@@ -30,3 +30,17 @@ Search 2010–2017: 0.3% a trade after costs for the one-session hold, 1% for fi
 3; six years of eight; 150 trades. Tests on 2005–2009 and 2018–2022, each cell that goes
 forward run once: half those, t of 2.5, four years of five, in both. 2023 is a check. The
 holdout stays sealed.
+
+**Results, 2026-11-17 23:16 ET.** **None of the 4 cells meets the bar; the peers keep falling.** 46,475
+peer-days; 2,564 opened 2% or more down. Bought at that open: −1.01% by the close and −1.48% in
+five sessions (2% gap); −1.28% and −1.82% (3% gap); two or three years of eight positive. Bad
+news about an industry spreads slowly, as it does for the company itself. 4 trials.
+
+## Addendum, 2026-11-17 23:16 ET: the other direction, bought
+
+Written before it is measured, after seeing that peers continue in the direction of their gap
+on bad news. If good news also spreads slowly, the peers of a company that **jumps** 15% or more
+after hours on its results, which **open 2% (or 3%) or more higher**, should keep rising.
+Trigger: the after-hours events of `after_hours` with a rise of 15% or more, $300M or more.
+Peers, trade, costs and bar as above (bought at the open, sold at the close or five sessions
+later). **4 cells**, charged to `sympathy`.
