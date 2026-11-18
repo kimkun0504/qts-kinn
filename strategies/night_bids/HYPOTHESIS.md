@@ -91,3 +91,13 @@ wholly beyond the level add up to 5 trades and $5,000:
 Cells: rise 3 levels × 3 sizes × 2 exits = 18; fall 3 levels × 3 sizes × 1 exit = 9.
 **27 cells**, charged to `night_bids`. What counts: as above. For the short cells the
 report gives the worst trade and worst 1%.
+
+**Results of trading with the move, 2026-11-17 20:56 ET.** In REPORT.md. **None of the 27 cells meets
+the bar and 25 lose.** Buying a rise at the next minute's high lost 0.6% to 2.2% a trade in
+companies of $300M or more (weekly t −3 to −8, winners 34% to 38%); selling a fall short at
+the next minute's low lost 0.2% to 1.7%. Both directions lose because the price does not
+move on after the signal (a stock first seen 5% up is paid for at 7.0% up and opens 5.6% up;
+one first seen 5% down is sold at 7.1% down and opens 6.4% down) while a minute's best and
+worst prices after hours are 1% to 3% apart. Read with the first part: after hours the middle
+price is about right, the taker pays the gap, and the resting order is picked off by news.
+27 cells; `night_bids` has 45 trials. No tests run.
