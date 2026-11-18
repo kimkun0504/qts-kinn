@@ -9,7 +9,7 @@ import pytest
 
 from kinn.engine.intraday.data import make_symbol_day
 
-SOURCE = Path(__file__).resolve().parents[1] / "strategies/close_unwind_impact_decay/formula.py"
+SOURCE = Path(__file__).resolve().parents[1] / "strategies/close_unwind_impact_decay/strategy.py"
 SPEC = spec_from_file_location("close_unwind_formula", SOURCE)
 MODULE = module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

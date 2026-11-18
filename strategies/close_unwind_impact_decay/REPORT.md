@@ -4,7 +4,7 @@ Status. Execution implementation under test before the development
 study. Hypothesis commit `e3463b5` fixes the candidate, the
 position size, the early exit policy, periods and advancement
 gates. The formula and candidate extraction are implemented in
-`formula.py`.
+`strategy.py`.
 
 The candidate combines the remaining discount from the last
 regular-session close with reduced price impact in the latest
@@ -49,6 +49,14 @@ suite, focused extended-execution tests, Ruff and import contracts
 pass. The run-store integration tests exercise both completed and
 unresolved positions in study and portfolio mode using synthetic
 bars. No empirical run has started yet.
+
+The initial CLI launch failed during strategy import before a
+manifest or run directory was created. Pytest's repository import
+path had hidden a helper-import dependency. The candidate's
+calculations now live in `strategy.py`, with an isolated-process
+load test outside the repository working directory. The signal
+and execution rules are unchanged. This is not an empirical
+trial and supplied no candidate returns.
 Claude's new after-hours research at `2cc002a` supplies related
 prior looks and retains the registered runner's regular-session
 fill boundary. Historical performance for this candidate

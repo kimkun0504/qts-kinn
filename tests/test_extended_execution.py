@@ -2,6 +2,8 @@
 
 import dataclasses
 import json
+import subprocess
+import sys
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
@@ -268,6 +270,24 @@ def test_strategy_prefix_replay_and_early_close_exclusion():
     assert signals[0].limit_price == pytest.approx(8.97 * 1.005)
     check_no_lookahead(strategy, data.view, signals, list(range(570, 984)))
     assert not day_signals(strategy, dataclasses.replace(data.view, close_minute=780))
+
+
+def test_strategy_loads_outside_the_pytest_pythonpath(tmp_path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-c",
+            "from kinn.run import load_strategy; "
+            "strategy = load_strategy('close_unwind_impact_decay', {}); "
+            "assert strategy.name == 'close_unwind_impact_decay'",
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.mark.parametrize(
