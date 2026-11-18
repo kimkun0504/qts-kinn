@@ -260,3 +260,9 @@ into the session. Two more exits from the minute bars of the next session: **the
 rule: an exit is better only if it beats the open in all three periods (2023 shown). The 10:00
 and 15:30 prices are bought back with the spread crossed (half the modelled spread added) since
 they are not auctions. **2 cells**, charged to `after_hours`.
+
+**Results of the later buy-backs, 2026-11-17 23:18 ET.** In REPORT.md. **Both are better than the open in
+all three periods**, by the rule set: at 10:00 3.25%, 3.14%, 2.29% (2023 7.32%); at 15:30 4.55%,
+3.47%, 2.37% (t 2.10), 2023 8.82%; against 2.98%, 2.82%, 1.60% and 6.66% at the open. The
+selling after bad results after hours goes on through the next session. 2 trials;
+`after_hours` has 114. The paper ledger records the 15:30 buy-back beside the open.

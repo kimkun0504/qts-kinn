@@ -183,11 +183,56 @@ def before_search(*periods) -> None:
                   f"{100 * np.median(net[k]):6.2f}%  t {tt:5.2f}  yrs {pos} of {len(set(years))}  worst {100 * net[k].min():.0f}%")  # fmt: skip
 
 
+def exits() -> None:
+    """The short bought back at the next open, 10:00, 15:30 and the close."""
+    out = ah.folder()
+    shape = load_settings().data_dir / "research" / "intraday_shape"
+    store = DataStore(load_settings())
+    t = duckdb.sql(
+        f"""with n as (
+                select n.day, n.symbol, year(n.day) as yr, (date_diff('day', DATE '2003-12-29', n.day) // 7) as week,
+                       v.mcap, v.adv, n.reaction, n.paid, w.rel_low, exp(v.c_next - v.c) * v.oc_next as to_open,
+                       exp(v.c_next - v.c) as to_close
+                from read_parquet('{out}/entries_*.parquet') n
+                join read_parquet('{out}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
+                join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+                where n.timing = 'after' and v.mcap >= 3e8 and v.mcap < 2e9 and n.reaction < -0.15),
+            nx as (select n.*, (select min(date) from read_parquet('{store.root}/panel/*.parquet') p
+                                where p.symbol = n.symbol and p.date > n.day) as next_day from n)
+            select nx.*, g.p1000, g.p1530, p.open as next_open
+            from nx left join read_parquet('{shape}/segments_*.parquet') g on g.symbol = nx.symbol and g.day = nx.next_day
+            left join read_parquet('{store.root}/panel/*.parquet') p on p.symbol = nx.symbol and p.date = nx.next_day"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    adv = d["adv"].astype(float)
+    tier = np.where(adv < 1e6, 0.0025, np.where(adv < 1e7, 0.0010, np.where(adv < 1e8, 0.0005, 0.0002)))
+    half = np.where(adv < 1e6, 0.0065, np.where(adv < 1e7, 0.0018, np.where(adv < 1e8, 0.0010, 0.0005)))
+    comm = 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / d["paid"].astype(float))) + ah.BORROW_NIGHT
+    entry = d["rel_low"].astype(float)
+    scale = d["to_open"].astype(float) / d["next_open"].astype(float)  # prices of the next session, against the reading's base
+    rows = {
+        "open": 1 - d["to_open"].astype(float) / entry - tier - comm,
+        "10:00": 1 - d["p1000"].astype(float) * scale / entry - half - comm,
+        "15:30": 1 - d["p1530"].astype(float) * scale / entry - half - comm,
+        "close": 1 - d["to_close"].astype(float) / entry - tier - comm,
+    }
+    ok = ~np.isnan(rows["10:00"]) & ~np.isnan(rows["15:30"])
+    for name, values in rows.items():
+        cells = []
+        for span, (a, b) in SPANS.items():
+            k = ok & (d["yr"] >= a) & (d["yr"] <= b)
+            _, tt, _ = weekly(values[k], d["week"][k])
+            cells.append(f"{span} {100 * values[k].mean():5.2f}% ({k.sum()}, t {tt:4.2f})")
+        print(f"bought back at {name:6} " + "  ".join(cells))
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "lows5":
         lows5(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == "before_lows":
         before_lows(int(sys.argv[2]), int(sys.argv[3]))
+    elif sys.argv[1] == "exits":
+        exits()
     elif sys.argv[1] == "before_search":
         before_search(*sys.argv[2:])
     else:

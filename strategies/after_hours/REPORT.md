@@ -1,6 +1,6 @@
 # After hours: an overnight gain in most years, missing in 2020 to 2022
 
-**Verdict: not passed; the nearest thing to a new result on 17 November.** Eight studies, 112
+**Verdict: not passed; the nearest thing to a new result on 17 November.** Nine studies, 114
 trials, nothing passed both tests. The holdout is untouched.
 
 Plan: [HYPOTHESIS.md](HYPOTHESIS.md). An earnings 8-K accepted after the close (or before
@@ -156,6 +156,20 @@ record. All three can be followed on paper each evening at no cost.
 next minute's low, bought back at that session's close; 3 cells): 2010–2017 +1.63% (26 trades,
 $50M–$300M), +2.44% (71, t 1.55, $300M–$2B), +2.87% (53, t 2.52, seven years of seven, $2B+).
 The same direction, on too few signals to meet the bar.
+
+**When to buy it back** (2 trials; judged as the earnings rule's exits: better only if better in
+all three periods):
+
+| Short, after costs | 2005–2009 | 2010–2017 | 2018–2022 | 2023 |
+|---|---|---|---|---|
+| Bought back at the next open (as tested) | +2.98% | +2.82% | +1.60% (t 1.15) | +6.66% |
+| … at 10:00 (spread crossed) | +3.25% | +3.14% | +2.29% (t 1.79) | +7.32% |
+| … **at 15:30** (spread crossed) | **+4.55%** | **+3.47%** | **+2.37% (t 2.10)** | **+8.82%** |
+| … at the close | +4.42% | +3.41% | +2.10% (t 1.87) | +8.80% |
+
+Holding the short through the next session is better in every period: the selling after bad
+results goes on all day. Bought back at 15:30 the short is closer to the bar it failed (t 2.10
+in 2018–2022 against 2.5), and the paper ledger records it beside the open.
 
 **As a book** (a description, not a test): $2,000 a trade, every signal taken, after costs, 639
 signals 2005 to October 2023. By year: 2005 $1,143, 2006 $373, 2007 $1,178, 2008 $3,296, 2009
