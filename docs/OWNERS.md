@@ -38,6 +38,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/distributed_morning_selloff` | gpt | 2026-11-17 | recovery after a decline spread across the morning |
 | `strategies/late_rally_selloff` | gpt | 2026-11-17 | rebound after a selloff in a late-session rally |
 | `strategies/one_dollar_reclaim` | gpt | 2026-11-17 | rebound above a fixed nominal price after an intraday break |
+| `strategies/filing_aware_dislocation` | gpt | 2026-11-17 | exclude newly usable filings from the size-peer reversal |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
