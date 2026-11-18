@@ -23,3 +23,17 @@ The original platform restriction and the limited scope of
 the extended-hours reassignment require a separate owner
 decision before changing the data view. No empirical run
 has started and no return estimate is available.
+
+Vendor documentation confirms that sale conditions can affect
+aggregate price and volume differently. The ratio is a vendor-
+aggregate proxy, not a verified estimate of the size of the
+trades setting price. The source and measurement caveat are in
+the hypothesis addendum.
+
+The same documentation search accidentally exposed illustrative
+post-seal AAPL rows. The strategy and thresholds were committed
+before that search and the example was not used to alter them.
+The incident is recorded in
+`docs/checkpoints/gpt-2026-11-18-documentation-exposure.md`.
+No empirical strategy run, sealed-folder access or holdout
+backtest occurred, but zero post-seal exposure cannot be claimed.

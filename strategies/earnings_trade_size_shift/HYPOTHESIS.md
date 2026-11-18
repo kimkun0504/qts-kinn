@@ -131,3 +131,21 @@ and the Form 8-K input version. Identify isolated event P&L
 as distinct from a capital-constrained account portfolio.
 Count all runs. Never load the sealed period or a date on
 or after 2023-11-09.
+
+## Pre-run measurement and exposure addendum
+
+Vendor documentation describes sale-condition rules that can
+update aggregate volume without updating OHLC. The volume/count
+ratio is therefore a proxy built from vendor aggregates, not a
+verified distribution of price-setting trade sizes or investor
+orders. A passing result would still need trade-condition and
+quote checks before a trading claim.
+[Massive aggregate condition rules](https://massive.com/knowledge-base/article/how-does-massive-create-the-open-high-low-close-volume-aggregate-bars)
+
+A documentation search after the frozen code commit returned
+illustrative post-seal AAPL rows in the provider's Quickstart.
+That accidental exposure is recorded in
+`docs/checkpoints/gpt-2026-11-18-documentation-exposure.md`.
+The sample was not used to select or change this candidate.
+There has been no empirical run, and the exposure must remain
+visible in its report and any later assessment of the research.
