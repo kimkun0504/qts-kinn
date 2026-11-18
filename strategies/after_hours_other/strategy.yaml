@@ -1,10 +1,10 @@
 name: after_hours_other
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: closed            # 24 cells and a comparison read 2026-11-17; none met the bar
 engine: minute
 universe: common stock $50M-$2B with a 10% after-hours move that is not a results release
 family: after_hours_other
-prior_trials: 21
+prior_trials: 25
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,8 @@ record:
   title: After hours, other news
   idea: A large after-hours move that is not a results release
   horizon: overnight to the next close
-  verdict: planned
+  verdict: failed
+  result: Outside results, a 10% after-hours move does not carry on; no-news rises give back
   summary: >-
     The after-hours short applied to every other large move after the close: an offering,
     a guidance cut, a drug decision. Short after a fall, or buy after a rise, and close out

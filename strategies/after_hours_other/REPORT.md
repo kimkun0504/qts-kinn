@@ -50,3 +50,13 @@ to the next close: positive in all eight years, 3.3% a trade, but 20 trades a ye
 hardest stocks to borrow, and a t of 2.4. Noted, not followed.
 
 Trials: 4 (family total 21).
+
+## Follow-up 2: buying a no-news fall (read 17 November 2026, 23:53 ET)
+
+| Size | To the next open | To the next close |
+|---|---|---|
+| $50M–$300M | +1.78% (99; t 1.43; 5 of 8) | +1.18% (t 0.49; 5 of 8) |
+| $300M–$2B | −1.10% (160; 2 of 8) | −1.83% (3 of 8) |
+
+Bought at the minute's high, the bounce is gone; no cell meets the bar. Trials: 4 (family
+total 25). **Verdict: closed.**
