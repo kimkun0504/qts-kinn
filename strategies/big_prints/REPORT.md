@@ -184,3 +184,15 @@ $50M–$300M, footprint 3+, up 0% to 4%, with an 8-K reacting that day, 2010–2
 −0.26% over the average (36 trades), any other 8-K +0.44% (91). Too few and nothing there: on
 news days the trades are many and small, so the footprint rarely reaches 3. The quiet-day rule
 stands as it is. 2 trials (family 27).
+
+## Follow-up 5: large pieces on a mid-sized results jump (read 18 November 2026, 00:18 ET)
+
+$300M–$2B, up 5%+ on results, 2010–2017, over the average stock of that size:
+
+| Footprint on the reaction day | 20 sessions | 60 sessions |
+|---|---|---|
+| 1.5 or more | +1.03% (326; t 0.78; 6 of 8) | +2.29% (307; t 0.21; 6 of 8) |
+| Under 1.5 | +0.66% (7,481; t 1.44; 8 of 8) | +1.07% (7,463; t 1.01; 8 of 8) |
+
+Larger means with large pieces, but on 40 trades a year, spread over quiet weeks, with a weekly
+t under 1: nothing to test. 2 trials (family 29).

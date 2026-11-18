@@ -4,7 +4,7 @@ status: event-study       # small-company cell passed both tests 2026-11-18; a l
 engine: daily
 universe: common stock $300M+ on a quiet up day traded in unusually large pieces
 family: big_prints
-prior_trials: 27
+prior_trials: 29
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -37,4 +37,5 @@ record:
     - {name: The seller's footprint (quiet down days), when: 2026-11-18, trials: 2, result: "The short fails; small stocks beat the average after these days too (+0.8%)", verdict: failed}
     - {name: The footprint as a filter on A50, when: 2026-11-18, trials: 1, result: "Better per trade in all periods by 0.04 to 0.13 points; cuts profitable trades; not used", verdict: failed}
     - {name: Large pieces on a news day, when: 2026-11-18, trials: 2, result: "36 and 91 trades; nothing", verdict: failed}
+    - {name: Large pieces on mid-sized results jumps, when: 2026-11-18, trials: 2, result: "+1.0% (20) and +2.3% (60) on 40 a year, t under 1", verdict: failed}
     - {name: Checks on the passed cell, when: 2026-11-18, trials: 5, result: "Control flat; 2023 +2.1%; search 0.94% with delistings; tail-heavy", verdict: note}
