@@ -1,0 +1,19 @@
+name: overnight_hold
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, price >= $5, no results due
+family: overnight_hold
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Holding only overnight
+  idea: Owning a stock only at night (or only by day), chosen by where its gains have come
+  horizon: One night or one session
+  verdict: planned
+  summary: >-
+    An indicator of our own: where a stock's move happens, overnight or in the session.
+    Buy in the closing auction and sell in the opening auction the stocks whose gains have
+    come at night (or the reverse by day).
