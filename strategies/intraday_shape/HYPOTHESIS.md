@@ -57,3 +57,31 @@ returns), bought at D+1's open, sold at the close 5 or 10 sessions later.
 Cells: 2 half hours × 2 holds × 3 sizes = **12**, the same bar. Charged to
 `intraday_shape`. A short of the top cells is not tested here: in companies of $2B or more
 it would make about 0.5% before borrow, under the bar.
+
+**Result of the other end, 2026-11-17 22:29 ET.** In REPORT.md. None of the 12 cells meets the bar. The
+stocks most pushed **down** into the close do a little better than the average stock (small,
+10 sessions: +0.72% over it, t 3.04; +0.36% after costs), much less than the stocks pushed up
+do worse. The first-half-hour ends are both slightly negative. 12 trials; `intraday_shape`
+has 24.
+
+## Addendum, 2026-11-17 22:29 ET: both ends at once, where shares can be borrowed
+
+Written after both ends were seen on 2010–2017, before any test period is looked at. The
+effect is lopsided: the push up into the close predicts; the push down barely does. A book
+that owns the 10 most pushed down and is short the 10 most pushed up, in companies large
+enough to borrow freely, takes the market out and keeps both.
+
+**Rule.** Each session D, in a size group: long the 10 stocks with the lowest last-half-hour
+score, short the 10 with the highest, both at D+1's open, both closed at the close 5 or 10
+sessions later. The trade's return is the long leg's average after costs plus the short leg's
+average after costs, halved (a return on the gross money). Short costs: the auction allowance
+and commission, and borrow at **1% a year** (general collateral for companies of this size at
+a retail broker is well under that; a short of any of these that cannot be borrowed is the
+risk said in the report).
+
+Cells: 2 sizes ($300M to $2B; $2B or more) × 2 holds = **4**, charged to `intraday_shape`.
+
+**What counts (set now, for a market-neutral trade).** Search 2010–2017 (already seen through
+its legs, shown for the record): 0.4% a trade for 10 sessions, 0.2% for 5, weekly t of 3,
+six years of eight. Tests on 2005–2009 and 2018–2022, run once each: **0.2% a trade for 10
+sessions, 0.1% for 5, weekly t of 2.5, four years of five, in both.**

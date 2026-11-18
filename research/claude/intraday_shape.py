@@ -89,11 +89,11 @@ def table() -> None:
     print(duckdb.sql(f"select count(*), min(day), max(day) from '{folder()}/scores.parquet'").fetchall())
 
 
-def cells(score: str, hold: int, size: str) -> dict[str, np.ndarray]:
+def cells(score: str, hold: int, size: str, order: str = "desc") -> dict[str, np.ndarray]:
     small, big = SIZES[size]
     t = duckdb.sql(
         f"""with s as (
-                select *, row_number() over (partition by day order by {score} desc) as rk,
+                select *, row_number() over (partition by day order by {score} {order}) as rk,
                        avg(g{hold}) over (partition by day) as everyone
                 from '{folder()}/scores.parquet' where mcap >= {small} and mcap < {big})
             select day, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week,
@@ -142,8 +142,20 @@ def search() -> None:
     print("\nMeet the search bar:", passed or "none")
 
 
-def test(score, hold, size) -> None:
-    d = cells(score, int(hold), size)
+def search_low() -> None:
+    passed = []
+    for score, hold, size in CELLS:
+        d = cells(score, hold, size, "asc")
+        m = measure(d, period(d, "search"))
+        label = f"low {score} {hold} {size}"
+        print(show(label, m))
+        if m["n"] >= 150 and m["net"] >= 0.01 and m["t"] >= 3 and m["pos"] >= 6:
+            passed.append(label)
+    print("\nMeet the search bar:", passed or "none")
+
+
+def test(score, hold, size, order="desc") -> None:
+    d = cells(score, int(hold), size, order)
     for name in ("early", "late"):
         m = measure(d, period(d, name))
         print(show(f"{score} {hold} {size} {name}", m))
@@ -157,5 +169,7 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         search()
+    elif sys.argv[1] == "search_low":
+        search_low()
     else:
         test(*sys.argv[2:5])
