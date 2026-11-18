@@ -213,8 +213,6 @@ def test_tool_finds_a_signal_from_fetched_answers(monkeypatch):
             return {"results": [{"vw": 20.0, "v": 100_000, "o": 15.0}] * 20}
         if "ABCDW" in route:
             return {"results": {"type": "WARRANT"}}
-        if "ABCDW" in route:
-            return {"results": {"type": "WARRANT"}}
         return {"results": {"type": "CS", "market_cap": 8e8}}
 
     monkeypatch.setattr(tool.tool, "massive", massive)
