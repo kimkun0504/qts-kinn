@@ -37,3 +37,8 @@ Search: the signals of 2013 to 2017 (17 quarters). Over the average stock of the
 positive, and a positive average after costs. Test: 2018 to 2022 (20 quarters), each cell
 that goes forward run once: **half those**, t of 2.5, four years of five. The first two
 quarters of 2023 are a check. There is no second test period, so a pass here is a lead.
+
+**Results, 2026-11-17 22:32 ET.** **None of the 8 cells meets the bar.** 18 quarters of signals in 2013–
+2017; against the average stock of the size group the 20 highest scores made −1.38% to +1.80%
+a trade, t under 1 in every cell. A jump in institutional holders, read 60 days after the
+quarter, says nothing about the next one to three months. 8 trials. No tests run.

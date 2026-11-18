@@ -1,10 +1,10 @@
 name: holders13f
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 8 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $2B, 20-day dollar volume >= $250k, 13F holders known (2013 on)
 family: holders13f
-prior_trials: 0
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: New institutional holders
   idea: Small companies that institutions are starting to own
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: closed
+  result: "No signal: −1.4% to +1.8% against other stocks, t under 1"
   summary: >-
-    From the quarterly 13F reports: buy the small companies whose number of institutional
-    holders jumped last quarter, 60 days after the quarter ends.
+    From the quarterly 13F reports: the small companies whose number of institutional
+    holders jumped, bought 60 days after the quarter ends.
+  weaknesses:
+    - By the time the reports are public, the buying they show is over.
+  evidence:
+    - {when: 2026-11-17, title: 8 cells on 2013 to 2017, kind: failed, text: "No cell near the bar; t under 1 everywhere."}
+  studies:
+    - {name: A jump in 13F holders, when: 2026-11-17, trials: 8, result: "No cell meets the bar", verdict: failed}
