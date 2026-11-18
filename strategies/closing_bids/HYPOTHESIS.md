@@ -61,3 +61,31 @@ close must lie inside the prices that actually printed between 16:00 and 16:05 i
 data** (from a different vendor than the daily table). The search is re-read with it, the
 two cells are re-judged, and only then tested. Recorded here as a change made after seeing
 the search years; the 18 cells are counted once.
+
+**Results, 2026-11-17 21:15 ET.** In REPORT.md. With the data check the search has one cell over the bar:
+$2B or more, close 2% or more under the 15:49 price, sold at the next open: 1.28% after costs
+on 173 fills, weekly t 3.30, **eight years of eight**, 65% winners, worst −13% (the −81% in
+the first reading was a wrong close and the check removed it). Tested once on each period:
+2005–2009 1.51% (857 fills, four years of five, **weekly t 0.33**); 2018–2022 1.35% (1,521
+fills, four of five, **weekly t 1.37**). **Not passed:** the t fails in both. The average is
+the same in all three periods and positive in 16 of 18 years, but four fifths of the test
+fills are in 2008 and 2020, and week to week in those years the result swings too far for
+the test. 18 cells and 2 test runs: 20 trials.
+
+## Addendum, 2026-11-17 21:15 ET: can it be done without the auction order, and is it the market?
+
+Written before it is measured, and after all three periods of the cell above were seen, so
+nothing below is a blind test. Two questions decide whether the lead is usable:
+
+- **Bought after the close instead.** A limit-on-close order has to be resting in every
+  large stock at 15:49, which an account of this size cannot fund. The usable version looks
+  at 16:01 for stocks of $2B or more that closed 2% or more under their 15:49 price and buys
+  them after hours: **at the high of the first minute that trades from 16:06 to 16:20**. Sold
+  at the next open. 1 cell.
+- **With SPY sold short at the close and bought back at the next open**, for the same
+  dollars (0.03% added for its costs), on the auction fills. If the gain is the market's own
+  overnight rebound after a late sell-off, this is near zero and the trade is simply SPY. 1
+  cell.
+
+**2 cells** on the search years, the same bar; the other two periods are shown beside them
+because they are already known for the base cell. Charged to `closing_bids`.

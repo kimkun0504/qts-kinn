@@ -4,7 +4,7 @@ status: event-study       # plan written 2026-11-17; nothing measured yet
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, no results due, down in the last ten minutes
 family: closing_bids
-prior_trials: 0
+prior_trials: 20
 cost_calibration: ibkr_pro_tiered
 owner: claude
 

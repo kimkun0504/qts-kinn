@@ -38,7 +38,7 @@ def collect(first: int, last: int) -> None:
     store = DataStore(load_settings())
     con = connect()
     for year in range(first, last + 1):
-        target = folder() / f"falls_{year}.parquet"
+        target = folder() / f"falls2_{year}.parquet"
         if target.exists():
             continue
         files = str(store.bars_roots[0] / "minute" / f"year={year}" / "*.parquet")
@@ -47,11 +47,16 @@ def collect(first: int, last: int) -> None:
                 with b as (
                     select symbol, cast(regexp_extract(filename, '(\\d{{4}}-\\d{{2}}-\\d{{2}})\\.parquet', 1) as date) as day,
                            arg_max(close, minute_et) filter (where minute_et between 940 and 949) as before,
-                           sum(close * volume) filter (where minute_et between 960 and 965) as auction
+                           sum(close * volume) filter (where minute_et between 960 and 965) as auction,
+                           min(low) filter (where minute_et between 960 and 965) as print_low,
+                           max(high) filter (where minute_et between 960 and 965) as print_high,
+                           arg_max(close, minute_et) filter (where minute_et between 955 and 959) as last,
+                           arg_min(close, minute_et) filter (where minute_et between 966 and 980) as later
                     from read_parquet('{files}', filename = true)
-                    where minute_et between 940 and 965 group by 1, 2)
+                    where minute_et between 940 and 980 group by 1, 2)
                 select b.day, b.symbol, d.permaticker, d.ref, d.mcap, d.adv, d.to_open, d.to_close,
-                       b.before, b.auction, d.ref / b.before - 1 as late
+                       b.before, b.auction, d.ref / b.before - 1 as late, b.print_low, b.print_high,
+                       b.last, b.later
                 from b join '{shared()}/daily.parquet' d on d.day = b.day and d.symbol = b.symbol
                 where b.before is not null and d.ref <= b.before * 0.98
             ) to '{target}' (format parquet)"""
@@ -62,12 +67,14 @@ def collect(first: int, last: int) -> None:
 def load(depth: int) -> dict[str, np.ndarray]:
     t = duckdb.sql(
         f"""select f.day, f.symbol, year(f.day) as yr, (date_diff('day', DATE '2003-12-29', f.day) // 7) as week,
-                   f.mcap, f.late, f.to_open - 1 as g_open, f.to_close - 1 as g_close,
+                   f.mcap, f.late, f.last / f.ref - 1 as last_gap, f.later / f.ref - 1 as later_gap,
+                   f.to_open - 1 as g_open, f.to_close - 1 as g_close,
                    2 * (case when f.adv < 1e6 then 0.0025 when f.adv < 1e7 then 0.0010
                              when f.adv < 1e8 then 0.0005 else 0.0002 end)
                    + 2 * least(0.01, greatest(0.000175, 0.0035 / f.ref)) as cost
-            from read_parquet('{folder()}/falls_*.parquet') f
+            from read_parquet('{folder()}/falls2_*.parquet') f
             where f.late <= {-depth / 100} and f.late >= -0.30 and f.auction >= {MIN_AUCTION}
+              and f.ref between f.print_low and f.print_high
               and not exists (select 1 from '{shared()}/results_due.parquet' r
                               where r.permaticker = f.permaticker and r.day = f.day)
             order by f.day, f.symbol"""
