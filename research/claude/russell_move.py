@@ -91,6 +91,21 @@ def table() -> None:
             where w.yr >= 2005 and w.prev_rk <= 1000 and w.rk > 1000
         ) to '{folder()}/events.parquet' (format parquet)"""
     )
+    con.execute(
+        f"""copy (
+            with r as (select a.*, b.rk as prev_rk from ranks a join ranks b
+                       on b.permaticker = a.permaticker and b.yr = a.yr - 1),
+            w as (select r.*, exp(q2.c - q1.c) / q1.oc - 1 as g_into
+                  from r join dates d on d.yr = r.yr
+                  join q q1 on q1.permaticker = r.permaticker and q1.date = d.first
+                  join q q2 on q2.permaticker = r.permaticker and q2.date = d.recon),
+            avgs as (select yr, avg(g_into) as all_into from w where rk between 1001 and 3000 group by 1)
+            select w.*, a.all_into, case when w.rk <= 2800 then 'clearly' end as clearly
+            from w join avgs a on a.yr = w.yr
+            where w.yr >= 2005 and w.prev_rk > 3000 and w.rk <= 3000
+        ) to '{folder()}/entrants.parquet' (format parquet)"""
+    )
+    print(con.sql(f"select yr, count(*), count(clearly) from '{folder()}/entrants.parquet' group by 1 order by 1").fetchall())
     print(con.sql(f"select yr, count(*), count(clearly) from '{folder()}/events.parquet' group by 1 order by 1").fetchall())
 
 
@@ -99,8 +114,8 @@ def cost(price, adv):
     return 2 * (np.minimum(0.01, np.maximum(0.000175, 0.0035 / price)) + tier)
 
 
-def run(period, cells) -> None:
-    t = duckdb.sql(f"select * from '{folder()}/events.parquet'").to_arrow_table()
+def run(period, cells, name="events") -> None:
+    t = duckdb.sql(f"select * from '{folder()}/{name}.parquet'").to_arrow_table()
     d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
     first, last = PERIODS[period]
     for kind, window in cells:
@@ -108,6 +123,8 @@ def run(period, cells) -> None:
         avg = d[f"all_{window}"].astype(float)
         price = (d["close"] if window == "into" else d["close_after"]).astype(float)
         adv = (d["adv"] if window == "into" else d["adv_after"]).astype(float)
+        if name == "entrants":
+            adv = np.nan_to_num(adv)
         keep = (d["yr"] >= first) & (d["yr"] <= last) & ~np.isnan(g)
         if kind == "clearly":
             keep &= d["clearly"] == "clearly"
@@ -131,5 +148,7 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(k, w) for k in ("down", "clearly") for w in ("into", "after")])
+    elif sys.argv[1] == "entrants":
+        run(sys.argv[2], [("down", "into"), ("clearly", "into")], "entrants")
     else:
         run(sys.argv[2], [(sys.argv[3], sys.argv[4])])
