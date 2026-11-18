@@ -200,3 +200,9 @@ to 15%, 2-day volume 3x or more), footprint read on the signal day. **1 cell:** 
 more, held as A50's plain exit (next open to the close 15 sessions later), after costs; the rest
 printed beside. Search bar: 150 trades, 1% a trade after costs, weekly t 3, six of eight;
 tests at 0.5%, t 2.5, four of five. 1 trial.
+
+## Check 9: large pieces in the weeks after results (written 2026-11-18 00:34 ET)
+
+A diagnostic of the passed cell using only what is known on D: its signals split by whether
+the company's last results 8-K reacted 5 to 30 calendar days before D (funds buying after the
+news, the ground of the earnings drift) or longer ago. 1 trial.
