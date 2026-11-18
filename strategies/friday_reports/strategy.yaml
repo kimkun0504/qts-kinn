@@ -1,10 +1,10 @@
 name: friday_reports
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 4 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $2B, results whose first reaction falls on a Friday
 family: friday_reports
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Friday reports
   idea: The drift after results that were read on a Friday
   horizon: 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "A quarter to 0.4 of a point more drift than other days; not enough alone"
   summary: >-
     Results read on a Friday get less attention and more of the move comes later. The
     earnings rule's test, on Friday reports only, in small and mid-sized companies.
+  weaknesses:
+    - No cell reaches a weekly t of 3; the extra drift is a quarter to 0.4 of a point.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2010 to 2017, kind: failed, text: "Small, 15% rise: 3.38% on 136 trades (t 2.05) against 2.99% on other days."}
+  studies:
+    - {name: A50's test on Friday reactions, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}

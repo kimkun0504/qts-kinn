@@ -28,3 +28,9 @@ Search 2010–2017: 1% a trade after costs, weekly t of 3, six years of eight, 1
 reported and taken on if the rest is met). Tests on 2005–2009 and 2018–2022, each cell that
 goes forward run once: 0.5%, t of 2.5, four years of five, in both. 2023 is a check. The holdout
 stays sealed.
+
+**Results, 2026-11-17 22:44 ET.** In REPORT.md. **None of the 4 cells meets the bar** (t under 3 in each).
+The Friday reports do drift a little more than the same rule on other days, as the published
+result says: 15% rise, $50M to $300M, 3.38% a trade (136 trades, t 2.05) against 2.99% (385,
+t 2.83); $300M to $2B, 1.70% (378, t 2.76) against 1.39% (1,085, t 2.89). A quarter of a
+point to 0.4 of a point more, not enough to stand alone. 4 trials. No tests run.
