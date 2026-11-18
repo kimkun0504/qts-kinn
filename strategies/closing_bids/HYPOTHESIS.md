@@ -49,3 +49,15 @@ orders a year fill.
 Whether the stock had an auction, and at what price our order would have stood in it, is
 read from trades by the minute and the official close. The cut-off times changed over the
 years (15:45 to 15:50 on NYSE, 15:50 to 15:55 on Nasdaq); 15:49 is used throughout.
+
+**Search result and a data check added before any test, 2026-11-17 21:12 ET.** Search: two cells met the
+bar, both in companies of $2B or more with a close 2% or more under the 15:49 price (265
+fills in eight years): sold at the next open 1.44% after costs (weekly t 3.71, seven years
+of eight, 70% winners), sold at the next close 2.08% (t 3.56, eight of eight). Every other
+cell was positive too, which a wrong closing price in the daily table would also produce
+(a close recorded too low makes a fall and a rebound out of nothing). So before the tests,
+one check is added to the rule, in the direction that can only remove trades: **the official
+close must lie inside the prices that actually printed between 16:00 and 16:05 in the minute
+data** (from a different vendor than the daily table). The search is re-read with it, the
+two cells are re-judged, and only then tested. Recorded here as a change made after seeing
+the search years; the 18 cells are counted once.
