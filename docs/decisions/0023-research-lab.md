@@ -72,4 +72,23 @@ test periods separately so the owner can hold them back as the agents do.
 
 **Deferred (recorded, not built):** minute-bar fields; news, short interest and short volume
 fields (Massive files on disk from 2016 only, read outside the store today); parameter sweeps;
-a factor (rank-decile) report; a cache of loaded fields between runs; several runs at once.
+a factor (rank-decile) report; several runs at once.
+
+**Added the same day, after the owner's first run failed** (a field clicked in the Data tab was
+written at the top of his file, and the syntax error was shown where he could not see it):
+
+9. **The code is checked before it runs, without running it** (`kinn.lab.check`, `ast` only):
+   errors (syntax, no `signal(data)`, a refused `SETTINGS`) block the Run button and are refused
+   by the server; warnings (an unknown `data.` field with the nearest one named, a negative
+   shift, a centered window, a missing helper module) are marked on the line as he types.
+10. **Nothing is written into the code at a place he cannot see:** a field is inserted only at
+    a cursor he has placed, and copied otherwise. The toolbar shows how the last run ended, and
+    the page moves to the results when a run he started ends.
+11. **A run has a time limit** (30 minutes by default) that the code's own `except Exception`
+    cannot catch, a log line a stage with the time, and the time each stage took.
+12. **Helper modules** (`lab/library/<name>.py`, imported as `lab.<name>`) let algorithms share
+    code; each run keeps a copy of the library and its hash, so an old result never changes.
+13. **A cache of loaded fields between runs** (memory-mapped files keyed by data build,
+    universe and window; 6 GB at most, least recently used dropped first).
+14. **The command line** (`kinn lab list | run | selfcheck`) runs through the same runner and
+    folder, so a run from the terminal is counted and shown like one from the page.

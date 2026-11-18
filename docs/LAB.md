@@ -112,13 +112,43 @@ halt waits a session).
 - **Over the average:** each trade is also measured against the equal-weight average of the
   universe over the same sessions, the figure the research reports.
 
+## Checks while you type
+
+The Lab reads your code as you type (it never runs it to check it) and marks problems on the
+line, with the count in the toolbar; click the count to go to the first one.
+
+- **Errors** stop a run until they are fixed: a syntax error, no `signal(data)`, a `signal` or
+  `exit_signal` that does not take one argument, a `SETTINGS` the Lab would refuse.
+- **Warnings** do not: `data.<name>` that is not a field (with the nearest field named), a
+  `shift` by a negative number or a centered rolling window (both read later days; the
+  lookahead test would mark the run), an import of a helper module that is not in the library.
+
+The server checks again when Run is pressed, so broken code never makes a run.
+
+## Helper modules (the library)
+
+Functions several algorithms share go in a helper module: **Lab → Library → New helper
+module**. A module called `helpers` is imported as `lab.helpers`:
+
+```python
+from lab.helpers import zscore
+
+
+def signal(data):
+    return zscore(data.returns.rolling(5).sum(), 60) > 2
+```
+
+Each run keeps a copy of the library as it was (`runs/<run_id>/pkg/lab/`), and its hash in the
+manifest, so changing a module later never changes what an old run was. An error inside a
+module names the module's line (`lab/helpers.py, line 7`).
+
 ## The settings panel
 
-Under the editor. A blank box keeps the value from your code's `SETTINGS`, or the Lab's default
+Beside the editor. A blank box keeps the value from your code's `SETTINGS`, or the Lab's default
 when the code sets none; that value shows greyed in the box. A typed value overrides it for
 this run and is remembered for this algorithm in this browser. Market cap is in $M, dollar
 volume in $K, the stop and the target in %. Typing 0 for the stop, the target or the largest
-market cap turns it off. **Clear changes** goes back to the code's values. The settings a run
+market cap turns it off. **Reset** goes back to the code's values. The settings a run
 used are kept with it; **Use its settings** (on a past run's Code tab) puts them back.
 
 The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–2022 to test, 2023 to
@@ -144,8 +174,11 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
   same years make the best of them less trustworthy; hold the 2018–2022 test years back until
   the idea is settled.
 
-One run goes at a time; **Cancel** stops it. A run that stops on an error shows it with the
-line of your code where it happened.
+One run goes at a time; **Cancel** stops it. The toolbar shows how the last run ended, and
+when a run you started ends the page moves to its results. A run that stops on an error shows
+it with the line of your code where it happened. A run stops by itself after 30 minutes
+(`KINN_LAB_TIME_LIMIT`, in minutes, before starting the Workbench; 0 for no limit); a `try` in
+your code cannot hold it.
 
 ## How big a run can be
 
@@ -155,10 +188,36 @@ about 2 GB plus what your code makes, and takes seconds. The Lab refuses a run t
 more than 60% of the machine's memory and says how big it was; narrow the universe or the
 period.
 
+**The cache.** The first run of a universe and period reads the prices from the data store and
+keeps them in `lab/cache/`; the next run with the same universe and period (whatever the code)
+reads them from there, memory-mapped, as it does the trade counts, filing days, fundamentals
+and SPY once read. A run over 2010–2017 goes from about 4 seconds to 1; all years over 9,500
+stocks from 9 to 3. The cache holds at most 6 GB (`KINN_LAB_CACHE_GB`), dropping what was used
+longest ago; a new data build starts it afresh. Deleting the folder is always safe.
+
+How long each stage of a run took is in its `summary.json` (`timings`) and its `log.txt`.
+
+## The command line
+
+The same runs without the page, from the repo folder:
+
+```bash
+uv run kinn lab list                                   # algorithms, trials, last result
+uv run kinn lab run momentum_rank --period search      # an algorithm in the Lab folder
+uv run kinn lab run ~/ideas/gap_fade.py --start 2012-01-03 --end 2016-12-30
+uv run kinn lab run gap_fade --settings '{"exit": {"hold_days": 5, "stop_loss": 0.1}}'
+uv run kinn lab selfcheck                              # every template on 2015, in a scratch folder
+```
+
+A run from the command line is saved, counted and shown on the page like any other. `selfcheck`
+runs every template and a deliberate peek in a temporary folder (your algorithms and trial
+counts are untouched) and says whether everything behaved: use it after an update.
+
 ## Where things are kept
 
 `KINN_LAB_DIR` (default `lab/` beside the run store): `algorithms/<name>.py` (your files),
-`trash/` (deleted algorithms, kept), `runs/<run_id>/` (a copy of the code and settings run,
-progress, the worker's log, results: `summary.json`, `trades.parquet`, `by_stock.json`,
-`by_year.json`, `equity.json`). Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
+`library/<name>.py` (helper modules), `trash/` (deleted files, kept), `cache/` (prices between
+runs), `runs/<run_id>/` (a copy of the code, the library and the settings run, progress, the
+log, results: `summary.json`, `trades.parquet`, `by_stock.json`, `by_year.json`,
+`equity.json`). Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
 protocol (`docs/NEW_STRATEGY.md`).
