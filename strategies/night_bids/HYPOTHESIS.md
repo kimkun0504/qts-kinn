@@ -101,3 +101,11 @@ one first seen 5% down is sold at 7.1% down and opens 6.4% down) while a minute'
 worst prices after hours are 1% to 3% apart. Read with the first part: after hours the middle
 price is about right, the taker pays the gap, and the resting order is picked off by news.
 27 cells; `night_bids` has 45 trials. No tests run.
+
+**Correction, 2026-11-17 21:05 ET.** The paragraph above gave two figures from memory that the check
+does not support. Measured: a stock first seen 5% up is paid for at 7.0% up and opens **6.2%**
+up, not 5.6% (medians, $300M to $2B); and the entry minute's best and worst prices are the
+same in half the cases, more than 1.1% apart in a quarter and more than 2.5% apart in a tenth
+(2015), not "1% to 3% apart". The loss from following the move is a small overshoot that is
+given back by the open (about a tenth of the move, in both directions), plus costs. The
+counts, returns and verdict are unchanged. REPORT.md carries the corrected reading.

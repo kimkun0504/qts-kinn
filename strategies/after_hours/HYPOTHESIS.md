@@ -157,7 +157,8 @@ the gain after a rise on results has been small since 2020 however it is cut.
 ## Addendum, 2026-11-17 20:59 ET: a resting order at the reading price instead of the minute's high
 
 Written before it is measured. `night_bids` showed tonight what trading after hours costs:
-a minute's best and worst prices are 1% to 3% apart, and every test in this family paid the
+a minute's best and worst prices can be 1% to 3% apart (measured afterwards: in a quarter
+to a tenth of minutes; half trade at one price), and every test in this family paid the
 worst one. The first part's long side made 0.9% to the next open **after** paying it. The
 owner asked for better entries; the plain one is not to cross that gap.
 

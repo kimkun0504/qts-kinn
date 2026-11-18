@@ -1,7 +1,7 @@
 # After hours: an overnight gain in most years, missing in 2020 to 2022
 
-**Verdict: not passed; the nearest thing to a new result today.** 30 cells on 2010 to 2017,
-five met the bar, none passed both tests. 40 trials. The holdout is untouched.
+**Verdict: not passed; the nearest thing to a new result on 17 November.** Five studies, 105
+trials, nothing passed both tests. The holdout is untouched.
 
 Plan: [HYPOTHESIS.md](HYPOTHESIS.md). An earnings 8-K accepted after the close (or before
 the open); 30 minutes later the stock is read against the 16:00 close; bought in the next
@@ -83,14 +83,51 @@ makes 0.1% to 0.6%; small and large companies down 15% make about 1% on few trad
      after bad news.
   3. A short's tail: single trades lost 20% to 35% overnight.
 
+## Indicators of our own, a resting order, and a hedge (evening of 17 November, 49 trials)
+
+Three follow-ups on the long side after a report released after the close, in companies of
+$300M or more with a rise of 5% or more unless said. Code:
+`research/claude/after_hours_score.py`.
+
+**Two indicators read from the first half hour** (15 cells, 12 test runs). Pressure is the
+dollars traded after hours as a share of the stock's normal day; hold is how much of the
+after-hours peak is left at the reading.
+
+| After costs | 2010–2017 | Weekly t | 2005–2009 | 2018–2022 | t, 2018–2022 |
+|---|---|---|---|---|---|
+| Hold kept (at 86% or more of its peak), to the next close | 1.75% | 6.48 | 1.68% | 0.46% | −0.10 |
+| Hold faded, to the next close | 0.60% | 1.74 | not run | not run | |
+| Hold kept, 15 sessions | 2.95% | 6.15 | 2.56% | 0.52% | 0.79 |
+| Pressure high (over 22% of a normal day), 15 sessions | 2.99% | 4.69 | 1.77% | −0.18% | 0.75 |
+| Pressure high, to the next close | 1.17% | 3.38 | 1.22% | 0.22% | 1.84 |
+| Pressure middle, 15 sessions | 2.07% | 3.51 | 2.21% | 0.84% | 0.53 |
+
+Both indicators sorted the stocks in the years to 2017 (a rise still at its peak made three
+times what a faded one made by the next close) and neither did after. Six cells met the
+search bar; none passed 2018–2022.
+
+**A resting order at the reading price** (18 cells, 2 test runs), filled only if a later
+minute trades below it. About 64% fill. It is no better than paying the minute's high:
+$300M to $2B, up 5% to 15%, to the next open made 0.79% on its 493 fills in the search years.
+The orders that fill are the stocks that came back. The one cell over the bar was $2B and
+over, up 5% to 15%, 15 sessions: 1.45% (t 3.20), then 1.21% in 2005–2009 (passed) and 1.45%
+in 2018–2022 (t 1.98, three years of five: missed).
+
+**That cell with SPY sold short against it** (2 cells): 1.08% a trade in the search years,
+seven years of eight, weekly t 2.80. Under the search bar of 3, so not tested further. The
+market was about 0.4 of its 1.5 points.
+
 ## What it is worth
 
 Nothing here has passed. Three leads, in the order I rate them:
 
-1. **Short after hours on a fall of 15% or more, $300M to $2B, bought back at the next open
-   or close.** Positive in every test year; failed only on the t since 2018.
-2. **Long after hours on a rise of 5% to 15%, $2B and over, held 15 sessions.** Positive in
-   all three periods on 2,300 trades; cheap, any size.
+1. **Long after hours on a rise of 5% to 15%, $2B and over, held 15 sessions.** 1.2% to 1.5%
+   a trade in all three periods by either fill, about 170 trades a year, no borrow needed,
+   easy to trade in small size. It loses two years in five since 2018 and has never met the
+   test on steadiness.
+2. **Short after hours on a fall of 15% or more, $300M to $2B, bought back at the next open
+   or close.** Positive in every test year; failed only on the t since 2018. It depends on
+   shares being there to borrow at that moment, which the owner can only see at the broker.
 3. **Long after hours, $300M to $2B, sold at the next open.** Worked in 14 of 15 years to
    2019, lost in 2020 to 2022.
 
@@ -109,4 +146,9 @@ uv run python after_hours.py test after mid up5 open
 uv run python after_hours.py lows 2005 2023
 uv run python after_hours.py search_short
 uv run python after_hours.py test_short mid down15 open
+uv run python after_hours_score.py peaks 2005 2023
+uv run python after_hours_score.py search
+uv run python after_hours_score.py limits 2005 2023
+uv run python after_hours_score.py limit_search
+uv run python after_hours_score.py hedged search
 ```
