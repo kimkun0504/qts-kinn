@@ -26,6 +26,9 @@ def main(side: str = "short") -> None:
     elif side == "long":
         d = load()
         keep = (d["timing"] == "after") & (d["mcap"] >= 2e9) & (d["reaction"] >= 0.05) & (d["reaction"] < 0.15)
+    elif side == "small15_open":
+        d = load()
+        keep = (d["timing"] == "after") & (d["mcap"] >= 5e7) & (d["mcap"] < 3e8) & (d["reaction"] >= 0.15)
     elif side == "mid_open":
         d = load()
         keep = (d["timing"] == "after") & (d["mcap"] >= 3e8) & (d["mcap"] < 2e9) & (d["reaction"] >= 0.05) & (d["reaction"] < 0.15)
@@ -89,12 +92,12 @@ def main(side: str = "short") -> None:
         if i in after and normal.get(i):
             fp[i] = after[i] / normal[i]
     net = (d["g_open"] if side == "short" else d["g_fifteen"]) - d["cost"]
-    if side in ("small_open", "mid_open"):
+    if side in ("small_open", "mid_open", "small15_open"):
         paid = d["paid"].astype(float)
         net = d["g_open15"] - d["cost_auction"] - 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / paid))
     years = d["yr"]
     base = keep & ~np.isnan(fp)
-    cut = np.median(fp[base & (years >= 2010) & (years <= 2017)])
+    cut = 2.31 if side == "small15_open" else np.median(fp[base & (years >= 2010) & (years <= 2017)])
     print(f"events {keep.sum()}, with a footprint {base.sum()}, the 2010-2017 median footprint {cut:.2f}")
     if side == "small_open":
         import pyarrow as pa
