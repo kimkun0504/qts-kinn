@@ -27,7 +27,7 @@ def load():
     bars = store.bars_roots[0] / "daily"
     con = duckdb.connect()
     con.execute(f"set threads=3; set memory_limit='2000MB'; set temp_directory='{tempfile.mkdtemp()}'")
-    return con.sql(
+    d = con.sql(
         f"""with e as (select * from '{busy()}/events.parquet'),
             p as (select permaticker, date, symbol from read_parquet('{store.root}/panel/*.parquet')
                   where date <= DATE '2023-11-08' and permaticker in (select permaticker from e)),
@@ -42,6 +42,12 @@ def load():
             select e.*, year(e.day) as yr, (date_diff('day', DATE '2003-12-29', e.day) // 7) as week, f.fp
             from e join f on f.permaticker = e.permaticker and f.date = e.reaction_day where f.n = 60"""
     ).fetchnumpy()
+    out = {}
+    for name, values in d.items():
+        if np.ma.isMaskedArray(values):
+            values = values.astype(float).filled(np.nan) if values.dtype.kind in "fiu" else values.filled(None)
+        out[name] = values
+    return out
 
 
 def run(period, holds) -> None:
