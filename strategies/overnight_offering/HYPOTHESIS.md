@@ -48,3 +48,11 @@ Search 2010–2017: 150 trades, 1% after costs, weekly t of 3, six years of eigh
 2005–2009 and 2018–2022, each cell that goes forward run once: 0.5%, t of 2.5, four years of
 five, in both. 2023 (to 13 October) is a check for a cell that passes. The holdout stays
 sealed. Every query on the raw filings is limited to dates before 2023-11-09.
+
+**Results, 2026-11-17 22:20 ET.** In REPORT.md. **None of the 30 cells meets the bar.** 14,210 overnight
+424B5 filings by companies in the universe (2003–2023); four fifths moved nothing at the open
+(routine shelf takedowns), 2,230 opened 3% to 10% down and 681 10% or more down (median
+−14.7%). Bought at the open, they lost in almost every cell (small down 10%+: −1.1% by the
+close, −1.8% in 15 sessions); sold short at the open they made nothing either (−0.4% to
++1.1%, weekly t under 1.5). The open is about the right price after an overnight deal. 30
+trials. No tests run.

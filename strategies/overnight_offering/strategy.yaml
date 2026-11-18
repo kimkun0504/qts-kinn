@@ -1,10 +1,10 @@
 name: overnight_offering
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 30 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, a prospectus supplement filed overnight
 family: overnight_offering
-prior_trials: 0
+prior_trials: 30
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,15 @@ record:
   title: The morning after an offering
   idea: Trading the first session after a company sells new shares overnight
   horizon: One to 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "No trade: the open after an overnight deal is about the right price"
   summary: >-
-    A company that sells shares overnight opens near the offering price. Buy the drop, or
-    sell it short, at the open, by the size of the company and the gap.
+    A company that sells shares overnight opens near the offering price. Bought at the open,
+    or sold short, by the size of the company and the gap.
+  weaknesses:
+    - Bought at the open after a deal, small and mid companies drift about 1% lower.
+    - Sold short at the open, the same stocks make nothing after costs.
+  evidence:
+    - {when: 2026-11-17, title: 30 cells on 2010 to 2017, kind: failed, text: "None meets the bar; the best is a short of $300M to $2B down 10%+ to the close, +1.1% on 58 trades."}
+  studies:
+    - {name: The session after an overnight 424B5, when: 2026-11-17, trials: 30, result: "No cell meets the bar", verdict: failed}
