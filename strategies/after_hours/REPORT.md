@@ -252,7 +252,7 @@ uv run python after_hours_score.py limit_search
 uv run python after_hours_score.py hedged search
 ```
 
-## Who sells after hours (1 trial, read 18 November 2026, 00:31 ET)
+## Who sells after hours (1 trial, read 18 November 2026, 00:30 ET)
 
 The short split at the 2010–2017 median of its after-hours footprint (shares per trade after
 hours against the stock's normal; the median is 2.24), after costs, bought back at the open:
