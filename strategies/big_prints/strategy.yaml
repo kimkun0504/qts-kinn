@@ -1,18 +1,36 @@
 name: big_prints
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-18; nothing measured yet
+status: event-study       # small-company cell passed both tests 2026-11-18; a lead, paper next
 engine: daily
 universe: common stock $300M+ on a quiet up day traded in unusually large pieces
 family: big_prints
-prior_trials: 0
+prior_trials: 13
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
 record:
   title: Big prints
   idea: A quiet up day traded in unusually large pieces
-  horizon: 10 to 20 sessions
-  verdict: planned
+  horizon: 20 sessions
+  verdict: weak
+  label: "Lead: passed both tests"
+  result: "Small companies, trade size 3x normal: +1.8% a trade over small stocks in both test periods (t 3 to 4), 2023 +2.1%"
   summary: >-
-    An indicator of our own: the average trade far larger than the stock's normal, on a
-    modest rise with no filing, as a large buyer at work. Buy the next open and hold.
+    An indicator of our own: on a quiet up day with no filing, the average trade (shares per
+    trade) far larger than the stock's own normal, as a fund building a position. Buy the next
+    open in companies of $50M to $300M and hold 20 sessions.
+  weaknesses:
+    - Chosen as a follow-up after the first four cells; with delisted stocks kept, its search figure is 0.94%, under the 1% bar.
+    - Much of the mean is a few large winners; capped at ±30% a trade, 2018–2022 has a t of 2.05.
+    - Thin stocks (median $400,000 a day) with fat losing tails; about 28 positions open at once.
+  waiting:
+    - "Big prints: say whether to follow it on paper each evening (no borrow needed)."
+  evidence:
+    - {when: 2026-11-18, title: First 4 cells on 2010 to 2017, kind: failed, text: "$300M–$2B +0.54% over 20 sessions in 8 of 8 years (t 3.78); $2B+ nothing."}
+    - {when: 2026-11-18, title: Small companies in the tests, kind: passed, text: "Trade size 3x: +1.85% (2005–09, t 4.21) and +1.77% (2018–22, t 3.09); 2x failed 2018–22."}
+    - {when: 2026-11-18, title: Ordinary trade size as a control, kind: note, text: "Same days with a normal trade size: +0.15%, +0.10%, −0.14%."}
+    - {when: 2026-11-18, title: 2023 and delisted stocks, kind: note, text: "2023 +2.10% over small stocks; with delistings kept, 0.94% / 1.78% / 1.83%."}
+  studies:
+    - {name: Big prints in companies of $300M and over, when: 2026-11-18, trials: 4, result: "Mid-sized +0.5% in 8 of 8 years; under the bar", verdict: failed}
+    - {name: Small companies and larger footprints, when: 2026-11-18, trials: 4, result: "Small, trade size 3x: passed both tests", verdict: lead}
+    - {name: Checks on the passed cell, when: 2026-11-18, trials: 5, result: "Control flat; 2023 +2.1%; search 0.94% with delistings; tail-heavy", verdict: note}

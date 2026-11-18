@@ -48,3 +48,52 @@ Over the average small stock, by year:
 **Small companies with a footprint of 3 or more pass both tests**, the first cell to do so
 tonight. It was chosen after the first four cells were read, so its search figures count for
 less; the two test periods were unread when it was chosen.
+
+## Checks on the passed cell (read 18 November 2026, 00:04 to 00:06 ET)
+
+**1. 2023 (to 13 October):** +2.08% over the average small stock (384 trades, t 2.38); after
+costs −0.56%, as small stocks fell that year.
+
+**2. The trade size is what matters.** The same events with an ordinary trade size (footprint
+under 1.2), $50M–$300M, 20 sessions: +0.15% over the average (45,531; t 0.68) in 2010–2017,
++0.10% in 2005–2009, −0.14% in 2018–2022. A quiet up day on heavy volume is worth nothing
+here; the large pieces are the signal.
+
+**3. Year by year, liquidity, and a book.** Over the average small stock the cell was positive
+in 17 of 19 years (2016 −0.4%, 2020 −1.4%). 87% of signals are in stocks trading under $1M a
+day (median about $400,000, price about $9, market value about $200M); those over $1M a day do
+as well (+1.21% in 2010–2017, +2.15% in 2005–2009, +1.98% in 2018–2022). At $2,000 a trade,
+about 300 signals a year leave 28 positions open on an average day (95th percentile 57, most
+81); unhedged the book made money in 12 of 18 years, and against the small-stock average in
+15 of 18. Single trades lost up to 40% to 96%; the worst 1% lost 19% to 53%.
+
+**4. Stocks that stop trading inside the hold** (3.7% of signals; on average +0.3%, mostly
+completed takeovers), kept at their last close:
+
+| Period | Trades | Over the average | Weekly t | Years positive | After costs |
+|---|---|---|---|---|---|
+| 2010–2017 | 2,155 | +0.94% | 3.24 | 7 of 8 | +1.15% |
+| 2005–2009 | 2,633 | +1.78% | 4.12 | 5 of 5 | +1.39% |
+| 2018–2022 | 1,906 | +1.83% | 3.10 | 4 of 5 | +0.80% |
+| 2023 | 405 | +2.10% | 2.43 | | −0.65% |
+
+**5. How much rests on a few trades** (a diagnostic, after the above). The median trade beats
+the average by +0.02% (2010–2017), +0.47%, +1.28% and +1.88% (2023), and the best 1% of trades
+make 27% to 69% of the excess. With each trade's excess capped at ±30%: +0.64% (t 2.65),
++1.37% (t 3.79), +0.97% (t 2.05), +1.92% (t 2.66).
+
+## Verdict: the best long lead of the night, not a clean pass
+
+- **For it:** chosen before either test period was read, it passed both (+1.8% a trade over
+  the average small stock, t 3 to 4); 2023 was +2.1%; 17 of 19 years positive; the control
+  shows the effect is the trade size and not volume or the up day; it needs no borrow; it is
+  an indicator of our own, from data the vendor sends every evening.
+- **Against it:** it was a follow-up chosen after the first four cells; kept with the stocks
+  that stopped trading, its search figure is 0.94%, just under the 1% bar; much of the mean
+  comes from a few large winners, and capped at ±30% its 2018–2022 t is 2.05; it trades small,
+  thin stocks with fat losing tails, and needs $50,000 or more at $2,000 a position.
+- **Next:** follow it on paper from tonight's data, and decide on size only after a few
+  months of signals. It was not run on the holdout.
+
+Trials: 4 + 4 (follow-up) + 5 (checks, counting the tests of two cells in the follow-up's
+four) = **13** (family `big_prints`).
