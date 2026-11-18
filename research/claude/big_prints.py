@@ -99,13 +99,14 @@ def table() -> None:
                         + case when ok.adv < 1e6 then 0.0025 when ok.adv < 1e7 then 0.0010
                                when ok.adv < 1e8 then 0.0005 else 0.0002 end) as cost
             from ok join daily d on d.date = ok.date and d.size = ok.size
-            where (ok.fp >= 2 or ok.fp < 1.2) and ok.dv >= 1.5 * ok.adv and ok.close / ok.prev_close - 1 between -0.04 and 0.04
+            where (ok.fp >= 2 or ok.fp < 1.2) and ok.dv >= 1.5 * ok.adv
+              and (ok.close / ok.prev_close - 1 between -0.04 and 0.04 or ok.close / ok.prev_close - 1 <= -0.05)
               and d.share < 0.05
               and (ok.fp >= 3 or not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date))
-        ) to '{folder()}/events_v8.parquet' (format parquet)"""
+        ) to '{folder()}/events_v9.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v8.parquet' group by 1, 2").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v9.parquet' group by 1, 2").fetchall())
 
 
 def news(period) -> None:
@@ -156,6 +157,35 @@ def repeat() -> None:
             pos = sum(over[years == y].mean() > 0 for y in set(years))
             print(f"{period:7} {label:12} {len(over):>5} trades  over the average {100 * over.mean():>6.2f}%  "
                   f"t {tt:>5.2f}  yrs {pos} of {len(set(years))}")
+
+
+def falls(period) -> None:
+    """Follow-up 9: quiet falls of 5%+ by footprint, bought, 10 sessions."""
+    t = duckdb.sql(
+        f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
+            from '{folder()}/events_v9.parquet' where ret <= -0.05 and quiet and size in ('small', 'mid')"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    first, last = PERIODS[period]
+    for size in ("small", "mid"):
+        for label, band in (("crowd", d["fp"] < 0.8), ("large", d["fp"] >= 2)):
+            keep = (d["size"] == size) & band & (d["yr"] >= first) & (d["yr"] <= last)
+            over = d["g10"][keep] - d["all10"][keep]
+            net = d["g10"][keep] - d["cost"][keep]
+            if len(over) < 3:
+                print(size, label, period, len(over))
+                continue
+            _, tt, _ = weekly(over, d["week"][keep])
+            years = d["yr"][keep]
+            yearly = {int(y): over[years == y].mean() for y in sorted(set(years))}
+            pos = sum(v > 0 for v in yearly.values())
+            bar = (150, 0.01, 3, 6) if period == "search" else (0, 0.005, 2.5, 4)
+            ok = len(over) >= bar[0] and over.mean() >= bar[1] and tt >= bar[2] and pos >= bar[3] and net.mean() > 0
+            print(f"fall {size:5} {label:5} {period:7} {len(over):>6} trades  over the average {100 * over.mean():>6.2f}%  "
+                  f"t {tt:>5.2f}  yrs {pos} of {len(yearly)}  after costs {100 * net.mean():>6.2f}%"
+                  + ("  MEETS THE BAR" if ok else ""))  # fmt: skip
+            if period != "search":
+                print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in yearly.items()))
 
 
 def crowd(period) -> None:
@@ -240,6 +270,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "falls":
+        falls(sys.argv[2])
     elif sys.argv[1] == "crowd":
         crowd(sys.argv[2])
     elif sys.argv[1] == "repeat":
