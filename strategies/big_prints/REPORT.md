@@ -19,3 +19,15 @@ A stronger reading of the same indicator, and smaller companies, are planned bel
 they are measured.
 
 Trials: 4.
+
+## Follow-up, 2010–2017 (read 18 November 2026, 00:03 ET)
+
+| Cell (20 sessions) | Trades | Over the average stock | Weekly t | Years positive | After costs |
+|---|---|---|---|---|---|
+| $300M–$2B, footprint 3+ | 2,461 | +0.30% | 0.67 | 6 of 8 | +0.85% |
+| $300M–$2B, footprint 4+ | 1,067 | +0.43% | 0.85 | 6 of 8 | +0.98% |
+| **$50M–$300M, footprint 2+** | **5,505** | **+1.03%** | **5.40** | **8 of 8** | **+1.11%** |
+| **$50M–$300M, footprint 3+** | **2,070** | **+1.00%** | **3.24** | **7 of 8** | **+1.21%** |
+
+A larger footprint does not help in mid-sized companies. In small companies both cells meet
+the search bar, and go to their tests.
