@@ -41,8 +41,11 @@ def main(low: int = 63, high: int = 91, labels: tuple = ("report due", "not due"
     rows = []
     for day, p, yr, week, over in t:
         got = reports.get(p, [])
-        i = bisect.bisect_right(got, day) - 1  # the last results reaction on or before the signal
-        due = i >= 0 and low <= (day - got[i]).days <= high
+        if low >= 300:  # by last year's calendar: any report low..high days before
+            due = any(low <= (day - r).days <= high for r in got)
+        else:
+            i = bisect.bisect_right(got, day) - 1  # the last results reaction on or before the signal
+            due = i >= 0 and low <= (day - got[i]).days <= high
         rows.append((yr, week, over, due))
     yr, wk, o, due = (np.array(c) for c in zip(*rows, strict=True))
     for name, (a, b) in {"2010-2017": (2010, 2017), "2005-2009": (2005, 2009), "2018-2022": (2018, 2022),
@@ -62,5 +65,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1 and sys.argv[1] == "after":
         main(5, 30, ("after results", "later"))
+    elif len(sys.argv) > 1 and sys.argv[1] == "anniversary":
+        main(336, 364, ("due by last year", "not due"))
     else:
         main()
