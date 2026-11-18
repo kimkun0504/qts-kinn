@@ -31,7 +31,9 @@ run store; it could not start anything.
      dollar volume).
    - **A lookahead test on every run:** the algorithm is run again on the data cut off at two
      dates; if its signals up to a cut-off change, it used the future, and the run is marked
-     "uses future data" in red. It cannot be switched off.
+     "The code looks ahead" in red with the first stock and day that changed. It cannot be
+     switched off. Every field the Lab derives (the split-adjusted close is anchored at each
+     stock's first price, not its last) passes the same test.
    - One position per stock at a time. Stops and targets are checked on each day's high and
      low; a gap through a stop fills at the open; when a stop and a target are both touched in
      one day, the stop is assumed first. A stock that stops trading is sold at its last close.
@@ -41,9 +43,9 @@ run store; it could not start anything.
      negative at 2× is marked fragile.
    - Each trade is also measured against the equal-weight average of the universe over the same
      days (the "over the average" figure the research uses), and the book against SPY.
-5. **The owner's runs are counted.** Each run is a trial of its algorithm; the count is shown
-   beside every result, because a result found after many tries is weaker than the same result
-   found first.
+5. **The owner's runs are counted.** Each run that gets as far as computing signals is a trial
+   of its algorithm (a run that stops on a syntax error is not); the count is shown beside every
+   result, because a result found after many tries is weaker than the same result found first.
 6. **Separate from the research record.** Algorithms and their runs live in the Lab folder
    (`KINN_LAB_DIR`, default `lab/` beside the run store), outside git and outside the run
    store, so the agents' record and trial counts are untouched. Each run keeps a copy of the
@@ -55,14 +57,18 @@ run store; it could not start anything.
    cancelled. One run at a time.
 8. **Only the Workbench's own page can start a run.** The server listens on 127.0.0.1 only.
    Requests that change anything must carry a session token that only a page served by the
-   Workbench can read, and must name the Workbench as their host and origin. A web page
-   elsewhere cannot make the server run code.
+   Workbench can read, and must name the Workbench as their host and origin (the Host check
+   also stops DNS rebinding). A web page elsewhere cannot make the server run code. Started
+   with `--host` beyond this machine, the Workbench turns the Lab off.
 
 **Consequences.** The Workbench, until now read-only, can start a process that runs code; the
 README and AGENTS.md say so. The Lab adds pandas as a dependency (the language owners write
 research code in). A run over 2005–2023 and every stock needs several gigabytes of memory on
-the Mac; the default period is 2010–2017 (the search years), and the Lab offers the test periods
-separately so the owner can hold them back as the agents do.
+the Mac (about 2 GB for a $50M-and-up universe, before the code's own tables); the Lab refuses a
+run that would need more than 60% of the machine's memory, with the size in the message. The
+data the code gets is shared and read-only underneath; pandas copies a table on the code's
+first change to it. The default period is 2010–2017 (the search years), and the Lab offers the
+test periods separately so the owner can hold them back as the agents do.
 
 **Deferred (recorded, not built):** minute-bar fields; news, short interest and short volume
 fields (Massive files on disk from 2016 only, read outside the store today); parameter sweeps;
