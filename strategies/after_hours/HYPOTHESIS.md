@@ -142,3 +142,14 @@ groups cut at the search-year median (taken without returns, after the collectio
 of 3, six years of eight. Tests on 2005–2009 and 2018–2022, each cell that goes forward run
 once: 0.5%, t of 2.5, four years of five, in both. An indicator is only worth keeping if its
 groups differ: the report gives every group, not only the best.
+
+**Results of the two indicators, 2026-11-17 20:44 ET.** In REPORT.md. Search: six cells met the bar
+(pressure middle for 15 sessions; pressure high to the next close and for 15 sessions; hold
+kept to the next close and for 15 sessions; hold faded for 15 sessions). The clearest was
+hold kept to the next close: 1.75% after costs on 901 trades, weekly t 6.48, eight years of
+eight, against 0.60% for the faded half. Tests, each run once: **none passes**. Every one of
+the six made 0.2% to 1.1% a trade in 2018–2022 with a weekly t under 2, and lost in 2020
+and 2021 or 2021 alone. Hold kept to the next close: 1.68% in 2005–2009 (t 2.57, four years
+of five) and 0.46% in 2018–2022 (t −0.10). 15 cells and 12 test runs: 27 trials;
+`after_hours` has 83 in all. The indicators sort the old years and not the recent ones:
+the gain after a rise on results has been small since 2020 however it is cut.
