@@ -260,3 +260,17 @@ of more than seven days in the price table are 124 of 7,099; without them the ce
 Quiet up days in pieces half the normal size or smaller, read as a short, 2010–2017: small
 companies +0.05% over the average for the short (192; t −0.41), mid-sized +1.67% (76; t 0.52).
 Rare and nothing there. 2 trials (family 34).
+
+## Follow-up 8: large pieces beside rule I (read 18 November 2026, 00:25 ET)
+
+Rule I signals, held 15 sessions, after costs:
+
+| Period | Rule I | Footprint 1.5+ | Under 1.5 |
+|---|---|---|---|
+| 2005–2009 | +3.86% (1,862) | +3.50% (246) | +3.92% |
+| 2010–2017 | +3.18% (2,909) | +3.22% (287) | +3.18% |
+| 2018–2022 | +1.54% (2,086) | +1.43% (310) | +1.55% |
+| 2023 | +1.73% (275) | +5.07% (51) | +0.96% |
+
+No better: insider purchases and large pieces do not add up. Rule I is unchanged. 1 trial
+(family 35).

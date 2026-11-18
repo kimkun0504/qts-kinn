@@ -4,7 +4,7 @@ status: event-study       # small-company cell passed both tests 2026-11-18; a l
 engine: daily
 universe: common stock $300M+ on a quiet up day traded in unusually large pieces
 family: big_prints
-prior_trials: 34
+prior_trials: 35
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -41,4 +41,5 @@ record:
     - {name: A footprint that repeats, when: 2026-11-18, trials: 1, result: "Not better in 2018–2022 (+1.58% against +1.83%)", verdict: failed}
     - {name: "The fill and the largest winners", when: 2026-11-18, trials: 2, result: "30-minute VWAP entry about as good; one data error among the top ten, no effect", verdict: note}
     - {name: "The crowd's footprint as a short", when: 2026-11-18, trials: 2, result: "Rare and nothing", verdict: failed}
+    - {name: Large pieces beside rule I, when: 2026-11-18, trials: 1, result: "No better in any period but 2023", verdict: failed}
     - {name: Checks on the passed cell, when: 2026-11-18, trials: 5, result: "Control flat; 2023 +2.1%; search 0.94% with delistings; tail-heavy", verdict: note}
