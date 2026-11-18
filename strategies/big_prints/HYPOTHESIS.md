@@ -133,3 +133,11 @@ first 30 minutes of D+1 (09:30–10:00, from minute bars), sold as before, in 20
 2018–2022 and 2023; and the average gap between that price and the official open. (b) The ten
 largest winners of the cell in 2005–2023, checked against the price table for data errors.
 2 trials.
+
+## Follow-up 7: the crowd's footprint (written 2026-11-18 00:22 ET)
+
+The other end of the indicator: a quiet up day (0% to 4%, 1.5x volume, no 8-K) traded in pieces
+**half the normal size or smaller** (footprint 0.5 or less) — many small orders, the mark of
+retail attention. Published work finds attention-driven buying is followed by weaker returns.
+Read as a short over the average stock of its size, 20 sessions, after costs and borrow at 10%
+a year. **2 cells:** $50M–$300M and $300M–$2B. Same search bar and tests. 2 trials.
