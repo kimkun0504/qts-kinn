@@ -161,3 +161,19 @@ which the stock does better than the average, and best when the day closed up. T
 the "a fund is still buying" story and leaves "large traders are involved" (a seller's block
 in a thin stock is absorbed, then the price recovers). The long cell's numbers are unchanged
 (the up-day signals are the same in both tables). Not followed further; 2 trials (family 24).
+
+## Follow-up 3: the footprint as a filter on A50 (read 18 November 2026, 00:17 ET)
+
+A50 signals, plain exit (next open to the close 15 sessions later), after costs:
+
+| Period | All A50 | Footprint 1+ | Footprint under 1 |
+|---|---|---|---|
+| 2010–2017 | +3.26% (603; t 3.96) | +3.38% (500) | +2.67% (103) |
+| 2005–2009 | +4.53% (434) | +4.66% (345) | +4.05% (89) |
+| 2018–2022 | +4.13% (460) | +4.17% (390) | +3.89% (70) |
+| 2023 | +5.95% (63) | +5.95% (56) | +5.89% (7) |
+
+Better per trade in all three periods, as the rule for A50's filters asks, but by only 0.04 to
+0.13 points, and the trades it removes still make 2.7% to 4.1% each: as a filter it would cut
+A50's total profit. **Not recommended**; A50 is unchanged. Most A50 jumps are already traded
+in larger pieces than normal (median footprint 1.2 to 1.4). 1 trial (family 25).

@@ -97,3 +97,11 @@ with a footprint of 1 or more (the trade at least its normal size), held as A50'
 A50's exits and filters are: **better only if better per trade in all three periods** (2005–
 2009, 2010–2017, 2018–2022), with 2023 as a check; the complement (footprint under 1) is
 printed beside it. 1 trial (charged here, not to earnings_drift; it changes nothing in A50).
+
+## Follow-up 4: large pieces on a news day (written 2026-11-18 00:16 ET)
+
+The rule above leaves out any day near an 8-K. If large pieces mark institutions at work, they
+may matter most when there is news to act on. Same conditions ($50M–$300M, footprint 3 or
+more, 1.5x volume, up 0% to 4%, held 20 sessions), but **with** an 8-K whose reaction session is
+D: **2 cells**, (a) a results 8-K (item 2.02) and (b) any other 8-K (no 2.02 from four days
+before D to D). Same search bar and tests. 2 trials.
