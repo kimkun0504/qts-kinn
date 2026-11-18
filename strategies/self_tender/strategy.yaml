@@ -1,0 +1,18 @@
+name: self_tender
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: companies filing an issuer tender offer (SC TO-I)
+family: self_tender
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Self-tender
+  idea: A company that offers to buy back its own securities
+  horizon: 20 to 60 sessions
+  verdict: planned
+  summary: >-
+    A company that files an issuer tender offer names a price and commits cash. Buy at the next
+    open after the filing and hold one to three months.
