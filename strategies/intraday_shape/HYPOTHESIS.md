@@ -140,3 +140,9 @@ Cells: 2 hedges (SPY; the 10 lowest) × 2 holds = **4**, charged to `intraday_sh
 counts:** search 2010–2017 (shown; the parent is seen): 0.3% a trade for 5 sessions, 0.5% for
 10, weekly t of 3, six years of eight. Tests on 2005–2009 and 2018–2022, run once each: half
 those, weekly t of 2.5, four years of five, in both.
+
+**Result in the most traded large companies, 2026-11-17 22:45 ET.** **None of the 4 cells meets the bar.**
+Short with SPY bought against it: 0.07% a trade for 5 sessions (t 1.48), 0.21% for 10 (t
+2.74); long-short: −0.01% and 0.09%. In stocks of $50M a day and $10 or more the push into the
+close predicts almost nothing; the effect is in the thinner stocks, where the short costs too
+much. 4 trials; `intraday_shape` has 36. No tests run.

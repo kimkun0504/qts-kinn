@@ -176,6 +176,50 @@ def pair_run(*names) -> None:
                     print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in m["yearly"].items()))
 
 
+def liquid(hold: int) -> dict[str, np.ndarray]:
+    """Short the 10 most pushed up into the close among the most traded large companies, hedged
+    with SPY or with the 10 least pushed up."""
+    store = DataStore(load_settings())
+    spy = duckdb.sql(
+        f"""select date, lead(close, {hold}) over (order by date) / lead(open, 1) over (order by date) - 1 as r
+            from read_parquet('{store.bars_roots[0]}/daily/*.parquet') where symbol = 'SPY'"""
+    ).fetchall()
+    fund = {day: r for day, r in spy if r is not None}
+    t = duckdb.sql(
+        f"""with s as (
+                select *, row_number() over (partition by day order by l10 desc) as hi,
+                       row_number() over (partition by day order by l10 asc) as lo
+                from '{folder()}/scores.parquet' where mcap >= 2e9 and adv >= 5e7 and close >= 10),
+            legs as (
+                select day, avg(-g{hold} - cost - {BORROW_DAY} * {hold * 1.4}) filter (where hi <= {BOOK}) as short_net,
+                       avg(g{hold} - cost) filter (where lo <= {BOOK}) as long_net
+                from s group by day)
+            select day, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week, short_net, long_net
+            from legs order by day"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    spy_r = np.array([fund.get(day, np.nan) for day in d["day"].astype(object)])
+    d["spy"] = (d["short_net"].astype(float) + spy_r - 0.0003) / 2
+    d["pair"] = (d["short_net"].astype(float) + d["long_net"].astype(float)) / 2
+    d["ok"] = ~np.isnan(spy_r)
+    return d
+
+
+def liquid_run(*names) -> None:
+    bars = {5: 0.003, 10: 0.005}
+    for hold in (5, 10):
+        d = liquid(hold)
+        for hedge in ("spy", "pair"):
+            d["net"], d["over"] = d[hedge], d[hedge]
+            for name in names:
+                keep = period(d, name) & d["ok"]
+                m = measure(d, keep)
+                bar = bars[hold] if name == "search" else bars[hold] / 2
+                print(show(f"short {hedge} {hold} {name}", m) + f"  short leg {100 * d['short_net'][keep].mean():.2f}%  bar {100 * bar:.2f}%")
+                if name != "search":
+                    print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in m["yearly"].items()))
+
+
 def search_low() -> None:
     passed = []
     for score, hold, size in CELLS:
@@ -203,6 +247,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         search()
+    elif sys.argv[1] == "liquid":
+        liquid_run(*sys.argv[2:])
     elif sys.argv[1] == "pairs":
         pair_run(*sys.argv[2:])
     elif sys.argv[1] == "search_low":

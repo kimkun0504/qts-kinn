@@ -1,7 +1,7 @@
 # Intraday shape: a stock pushed up into the close, day after day, gives it back
 
-**Verdict: closed; one finding worth keeping as a warning, and an exit for the earnings rule to follow on paper.** 32 cells on 2010 to 2017, none
-meets the bar set in [HYPOTHESIS.md](HYPOTHESIS.md), so no test was run. 32 trials. The
+**Verdict: closed; one finding worth keeping as a warning, and an exit for the earnings rule to follow on paper.** 36 cells on 2010 to 2017, none
+meets the bar set in [HYPOTHESIS.md](HYPOTHESIS.md), so no test was run. 36 trials. The
 holdout is untouched.
 
 From minute bars, for every listed common stock of $50M or more and every session from 2005
@@ -30,6 +30,11 @@ open and held 5 or 10 sessions. Code: `research/claude/intraday_shape.py`.
 - **The short is not worth it after costs.** Long the 10 most pushed down and short the 10 most
   pushed up, in companies of $2B or more: 0.20% a trade for 10 sessions (weekly t 1.79). The
   stocks pushed up into the close are thin for their size; the round trip costs them 0.21%.
+
+- **In the most traded large companies it is almost gone.** Among stocks of $2B or more, $50M
+  a day and $10 or more, the 10 most pushed up, sold short with SPY bought against them, made
+  0.07% a trade over 5 sessions and 0.21% over 10 (t 1.48 and 2.74). The effect lives where the
+  short is too dear.
 
 **Use:** as a warning on a stock already chosen for another reason. A candidate for the
 earnings rule or the insider rule that has been pushed up into the close for two weeks is
