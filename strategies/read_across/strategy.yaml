@@ -4,7 +4,7 @@ status: event-study       # plan written 2026-11-17; nothing measured yet
 engine: daily
 universe: listed common stock, market value >= $50M, in the industry of a company that just jumped on results, own results still to come
 family: read_across
-prior_trials: 0
+prior_trials: 18
 cost_calibration: ibkr_pro_tiered
 owner: claude
 

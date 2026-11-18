@@ -38,3 +38,9 @@ Search 2010–2017: 150 trades, 1% after costs, weekly t of 3, six years of eigh
 2005–2009 and 2018–2022, each cell that goes forward run once: 0.5%, t of 2.5, four years of
 five, in both. Each cell is also shown over the average stock for the same days, since a
 long trade of 5 to 15 sessions carries the market. The holdout stays sealed.
+
+**Results, 2026-11-17 21:04 ET.** In REPORT.md. **None of the 18 cells meets the bar; the best makes
+0.47% a trade.** Peers of $2B or more gained 0.6% to 0.8% over the average stock in 15
+sessions (weekly t about 2.5), which is the known industry effect and too small to trade
+after costs; peers under $300M gained nothing over the average stock and lost 0.3% to 0.8%
+after costs. 18 trials. No tests run.

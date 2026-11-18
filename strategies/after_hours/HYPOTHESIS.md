@@ -198,3 +198,9 @@ their own, and its bad years (2008, 2020) are market years. Two cells: that trad
 sold short for the same dollars over the same sessions** (SPY's close on the report day to
 its close 16 sessions on; 0.03% added for its costs), by the minute's high and by the
 resting order. Same bar and tests. **2 cells**, charged to `after_hours`.
+
+**Results of the SPY-hedged cell, 2026-11-17 21:04 ET.** In REPORT.md. Search years: 1.08% a trade after
+costs by the minute's high (860 trades, weekly t 2.80, seven years of eight) and 1.01% by the
+resting order (698 trades, t 2.07, seven of eight). **Neither meets the search bar** (the t
+of 3), so no tests were run. The market was about 0.4 of the cell's 1.5 points; the rest is
+the stocks. 2 cells; `after_hours` has 105 trials.

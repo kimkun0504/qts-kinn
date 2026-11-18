@@ -4,7 +4,7 @@ status: event-study       # nothing passed both tests; three leads in REPORT.md 
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
-prior_trials: 103
+prior_trials: 105
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
