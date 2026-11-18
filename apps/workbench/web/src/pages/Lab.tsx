@@ -300,6 +300,12 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
     }
     let live = true;
     let timer: number | undefined;
+    // When a run started from this page ends (however fast), show its results.
+    const reveal = () => {
+      if (startedHere.current !== shown) return;
+      startedHere.current = null;
+      window.setTimeout(() => results.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+    };
     const load = () =>
       lab
         .run(shown)
@@ -308,6 +314,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
           setDetail(found);
           setStatus(found.status);
           if (LIVE.includes(found.status.state)) timer = window.setTimeout(tick, 1000);
+          else reveal();
         })
         .catch(() => live && setDetail(null));
     const tick = () =>
@@ -321,10 +328,6 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
             load();
             refreshRuns();
             onChanged();
-            if (startedHere.current === shown) {
-              startedHere.current = null;
-              window.setTimeout(() => results.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
-            }
           }
         })
         .catch(() => live && (timer = window.setTimeout(tick, 3000)));
