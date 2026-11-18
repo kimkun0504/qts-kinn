@@ -206,3 +206,16 @@ tests at 0.5%, t 2.5, four of five. 1 trial.
 A diagnostic of the passed cell using only what is known on D: its signals split by whether
 the company's last results 8-K reacted 5 to 30 calendar days before D (funds buying after the
 news, the ground of the earnings drift) or longer ago. 1 trial.
+
+## Follow-up 13: large pieces in sector funds (written 2026-11-18 00:36 ET)
+
+A fund moving money into a sector often does it through a sector or industry index fund, in
+blocks. A sector fund traded in large pieces on a quiet day may mark an allocation that goes on
+for weeks. **Funds (fixed list):** XLB XLE XLF XLI XLK XLP XLU XLV XLY SMH XBI IBB KRE KBE XRT
+XHB ITB IYR VNQ GDX XME OIH XOP IYT ITA KIE XSD IGV. **Event:** footprint 2 or more (shares per
+trade against the fund's previous 60 sessions), dollar volume 1.5x its 20-session median, the
+fund's return 0% to +2% above SPY's that day, and fewer than a quarter of the listed funds with
+a footprint of 2 or more that day (market-wide days out). Bought at the next open, held 20
+sessions, against SPY over the same days (open to close); costs 0.02% a side and commission.
+**1 cell.** Search bar: 150 trades, 1% over SPY, weekly t 3, six of eight; tests at half, t
+2.5, four of five. 1 trial.
