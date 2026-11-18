@@ -1,0 +1,18 @@
+name: russell_move
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: companies moving from the Russell 1000 to the Russell 2000 (rebuilt from market values)
+family: russell_move
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Russell move
+  idea: A company that drops from the Russell 1000 to the top of the Russell 2000
+  horizon: about 20 sessions
+  verdict: planned
+  summary: >-
+    Russell 2000 funds must buy the largest newcomers at the June rebuild. Buy them after the
+    May rank day and sell at the rebuild, or buy after it.
