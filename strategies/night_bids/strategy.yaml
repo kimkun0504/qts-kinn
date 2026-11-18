@@ -1,0 +1,19 @@
+name: night_bids
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: intraday
+universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, no results due
+family: night_bids
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Resting bids after hours
+  idea: Leaving small buy orders below the market after hours
+  horizon: Overnight
+  verdict: planned
+  summary: >-
+    The owner's idea. After 16:00 almost nobody quotes, so a hurried seller can push a stock
+    down several percent on a few thousand dollars. A small buy order left below the close is
+    filled by such a seller and sold at the next open.
