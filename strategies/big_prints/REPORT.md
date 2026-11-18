@@ -196,3 +196,17 @@ $300M–$2B, up 5%+ on results, 2010–2017, over the average stock of that size
 
 Larger means with large pieces, but on 40 trades a year, spread over quiet weeks, with a weekly
 t under 1: nothing to test. 2 trials (family 29).
+
+## Follow-up 6: a footprint that repeats (read 18 November 2026, 00:19 ET)
+
+The passed cell split by an earlier footprint (2+) in the 10 sessions before, over the average:
+
+| Period | Passed cell | Repeated | Single |
+|---|---|---|---|
+| 2010–2017 | +0.94% (2,155; t 3.24) | +0.98% (1,069; t 2.85) | +0.90% (1,086; t 2.06) |
+| 2005–2009 | +1.78% (2,633; t 4.12) | +1.99% (1,623; t 2.69) | +1.45% (1,010; t 3.64) |
+| 2018–2022 | +1.83% (1,906; t 3.10) | +1.58% (1,349; t 1.56) | +2.44% (557; t 3.26) |
+| 2023 | +2.10% (405) | +2.62% (345) | −0.91% (60) |
+
+Not better in 2018–2022, and its t there is 1.56: a repeated footprint is not a better rule.
+The passed cell stays as it is. 1 trial (family 30).
