@@ -35,3 +35,12 @@ item (3.02, 4.02, 2.04, 3.01, 4.01, 2.06) × size ($50M–$300M, $300M–$2B) ×
 Search 2010–2017: 150 trades, 1% over the average for 20 sessions or 2% for 60, weekly t of
 3, six years of eight, positive after costs and borrow. Tests on 2005–2009 and 2018–2022 at
 half those, t of 2.5, four years of five. 2023 is a check. The holdout stays sealed.
+
+## Follow-up: a shelf registration (written 2026-11-18 00:30 ET)
+
+A company that files a shelf registration (form S-3, not an amendment) is preparing to sell
+shares; the sale comes later, at a discount. If the market prices the dilution only as it
+happens, the stock should trail from the filing. Same trade and costs as above (sold short at
+the first open after acceptance, held 20 or 60 sessions, borrow at 10% a year, against the
+average stock of its size); the first S-3 by a filer in 365 days. **4 cells:** size × hold. Same
+bars. 4 trials.
