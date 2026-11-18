@@ -15,6 +15,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `kinn.registry`, `kinn.run`, `kinn.cli` | claude | 2026-11-15 | |
 | `kinn.reporting` | claude | 2026-11-15 | open to gpt on request |
 | `apps/workbench` | claude | 2026-11-15 | open to gpt on request |
+| `kinn.lab` | claude | 2026-11-18 | the owner's Lab (decision 0023) |
 | `strategies/intraday_rebound` | claude | 2026-11-15 | parked; see its REPORT.md |
 | `strategies/random_entry` | claude | 2026-11-15 | canary; change only with the canary tests |
 | `strategies/rebound_limit` | claude | 2026-11-16 | parked: failed the holdout; reversal signals and fast-fall entries did not reach the target, see its REPORT.md |
