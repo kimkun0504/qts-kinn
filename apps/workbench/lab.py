@@ -105,15 +105,20 @@ def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launc
         # Settings are checked here too, so a typo shows at once; the worker checks again with
         # the SETTINGS the code computes, if it computes them.
         parse(settings, literal_settings(code) or {})
+        store.save_algorithm(root, name, code)  # Run keeps the code, even if it has to wait
     except (store.LabError, SettingsError) as error:
         return _error(400, str(error))
     with _START:
         active = store.active_run(root)
         if active:
             return _error(409, f"Run {active} is still going. Wait for it or cancel it.")
-        store.save_algorithm(root, name, code)
         run_dir = store.new_run(root, name, code, settings)
-        launch(run_dir)
+        try:
+            launch(run_dir)
+        except OSError as error:
+            store.set_status(run_dir, "failed", stage="Stopped",
+                             error=f"The worker process could not start: {error}")  # fmt: skip
+            return _error(500, f"The worker process could not start: {error}")
     return 202, {"run_id": run_dir.name, "status": store.status(run_dir)}
 
 

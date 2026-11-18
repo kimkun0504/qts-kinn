@@ -3,7 +3,7 @@
 <KINN_LAB_DIR or beside the run store>/lab/
     algorithms/<name>.py        the owner's files
     trash/<name>-<time>.py      deleted algorithms (kept, never removed by the Lab)
-    runs/<run_id>/              request.json, manifest.json, status.json, log.txt, results
+    runs/<run_id>/              request.json, manifest.json, status.json, pid, log.txt, results
 """
 
 from __future__ import annotations
@@ -27,6 +27,7 @@ MAX_CODE = 200_000  # characters
 TEMPLATES = Path(__file__).parent / "templates"
 STATES = ("queued", "running", "complete", "failed", "cancelled", "interrupted")
 FINAL = ("complete", "failed", "cancelled", "interrupted")
+START_GRACE = 120  # seconds a queued run may wait for its worker before it counts as lost
 
 
 class LabError(ValueError):
@@ -167,6 +168,14 @@ def set_status(run_dir: Path, state: str, **fields) -> dict:
     return status
 
 
+def _age(run_dir: Path) -> float:
+    """Seconds since the run's folder was made."""
+    try:
+        return time.time() - (run_dir / "request.json").stat().st_mtime
+    except OSError:
+        return 0.0
+
+
 def pid_of(run_dir: Path) -> int | None:
     """The worker's process id. Kept in its own file, written only by the launcher, so the
     launcher and the worker never write the same file."""
@@ -179,6 +188,9 @@ def pid_of(run_dir: Path) -> int | None:
 def status(run_dir: Path) -> dict:
     found = _read(run_dir / "status.json") or {"state": "failed", "error": "No status file."}
     pid = pid_of(run_dir)
+    if found.get("state") == "queued" and not pid and _age(run_dir) > START_GRACE:
+        return set_status(run_dir, "interrupted", stage="Stopped",
+                          error="The run's worker never started. Run it again.")  # fmt: skip
     if found.get("state") in ("queued", "running") and pid and not alive(pid):
         found = set_status(
             run_dir, "interrupted", stage="Stopped",

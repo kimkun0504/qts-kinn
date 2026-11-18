@@ -151,6 +151,26 @@ def test_one_run_at_a_time(root, fake):
     assert status == 409 and busy.name in payload["error"]
 
 
+def test_a_worker_that_cannot_start_fails_the_run_and_frees_the_lab(root):
+    def broken(run_dir):
+        raise OSError("no such file")
+
+    status, payload = lab.route(
+        "POST", ["runs"], {}, {"algorithm": "x", "code": CODE}, root, launch=broken
+    )
+    assert status == 500 and "could not start" in payload["error"]
+    assert store.active_run(root) is None
+    assert store.read_algorithm(root, "x") == CODE
+
+
+def test_a_queued_run_whose_worker_never_started_is_let_go(root):
+    run_dir = store.new_run(root, "x", CODE, {})
+    old = os.stat(run_dir / "request.json").st_mtime - 3600
+    os.utime(run_dir / "request.json", (old, old))
+    assert store.status(run_dir)["state"] == "interrupted"
+    assert store.active_run(root) is None
+
+
 def test_cancel_only_a_running_run(root, finished):
     assert lab.route("POST", ["runs", finished, "cancel"], {}, None, root)[0] == 409
 
