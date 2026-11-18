@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import tempfile
+from datetime import date
 
 import duckdb
 import numpy as np
@@ -24,7 +25,7 @@ def main() -> None:
     for period in ("early", "choose", "late", "check"):
         d = study.rows(period)
         keep = study.pick(d, *RULE_I)
-        kept += [(period, int(p), day, float(g) - float(c), int(w))
+        kept += [(period, int(p), date.fromisoformat(str(day)[:10]), float(g) - float(c), int(w))
                  for p, day, g, c, w in zip(d["permaticker"][keep], d["day"][keep], d["g15"][keep],
                                             d["cost"][keep], d["week"][keep], strict=True)]  # fmt: skip
     signals = pa.table({k: [r[i] for r in kept] for i, k in enumerate(("period", "permaticker", "day", "net", "week"))})
