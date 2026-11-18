@@ -37,3 +37,9 @@ Search 2010–2017: 150 trades (reported and taken on if fewer but the rest is m
 after costs, weekly t of 3, six years of eight. Tests on 2005–2009 and 2018–2022, each cell
 that goes forward run once: 0.5%, t of 2.5, four years of five, in both. 2023 is a check.
 The holdout stays sealed.
+
+**Results, 2026-11-17 22:42 ET.** In REPORT.md. **None of the 8 cells meets the bar; the arrival of the
+overdue report is followed by more falling, not relief.** 1,806 events (2003–2023); in
+2010–2017, 353 (fewer than planned for). Small companies lost 3.0% a trade in 15 sessions
+(median −3% to −4%, one or no year of eight positive); those already down 10% since the notice
+lost 7% to 8%. Larger companies about −0.2%. 8 trials. No tests run.
