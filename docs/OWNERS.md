@@ -63,6 +63,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/first_report` | claude | 2026-11-17 | the drift after a new listing's first strong results |
 | `strategies/uplisting` | claude | 2026-11-17 | a company that moves up to Nasdaq or the NYSE (Sharadar exchange changes) |
 | `strategies/index_deletion` | claude | 2026-11-17 | companies dropped from the S&P 500 that stay listed |
+| `strategies/spin_off` | claude | 2026-11-17 | newly spun-off companies and their parents |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
