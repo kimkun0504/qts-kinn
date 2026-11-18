@@ -1,10 +1,10 @@
 name: filing_drift
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 3 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $300M (one cell to $2B), a 10-Q or 10-K with no results 8-K
 family: filing_drift
-prior_trials: 0
+prior_trials: 3
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Filing drift
   idea: The earnings rule for companies whose numbers first appear in the 10-Q
   horizon: 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "No trade: a jump on the 10-Q alone is given back (−1.8% a trade)"
   summary: >-
-    Many small companies issue no results press release. Apply the earnings rule's jump and
-    volume test on the session after their 10-Q or 10-K instead.
+    Many small companies issue no results press release. The earnings rule's jump and volume
+    test, on the session after their 10-Q or 10-K instead.
+  weaknesses:
+    - The drift needs a results press release; without one the jump reverses.
+  evidence:
+    - {when: 2026-11-17, title: 3 cells on 2010 to 2017, kind: failed, text: "Q50 −1.80% a trade on 99 trades; no cell meets the bar."}
+  studies:
+    - {name: A50 on 10-Q and 10-K filings without a results 8-K, when: 2026-11-17, trials: 3, result: "No cell meets the bar", verdict: failed}

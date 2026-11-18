@@ -35,3 +35,9 @@ As A50's search: 2010–2017, 1% a trade after costs, weekly t of 3, six years o
 the tests anyway, with the count said. Tests on 2005–2009 and 2018–2022, each cell that goes
 forward run once: 0.5%, t of 2.5, four years of five, in both. 2023 is a check. The holdout
 stays sealed (its period holds no raw filing data here; the download stops at 2023-11-08).
+
+**Results, 2026-11-17 22:24 ET.** **None of the 3 cells meets the bar.** Q50: 99 trades in 2010–2017,
+−1.80% a trade after costs (weekly t −0.93, three years of eight); with a 10% rise, 143
+trades, −1.18%; Q50 in $300M to $2B, 73 trades, +1.09% (t 0.57). A small company that jumps
+on a 10-Q with no press release gives the jump back: the earnings rule needs the press
+release. 3 trials. No tests run.
