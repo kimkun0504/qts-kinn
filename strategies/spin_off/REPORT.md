@@ -1,6 +1,6 @@
 # Spin-off: report
 
-Read on 17 November 2026 (23:37 ET), after the plan. Code: `research/claude/spin_off.py`.
+Read on 17 November 2026 (23:35 ET), after the plan. Code: `research/claude/spin_off.py`.
 
 | 2010–2017, held 60 sessions | Trades | Over the average stock of $300M+ | Weekly t | Years positive | After costs |
 |---|---|---|---|---|---|
