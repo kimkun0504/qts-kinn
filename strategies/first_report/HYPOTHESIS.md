@@ -40,3 +40,8 @@ listing stays thinly covered for about a year, so: A50's test on **every results
 stock has traded 400 sessions or fewer** (up to its first four or five reports), blank-check
 companies left out. Same two tests, same two sizes, same trade and bar. **4 cells**, charged to
 `first_report`.
+
+**Results of the first year, 2026-11-17 23:24 ET.** **None of the 4 cells meets the bar.** 2010–2017:
+$50M–$300M +1.04% (62 trades) and +2.23% (116); $300M–$2B +1.67% (148, t 1.75) and +0.80%
+(351, t 1.70); medians near zero. The first report's strong showing does not extend to the
+first year. 4 trials; `first_report` has 8.

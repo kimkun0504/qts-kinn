@@ -58,9 +58,14 @@ def firsts() -> None:
     print(duckdb.sql(f"select count(*) from '{firsts_path()}'").fetchall())
 
 
-def rule(test: int, size: str) -> str:
+def rule(test: int, size: str, year: bool = False) -> str:
     jump, volume = TESTS[test]
     lo, hi = SIZES[size]
+    if year:
+        return (f"earn and age <= 400 and ret2 >= {jump} and dvr2 >= {volume} and mcap >= {lo} and mcap < {hi}"
+                f" and exists (select 1 from '{firsts_path()}' f where f.permaticker = d.permaticker"
+                f"             and f.day >= d.day - 600)"
+                f" and d.permaticker not in (select permaticker from '{spac_path()}')")  # fmt: skip
     return (f"earn and age <= 150 and ret2 >= {jump} and dvr2 >= {volume} and mcap >= {lo} and mcap < {hi}"
             f" and exists (select 1 from '{firsts_path()}' f where f.permaticker = d.permaticker and f.day = d.day)"
             f" and d.permaticker not in (select permaticker from '{spac_path()}')")  # fmt: skip
@@ -80,15 +85,15 @@ def summary(d, label, a, b):
     return yearly
 
 
-def search() -> None:
+def search(year: bool = False) -> None:
     for test in TESTS:
         for size in SIZES:
-            summary(trades(rule(test, size), "search"), f"first {test}% {size}", 2010, 2017)
+            summary(trades(rule(test, size, year), "search"), f"{'year' if year else 'first'} {test}% {size}", 2010, 2017)
 
 
-def test(t, size) -> None:
+def test(t, size, year: bool = False) -> None:
     for label, period, a, b in (("2005-2009", "early", 2005, 2009), ("2018-2022", "search", 2018, 2022)):
-        yearly = summary(trades(rule(int(t), size), period), f"first {t}% {size} {label}", a, b)
+        yearly = summary(trades(rule(int(t), size, year), period), f"{'year' if year else 'first'} {t}% {size} {label}", a, b)
         if yearly:
             print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in yearly.items()))
 
@@ -100,5 +105,9 @@ if __name__ == "__main__":
         firsts()
     elif sys.argv[1] == "search":
         search()
+    elif sys.argv[1] == "search_year":
+        search(year=True)
+    elif sys.argv[1] == "test_year":
+        test(*sys.argv[2:4], year=True)
     else:
         test(*sys.argv[2:4])

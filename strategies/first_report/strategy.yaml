@@ -1,10 +1,10 @@
 name: first_report
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 8 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $2B, the first results of a new listing
 family: first_report
-prior_trials: 0
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,15 @@ record:
   title: First report
   idea: The drift after a newly listed company's first strong results
   horizon: 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "Strong on 12 to 41 first reports of mid-sized listings; too rare, and the first year does not drift"
   summary: >-
     A company's first results as a listed company are the least watched of all. The earnings
-    rule's test on first reports only, in small and mid-sized companies.
+    rule's test on first reports, and on the first 400 sessions of reports.
+  weaknesses:
+    - First reports with a strong jump are rare (12 to 41 in eight years).
+  evidence:
+    - {when: 2026-11-17, title: 8 cells on 2010 to 2017, kind: failed, text: "Mid-sized first reports +4.7% to +16% on 41 and 12 trades; the first year +0.8% to +2.2%."}
+  studies:
+    - {name: A50 on first reports, when: 2026-11-17, trials: 4, result: "Too few trades", verdict: failed}
+    - {name: A50 on the first year of reports, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
