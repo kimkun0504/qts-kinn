@@ -251,3 +251,18 @@ uv run python after_hours_score.py limits 2005 2023
 uv run python after_hours_score.py limit_search
 uv run python after_hours_score.py hedged search
 ```
+
+## Who sells after hours (1 trial, read 18 November 2026, 00:31 ET)
+
+The short split at the 2010–2017 median of its after-hours footprint (shares per trade after
+hours against the stock's normal; the median is 2.24), after costs, bought back at the open:
+
+| Period | Short | Large pieces | Small pieces |
+|---|---|---|---|
+| 2005–2009 | +2.98% (143) | +3.84% (64) | +2.29% (79) |
+| 2010–2017 | +2.71% (250) | +3.29% (125) | +2.13% (125) |
+| 2018–2022 | +1.56% (198) | +0.67% (67) | +2.02% (131) |
+| 2023 | +6.13% (43) | +5.17% (29) | +8.11% (14) |
+
+Funds selling in large pieces marked the better shorts to 2017 and the worse ones since: not a
+filter. The short is unchanged. (Code: `research/claude/after_hours_footprint.py`.)
