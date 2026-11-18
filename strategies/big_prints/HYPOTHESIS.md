@@ -141,3 +141,13 @@ The other end of the indicator: a quiet up day (0% to 4%, 1.5x volume, no 8-K) t
 retail attention. Published work finds attention-driven buying is followed by weaker returns.
 Read as a short over the average stock of its size, 20 sessions, after costs and borrow at 10%
 a year. **2 cells:** $50M–$300M and $300M–$2B. Same search bar and tests. 2 trials.
+
+## Follow-up 8: large pieces beside rule I (written 2026-11-18 00:23 ET)
+
+Rule I (strategies/insider_buying: an insider purchase of $100,000+ in a $50M–$300M company,
+bought the next open, held 15 sessions) made 3.2% to 3.9% a trade before 2018 and 1.5% since.
+If insiders buying and institutions trading in large pieces are two signs of the same thing,
+rule I signals whose signal day is traded in large pieces should do better. **1 cell:** rule I
+with a footprint of 1.5 or more on the signal day, against all rule I signals, after costs.
+Judged as a filter: better per trade in all three periods (2005–2009, 2010–2017, 2018–2022),
+2023 a check; the rest printed beside. 1 trial (charged here; rule I is unchanged).
