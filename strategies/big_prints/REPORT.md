@@ -6,7 +6,7 @@ follow it on paper.** A company of $50M to $300M that, on a quiet day with no 8-
 bought at the next open and held 20 sessions: +1.85% (2005–2009, t 4.21) and +1.77% (2018–2022,
 t 3.09) over the average small stock, +2.08% in 2023; the same days with an ordinary trade size
 make nothing. Against it: chosen as a follow-up; 0.94% in 2010–2017 with delisted stocks kept;
-tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 49 trials.
+tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 51 trials.
 
 Code: `research/claude/big_prints.py`.
 
@@ -397,3 +397,36 @@ $300M–$600M, the same rule, over the average $300M–$2B stock: +0.39% (907; t
 2010–2017, +0.49% (2005–2009), +0.17% (2018–2022), +0.08% (2023). The effect stops at about
 $300M: it lives where a fund's order is a large part of a stock's trading. The rule's capacity is
 the small companies only. 1 trial (family 49).
+
+## Follow-up 17: after the first paper run (read 18 November 2026, 12:10 ET)
+
+The first paper run (`--since 2026-10-20`, 21 evenings) showed many blank-check companies
+(SPACs) among the signals and skipped 8 of 21 evenings as index days.
+
+**(a) Blank-check companies** (Sharadar SIC 6770) in the passed cell, over the average small stock:
+
+| Period | Passed cell | Without blank checks | Blank checks |
+|---|---|---|---|
+| 2005–2009 | +1.78% (2,633) | +1.81% (2,597) | −0.03% (36) |
+| 2010–2017 | +0.94% (2,155) | +0.93% (2,152) | (3) |
+| 2018–2022 | +1.83% (1,906) | +1.56% (1,628) | **+3.39%** (278) |
+| 2023 | +2.10% (405) | +2.02% (278) | +2.28% (127) |
+
+Not a filter: since 2018 the blank checks did better than the rest (a blank check near its trust
+value has a floor and pays off when a deal is announced). They stay in the rule. They are 15% of
+signals in 2018–2022 and 31% in 2023, so the paper ledger will be full of them.
+
+**(b) How often the research skipped a session** (5%+ of eligible small stocks with a footprint
+of 2+): 2–4% of sessions a year from 2007 to 2020, then 7.5% in 2021, **16% in 2022 and 15% in
+2023**; the share of large-trade stocks on an ordinary day has drifted up toward the 5% line
+(median 1.4%–1.9% in 2009–2017, 3.3%–3.8% in 2022–2023). Counted over every stock, as the paper
+ledger does, the research would have skipped 5–7% of sessions in 2022–2023. The paper run's 8
+of 21 means the drift has gone further, or the vendor's live trade counts differ from its flat
+files; a few weeks of paper will tell which.
+
+**(c) The signals on skipped sessions:** +0.03% (2010–2017, 964), −0.09% (2005–2009, 771),
++1.72% (2018–2022, 659), +1.93% (2023, 199) over the average. The skip earned its place before
+2018 and has not mattered since. It stays, and the paper ledger now records the skipped
+sessions' signals separately so the question can be followed forward.
+
+2 trials (family 51).
