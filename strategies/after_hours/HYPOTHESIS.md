@@ -266,3 +266,12 @@ all three periods**, by the rule set: at 10:00 3.25%, 3.14%, 2.29% (2023 7.32%);
 3.47%, 2.37% (t 2.10), 2023 8.82%; against 2.98%, 2.82%, 1.60% and 6.66% at the open. The
 selling after bad results after hours goes on through the next session. 2 trials;
 `after_hours` has 114. The paper ledger records the 15:30 buy-back beside the open.
+
+## Addendum, 2026-11-17 23:20 ET: after the selling, a rebound to buy?
+
+Written before it is measured. The short's events ($300M–$2B, down 15%+ after hours on
+results) keep falling through the next session. If the selling is spent by its close, the stock
+may come back. **Bought at the close of the session after the report** (D+1), sold at the close
+5 or 10 sessions later. Costs: the auction allowance and commission. The bar of the first part
+(1% a trade, t of 3, six years of eight on 2010–2017, 150 trades or fewer if the rest is met;
+tests at 0.5%, t 2.5, four of five). **2 cells**, charged to `after_hours`.
