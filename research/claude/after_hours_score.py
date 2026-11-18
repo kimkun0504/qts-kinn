@@ -217,6 +217,29 @@ def limit_test(size, reaction, exit_) -> None:
             print(f"    {year}: {mine.sum():>5}  {100 * net[mine].mean():>6.2f}%")
 
 
+def hedged() -> None:
+    """The large-company cell with SPY sold short over the same sessions."""
+    store = DataStore(load_settings())
+    spy = duckdb.sql(
+        f"""select date, lead(close, 16) over (order by date) / close - 1 as r
+            from read_parquet('{store.bars_roots[0]}/daily/*.parquet') where symbol = 'SPY'"""
+    ).fetchall()
+    market = {day: r for day, r in spy if r is not None}
+    for name, d in (("high", load()), ("limit", load_limits())):
+        fund = np.array([market.get(day, np.nan) for day in d["day"].astype(object)])
+        d["g_hedged"] = d["g_fifteen"].astype(float) - fund - 0.0003
+        base = (d["mcap"] >= 2e9) & (d["reaction"] < 0.15) & ~np.isnan(fund)
+        if name == "limit":
+            base &= d["filled"]
+        net = d["g_hedged"] - d["cost"]
+        for period in sys.argv[2:]:
+            keep = base & years(d, period)
+            print(show(f"{name} large up5 hedged {period}", measure(d, keep, "hedged")))
+            for year in sorted(set(d["yr"][keep])):
+                mine = keep & (d["yr"] == year)
+                print(f"    {year}: {mine.sum():>5}  {100 * net[mine].mean():>6.2f}%")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "limits":
         limits(int(sys.argv[2]), int(sys.argv[3]))
@@ -224,6 +247,8 @@ if __name__ == "__main__":
         peaks(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == "search":
         search()
+    elif sys.argv[1] == "hedged":
+        hedged()
     elif sys.argv[1] == "limit_search":
         limit_search()
     elif sys.argv[1] == "limit_test":
