@@ -165,6 +165,13 @@ years positive**, about $1,900 a year on average. 537 evenings; at most six sign
 evening, three or more on only nine. Most come in the reporting months (February, May, July and
 August, October and November).
 
+**Checked for data errors** (the danger for a short bought back at the open is a bad, too-low
+open price): the eight largest winners all have next-day opens equal to the first regular
+minute in the minute data, and are real collapses (Green Dot 2012-07-27, Sequenom 2009-04-30,
+Huron Consulting 2009-08-03, Funko 2022-11-04, Design Therapeutics 2023-08-15 and others). The
+ten largest winners make 23% of the total over 639 trades; without the two largest, 2023 is
+still about +4.8% a trade.
+
 ## Following the short on paper (built 2026-11-17)
 
 `tools/owner/paper_after_hours.py` keeps a paper ledger of the after-hours short, the strongest
