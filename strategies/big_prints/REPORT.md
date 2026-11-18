@@ -177,3 +177,10 @@ Better per trade in all three periods, as the rule for A50's filters asks, but b
 0.13 points, and the trades it removes still make 2.7% to 4.1% each: as a filter it would cut
 A50's total profit. **Not recommended**; A50 is unchanged. Most A50 jumps are already traded
 in larger pieces than normal (median footprint 1.2 to 1.4). 1 trial (family 25).
+
+## Follow-up 4: large pieces on a news day (read 18 November 2026, 00:19 ET)
+
+$50M–$300M, footprint 3+, up 0% to 4%, with an 8-K reacting that day, 2010–2017: a results 8-K
+−0.26% over the average (36 trades), any other 8-K +0.44% (91). Too few and nothing there: on
+news days the trades are many and small, so the footprint rarely reaches 3. The quiet-day rule
+stands as it is. 2 trials (family 27).
