@@ -310,3 +310,10 @@ bars). The short cell ($300M–$2B, down 15%+, sold at the low of the next minut
 at the next open), split at the median footprint of its 2010–2017 events. **1 cell:** the
 larger-piece half, judged as a filter on the short: better per trade in all three periods, 2023
 as a check; the other half printed beside.
+
+## Addendum, 2026-11-18 00:32 ET: who buys after hours (1 trial)
+
+The same footprint split for the closest long lead: a results release after the close in a
+company of $2B or more, up 5% to 15% half an hour later, bought at the high of the next minute
+and held 15 sessions. Split at the 2010–2017 median of the after-hours footprint. **1 cell:** the
+larger-piece half, judged as a filter: better per trade in all three periods, 2023 as a check.
