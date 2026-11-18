@@ -1,5 +1,9 @@
 # Filing-aware dislocation reversal
 
+Final verdict. Park after the development portfolio missed its
+required daily Sharpe at doubled slippage. The committed study
+decision below records the earlier event-study gate pass.
+
 ## Development study decision
 
 Develop to the registered portfolio check. The study passed every
@@ -95,3 +99,80 @@ availability rule. The family has already read the validation
 years for other definitions. Any later qualifying test will
 use the frozen registration and must acknowledge that reuse.
 The holdout stays sealed.
+
+## Development portfolio verdict
+
+**Park.** The registered portfolio earned +3.83% net per trade
+at base costs and +3.45% at doubled slippage over 254 trades.
+It met every registered development bar except full-period
+daily Sharpe at doubled slippage, which was 0.87 against a
+strict requirement above 1. The original unfiltered portfolio
+had a stressed Sharpe of 0.93. The filing screen raised the
+mean return slightly and reduced total profit and the number
+of traded dates. It did not improve the required risk measure.
+
+The portfolio was run only after the committed study verdict
+`b28a998`. Run `20261118T011522Z_gpt_filing_aware_dislocation_bb58abd6`
+used that clean commit, build `447e58e098`, and the same
+Form 8-K input. It adds one counted family trial, bringing
+the shared total to 105 including nine earlier
+declared looks.
+
+| Development portfolio | Unfiltered size peers | Filing screen |
+| --- | ---: | ---: |
+| Trades / active dates | 286 / 199 | 254 / 178 |
+| Gross mean | +4.36% | +4.45% |
+| Net mean at 1× | +3.73% | +3.83% |
+| Net mean at 2× | +3.36% | +3.45% |
+| Daily P&L t-statistic at 1× | 3.69 | 3.45 |
+| Daily P&L t-statistic at 2× | 3.40 | 3.19 |
+| Daily annualised Sharpe at 2× | 0.93 | 0.87 |
+| Worst drawdown at 1× | −$1,443 | −$1,468 |
+| Worst drawdown at 2× | −$1,664 | −$1,637 |
+| Total net at 1× | +$21,199 | +$19,314 |
+| Total net at 2× | +$19,083 | +$17,452 |
+
+The 2013–2016 block had 45 trades on
+41 dates at
++2.56% net at 1× and
++2.26% at 2×. Those return and
+sample gates passed. The full-period 2× drawdown gate passed.
+
+Kinn rejected three signals for capital availability. Mean
+executed notional was +$1,983.
+Every entry was on the next clock minute. There were
+233 timed exits and
+21 auction exits, all on the entry
+date. Kinn passed 178 signal-session
+lookahead replays. The saved metrics were recomputed from
+the saved trades and matched exactly.
+
+At base costs, 161 winners averaged
++11.85% and
+93 losses averaged
+−10.06%. At doubled slippage,
+158 winners averaged
++11.70% and
+96 losses averaged
+−10.11%.
+
+| Year | Trades | Net mean at 1× | Net mean at 2× | Net P&L at 1× |
+| --- | ---: | ---: | ---: | ---: |
+| 2003 | 1 | +31.46% | +31.33% | +$621 |
+| 2004 | 4 | +8.74% | +8.50% | +$697 |
+| 2005 | 4 | −6.52% | −6.76% | −$519 |
+| 2006 | 9 | +3.65% | +3.40% | +$658 |
+| 2007 | 21 | +4.91% | +4.60% | +$2,056 |
+| 2008 | 130 | +4.77% | +4.32% | +$12,292 |
+| 2009 | 18 | +0.70% | +0.41% | +$255 |
+| 2010 | 3 | +2.89% | +2.73% | +$174 |
+| 2011 | 11 | −4.63% | −4.88% | −$1,023 |
+| 2012 | 8 | +11.25% | +10.77% | +$1,800 |
+| 2013 | 8 | +4.48% | +4.17% | +$718 |
+| 2014 | 13 | +2.50% | +2.19% | +$654 |
+| 2015 | 16 | +4.43% | +4.16% | +$1,413 |
+| 2016 | 8 | −3.03% | −3.34% | −$481 |
+
+The definition failed its development portfolio gate, so the
+validation configuration was not run. Fills and depth remain
+modeled from minute bars. The sealed holdout stayed excluded.
