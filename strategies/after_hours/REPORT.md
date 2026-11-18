@@ -326,3 +326,11 @@ ten trades a year and a weekly t under 2.5. The cleaner form of the lead to watc
 **on the evening of results, a small company up 5%+ after hours with its after-hours trading in
 large pieces; buy the next open, hold 15 sessions.** It sits on A50's ground a day earlier and
 with a lower jump; how much the two overlap has not been measured.
+
+**Overlap with A50** (1 trial): of the larger-piece signals bought at the next open, 22 of 55,
+44 of 105, 28 of 80 and 12 of 30 (2023) went on to become A50 signals a day or two later.
+Those made +14.7%, +7.4%, +14.1% and +17.5%; **the rest made −2.68% (2005–2009), +3.40%,
++5.52% and +0.06% (2023)**. The lead is mostly A50 caught a day earlier, before anyone can know
+which jumps A50 will take; on its own it is weak. It stays a note on A50's timing, not a second
+strategy: it suggests the A50 jumps that began after hours in large pieces gained a great deal
+on their first day, which A50's entry (the open after the signal day) does not get.
