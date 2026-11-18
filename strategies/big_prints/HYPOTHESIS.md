@@ -105,3 +105,14 @@ may matter most when there is news to act on. Same conditions ($50M–$300M, foo
 more, 1.5x volume, up 0% to 4%, held 20 sessions), but **with** an 8-K whose reaction session is
 D: **2 cells**, (a) a results 8-K (item 2.02) and (b) any other 8-K (no 2.02 from four days
 before D to D). Same search bar and tests. 2 trials.
+
+## Follow-up 5: large pieces on a mid-sized company's results jump (written 2026-11-18 00:17 ET)
+
+In companies of $300M to $2B the drift after a results jump is small (busy_day: +0.8% over
+20 sessions after a 5% jump, 2010–2017) and faded after 2017 (earnings_drift, family 22). If
+large pieces mark institutions that keep buying for weeks, the jumps traded in large pieces
+should drift more. Events: busy_day's (results 8-K, $300M–$2B, $1M a day, up 5%+ on the
+reaction session D, bought at the next open), whatever the day's crowding, with the footprint
+read on D. **2 cells:** footprint 1.5 or more, held 20 and 60 sessions, against the average
+stock of that size; the rest (under 1.5) printed beside. Bars: 1% (20) and 2% (60) over the
+average, t 3, six of eight, positive after costs; tests at half. 2 trials.
