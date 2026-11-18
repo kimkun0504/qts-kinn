@@ -1,10 +1,10 @@
 name: annual_timing
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-18; nothing measured yet
+status: closed            # failed the search period 2026-11-18
 engine: daily
 universe: companies filing their 10-K 10+ days earlier than last year
 family: annual_timing
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Annual timing
   idea: A company that files its annual report much earlier than last year
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: closed
+  result: "An early 10-K says nothing the results release did not (−0.4% to +0.3%)"
   summary: >-
     Good news is hurried and bad news delayed. Buy a company whose annual report comes well
     ahead of its own habit, and hold one to three months.
+  weaknesses:
+    - The results 8-K comes first; the 10-K's timing adds nothing.
+  evidence:
+    - {when: 2026-11-18, title: 4 cells on 2010 to 2017, kind: failed, text: "−0.44% to +0.32% over the average stock, t under 0.7."}
+  studies:
+    - {name: 10-Ks filed earlier than last year, when: 2026-11-18, trials: 4, result: "No cell meets the bar", verdict: failed}
