@@ -91,3 +91,22 @@ sessions in $2B or more, weekly t 1.79; 0.22% and t 1.50 in $300M to $2B). The s
 pushed up into the close are thin and cheap for their size: costs both ways average 0.21% in
 $2B or more, and the short leg keeps 0.03% of their 0.29% fall. 4 trials; `intraday_shape`
 has 28. No tests run.
+
+## Addendum, 2026-11-17 22:33 ET: an exit for the earnings rule (the owner's "exit better")
+
+Written before it is measured. The finding above (a stock pushed up into the close gives it
+back) may help the one rule that works: an A50 holding that spikes in the last half hour may
+be better sold than held to the 15th session. Exits for A50 were compared on 16 November
+(holds, stops, targets, trailing stops, averages) and none beat the plain rule in all three
+periods; this adds four, judged the same way.
+
+**Trades:** every A50 signal from 2005 to 13 October 2023 (bought at the next open; plain exit
+at the close 15 sessions after the signal). **Variants:** sell at the next open after the
+first session, among the 14 held before the last, whose last-half-hour return (15:29 price to
+the official close) is **4% or more**; **2% or more**; or whose last-half-hour returns over the
+last three held sessions add up to **6% or more**; **3% or more**. Costs as A50 (the auction
+allowance both ways).
+
+**How it is read:** each variant against the plain rule on 2010–2017, 2005–2009 and 2018–2022
+apart (2023 shown). A variant is better only if it beats the plain rule's mean a trade in all
+three. **4 cells**, charged to `intraday_shape`.
