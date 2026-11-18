@@ -1,0 +1,20 @@
+name: fragmented_demand_burst
+status: study
+engine: intraday
+universe: domestic common stocks with a low prior estimated share-count proxy
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: big_prints
+prior_trials: 49
+record:
+  title: Fragmented demand burst
+  idea: Test accelerating transaction activity with smaller average prints
+  horizon: Sixty minutes after first fill
+  verdict: untested
+  summary: >-
+    At a fixed morning time, compare a count-burst rule with its
+    smaller-print subset in stocks with low estimated share counts.
+  weaknesses:
+    - Aggregate counts and size do not identify investors or signed flow.
+    - Capitalisation divided by price does not measure free float.
+    - The normal study approximates execution and ignores account constraints.
