@@ -280,3 +280,14 @@ tests at 0.5%, t 2.5, four of five). **2 cells**, charged to `after_hours`.
 the session after the report: −0.50% in 5 sessions (median −0.60%, two years of eight), +0.19%
 in 10 (median −1.80%). The fall does not overshoot; it is slow and then it stops. 2 trials;
 `after_hours` has 116.
+
+## Addendum, 2026-11-17 23:25 ET: the neighbours of the short, held to 15:30
+
+Written before it is measured. If the short works because bad results are absorbed slowly
+through the next session, the cells next to it should show it too when held to 15:30, which
+none of them has been. Four cells, each a new rule with the 15:30 buy-back (spread crossed), the
+rest as the short: **$50M–$300M down 15%+**; **$2B or more down 15%+**; **$300M–$2B down 10%
+to 15%**; **$2B or more down 10% to 15%**. The first part's bar (2010–2017: 1% a trade, t of 3,
+six years of eight, 150 trades or fewer if the rest is met), and each cell that meets it goes
+once to 2005–2009 and 2018–2022 (0.5%, t of 2.5, four years of five). 2023 is a check for a cell
+that passes. **4 cells**, charged to `after_hours`.
