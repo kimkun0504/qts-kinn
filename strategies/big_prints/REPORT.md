@@ -283,3 +283,16 @@ year, after costs: the two move together more than A50 and the after-hours short
 2005 to 2023 is positive; the weakest are 2008 (+$514: A50 +$3,222, big prints −$2,708) and
 2011 (+$931: A50 −$671, big prints +$1,602). Big prints adds most in 2010, 2013 and 2019 and
 costs in 2018, 2022 and 2023.
+
+## Follow-up 9: a quiet fall, by who sold (read 18 November 2026, 00:27 ET)
+
+Down 5% or more with no 8-K, bought at the next open, 10 sessions, over the average, 2010–2017:
+
+| Size | Small pieces (under 0.8) | Large pieces (2+) |
+|---|---|---|
+| $50M–$300M | −0.79% (950; t −1.15; 1 of 8) | +0.99% (511; t 0.68; 6 of 8) |
+| $300M–$2B | +0.49% (357; t 0.44) | −0.24% (255) |
+
+No cell meets the bar. In small companies the pattern of the night repeats faintly: after a fall
+in small pieces the stock keeps trailing; after a fall in large pieces it does better than the
+average. Too noisy to trade. 4 trials (family 39).
