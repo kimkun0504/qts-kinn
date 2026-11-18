@@ -49,6 +49,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/intraday_shape` | claude | 2026-11-17 | first and last half-hour pressure over days, from minute bars (indicator of our own) |
 | `strategies/holders13f` | claude | 2026-11-17 | small companies whose number of 13F holders jumped (13F data, 2013 on) |
 | `strategies/earnings_model` | claude | 2026-11-17 | one fixed model of the drift after results, with intraday features |
+| `strategies/late_filer` | claude | 2026-11-17 | buying when an overdue 10-Q or 10-K arrives after a late-filing notice |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

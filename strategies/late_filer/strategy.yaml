@@ -1,0 +1,18 @@
+name: late_filer
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, market value >= $50M, a notice of late filing followed by the report within 20 days
+family: late_filer
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Late filer
+  idea: Buying when an overdue 10-Q or 10-K finally arrives
+  horizon: 15 sessions
+  verdict: planned
+  summary: >-
+    A notice of late filing tells the market something is wrong. Buy when the report then
+    arrives inside the grace period, at once or after one session.
