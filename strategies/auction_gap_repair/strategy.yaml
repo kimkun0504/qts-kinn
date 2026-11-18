@@ -1,0 +1,22 @@
+name: auction_gap_repair
+status: hypothesis
+engine: intraday
+universe: domestic common stocks trading actively before the open
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Opening discount to active premarket trading
+  idea: Test repair of a sharp opening discount to a recent traded reference
+  horizon: Thirty minutes before the first liquidation attempt
+  verdict: hypothesis
+  label: Preregistered
+  result: Untested
+  summary: >-
+    Compare the first regular-session bar with a volume-weighted
+    median of recent active premarket closes, and enter after
+    recovery begins while a discount remains.
+  weaknesses:
+    - Premarket prices can be unrepresentative or become stale after new information.
+    - Minute bars do not establish executable depth or transaction-level median prices.
