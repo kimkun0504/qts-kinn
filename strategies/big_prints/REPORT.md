@@ -210,3 +210,23 @@ The passed cell split by an earlier footprint (2+) in the 10 sessions before, ov
 
 Not better in 2018–2022, and its t there is 1.56: a repeated footprint is not a better rule.
 The passed cell stays as it is. 1 trial (family 30).
+
+## As a book (a description, not a test)
+
+$2,000 a position, at most N open; each session the day's signals are taken largest footprint
+first while there is room; held 20 sessions; after costs, unhedged. Code:
+`research/claude/big_prints_book.py`.
+
+| Cap (money tied up) | Trades 2005–Oct 2023 | Dollars in all | A year | Years positive |
+|---|---|---|---|---|
+| 10 ($20,000) | 2,241 | $56,997 | about $3,000 | 15 of 19 |
+| 20 ($40,000) | 4,175 | $85,986 | about $4,500 | 14 of 19 |
+| 30 ($60,000) | 5,481 | $112,236 | about $5,900 | 13 of 19 |
+| none | 7,099 | $148,303 | about $7,800 | 12 of 19 |
+
+With ten positions: 2005 +$5,455, 2006 +$8,111, 2007 +$863, 2008 −$2,708, 2009 +$11,530,
+2010 +$7,897, 2011 +$1,602, 2012 +$905, 2013 +$9,832, 2014 +$2,884, 2015 +$166, 2016 +$2,899,
+2017 +$1,421, 2018 −$1,789, 2019 +$4,977, 2020 +$2,899, 2021 +$2,566, 2022 −$721, 2023 −$1,793.
+The losing years are years small stocks fell (2008, 2018, 2022, 2023); against the small-stock
+average 14 of 19 years are positive at every cap. About 15% a year on the money tied up with
+ten positions, before any hedge: smaller than A50, and it does not need the same events.
