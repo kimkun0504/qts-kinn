@@ -1,0 +1,18 @@
+name: big_prints
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-18; nothing measured yet
+engine: daily
+universe: common stock $300M+ on a quiet up day traded in unusually large pieces
+family: big_prints
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Big prints
+  idea: A quiet up day traded in unusually large pieces
+  horizon: 10 to 20 sessions
+  verdict: planned
+  summary: >-
+    An indicator of our own: the average trade far larger than the stock's normal, on a
+    modest rise with no filing, as a large buyer at work. Buy the next open and hold.
