@@ -137,8 +137,108 @@ def test(book, window, size) -> None:
         print("    " + "  ".join(f"{y} {100 * v:.1f}%" for y, v in m["yearly"].items()))
 
 
+def picks() -> None:
+    """Every stock in a night book (both windows, every size), with the raw prices needed to
+    price it again from minute bars."""
+    store = DataStore(load_settings())
+    sizes = " ".join(f"when mcap >= {lo} and mcap < {hi} then '{name}'" for name, (lo, hi) in SIZES.items())
+    connect().execute(
+        f"""copy (
+            with s as (select *, case {sizes} end as size from '{folder()}/stocks.parquet'),
+            r as (select *, row_number() over (partition by day, size order by n20 desc) as r20,
+                            row_number() over (partition by day, size order by n60 desc) as r60 from s),
+            k as (select * from r where r20 <= {BOOK} or r60 <= {BOOK}),
+            p as (select permaticker, date, symbol, open, close,
+                         lead(date) over w as next_date, lead(symbol) over w as next_symbol, lead(open) over w as next_open
+                  from read_parquet('{store.root}/panel/*.parquet')
+                  where date <= DATE '2023-11-08' window w as (partition by permaticker order by date))
+            select k.day, k.permaticker, k.size, k.r20 <= {BOOK} as in20, k.r60 <= {BOOK} as in60, k.night, k.close as price,
+                   p.symbol, p.close as raw_close, p.next_date, p.next_symbol, p.next_open
+            from k join p on p.permaticker = k.permaticker and p.date = k.day
+        ) to '{folder()}/picks.parquet' (format parquet)"""
+    )
+    print(duckdb.sql(f"select count(*), count(distinct day) from '{folder()}/picks.parquet'").fetchall())
+
+
+def minutes(first: int, last: int) -> None:
+    """The closing prints of D and the first regular minute of D+1 for every pick."""
+    store = DataStore(load_settings())
+    con = connect()
+    for year in range(first, last + 1):
+        target = folder() / f"prints_{year}.parquet"
+        if target.exists():
+            continue
+        files = str(store.bars_roots[0] / "minute" / f"year={year}" / "*.parquet")
+        con.execute(
+            f"""copy (
+                with need as (
+                    select day as date, symbol from '{folder()}/picks.parquet' where year(day) = {year}
+                    union select next_date, next_symbol from '{folder()}/picks.parquet' where year(next_date) = {year}),
+                b as (select symbol, cast(regexp_extract(filename, '(\\d{{4}}-\\d{{2}}-\\d{{2}})\\.parquet', 1) as date) as date,
+                             minute_et, open, high, low, close, volume
+                      from read_parquet('{files}', filename = true)
+                      where minute_et = 570 or minute_et between 960 and 965)
+                select b.date, b.symbol,
+                       min(low) filter (where minute_et >= 960) as close_low, max(high) filter (where minute_et >= 960) as close_high,
+                       sum(close * volume) filter (where minute_et >= 960) as close_dollars,
+                       min(low) filter (where minute_et = 570) as open_low, max(open) filter (where minute_et = 570) as open_first,
+                       sum(close * volume) filter (where minute_et = 570) as open_dollars
+                from b join need n on n.date = b.date and n.symbol = b.symbol group by 1, 2
+            ) to '{target}' (format parquet)"""
+        )
+        print(year, con.sql(f"select count(*) from '{target}'").fetchall()[0][0], flush=True)
+
+
+REPRICE_COST = "2 * greatest(0.000175, 0.0045 / price)"
+
+
+def repriced(window: int, size: str) -> dict[str, np.ndarray]:
+    t = duckdb.sql(
+        f"""with k as (
+                select k.day, k.night, k.price,
+                       (1 + k.night) * c2.open_low / k.next_open - 1 as night_low,
+                       c1.close_low <= k.raw_close and k.raw_close <= c1.close_high and c1.close_dollars >= 100000 as closed,
+                       c2.open_dollars >= 50000 as opened
+                from '{folder()}/picks.parquet' k
+                left join read_parquet('{folder()}/prints_*.parquet') c1 on c1.date = k.day and c1.symbol = k.symbol
+                left join read_parquet('{folder()}/prints_*.parquet') c2 on c2.date = k.next_date and c2.symbol = k.next_symbol
+                where k.in{window} and k.size = '{size}')
+            select day, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week,
+                   avg(night_low - {REPRICE_COST}) as net, avg(night_low) as gross, avg(night) as official,
+                   count(*) as n, avg(opened::int) as opened
+            from k where closed and night_low is not null group by day order by day"""
+    ).to_arrow_table()
+    return {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+
+
+def reprice(*periods) -> None:
+    passed = []
+    for window in (20, 60):
+        for size in SIZES:
+            b = repriced(window, size)
+            for name in periods:
+                keep = period(b, name)
+                m = measure(b, keep)
+                extra = (f"  official open {100 * b['official'][keep].mean():.3f}%  stocks a night {b['n'][keep].mean():.1f}"
+                         f"  first minute $50k+ {100 * b['opened'][keep].mean():.0f}%")  # fmt: skip
+                label = f"night {window} {size} {name}"
+                print(show(label, m) + extra)
+                if name != "search":
+                    print("    " + "  ".join(f"{y} {100 * v:.1f}%" for y, v in m["yearly"].items()))
+                elif m["n"] >= 3 and m["net"] >= 0.0008 and m["t"] >= 3 and m["pos"] >= 6:
+                    passed.append(label)
+    if passed:
+        print("\nMeet the search bar:", passed)
+
+
 if __name__ == "__main__":
-    if sys.argv[1] == "table":
+    if sys.argv[1] == "picks":
+        picks()
+    elif sys.argv[1] == "minutes":
+        minutes(int(sys.argv[2]), int(sys.argv[3]))
+    elif sys.argv[1] == "reprice":
+        reprice(*sys.argv[2:])
+    elif sys.argv[1] == "table":
         table()
     elif sys.argv[1] == "search":
         search()

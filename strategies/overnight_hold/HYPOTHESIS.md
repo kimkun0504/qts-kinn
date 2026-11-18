@@ -83,3 +83,28 @@ session, weekly t of 3, six years of eight; each cell that meets it goes once to
 and 2018–2022 at 0.04%, t of 2.5, four years of five. **6 cells**, charged to
 `overnight_hold`. This re-reading is made after seeing the search years; the test periods
 of this family have not been looked at.
+
+**Result of the re-pricing, 2026-11-17 22:16 ET.** **Every one of the 6 cells loses** (−0.25% to −0.49% a
+night). Two reasons, from a look at the picks of the search years afterwards: only 18% to 56%
+of picks (small to large) have any minute bars from 16:00 to 16:05, so one to three stocks a
+night are left; and the lowest price of the first minute is on average about 0.5% under the
+official open (the median gap is 0% to 0.1%; the average is a few opening collapses). A
+market-on-open order fills at the opening cross, which the tick check of 16 November found
+to be the official open in 86% of cases, not at that minute's low; the test above used a
+price no such order receives. It stands as written: failed. 6 trials.
+
+## Addendum, 2026-11-17 22:16 ET: the auction prices, where both auctions can be seen
+
+Written before it is measured; the test periods of this family are still unseen. A last
+reading, at prices a market-on-close and market-on-open order do receive:
+
+- A stock counts on a night only if **its official close lies inside prices printed from
+  16:00 to 16:05** in the minute data (any amount) and **D+1's first regular minute opened
+  within 0.2% of the official open** (the opening cross printed there). Otherwise it is left
+  out that night; the book holds the rest of its ten.
+- Bought at the official close, sold at the official open. Costs: commission and auction
+  fees, as in the re-pricing. No other allowance.
+
+The six night cells, the same bar. **6 cells.** A cell that passes is "auction-dependent"
+in the sense of the swing search's rule of 16 November and is a lead to confirm with ticks,
+not a finding.
