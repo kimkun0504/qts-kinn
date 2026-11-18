@@ -213,7 +213,10 @@ accepted after 17:30 are dated), keeps the results 8-Ks accepted between 16:00 a
 for each fetches the stock's market value, normal volume and that evening's minute bars from
 Massive. The rule is the research rule exactly (a test holds the reading to the research code
 on 400 random days); the candidates come from the filings, never from the next morning's
-price. Ledger: `paper/after_hours/report.md`. It sends no order. Each signal is settled at the
+price. **Checked on real data:** run over the 2022 and 2023 events with the ledger's own code, it
+finds the same signals as the research (64 and 44) and the same returns within 0.16 of a point
+(2.62% against 2.51%, 6.82% against 6.66%; `research/claude/after_hours_paper_check.py`).
+Ledger: `paper/after_hours/report.md`. It sends no order. Each signal is settled at the
 next open (the rule as tested) and, from a run after 15:32 the next day, also as held to 15:30
 (the better exit).
 
