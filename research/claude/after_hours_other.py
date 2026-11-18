@@ -19,11 +19,11 @@ import duckdb
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
-
 import sec_times
+from swing_earnings import weekly
+
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
-from swing_earnings import weekly
 
 OPEN, CLOSE, LAST = 570, 960, 1170
 MOVE, MIN_DOLLARS, MIN_BAR = 0.10, 50_000, 5_000
@@ -72,9 +72,7 @@ def kinds() -> dict:
         at = bisect.bisect_left(days, day)
         if at < len(days) and days[at] == day and minute >= 930:
             d = day
-        elif at < len(days) and days[at] == day and minute < OPEN:
-            d = days[at - 1] if at > 0 else None
-        elif not (at < len(days) and days[at] == day):
+        elif at < len(days) and days[at] == day and minute < OPEN or not (at < len(days) and days[at] == day):
             d = days[at - 1] if at > 0 else None
         else:
             continue
@@ -91,15 +89,15 @@ def collect(first: int, last: int) -> None:
     store = DataStore(load_settings())
     out = folder()
     known = kinds()
-    uni = pq.read_table(out / "universe.parquet").to_pylist()
-    by_day = defaultdict(dict)
-    for r in uni:
-        if first <= r["date"].year <= last:
-            by_day[r["date"]][r["symbol"]] = r
     for year in range(first, last + 1):
         target = out / f"entries_{year}.parquet"
         if target.exists():
             continue
+        by_day = defaultdict(dict)
+        for r in duckdb.sql(
+            f"select * from '{out}/universe.parquet' where year(date) = {year}"
+        ).to_arrow_table().to_pylist():
+            by_day[r["date"]][r["symbol"]] = r
         found = []
         for day in sorted(d for d in by_day if d.year == year):
             rows = by_day[day]
