@@ -1,5 +1,13 @@
 # Big prints: report
 
+**Verdict: the best long lead of 17–18 November; passed both test periods, not a clean pass;
+follow it on paper.** A company of $50M to $300M that, on a quiet day with no 8-K, closes 0% to
+4% up on 1.5x its normal dollar volume while trading in pieces three times its own normal size,
+bought at the next open and held 20 sessions: +1.85% (2005–2009, t 4.21) and +1.77% (2018–2022,
+t 3.09) over the average small stock, +2.08% in 2023; the same days with an ordinary trade size
+make nothing. Against it: chosen as a follow-up; 0.94% in 2010–2017 with delisted stocks kept;
+tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 46 trials.
+
 Code: `research/claude/big_prints.py`.
 
 ## The 4 cells, 2010–2017 (read 18 November 2026, 00:01 ET)
