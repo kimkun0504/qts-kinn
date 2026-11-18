@@ -308,3 +308,21 @@ half makes +7.84% (28 trades; median +0.65%), +5.69% (50; median +4.94%), +5.42%
 +0.66%) and +0.83% in 2023 (16; median −0.38%). Still positive on average, but outside
 2010–2017 the typical trade is near zero once the doubtful minutes are dropped: the price paid
 in a thin after-hours minute is carrying much of it. A lead to watch, not to trade.
+
+**Bought at the next open instead** (1 trial; the same signal, known before the open, bought in
+the opening auction, sold at the close 15 sessions later):
+
+| Period | Small-company long | Large pieces | Small pieces |
+|---|---|---|---|
+| 2005–2009 | +3.41% (208) | +4.28% (55; t 0.72) | +3.10% |
+| 2010–2017 | +3.90% (210) | +5.06% (105; t 2.38) | +2.74% |
+| 2018–2022 | +4.42% (251) | **+8.53%** (80; t 1.89) | +2.50% |
+| 2023 | +7.23% (44) | +7.02% (30) | +7.68% (14) |
+
+Most of the gain survives without an after-hours fill: the larger-piece half is better in all
+three periods bought in the auction (by 0.9 to 4.1 points; 2023 about even). That removes the
+weakest part of the lead (the price in a thin after-hours minute) and leaves the other: about
+ten trades a year and a weekly t under 2.5. The cleaner form of the lead to watch is this one:
+**on the evening of results, a small company up 5%+ after hours with its after-hours trading in
+large pieces; buy the next open, hold 15 sessions.** It sits on A50's ground a day earlier and
+with a lower jump; how much the two overlap has not been measured.

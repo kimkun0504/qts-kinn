@@ -4,7 +4,7 @@ status: event-study       # nothing passed both tests in 105 trials; three leads
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
-prior_trials: 125
+prior_trials: 126
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -42,6 +42,7 @@ record:
     - {name: Who sells after hours (footprint split), when: 2026-11-18, trials: 1, result: "Large pieces better to 2017, worse since; not a filter", verdict: failed}
     - {name: Who buys after hours (footprint split), when: 2026-11-18, trials: 1, result: "Large pieces worse for the large-company long; not a filter", verdict: failed}
     - {name: Who buys after hours in small companies, when: 2026-11-18, trials: 2, result: "Large pieces better in every period (+5.4%, +6.1%, +9.9%; 2023 +7.6%); 10 to 16 trades a year, t 1.0 to 2.8, thin fills; with $5,000+ entry minutes the median is near zero outside 2010–17", verdict: lead}
+    - {name: The same signal bought at the next open, when: 2026-11-18, trials: 1, result: "Large pieces +4.3%, +5.1%, +8.5% (2023 +7.0%), better than the whole cell in every period; ~10 trades a year, t under 2.5", verdict: lead}
     - {name: Later buy-backs for the short, when: 2026-11-17, trials: 2, result: "Bought back at 15:30: +4.55%, +3.47%, +2.37% (t 2.10), 2023 +8.82%; better than the open in every period", verdict: lead}
     - {name: The short before the open, when: 2026-11-17, trials: 3, result: "Same direction ($2B+ +2.87%, 7 of 7 years) on too few signals", verdict: failed}
     - {name: Harsher fills for the short, when: 2026-11-17, trials: 2, result: "Thin minutes do not matter; the worst of five minutes leaves 0.7% in 2018 to 2022", verdict: note}
