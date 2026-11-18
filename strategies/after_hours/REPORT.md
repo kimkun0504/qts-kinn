@@ -266,3 +266,18 @@ hours against the stock's normal; the median is 2.24), after costs, bought back 
 
 Funds selling in large pieces marked the better shorts to 2017 and the worse ones since: not a
 filter. The short is unchanged. (Code: `research/claude/after_hours_footprint.py`.)
+
+## Who buys after hours (1 trial, read 18 November 2026, 00:33 ET)
+
+$2B and over, up 5% to 15% after hours, bought at the minute's high, held 15 sessions, after
+costs, split at the 2010–2017 median after-hours footprint (1.76):
+
+| Period | Long | Large pieces | Small pieces |
+|---|---|---|---|
+| 2005–2009 | +1.85% (362) | +1.33% (164) | +2.29% (198) |
+| 2010–2017 | +1.54% (854) | +1.51% (427) | +1.56% (427) |
+| 2018–2022 | +1.07% (1,046) | +0.22% (426) | +1.66% (620) |
+| 2023 | +0.28% (179) | +1.38% (94) | −0.94% (85) |
+
+Not a filter: the larger-piece half did worse in every period but 2023. 2 trials for the two
+footprint splits (family 122).

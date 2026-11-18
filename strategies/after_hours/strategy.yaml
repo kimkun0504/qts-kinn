@@ -4,7 +4,7 @@ status: event-study       # nothing passed both tests in 105 trials; three leads
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
-prior_trials: 121
+prior_trials: 122
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -40,6 +40,7 @@ record:
     - {name: The short's neighbours held to 15:30, when: 2026-11-17, trials: 4, result: "All four positive in 7 of 8 years (+0.8% to +1.5%), none meets the bar", verdict: note}
     - {name: A rebound after the short's events, when: 2026-11-17, trials: 2, result: "None: −0.50% in 5 sessions, +0.19% in 10", verdict: failed}
     - {name: Who sells after hours (footprint split), when: 2026-11-18, trials: 1, result: "Large pieces better to 2017, worse since; not a filter", verdict: failed}
+    - {name: Who buys after hours (footprint split), when: 2026-11-18, trials: 1, result: "Large pieces worse for the large-company long; not a filter", verdict: failed}
     - {name: Later buy-backs for the short, when: 2026-11-17, trials: 2, result: "Bought back at 15:30: +4.55%, +3.47%, +2.37% (t 2.10), 2023 +8.82%; better than the open in every period", verdict: lead}
     - {name: The short before the open, when: 2026-11-17, trials: 3, result: "Same direction ($2B+ +2.87%, 7 of 7 years) on too few signals", verdict: failed}
     - {name: Harsher fills for the short, when: 2026-11-17, trials: 2, result: "Thin minutes do not matter; the worst of five minutes leaves 0.7% in 2018 to 2022", verdict: note}
