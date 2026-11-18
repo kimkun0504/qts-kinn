@@ -254,3 +254,9 @@ of more than seven days in the price table are 124 of 7,099; without them the ce
 +0.95% (t 3.28), +1.78% (t 4.10), +1.87% (t 3.10) and +2.02% in 2023 — unchanged.
 
 2 trials (family 32).
+
+## Follow-up 7: the crowd's footprint (read 18 November 2026, 00:23 ET)
+
+Quiet up days in pieces half the normal size or smaller, read as a short, 2010–2017: small
+companies +0.05% over the average for the short (192; t −0.41), mid-sized +1.67% (76; t 0.52).
+Rare and nothing there. 2 trials (family 34).
