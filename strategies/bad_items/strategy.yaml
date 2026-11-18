@@ -4,7 +4,7 @@ status: closed            # failed the search period 2026-11-17
 engine: daily
 universe: common stock $50M-$2B after an 8-K with item 3.02, 4.02, 2.04, 3.01, 4.01 or 2.06
 family: bad_items
-prior_trials: 24
+prior_trials: 28
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -24,3 +24,4 @@ record:
     - {when: 2026-11-17, title: 24 cells on 2010 to 2017, kind: failed, text: "17 of 24 on the short's side; only small impairments clear the return and t, on 85 shorts."}
   studies:
     - {name: Shorts after six bad 8-K items, when: 2026-11-17, trials: 24, result: "No cell meets the bar", verdict: failed}
+    - {name: Shorts after a shelf registration (S-3), when: 2026-11-18, trials: 4, result: "Trail the average in 8 of 8 years (+3.9% in 60 sessions, small); lose unhedged after borrow", verdict: failed}

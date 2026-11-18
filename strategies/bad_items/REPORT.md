@@ -31,3 +31,18 @@ its own. Two notes:
   bad news having been priced before the filing.
 
 The tests and 2023 stay unread. Trials: 24 (family `bad_items`).
+
+## Follow-up: a shelf registration, S-3 (read 18 November 2026, 00:31 ET)
+
+The short's return over the average stock of its size, 2010–2017:
+
+| Size | 20 sessions | 60 sessions | After costs and borrow, unhedged (20 / 60) |
+|---|---|---|---|
+| $50M–$300M | +1.50% (810; t 1.72; 7 of 8) | **+3.85%** (t 3.22; **8 of 8**) | −0.51% / −0.61% |
+| $300M–$2B | **+1.08%** (1,193; t 3.37; **8 of 8**) | +0.61% (t 1.10) | −0.80% / −4.23% |
+
+Companies that file a shelf do trail the average, in every year, as the plan expected; but two
+cells that clear the return, t and years fail the last condition: a short held for weeks in a
+rising market loses after costs and borrow. Hedged with the average the small-company cell
+would keep about 0.8% a trade after 2.4% of borrow; not enough to follow. No test was run.
+4 trials (family 28).
