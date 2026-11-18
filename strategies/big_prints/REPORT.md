@@ -347,3 +347,9 @@ $50M–$300M, results jump of 5% to 15% on 3x volume, plain 15-session exit, aft
 Large pieces mark the better jumps here too (2.5 times the rest), but on 17 trades a year and a
 t of 2.2 the cell misses the search bar (150 trades, t 3); the test years were not read.
 1 trial (family 44).
+
+## Check 9: large pieces in the weeks after results (read 18 November 2026, 00:35 ET)
+
+Signals whose last results reacted 5 to 30 days before: +1.12% (2010–2017), +2.03%
+(2005–2009), +1.22% (2018–2022), +2.19% (2023); the rest +0.87%, +1.69%, +1.94%, +2.08%. No
+steady difference: the signal is not the earnings drift seen another way. 1 trial (family 45).
