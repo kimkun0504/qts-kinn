@@ -1,9 +1,12 @@
 """The Lab folder: the owner's algorithms and the Lab's runs (decision 0023).
 
 <KINN_LAB_DIR or beside the run store>/lab/
-    algorithms/<name>.py        the owner's files
-    trash/<name>-<time>.py      deleted algorithms (kept, never removed by the Lab)
-    runs/<run_id>/              request.json, manifest.json, status.json, pid, log.txt, results
+    algorithms/<name>.py        the owner's algorithms
+    library/<name>.py           helper modules an algorithm imports as ``lab.<name>``
+    trash/                      deleted files (kept, never removed by the Lab)
+    cache/                      prices kept between runs (rebuilt when missing)
+    runs/<run_id>/              algorithm.py, pkg/lab/ (the library as it was), request.json,
+                                manifest.json, status.json, pid, log.txt, results
 """
 
 from __future__ import annotations
@@ -11,6 +14,7 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import json
+import keyword
 import os
 import re
 import signal as signals
@@ -23,6 +27,8 @@ from pathlib import Path
 from kinn.core.settings import Settings, load_settings
 
 NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
+MODULE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")  # importable: lab.<name>
+RESERVED = {"library"}  # a path segment of the page
 MAX_CODE = 200_000  # characters
 TEMPLATES = Path(__file__).parent / "templates"
 STATES = ("queued", "running", "complete", "failed", "cancelled", "interrupted")
@@ -58,6 +64,15 @@ def check_name(name: str) -> str:
     if not isinstance(name, str) or not NAME.match(name):
         raise LabError("A name is 1 to 64 characters: lower-case letters, digits, - and _, "
                        "starting with a letter or digit.")  # fmt: skip
+    if name in RESERVED:
+        raise LabError(f"{name} is a word the Lab keeps for itself. Choose another name.")
+    return name
+
+
+def check_module(name: str) -> str:
+    if not isinstance(name, str) or not MODULE.match(name) or keyword.iskeyword(name):
+        raise LabError("A helper module's name is 1 to 64 characters: lower-case letters, digits "
+                       "and _, starting with a letter, so it can be imported.")  # fmt: skip
     return name
 
 
@@ -118,6 +133,54 @@ def delete_algorithm(root: Path, name: str) -> None:
     os.replace(path, trash / f"{name}-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}.py")
 
 
+# -- the library: helper modules -----------------------------------------------------------
+def modules(root: Path) -> list[dict]:
+    folder = root / "library"
+    return [
+        {"name": path.stem, "description": describe(path.read_text()),
+         "updated": datetime.fromtimestamp(path.stat().st_mtime, UTC).isoformat()}
+        for path in sorted(folder.glob("*.py")) if MODULE.match(path.stem)
+    ]  # fmt: skip
+
+
+def read_module(root: Path, name: str) -> str:
+    path = root / "library" / f"{check_module(name)}.py"
+    if not path.exists():
+        raise LabError(f"There is no helper module called {name}.")
+    return path.read_text()
+
+
+def save_module(root: Path, name: str, code: str) -> dict:
+    check_module(name)
+    if not isinstance(code, str):
+        raise LabError("The code must be text.")
+    if len(code) > MAX_CODE:
+        raise LabError(f"The code is longer than {MAX_CODE:,} characters.")
+    folder = root / "library"
+    folder.mkdir(parents=True, exist_ok=True)
+    tmp = folder / f".{name}.py.tmp"
+    tmp.write_text(code)
+    os.replace(tmp, folder / f"{name}.py")
+    return {"name": name, "description": describe(code)}
+
+
+def delete_module(root: Path, name: str) -> None:
+    path = root / "library" / f"{check_module(name)}.py"
+    if not path.exists():
+        raise LabError(f"There is no helper module called {name}.")
+    trash = root / "trash"
+    trash.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    os.replace(path, trash / f"library-{name}-{stamp}.py")
+
+
+def library_code(root: Path) -> dict[str, str]:
+    """Every helper module's code by name, as a run will snapshot it."""
+    folder = root / "library"
+    return {path.stem: path.read_text() for path in sorted(folder.glob("*.py"))
+            if MODULE.match(path.stem)}  # fmt: skip
+
+
 def templates() -> list[dict]:
     return [
         {"name": path.stem, "description": describe(path.read_text()), "code": path.read_text()}
@@ -126,15 +189,21 @@ def templates() -> list[dict]:
 
 
 # -- runs ---------------------------------------------------------------------------------
-def code_hash(code: str, settings: dict) -> str:
-    payload = json.dumps({"code": code, "settings": settings}, sort_keys=True, default=str)
-    return hashlib.sha256(payload.encode()).hexdigest()
+def code_hash(code: str, settings: dict, library: dict[str, str] | None = None) -> str:
+    """One hash for everything a run's result depends on that the owner wrote."""
+    payload = {"code": code, "settings": settings}
+    if library:
+        payload["library"] = library
+    text = json.dumps(payload, sort_keys=True, default=str)
+    return hashlib.sha256(text.encode()).hexdigest()
 
 
 def new_run(root: Path, name: str, code: str, settings: dict) -> Path:
-    """Create the run's folder with its request; the worker does the rest."""
+    """Create the run's folder with its request and a copy of the library as it is now; the
+    worker does the rest."""
     check_name(name)
-    digest = code_hash(code, settings)
+    library = library_code(root)
+    digest = code_hash(code, settings, library)
     (root / "runs").mkdir(parents=True, exist_ok=True)
     while True:  # two runs of the same code in the same second: the second waits a second
         now = datetime.now(UTC)
@@ -146,10 +215,17 @@ def new_run(root: Path, name: str, code: str, settings: dict) -> Path:
         except FileExistsError:
             time.sleep(0.2)
     (run_dir / "algorithm.py").write_text(code)
+    package = run_dir / "pkg" / "lab"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text('"""The owner\'s helper modules, as they were."""\n')
+    for module, text in library.items():
+        (package / f"{module}.py").write_text(text)
     _write(run_dir / "request.json", {"algorithm": name, "settings": settings})
     _write(run_dir / "manifest.json", {
-        "run_id": run_id, "algorithm": name, "description": describe(code),
-        "code_sha256": digest, "requested_settings": settings, "created_at": now.isoformat(),
+        "schema": "lab-run-1", "run_id": run_id, "algorithm": name,
+        "description": describe(code), "code_sha256": digest,
+        "library": {m: hashlib.sha256(t.encode()).hexdigest()[:12] for m, t in library.items()},
+        "requested_settings": settings, "created_at": now.isoformat(),
     })  # fmt: skip
     set_status(run_dir, "queued", stage="Waiting to start", progress=0.0)
     return run_dir

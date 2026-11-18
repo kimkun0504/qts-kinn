@@ -51,7 +51,12 @@ def _user_trace(error: BaseException) -> str:
     frames = frames[mine[0] :] if mine else frames[-1:]
     lines = []
     for frame in frames:
-        where = "your code" if frame.filename == FILE else frame.filename.rsplit("/", 2)[-1]
+        if frame.filename == FILE:
+            where = "your code"
+        elif "/pkg/lab/" in frame.filename.replace("\\", "/"):
+            where = "lab/" + frame.filename.replace("\\", "/").rsplit("/", 1)[-1]  # the library
+        else:
+            where = frame.filename.rsplit("/", 2)[-1]
         lines.append(f"  {where}, line {frame.lineno}, in {frame.name}")
         if frame.line:
             lines.append(f"    {frame.line}")

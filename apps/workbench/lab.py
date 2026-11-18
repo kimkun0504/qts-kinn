@@ -17,6 +17,7 @@ import duckdb
 
 from kinn.lab import data as lab_data
 from kinn.lab import store
+from kinn.lab.check import as_dicts, check
 from kinn.lab.settings import LAST_ENTRY, MAX_HOLD, PERIODS, Settings, SettingsError, parse
 
 Response = tuple[int, object]
@@ -78,6 +79,42 @@ def algorithm(root: Path, name: str) -> Response:
                  "settings_in_code": literal_settings(code)}  # fmt: skip
 
 
+def lint(root: Path, body: dict) -> Response:
+    """The checks of :mod:`kinn.lab.check` on code the page sends (never run)."""
+    code = body.get("code")
+    if not isinstance(code, str) or len(code) > store.MAX_CODE:
+        return _error(400, "Send the code as text, at most 200,000 characters.")
+    library = set(store.library_code(root))
+    return 200, {"findings": as_dicts(check(code, library, module=bool(body.get("module"))))}
+
+
+def library(root: Path) -> Response:
+    return 200, store.modules(root)
+
+
+def module(root: Path, name: str) -> Response:
+    try:
+        code = store.read_module(root, name)
+    except store.LabError as error:
+        return _error(404, str(error))
+    return 200, {"name": name, "code": code, "description": store.describe(code)}
+
+
+def save_module(root: Path, name: str, body: dict) -> Response:
+    try:
+        return 200, store.save_module(root, name, body.get("code"))
+    except store.LabError as error:
+        return _error(400, str(error))
+
+
+def delete_module(root: Path, name: str) -> Response:
+    try:
+        store.delete_module(root, name)
+    except store.LabError as error:
+        return _error(404, str(error))
+    return 200, {"deleted": name}
+
+
 def save(root: Path, name: str, body: dict) -> Response:
     try:
         return 200, store.save_algorithm(root, name, body.get("code"))
@@ -102,8 +139,12 @@ def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launc
         store.check_name(name)
         if code is None:
             code = store.read_algorithm(root, name)
-        # Settings are checked here too, so a typo shows at once; the worker checks again with
-        # the SETTINGS the code computes, if it computes them.
+        # The code and the settings are checked here, so a mistake shows at once and makes no
+        # run; the worker checks again with the SETTINGS the code computes, if it computes them.
+        errors = [f for f in check(code, set(store.library_code(root))) if f.severity == "error"]
+        if errors:
+            first = errors[0]
+            return _error(400, f"Line {first.line}: {first.message}")
         parse(settings, literal_settings(code) or {})
         store.save_algorithm(root, name, code)  # Run keeps the code, even if it has to wait
     except (store.LabError, SettingsError) as error:
@@ -258,6 +299,10 @@ def route(method: str, parts: list[str], query: dict, body: dict | None, root: P
             return templates()
         if parts == ["algorithms"]:
             return algorithms(root)
+        if parts == ["library"]:
+            return library(root)
+        if head == "library" and len(parts) == 2:
+            return module(root, parts[1])
         if head == "algorithms" and len(parts) == 2:
             return algorithm(root, parts[1])
         if parts == ["runs"]:
@@ -270,6 +315,12 @@ def route(method: str, parts: list[str], query: dict, body: dict | None, root: P
             return run_part(root, parts[1], parts[2])
     elif method == "PUT" and head == "algorithms" and len(parts) == 2:
         return save(root, parts[1], body or {})
+    elif method == "PUT" and head == "library" and len(parts) == 2:
+        return save_module(root, parts[1], body or {})
+    elif method == "DELETE" and head == "library" and len(parts) == 2:
+        return delete_module(root, parts[1])
+    elif method == "POST" and parts == ["check"]:
+        return lint(root, body or {})
     elif method == "DELETE" and head == "algorithms" and len(parts) == 2:
         return delete(root, parts[1])
     elif method == "POST" and parts == ["runs"]:
