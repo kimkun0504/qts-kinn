@@ -39,6 +39,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/after_hours` | claude | 2026-11-17 | buying an earnings reaction in extended hours, small size (owner's idea) |
 | `strategies/runner_close` | claude | 2026-11-17 | a stock that has run on the day, into the close and overnight (owner's observation) |
 | `strategies/night_bids` | claude | 2026-11-17 | resting buy orders below the close in after-hours, sold at the next open (owner's idea) |
+| `strategies/before_report` | claude | 2026-11-17 | buying ahead of results, chosen by the company's own record of reactions (owner asked for earlier entries) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

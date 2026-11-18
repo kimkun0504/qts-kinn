@@ -1,0 +1,19 @@
+name: before_report
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, results due in five sessions
+family: before_report
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Buying before the report
+  idea: Buying ahead of results in companies whose last report jumped
+  horizon: 4 to 6 sessions
+  verdict: planned
+  summary: >-
+    The owner asked for earlier entries. Buy five sessions before results, chosen by how the
+    stock reacted to the company's last reports, and sell just before the report or the
+    session after it.
