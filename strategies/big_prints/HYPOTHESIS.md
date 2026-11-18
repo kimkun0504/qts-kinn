@@ -254,3 +254,10 @@ code 6770), judged as a filter: better per trade in all three periods, 2023 a ch
 blank-check signals printed beside. (b) A count, not a trial: the share of sessions the research
 skipped as index days (5% or more of small stocks with a footprint of 2+), by year, against the
 paper run's 8 of 21. 1 trial.
+
+(c), written 2026-11-18 12:04 ET after (b) showed the research skipped 2–4% of sessions a year until
+2020 but 16% in 2022 and 15% in 2023 (the share of large-trade small stocks has drifted up
+toward the 5% line), and the paper run skipped 8 of 21: **the signals on skipped sessions**, by
+period. If they beat the average small stock in all three periods, the skip can be dropped
+without harm (keeping the rule simpler and the paper ledger's count of days complete); if not,
+it stays. 1 trial.
