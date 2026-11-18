@@ -1,0 +1,21 @@
+name: active_gap_recovery
+status: study
+engine: intraday
+universe: domestic common stocks resuming after a gap in dense trading
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Recovery after an active-stock trading gap
+  idea: Test a discounted resumption with recovery in its first returning bar
+  horizon: Thirty minutes after first fill
+  verdict: untested
+  summary: >-
+    Observe a gap in an actively rising stock's bars, a discounted
+    return and initial recovery. Other company observations reject
+    an obvious universe-wide missing interval.
+  weaknesses:
+    - Missing bars do not identify a halt or certify target data continuity.
+    - Reopening depth and spreads remain unobserved.
+    - The normal event study ignores account constraints and entry expiry.
