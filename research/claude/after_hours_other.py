@@ -13,7 +13,7 @@ import bisect
 import sys
 import tempfile
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 
 import duckdb
 import numpy as np
@@ -85,12 +85,35 @@ def kinds() -> dict:
     return found
 
 
+def filing_dates() -> dict:
+    """{permaticker: sorted New York dates of its 8-Ks and 6-Ks} (the follow-up's quiet test)."""
+    stocks = sec_times.numbers()
+    found = defaultdict(list)
+    for name, forms in (("8k.jsonl.gz", ("8-K",)), ("other_forms.jsonl.gz", ("6-K",))):
+        for row in sec_times.filings(name):
+            if row["form"] not in forms or row["cik"] not in stocks or row["filed"] >= "2023-11-09":
+                continue
+            when = sec_times.accepted(row)
+            if when:
+                for permaticker in stocks[row["cik"]]:
+                    found[permaticker].append(when[0])
+    return {k: sorted(v) for k, v in found.items()}
+
+
+def quiet(dates: dict, permaticker: int, day: date) -> bool:
+    """No 8-K or 6-K accepted from the day before ``day`` to four days after it."""
+    got = dates.get(permaticker, [])
+    at = bisect.bisect_left(got, day - timedelta(days=1))
+    return not (at < len(got) and got[at] <= day + timedelta(days=4))
+
+
 def collect(first: int, last: int) -> None:
     store = DataStore(load_settings())
     out = folder()
     known = kinds()
+    dates = filing_dates()
     for year in range(first, last + 1):
-        target = out / f"entries_{year}.parquet"
+        target = out / f"v2_{year}.parquet"
         if target.exists():
             continue
         by_day = defaultdict(dict)
@@ -135,6 +158,8 @@ def collect(first: int, last: int) -> None:
                 found.append({"day": day, "symbol": s, "permaticker": r["permaticker"], "side": side,
                               "kind": known.get((r["permaticker"], day), "none"), "reaction": float(move[k]),
                               "minute": int(minute[k]), "paid": float(paid), "base": float(base),
+                              "low_e": float(low[e]), "high_e": float(high[e]),
+                              "quiet": quiet(dates, r["permaticker"], day),
                               "dollars": float(cum[k]), "mcap": r["mcap"], "adv": r["adv"],
                               "next_open": r["next_open"], "next_close": r["next_close"]})  # fmt: skip
         pq.write_table(pa.Table.from_pylist(found), target)
@@ -144,7 +169,7 @@ def collect(first: int, last: int) -> None:
 def load() -> dict:
     t = duckdb.sql(
         f"""select *, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week
-            from read_parquet('{folder()}/entries_*.parquet', union_by_name = true)"""
+            from read_parquet('{folder()}/v2_*.parquet', union_by_name = true)"""
     ).to_arrow_table()
     d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
     paid = d["paid"].astype(float)
@@ -201,6 +226,30 @@ def search() -> None:
     print("\nMeet the search bar:", met or "none")
 
 
+def fade(*periods) -> None:
+    """The follow-up: no-news rises sold short at the low of the entry minute."""
+    d = load()
+    paid = d["low_e"].astype(float)
+    adv = d["adv"].astype(float)
+    tier = np.where(adv < 1e6, 0.0025, np.where(adv < 1e7, 0.0010, np.where(adv < 1e8, 0.0005, 0.0002)))
+    commission = 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / paid))
+    for exit_ in ("next_open", "next_close"):
+        gross = 1 - d[exit_].astype(float) / paid
+        d[exit_ + "_net"] = gross - tier - commission - BORROW_NIGHT
+    for period in periods or ("search",):
+        first, last = PERIODS[period]
+        for size in ("small", "mid"):
+            for exit_ in ("next_open", "next_close"):
+                keep = ((d["kind"] == "none") & d["quiet"].astype(bool) & (d["side"] == "long")
+                        & (d["size"] == size) & (d["yr"] >= first) & (d["yr"] <= last))  # fmt: skip
+                m = measure(d, keep, exit_)
+                bar = (0.01, 3, 6, 150) if period == "search" else (0.005, 2.5, 4, 0)
+                ok = m["n"] >= max(3, bar[3]) and m["mean"] >= bar[0] and m["t"] >= bar[1] and m["pos"] >= bar[2]
+                print(show(f"fade {size} {exit_} {period}", m) + ("  MEETS THE BAR" if ok else ""))
+                if period != "search" and m["n"] >= 3:
+                    print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in m["yearly"].items()))
+
+
 def test(kind, side, size, exit_) -> None:
     d = load()
     for period in ("early", "late"):
@@ -218,6 +267,8 @@ if __name__ == "__main__":
         collect(int(sys.argv[2]), int(sys.argv[3]))
     elif command == "search":
         search()
+    elif command == "fade":
+        fade(*sys.argv[2:])
     else:
         test(*sys.argv[2:])
     _ = date
