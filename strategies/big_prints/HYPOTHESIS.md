@@ -67,3 +67,10 @@ The tables so far keep only signals whose stock still trades 20 sessions later, 
 companies taken over or delisted in the hold. The passed cell is read again with the last
 close inside the 20 sessions in place of the 20th (as the after_hours study does), in all
 three periods and 2023. One trial.
+
+## Check 6: the passed cell's neighbours (written 2026-11-18 00:07 ET)
+
+Whether the cell is a knife-edge: $50M–$300M, read in all three periods with stopped stocks
+kept, (a) held 20 sessions with footprint floors of 2.5, 4 and 5, and (b) footprint 3 or more
+held 10 and 40 sessions. 5 cells; a neighbourhood that holds up is expected to be positive in
+all three periods. 5 trials.
