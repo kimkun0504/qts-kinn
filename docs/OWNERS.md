@@ -44,6 +44,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/closing_bids` | claude | 2026-11-17 | limit-on-close buy orders under a stock pushed down in the last ten minutes, sold at the next open |
 | `strategies/overnight_hold` | claude | 2026-11-17 | holding only overnight or only by day, by where a stock's gains have come (indicator of our own) |
 | `strategies/overnight_offering` | claude | 2026-11-17 | the first session after a company sells new shares overnight (prospectus filings) |
+| `strategies/lockup_end` | claude | 2026-11-17 | the weeks around an IPO's lockup end (insiders may first sell) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
