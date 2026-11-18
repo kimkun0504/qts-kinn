@@ -1,10 +1,10 @@
 name: lockup_end
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 9 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock six months after its IPO, market value >= $50M, 20-day dollar volume >= $250k
 family: lockup_end
-prior_trials: 0
+prior_trials: 9
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,15 @@ record:
   title: Lockup end
   idea: The weeks around the day insiders may first sell after an IPO
   horizon: 7 to 20 sessions
-  verdict: planned
+  verdict: closed
+  result: "No trade: the date is priced; small IPOs keep drifting down"
   summary: >-
-    Six months after an IPO, insiders may sell. The date is known months ahead. Sell short
-    before it, or buy once the first selling has passed.
+    Six months after an IPO, insiders may sell. Sold short before the date, or bought once
+    the first selling has passed.
+  weaknesses:
+    - The short before the date makes under 1% with a weekly t under 1.
+    - There is no recovery after it in any size.
+  evidence:
+    - {when: 2026-11-17, title: 9 cells on 2010 to 2017, kind: failed, text: "None meets the bar; 869 lockup ends in the search years."}
+  studies:
+    - {name: The 180-day lockup end after an IPO, when: 2026-11-17, trials: 9, result: "No cell meets the bar", verdict: failed}

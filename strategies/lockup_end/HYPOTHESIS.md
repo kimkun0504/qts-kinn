@@ -37,3 +37,8 @@ five, in both (2005–2009 has few IPOs; a cell with under 50 trades there is re
 few rather than failed). 2023 is a check for a cell that passes. The holdout stays sealed.
 Raw filings and the ticker table are read only for dates before 2023-11-09; the ticker table
 supplies the SIC code and category, which are taken as they stand now.
+
+**Results, 2026-11-17 22:22 ET.** In REPORT.md. **None of the 9 cells meets the bar.** 2,158 lockup ends
+(2005–2023), 869 in the search years. Short before: −1.4% to +0.7% a trade; bought after: −3.2%
+to −0.3%. The weeks after a lockup end drift down slightly in small IPOs and are flat in
+larger ones; the date is priced. 9 trials. No tests run.

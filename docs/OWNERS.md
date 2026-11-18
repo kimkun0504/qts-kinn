@@ -45,6 +45,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/overnight_hold` | claude | 2026-11-17 | holding only overnight or only by day, by where a stock's gains have come (indicator of our own) |
 | `strategies/overnight_offering` | claude | 2026-11-17 | the first session after a company sells new shares overnight (prospectus filings) |
 | `strategies/lockup_end` | claude | 2026-11-17 | the weeks around an IPO's lockup end (insiders may first sell) |
+| `strategies/filing_drift` | claude | 2026-11-17 | the earnings rule on 10-Q and 10-K filings of companies with no results 8-K |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
