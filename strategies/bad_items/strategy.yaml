@@ -1,0 +1,18 @@
+name: bad_items
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: common stock $50M-$2B after an 8-K with item 3.02, 4.02, 2.04, 3.01, 4.01 or 2.06
+family: bad_items
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Bad items
+  idea: Selling short after an 8-K that carries quiet bad news
+  horizon: 20 to 60 sessions
+  verdict: planned
+  summary: >-
+    Share sales, restatements, defaults, listing notices, auditor changes and impairments often
+    barely move the price on the day. Sell short after the filing and hold for weeks.
