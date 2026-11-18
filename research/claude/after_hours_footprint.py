@@ -23,9 +23,12 @@ def main(side: str = "short") -> None:
     if side == "short":
         d = load_short()
         keep = (d["mcap"] >= 3e8) & (d["mcap"] < 2e9) & (d["reaction"] <= -0.15)
-    else:
+    elif side == "long":
         d = load()
         keep = (d["timing"] == "after") & (d["mcap"] >= 2e9) & (d["reaction"] >= 0.05) & (d["reaction"] < 0.15)
+    else:  # "small": the small-company long
+        d = load()
+        keep = (d["timing"] == "after") & (d["mcap"] >= 5e7) & (d["mcap"] < 3e8) & (d["reaction"] >= 0.05)
     rows = duckdb.sql(
         f"""select n.day, n.symbol, v.minute from read_parquet('{folder()}/entries_*.parquet') n
             join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
