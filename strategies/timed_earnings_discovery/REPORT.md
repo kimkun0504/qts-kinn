@@ -15,3 +15,8 @@ Synthetic checks include winter/summer timezone conversion, the
 availability delay, earliest-filing selection, a later filing unable
 to rescue a failed event, deliberate future-filing cheating,
 future-price perturbations and after-hours timed execution.
+Additional synthetic checks cover the last permitted entry
+minute, acceptance seconds, entry expiry after a cap rejection,
+and failed liquidation retained as unresolved exposure with
+no completed event return. An official regular close cannot
+silently flatten that residual.

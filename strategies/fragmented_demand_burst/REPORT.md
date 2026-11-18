@@ -131,3 +131,13 @@ documented documentation-sample exposure. This is adaptive
 research with many prior looks, not globally pristine validation.
 Neither run loaded validation or sealed-holdout market dates.
 The candidate stays parked.
+
+## Trial-accounting addendum
+
+After this report's original write-up, Claude branch commit
+`d67cdc15860f8e72207e40dbdc02d8a7e3adf5ec` was fetched.
+Its follow-up 17 declares two further `big_prints` looks,
+raising that earlier declared baseline from 49 to 51.
+With the five counted run-store trials, the known family
+total is now 56. The original manifests retain their
+49-prior-look snapshot; no returns or selection gates change.

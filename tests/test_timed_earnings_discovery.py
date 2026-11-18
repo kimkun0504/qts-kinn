@@ -14,6 +14,7 @@ from kinn.engine.intraday.simulator import FillConfig, simulate_day
 from kinn.engine.intraday.strategy import check_no_lookahead, day_signals, input_sessions
 from kinn.features.base import LookaheadError
 from kinn.risk.sizing import RiskConfig
+from kinn.validation.event_study import measure_extended
 from tests.test_simulator import COSTS
 
 SOURCE = Path(__file__).resolve().parents[1] / "strategies/timed_earnings_discovery/strategy.py"
@@ -220,3 +221,73 @@ def test_unimplemented_input_is_not_bypassed_and_params_are_frozen():
         input_sessions(strategy, "form8k_timed")
     with pytest.raises(ValueError, match="no tunable parameters"):
         MODULE.build({"gain": 0.1})
+
+
+@pytest.mark.parametrize("seconds", [0, 59])
+def test_acceptance_seconds_and_last_permitted_entry_minute(seconds):
+    bars = stock()
+    minutes = bars.minute.copy()
+    minutes[:-1] += 59
+    late = replace(
+        FilingFixture(),
+        accepted=datetime(2010, 1, 4, 21, 59, seconds, tzinfo=UTC),
+        usable_minute=1020,
+    )
+    data = view(bars=replace(bars, minute=minutes), filings=(late,))
+    (signal,) = day_signals(MODULE.build({}), data)
+    assert signal.minute == 1022 and signal.expire_minute == 1023
+    _, cfg = runner.load_config("timed_earnings_discovery", "development")
+    result = simulate_day(
+        DayData(data, {}),
+        [signal],
+        risk=RiskConfig(**cfg["risk"]),
+        config=FillConfig(**cfg["fills"]),
+        costs=COSTS,
+    )
+    (trade,) = result.trades
+    assert trade.entry_minute == 1023 and trade.exit_minute == 1053
+    assert not result.unresolved
+
+
+def test_entry_above_registered_cap_stays_unfilled_after_expiry():
+    data = view()
+    (signal,) = day_signals(MODULE.build({}), data)
+    bars = data.symbols["ABC"]
+    prices = bars.close.copy()
+    prices[bars.minute == 964] = 10.9
+    changed = replace(bars, open=prices, close=prices, high=prices + 0.001, low=prices - 0.001)
+    _, cfg = runner.load_config("timed_earnings_discovery", "development")
+    result = simulate_day(
+        DayData(replace(data, symbols={"ABC": changed}), {}),
+        [signal],
+        risk=RiskConfig(**cfg["risk"]),
+        config=FillConfig(**cfg["fills"]),
+        costs=COSTS,
+    )
+    assert result.unfilled == 1 and not result.trades and not result.unresolved
+
+
+def test_failed_liquidation_retains_exposure_and_has_no_completed_event_return():
+    data = view()
+    (signal,) = day_signals(MODULE.build({}), data)
+    bars = data.symbols["ABC"]
+    prices = bars.close.copy()
+    prices[bars.minute == 994], prices[bars.minute == 1199] = 10.5, 10
+    changed = replace(bars, open=prices, close=prices, high=prices + 0.001, low=prices - 0.001)
+    _, cfg = runner.load_config("timed_earnings_discovery", "development")
+    fills = FillConfig(**cfg["fills"])
+    result = simulate_day(
+        # An official regular close must not make the residual disappear.
+        DayData(replace(data, symbols={"ABC": changed}), {"ABC": 1000}),
+        [signal],
+        risk=RiskConfig(**cfg["risk"]),
+        config=fills,
+        costs=COSTS,
+    )
+    assert not result.trades and len(result.unresolved) == 1
+    assert result.unresolved[0].held > 0
+    row = measure_extended(
+        data.day, changed, signal, config=fills, costs=COSTS, position_dollars=2000
+    )
+    assert not row["completed"] and row["held"] > 0 and row["r_30"] is None
+    assert row["marked_net"] is not None and row["marked_net_2x"] is not None
