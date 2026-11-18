@@ -1,0 +1,21 @@
+name: timed_earnings_discovery
+status: prepared
+engine: intraday
+universe: domestic common stocks with a timed after-close earnings filing
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_momentum
+prior_trials: 174
+record:
+  title: Timed after-hours earnings discovery
+  idea: Test continued repricing in the first complete minutes after an earnings 8-K
+  horizon: Thirty minutes after first fill
+  verdict: authorization pending
+  summary: >-
+    Prepared strategy and synthetic tests for a scoped timestamped
+    earnings input. No empirical run until the platform adapter
+    and new derived-input build are authorized.
+  weaknesses:
+    - SEC acceptance can follow the actual press release.
+    - Opening fills and after-hours depth remain inferred.
+    - The timestamped input adapter and coverage are not yet verified.
