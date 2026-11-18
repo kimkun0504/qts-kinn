@@ -43,6 +43,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/close_unwind_impact_decay` | gpt | 2026-11-17 | frozen after-hours impact-decay study; scoped execution support authorized |
 | `strategies/premarket_price_discovery` | gpt | 2026-11-18 | distributed premarket price discovery, one frozen momentum rule |
 | `strategies/auction_gap_repair` | gpt | 2026-11-18 | opening discount to an active premarket reference, one rebound rule |
+| `strategies/earnings_trade_size_shift` | gpt | 2026-11-18 | typed earnings and expanding trade size; transaction-count view requested |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
