@@ -67,6 +67,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/self_tender` | claude | 2026-11-17 | companies filing an issuer tender offer |
 | `strategies/after_hours_other` | claude | 2026-11-17 | large after-hours moves that are not results |
 | `strategies/russell_move` | claude | 2026-11-17 | companies moving from the Russell 1000 to the Russell 2000 |
+| `strategies/busy_day` | claude | 2026-11-17 | results jumps on crowded reporting days |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

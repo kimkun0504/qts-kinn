@@ -1,0 +1,18 @@
+name: busy_day
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: common stock $300M-$2B up 5% on results
+family: busy_day
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Busy day
+  idea: A jump on results released on a day crowded with other results
+  horizon: 20 to 60 sessions
+  verdict: planned
+  summary: >-
+    On days when very many companies report, each report gets less attention and more of the
+    move comes later. Buy mid-sized companies up 5% on results on the busiest days.
