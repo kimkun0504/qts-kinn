@@ -1,10 +1,10 @@
 name: index_deletion
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: closed            # failed the search period 2026-11-17
 engine: daily
 universe: companies removed from the S&P 500 that stay listed
 family: index_deletion
-prior_trials: 0
+prior_trials: 2
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,8 @@ record:
   title: Index deletion
   idea: A company dropped from the S&P 500 that stays listed
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: failed
+  result: Deleted companies kept trailing large stocks (−1.3% over 20 sessions, −4.1% over 60)
   summary: >-
     Index funds must sell a deleted company on the day the change takes effect. Buy it after
     that day and hold while the forced selling ends.
