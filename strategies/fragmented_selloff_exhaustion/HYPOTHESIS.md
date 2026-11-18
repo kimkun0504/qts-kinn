@@ -153,3 +153,11 @@ does not claim zero historical post-seal exposure. No sample
 price or volume is used here. No new post-seal lookup, raw write,
 download, rebuild, sealed-folder access or date on or after
 2023-11-09 is permitted in the studies.
+
+Implementation note before the first run: inclusive floating-
+point price and score comparisons allow one adjacent representable
+value, with economic thresholds unchanged. Fragmentation tests
+use Python integer cross-products. Synthetic tests cover the
+score, first-base-event restriction, primary/control subset,
+missing bars and counts, both prefix replays, next-minute expiry
+and the distinct study-close/portfolio-open exit conventions.
