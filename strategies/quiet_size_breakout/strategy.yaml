@@ -1,5 +1,5 @@
 name: quiet_size_breakout
-status: hypothesis
+status: event-study
 engine: intraday
 universe: domestic common stocks with active narrow-range trading
 cost_calibration: ibkr_pro_tiered
@@ -10,8 +10,8 @@ record:
   title: Larger prints at a narrow-range breakout
   idea: Test large-print participation before a large price expansion
   horizon: Two hours after first fill
-  verdict: hypothesis
-  label: Preregistered primary and control
+  verdict: event-study
+  label: Development studies ready
   result: Untested
   summary: >-
     At a fixed morning time, test a small breakout on active

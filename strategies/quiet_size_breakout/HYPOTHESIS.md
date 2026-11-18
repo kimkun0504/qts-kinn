@@ -136,3 +136,10 @@ This registration follows that incident and does not claim zero
 historical post-seal exposure. No sample value is used here.
 No new post-seal lookup, sealed-folder access, raw write, download,
 rebuild or date on or after 2023-11-09 is permitted in these runs.
+
+Pre-run implementation note: inclusive price boundaries allow
+one adjacent representable floating-point value. The print-size
+gate uses Python integer cross-products. No economic threshold
+changes. Tests cover the fixed time, exact primary/control
+subset, future-bar replay, missing data, entry expiry and the
+different study-close and portfolio-open exit conventions.
