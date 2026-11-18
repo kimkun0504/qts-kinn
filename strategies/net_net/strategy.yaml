@@ -1,0 +1,18 @@
+name: net_net
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, market value >= $30M and under its net current assets, $250k a day
+family: net_net
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Net-nets
+  idea: Small companies priced under their current assets less all liabilities
+  horizon: 6 to 12 months
+  verdict: planned
+  summary: >-
+    Graham's rule: buy a company whose market value is under its current assets less all its
+    liabilities, after its quarterly report, and hold six or twelve months.

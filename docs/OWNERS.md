@@ -55,6 +55,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/dividend_signal` | claude | 2026-11-17 | dividend initiations and raises in small companies (Sharadar actions) |
 | `strategies/five_dollars` | claude | 2026-11-17 | a small company back over $5 after months under it (fund and margin eligibility) |
 | `strategies/ssr_day` | claude | 2026-11-17 | the session after the short-sale circuit breaker (Rule 201) trips, against near misses |
+| `strategies/net_net` | claude | 2026-11-17 | Graham net-nets in small companies (balance sheet from raw SF1) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
