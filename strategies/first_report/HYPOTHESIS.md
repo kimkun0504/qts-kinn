@@ -27,3 +27,16 @@ A50's search bar: 2010–2017, 1% a trade after costs, weekly t of 3, six years 
 trades (fewer reported and taken on if the rest is met). Tests on 2005–2009 and 2018–2022, each
 cell that goes forward run once: 0.5%, t of 2.5, four years of five. 2023 is a check. The holdout
 stays sealed.
+
+**Results, 2026-11-17 23:23 ET.** **None of the 4 cells meets the bar; there are too few.** In 2010–2017:
+$50M–$300M, 3 and 6 trades (−9%); $300M–$2B, **12 trades at +15.99%** (15% test, t 2.72,
+six years of six) and **41 at +4.68%** (10% test, t 1.94, seven years of eight). 4 trials.
+
+## Addendum, 2026-11-17 23:23 ET: the first year of reports
+
+Written after the result above (a positive sign in companies of $300M to $2B on too few
+trades), before anything below is measured; the test periods of this family are unseen. A new
+listing stays thinly covered for about a year, so: A50's test on **every results event while the
+stock has traded 400 sessions or fewer** (up to its first four or five reports), blank-check
+companies left out. Same two tests, same two sizes, same trade and bar. **4 cells**, charged to
+`first_report`.
