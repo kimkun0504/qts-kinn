@@ -177,3 +177,15 @@ calendar days before D, the next is expected within the next four weeks, inside 
 **1 cell:** the passed cell with that condition, in all three periods and 2023. It is worth
 using only if better per trade than the passed cell in all three periods and it meets the test
 bars (0.5%, t 2.5, four of five) in both test periods. 1 trial.
+
+## Follow-up 11: a month of large pieces, as a monthly ranking (written 2026-11-18 00:27 ET)
+
+The events above are single days. A fund that works an order for weeks raises a stock's
+average trade size for weeks. **Monthly footprint:** the geometric mean of a stock's shares per
+trade over its last 20 sessions, against the same over the 60 sessions before those. On the
+first session of each month, rank the stocks of each size (common stock, $250,000 a day, $2 or
+more; $50M–$300M and $300M–$2B) and buy the top tenth (the ranking
+uses the previous close, so the buy is at the first session's open), held 20 sessions, against
+the average stock of the size over the same days. **2 cells** (small, mid). Bar: 1% over the
+average, t over the months of 3, six of eight years, positive after costs; tests at half, t
+2.5, four of five. 2 trials.
