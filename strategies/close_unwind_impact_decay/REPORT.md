@@ -104,3 +104,11 @@ example were not inspected. There was no data rebuild or raw
 write. This trial provides evidence that this exact rule is
 too sparse to evaluate in the registered development data.
 It establishes no conclusion about all after-hours strategies.
+
+## Subsequent execution audit
+
+The capped proxy's completed execution-bar statistics can
+affect opening-fill selection. Synthetic demonstrations and
+the required quote evidence are documented in
+`docs/requests/2026-11-18-opening-fill-selection-audit.md`.
+The original no-fill run and parked verdict remain unchanged.

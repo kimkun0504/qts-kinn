@@ -16,6 +16,7 @@ import pyarrow as pa
 from kinn.core.types import Signal
 from kinn.costs.model import CostModel
 from kinn.engine.intraday.data import SymbolDay
+from kinn.engine.intraday.extended import OPEN_PROXY_ASSUMPTIONS
 from kinn.engine.intraday.simulator import (
     FillConfig,
     _Path,
@@ -211,6 +212,8 @@ def summarize(events: pa.Table) -> dict:
     n = events.num_rows
     everything = np.ones(n, dtype=bool)
     out: dict = {"events": n, "horizons": list(HORIZONS)}
+    if "completed" in table:
+        out["execution_assumptions"] = dict(OPEN_PROXY_ASSUMPTIONS)
     if n == 0:
         if "completed" in table:
             out.update(

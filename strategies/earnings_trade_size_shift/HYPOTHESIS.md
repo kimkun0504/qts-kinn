@@ -149,3 +149,13 @@ That accidental exposure is recorded in
 The sample was not used to select or change this candidate.
 There has been no empirical run, and the exposure must remain
 visible in its report and any later assessment of the research.
+
+The subsequent synthetic execution audit demonstrates that the
+completed execution bar's range and volume can affect opening-
+fill selection, beyond their effect on transaction costs.
+See `docs/requests/2026-11-18-opening-fill-selection-audit.md`.
+An apparent numerical pass under this proxy would remain
+provisional until quote checks resolve the execution-selection
+assumption. It cannot by itself establish the requested
+tradable edge. No empirical run has begun and no threshold
+or exit changed during the audit.

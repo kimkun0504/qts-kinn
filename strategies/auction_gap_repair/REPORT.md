@@ -89,3 +89,11 @@ market data or sealed dates were used.
 This trial establishes that the exact definition is too sparse
 in the registered development data. It does not demonstrate a
 profitable opening-repair effect or rule out all such effects.
+
+## Subsequent execution audit
+
+Synthetic tests demonstrate the execution-selection dependency
+described above: the completed execution bar's later range and
+volume can affect opening-fill acceptance. See
+`docs/requests/2026-11-18-opening-fill-selection-audit.md`.
+This no-signal result and its parked verdict are preserved.

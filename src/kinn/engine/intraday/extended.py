@@ -17,6 +17,13 @@ from kinn.engine.intraday.data import SymbolDay
 if TYPE_CHECKING:
     from kinn.engine.intraday.simulator import FillConfig
 
+OPEN_PROXY_ASSUMPTIONS = {
+    "model": "minute_open_proxy-1",
+    "quotes_observed": False,
+    "execution_bar_statistics_affect_cap_feasibility": True,
+    "signal_replay_certifies_fills": False,
+}
+
 
 def simulate_extended(
     sd: SymbolDay,

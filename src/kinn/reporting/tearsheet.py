@@ -244,6 +244,8 @@ def render(run_dir: Path) -> tuple[str, str]:
             "Statistics and the chart below cover completed trades only. "
             "Unresolved positions invalidate the portfolio. Their marks are valuations, not fills; "
             "see unresolved.parquet and marked_equity.parquet."
+            " Completed execution-bar range and volume affect opening-fill selection. "
+            "Signal replay does not certify fills; quote-level feasibility remains unverified."
         )
     git = manifest["git"]
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">

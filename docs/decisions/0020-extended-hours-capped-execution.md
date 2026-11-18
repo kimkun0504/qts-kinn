@@ -54,3 +54,17 @@ they cannot establish depth or an attainable opening fill.
 Quote and tick checks remain necessary before a trading claim.
 
 No data build or download is part of this change.
+
+## Opening-fill selection audit
+
+Synthetic checks subsequently confirmed that completed
+execution-bar statistics can change cap acceptance even with
+identical history, order and opening price. This limitation
+affects inference about which opening fills occur, in addition
+to estimating their costs. Its direction is unverified.
+
+New manifests and summaries record `minute_open_proxy-1`
+assumptions and reports state that signal replay does not
+certify fills. No fill arithmetic or old run output changes.
+The finding and required quote evidence are recorded in
+`docs/requests/2026-11-18-opening-fill-selection-audit.md`.

@@ -29,6 +29,7 @@ from kinn.data import holdout
 from kinn.data.inputs import info as input_info
 from kinn.data.store import DataStore
 from kinn.engine.intraday.data import load_day
+from kinn.engine.intraday.extended import OPEN_PROXY_ASSUMPTIONS
 from kinn.engine.intraday.simulator import FillConfig, UnresolvedPosition, simulate_day
 from kinn.engine.intraday.strategy import (
     Strategy,
@@ -279,6 +280,7 @@ def start_run(
             "build": store.build_id,
             "kind": kind,
             **({"execution": execution} if execution else {}),
+            **({"execution_assumptions": OPEN_PROXY_ASSUMPTIONS} if execution else {}),
             **({"inputs": {k: v["input_id"] for k, v in used.items()}} if used else {}),
         }
     )
@@ -313,6 +315,7 @@ def start_run(
         manifest["inputs"] = used
     if execution:
         manifest["execution"] = execution
+        manifest["execution_assumptions"] = dict(OPEN_PROXY_ASSUMPTIONS)
     if unseal:
         manifest["unsealed"] = True
     registry.write_json(run_dir / "manifest.json", manifest)
@@ -483,6 +486,9 @@ def finalize(run_dir: Path, *, settings: Settings) -> None:
         )
         summary = metrics_module.summarize(trades, sessions, equity=equity, counts=counts)
         if manifest.get("execution"):
+            summary["execution_assumptions"] = manifest.get(
+                "execution_assumptions", dict(OPEN_PROXY_ASSUMPTIONS)
+            )
             expected = [parts / "unresolved" / p.name for p in sorted(parts.glob("*.parquet"))]
             if any(not p.exists() for p in expected):
                 raise ValueError("extended run is missing unresolved-exposure part files")

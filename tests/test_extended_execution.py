@@ -352,21 +352,26 @@ def test_registered_runner_persists_execution_contract_and_unresolved_exposure(
     assert runner.continue_run(folder, settings=settings)
     manifest = json.loads((folder / "manifest.json").read_text())
     assert manifest["execution"]["session"] == "extended_v1"
+    assert manifest["execution_assumptions"]["model"] == "minute_open_proxy-1"
+    assert not manifest["execution_assumptions"]["quotes_observed"]
     assert manifest["resolved_config"]["fills"]["entry_start_minute"] == 968
     assert manifest["status"] == "complete" and manifest["agent"] == "test"
     summary = json.loads((folder / ("study.json" if study else "metrics.json")).read_text())
     assert summary["counts"]["unresolved_positions"] == int(unresolved)
     assert summary["counts"]["lookahead_checks"] == 1
+    assert summary["execution_assumptions"]["execution_bar_statistics_affect_cap_feasibility"]
     if study:
         events = pq.read_table(folder / "events.parquet").to_pylist()
         assert len(events) == 1 and events[0]["completed"] == (not unresolved)
         assert summary["eligible_for_portfolio"] == (not unresolved)
         assert "unresolved positions" in (folder / "study.md").read_text()
+        assert "Signal replay does not certify fills" in (folder / "study.md").read_text()
     else:
         assert summary["execution_risk"]["eligible"] == (not unresolved)
         positions = pq.read_table(folder / "unresolved.parquet").to_pylist()
         assert len(positions) == int(unresolved)
         equity = pq.read_table(folder / "marked_equity.parquet").to_pylist()
+        assert "Signal replay does not certify fills" in (folder / "tearsheet.md").read_text()
         if unresolved:
             assert summary["trades"] == 0 and equity[0]["net"] < 0
             assert "invalidate" in (folder / "tearsheet.md").read_text()

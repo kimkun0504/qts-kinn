@@ -162,6 +162,11 @@ def render(run_dir: Path) -> tuple[str, str]:
             f"unresolved positions: {counts.get('unresolved_positions', 0)}. "
             "No return, daily P&L t-statistic or drawdown estimate is available."
         )
+        if manifest.get("execution"):
+            facts += (
+                " Opening fills are inferred using completed execution-bar statistics; "
+                "quote-level feasibility and fill-selection bias remain unverified."
+            )
         return (
             f"<html><body><h1>{html.escape(title)}</h1><p>{html.escape(head)}</p>"
             f"<p>{html.escape(facts)}</p></body></html>",
@@ -208,6 +213,8 @@ def render(run_dir: Path) -> tuple[str, str]:
             "Returns include completed positions only; any unresolved exposure fails the study. "
             "A horizon schedules liquidation; capped orders can fill later. "
             "Both cost cases must fit each limit. Minute bars approximate executable liquidity."
+            " Completed execution-bar range and volume affect opening-fill selection. "
+            "Signal replay does not certify fills; quote-level feasibility remains unverified."
         )
     sections = [
         ("By period", "by_period"),

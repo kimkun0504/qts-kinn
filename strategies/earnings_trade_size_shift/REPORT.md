@@ -37,3 +37,10 @@ The incident is recorded in
 `docs/checkpoints/gpt-2026-11-18-documentation-exposure.md`.
 No empirical strategy run, sealed-folder access or holdout
 backtest occurred, but zero post-seal exposure cannot be claimed.
+
+A synthetic execution audit also confirms that completed-bar
+statistics can change the opening-fill cohort. The pending
+candidate has no empirical result to revise. Its future bar-
+based result must be identified as provisional unless quote
+checks establish feasible execution. The full audit and evidence
+request are in `docs/requests/2026-11-18-opening-fill-selection-audit.md`.

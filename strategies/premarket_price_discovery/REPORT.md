@@ -113,3 +113,13 @@ activity did not overcome reversal and transaction costs in
 this frozen study. The result does not justify an opposite-side
 trade, a new threshold, or a claim that all intraday trading
 is impossible.
+
+## Subsequent execution audit
+
+Synthetic tests confirmed that changing an execution bar's later
+range or volume can change the capped proxy's opening-fill
+acceptance, even with identical history, order and opening
+price. This is an unverified selection assumption, not only
+a cost-estimation caveat. The stored run and negative verdict
+are preserved. No rerun or validation was made. See
+`docs/requests/2026-11-18-opening-fill-selection-audit.md`.
