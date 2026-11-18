@@ -67,9 +67,11 @@ def table() -> None:
             with q as (select *, lead(c, 1) over w as c1, lead(open, 1) over w as o1, lead(close, 1) over w as cl1,
                               lead(c, 10) over w as c10, lead(c, 20) over w as c20
                        from '{tmp}/fp.parquet' window w as (partition by permaticker order by date)),
-            ok as (select *, case when mcap < 2e9 then 'mid' else 'large' end as size,
+            ok as (select *, case when mcap < 3e8 then 'small' when mcap < 2e9 then 'mid' else 'large' end as size,
                           exp(c10 - c1) * cl1 / o1 - 1 as g10, exp(c20 - c1) * cl1 / o1 - 1 as g20
-                   from q where mcap >= 3e8 and adv >= 1e6 and prev_close >= 5 and nfp = 60 and c20 is not null
+                   from q where nfp = 60 and c20 is not null
+                     and ((mcap >= 3e8 and adv >= 1e6 and prev_close >= 5)
+                          or (mcap >= 5e7 and mcap < 3e8 and adv >= 250000 and prev_close >= 2))
                      and date between DATE '2005-01-03' and DATE '2023-10-13'),
             daily as (select date, size, avg(g10) as all10, avg(g20) as all20,
                              avg(case when fp >= 2 then 1.0 else 0.0 end) as share from ok group by 1, 2)
@@ -83,22 +85,22 @@ def table() -> None:
               and d.share < 0.05
               and not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date)
-        ) to '{folder()}/events.parquet' (format parquet)"""
+        ) to '{folder()}/events_v2.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, count(*) from '{folder()}/events.parquet' group by 1").fetchall())
+    print(con.sql(f"select size, count(*) from '{folder()}/events_v2.parquet' group by 1").fetchall())
 
 
-def run(period, cells) -> None:
+def run(period, cells, name="events_v2") -> None:
     t = duckdb.sql(
         f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
-            from '{folder()}/events.parquet'"""
+            from '{folder()}/{name}.parquet'"""
     ).to_arrow_table()
     d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
     first, last = PERIODS[period]
-    for size, hold in cells:
+    for size, hold, floor in cells:
         g = d[f"g{hold}"].astype(float)
         avg = d[f"all{hold}"].astype(float)
-        keep = (d["size"] == size) & (d["yr"] >= first) & (d["yr"] <= last) & ~np.isnan(g)
+        keep = (d["size"] == size) & (d["fp"] >= floor) & (d["yr"] >= first) & (d["yr"] <= last) & ~np.isnan(g)
         over = g[keep] - avg[keep]
         net = g[keep] - d["cost"][keep]
         _, tt, _ = weekly(over, d["week"][keep])
@@ -107,7 +109,7 @@ def run(period, cells) -> None:
         pos = sum(v > 0 for v in yearly.values())
         bar = (150, 0.01, 3, 6) if period == "search" else (0, 0.005, 2.5, 4)
         ok = len(over) >= bar[0] and over.mean() >= bar[1] and tt >= bar[2] and pos >= bar[3] and net.mean() > 0
-        print(f"{size:5} {hold} {period:7} {len(over):>6} trades  over the average {100 * over.mean():>6.2f}%  "
+        print(f"{size:5} {hold} fp>={floor} {period:7} {len(over):>6} trades  over the average {100 * over.mean():>6.2f}%  "
               f"t {tt:>5.2f}  yrs {pos} of {len(yearly)}  after costs {100 * net.mean():>6.2f}%"
               + ("  MEETS THE BAR" if ok else ""))  # fmt: skip
         if period != "search":
@@ -118,6 +120,8 @@ if __name__ == "__main__":
     if sys.argv[1] == "table":
         table()
     elif sys.argv[1] == "search":
-        run("search", [(s, h) for s in ("mid", "large") for h in (10, 20)])
+        run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "followup":
+        run(sys.argv[2], [("mid", 20, 3), ("mid", 20, 4), ("small", 20, 2), ("small", 20, 3)])
     else:
-        run(sys.argv[2], [(sys.argv[3], int(sys.argv[4]))])
+        run(sys.argv[2], [(sys.argv[3], int(sys.argv[4]), float(sys.argv[5]))])
