@@ -1,0 +1,29 @@
+# First report: a newly listed company's first results
+
+Written 2026-11-17 23:23 ET, before anything is measured. The drift after results that holds up here (A50)
+lives where few people are watching. A company's first results as a listed company are the
+extreme case: little history, few analysts yet, holders still finding out what they own. If a
+strong first report is believed slowly, the drift should show even in companies of $300M to
+$2B, where A50's kind of drift has otherwise been too weak to trade.
+
+## Events
+
+A50's event (the first session after a results 8-K), when it is the stock's **first** results
+event in the data and the stock has traded **150 sessions or fewer** (a new listing: an IPO,
+a spin-off or a move from another market). Blank-check companies (SIC 6770) left out. Then A50's
+test on the event session: a two-session rise of **15% or more on five times** normal dollar
+volume, or **10% or more on three times**. Bought at the next open, sold at the close 15
+sessions after the signal. Costs as A50. 2005 to 13 October 2023.
+
+Sizes: $50M to $300M; $300M to $2B.
+
+## Cells
+
+2 tests × 2 sizes = **4**, family `first_report`. Shown beside each: how many are A50 signals.
+
+## What counts
+
+A50's search bar: 2010–2017, 1% a trade after costs, weekly t of 3, six years of eight; 100
+trades (fewer reported and taken on if the rest is met). Tests on 2005–2009 and 2018–2022, each
+cell that goes forward run once: 0.5%, t of 2.5, four years of five. 2023 is a check. The holdout
+stays sealed.
