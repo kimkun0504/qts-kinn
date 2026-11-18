@@ -1,5 +1,5 @@
 name: timed_earnings_discovery
-status: study
+status: parked
 engine: intraday
 universe: domestic common stocks with a timed after-close earnings filing
 cost_calibration: ibkr_pro_tiered
@@ -10,7 +10,9 @@ record:
   title: Timed after-hours earnings discovery
   idea: Test continued repricing in the first complete minutes after an earnings 8-K
   horizon: Thirty minutes after first fill
-  verdict: development pending
+  verdict: parked
+  label: Sparse and negative after-hours development result
+  result: 12 completed events averaged -2.25% net at after-hours base costs and -2.81% at doubled slippage
   summary: >-
     Frozen strategy for an owner-authorized timestamped earnings
     input, with a conservative delay and native prefix replay.
