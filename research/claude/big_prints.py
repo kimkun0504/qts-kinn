@@ -88,13 +88,38 @@ def table() -> None:
                         + case when ok.adv < 1e6 then 0.0025 when ok.adv < 1e7 then 0.0010
                                when ok.adv < 1e8 then 0.0005 else 0.0002 end) as cost
             from ok join daily d on d.date = ok.date and d.size = ok.size
-            where (ok.fp >= 2 or ok.fp < 1.2) and ok.dv >= 1.5 * ok.adv and ok.close / ok.prev_close - 1 between 0 and 0.04
+            where (ok.fp >= 2 or ok.fp < 1.2) and ok.dv >= 1.5 * ok.adv and ok.close / ok.prev_close - 1 between -0.04 and 0.04
               and d.share < 0.05
               and not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date)
-        ) to '{folder()}/events_v5.parquet' (format parquet)"""
+        ) to '{folder()}/events_v6.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v5.parquet' group by 1, 2").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v6.parquet' group by 1, 2").fetchall())
+
+
+def sellers(period) -> None:
+    """Follow-up 2: quiet down days in large pieces, read as a short over the average."""
+    t = duckdb.sql(
+        f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
+            from '{folder()}/events_v6.parquet' where ret < 0"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    first, last = PERIODS[period]
+    for size, floor in (("small", 3), ("mid", 2)):
+        keep = (d["size"] == size) & (d["fp"] >= floor) & (d["yr"] >= first) & (d["yr"] <= last)
+        over = d["all20"][keep] - d["g20"][keep]
+        net = -d["g20"][keep] - d["cost"][keep] - 0.10 * 20 / 252
+        _, tt, _ = weekly(over, d["week"][keep])
+        years = d["yr"][keep]
+        yearly = {int(y): over[years == y].mean() for y in sorted(set(years))}
+        pos = sum(v > 0 for v in yearly.values())
+        bar = (150, 0.01, 3, 6) if period == "search" else (0, 0.005, 2.5, 4)
+        ok = len(over) >= bar[0] and over.mean() >= bar[1] and tt >= bar[2] and pos >= bar[3] and net.mean() > 0
+        print(f"sell {size:5} fp>={floor} {period:7} {len(over):>6} shorts  over the average {100 * over.mean():>6.2f}%  "
+              f"t {tt:>5.2f}  yrs {pos} of {len(yearly)}  after costs and borrow {100 * net.mean():>6.2f}%"
+              + ("  MEETS THE BAR" if ok else ""))  # fmt: skip
+        if period != "search":
+            print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in yearly.items()))
 
 
 def run(period, cells, name="events_v2") -> None:
@@ -129,6 +154,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "sellers":
+        sellers(sys.argv[2])
     elif sys.argv[1] == "neighbours":
         for period in ("search", "early", "late"):
             run(period, [("small", 20, 2.5), ("small", 20, 4), ("small", 20, 5), ("small", 10, 3), ("small", 40, 3)],
