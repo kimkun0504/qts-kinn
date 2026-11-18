@@ -1,0 +1,18 @@
+name: annual_timing
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-18; nothing measured yet
+engine: daily
+universe: companies filing their 10-K 10+ days earlier than last year
+family: annual_timing
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Annual timing
+  idea: A company that files its annual report much earlier than last year
+  horizon: 20 to 60 sessions
+  verdict: planned
+  summary: >-
+    Good news is hurried and bad news delayed. Buy a company whose annual report comes well
+    ahead of its own habit, and hold one to three months.

@@ -70,6 +70,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/busy_day` | claude | 2026-11-17 | results jumps on crowded reporting days |
 | `strategies/quarter_turn` | claude | 2026-11-17 | losers bought at the last close of a quarter |
 | `strategies/bad_items` | claude | 2026-11-17 | shorts after 8-Ks with quiet bad news |
+| `strategies/annual_timing` | claude | 2026-11-18 | 10-Ks filed much earlier than last year |
 | `strategies/big_prints` | claude | 2026-11-18 | quiet up days traded in unusually large pieces |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
