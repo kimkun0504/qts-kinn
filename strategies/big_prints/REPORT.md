@@ -329,3 +329,11 @@ next report due within about four weeks), over the average small stock:
 
 Worse in 2005–2009 and 2023, and its t is under 2.5 in both tests: guessing the report date
 from the last one does not make a better rule. The passed cell stands. 1 trial (family 41).
+
+## Follow-up 11: a month of large pieces, ranked monthly (read 18 November 2026, 00:30 ET)
+
+The top tenth by the last 20 sessions' trade size against the 60 before, bought on the first
+session of each month, 20 sessions, 2010–2017: small companies −0.08% over the average (5,351;
+t −0.20), mid-sized +0.10% (13,921; t 0.72). Nothing: the signal is the single quiet day with
+very large pieces, not a month of somewhat larger ones (the top tenth's footprint is only 1.2
+to 1.3). 2 trials (family 43).

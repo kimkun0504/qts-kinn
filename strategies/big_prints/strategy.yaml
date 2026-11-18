@@ -4,7 +4,7 @@ status: event-study       # small-company cell passed both tests 2026-11-18; a l
 engine: daily
 universe: common stock $300M+ on a quiet up day traded in unusually large pieces
 family: big_prints
-prior_trials: 41
+prior_trials: 43
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -45,4 +45,5 @@ record:
     - {name: Quiet falls by who sold, when: 2026-11-18, trials: 4, result: "No cell meets the bar; small pieces keep falling, large pieces recover, faintly", verdict: failed}
     - {name: Results inside the hold (diagnostic), when: 2026-11-18, trials: 1, result: "Signals followed by results did 2 to 4 times better in three periods of four", verdict: note}
     - {name: A report expected inside the hold, when: 2026-11-18, trials: 1, result: "Worse in 2005–2009 and 2023; not used", verdict: failed}
+    - {name: A monthly footprint ranking, when: 2026-11-18, trials: 2, result: "Nothing (−0.08%, +0.10%)", verdict: failed}
     - {name: Checks on the passed cell, when: 2026-11-18, trials: 5, result: "Control flat; 2023 +2.1%; search 0.94% with delistings; tail-heavy", verdict: note}
