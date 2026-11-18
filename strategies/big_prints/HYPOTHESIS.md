@@ -74,3 +74,14 @@ Whether the cell is a knife-edge: $50M–$300M, read in all three periods with s
 kept, (a) held 20 sessions with footprint floors of 2.5, 4 and 5, and (b) footprint 3 or more
 held 10 and 40 sessions. 5 cells; a neighbourhood that holds up is expected to be positive in
 all three periods. 5 trials.
+
+## Follow-up 2: the seller's footprint (written 2026-11-18 00:14 ET)
+
+If large pieces on a quiet up day are a buyer at work, large pieces on a quiet **down** day
+should be a seller at work, and the stock should trail afterwards. Same conditions, but the
+close **0% to 4% below** the previous close. Read as a short: the short's return over the
+average stock of its size, 20 sessions, sold at the next open; after costs and borrow at 10%
+a year. **2 cells:** $50M–$300M and $300M–$2B, footprint 3 or more for the small and 2 or
+more for the mid-sized (each size's first reading above). Search bar: 1% over the average,
+t of 3, six years of eight, positive after costs and borrow; tests at half, t 2.5, four of
+five. 2 trials.
