@@ -12,8 +12,14 @@ record:
   title: Spin-off
   idea: The new company in its first weeks, after the parent's holders sell it
   horizon: 60 sessions
-  verdict: failed
-  result: New companies beat the average stock by 3.6% a quarter in 2010–17, t under 2
+  verdict: closed
+  result: "New companies beat the average stock by 3.6% a quarter in 2010–17, t under 2"
   summary: >-
     Holders of the parent receive shares they did not choose and many must sell. Buy the new
     company after the selling, or straight away, and hold three months.
+  weaknesses:
+    - About 18 spin-offs a year; single results too wide for the mean to be told from luck.
+  evidence:
+    - {when: 2026-11-17, title: 3 cells on 2010 to 2017, kind: failed, text: "New company +3.63% (t 1.62) and +3.67% from the 11th session (t 1.96); parent −1.12%."}
+  studies:
+    - {name: New companies and parents after a spin-off, when: 2026-11-17, trials: 3, result: "No cell meets the bar", verdict: failed}

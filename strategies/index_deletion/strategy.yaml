@@ -12,8 +12,14 @@ record:
   title: Index deletion
   idea: A company dropped from the S&P 500 that stays listed
   horizon: 20 to 60 sessions
-  verdict: failed
-  result: Deleted companies kept trailing large stocks (−1.3% over 20 sessions, −4.1% over 60)
+  verdict: closed
+  result: "Deleted companies kept trailing large stocks: −1.3% over 20 sessions, −4.1% over 60"
   summary: >-
     Index funds must sell a deleted company on the day the change takes effect. Buy it after
     that day and hold while the forced selling ends.
+  weaknesses:
+    - Most deletions follow a long decline; the forced selling is not the whole story.
+  evidence:
+    - {when: 2026-11-17, title: 2 cells on 2010 to 2017, kind: failed, text: "20 sessions −1.28% (t −0.75), 60 sessions −4.10% against large stocks."}
+  studies:
+    - {name: S&P 500 deletions that stay listed, when: 2026-11-17, trials: 2, result: "No cell meets the bar", verdict: failed}

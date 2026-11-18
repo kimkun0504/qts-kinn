@@ -12,9 +12,15 @@ record:
   title: After hours, other news
   idea: A large after-hours move that is not a results release
   horizon: overnight to the next close
-  verdict: failed
-  result: Outside results, a 10% after-hours move does not carry on; no-news rises give back
+  verdict: closed
+  result: "Outside results, a 10% after-hours move does not carry on; no-news rises give back"
   summary: >-
     The after-hours short applied to every other large move after the close: an offering,
     a guidance cut, a drug decision. Short after a fall, or buy after a rise, and close out
     the next day.
+  weaknesses:
+    - Without results a large after-hours move is mostly reversed or already priced by the open.
+  evidence:
+    - {when: 2026-11-17, title: 24 cells and a comparison on 2010 to 2017, kind: failed, text: "No cell meets the bar; the nearest, small no-news rises sold short to the next close, +3.27% in 8 of 8 years at t 2.41."}
+  studies:
+    - {name: After-hours moves that are not results, when: 2026-11-17, trials: 25, result: "No cell meets the bar; read at the first 10% minute, the results short makes 0.65%", verdict: failed}

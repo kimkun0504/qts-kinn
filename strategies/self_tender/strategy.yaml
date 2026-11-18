@@ -12,8 +12,14 @@ record:
   title: Self-tender
   idea: A company that offers to buy back its own securities
   horizon: 20 to 60 sessions
-  verdict: failed
-  result: Nothing in companies of $300M+; small ones +3% over 20 sessions on 9 trades a year, t 1.7
+  verdict: closed
+  result: "Nothing in companies of $300M+; small ones +3% over 20 sessions on 9 trades a year, t 1.7"
   summary: >-
     A company that files an issuer tender offer names a price and commits cash. Buy at the next
     open after the filing and hold one to three months.
+  weaknesses:
+    - The form mixes offers for shares, notes and employee options; the text is not on disk.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2010 to 2017, kind: failed, text: "Small +3.23% (20 sessions, t 1.72) and +3.93% (60); $300M and over about zero."}
+  studies:
+    - {name: Issuer tender offers (SC TO-I), when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
