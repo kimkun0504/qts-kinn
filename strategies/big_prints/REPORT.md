@@ -6,7 +6,7 @@ follow it on paper.** A company of $50M to $300M that, on a quiet day with no 8-
 bought at the next open and held 20 sessions: +1.85% (2005–2009, t 4.21) and +1.77% (2018–2022,
 t 3.09) over the average small stock, +2.08% in 2023; the same days with an ordinary trade size
 make nothing. Against it: chosen as a follow-up; 0.94% in 2010–2017 with delisted stocks kept;
-tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 48 trials.
+tail-heavy. The paper ledger is `tools/owner/paper_big_prints.py`. 49 trials.
 
 Code: `research/claude/big_prints.py`.
 
@@ -390,3 +390,10 @@ only from August 2004, so the 2005 anniversaries are partly missing, which may w
 period. Together with check 8 it points the same way: big prints ahead of a report are the best
 of them. With a real calendar of report dates (the Benzinga question) this is the first thing to
 test forward. 1 trial (family 48).
+
+## Follow-up 16: the next size up (read 18 November 2026, 00:48 ET)
+
+$300M–$600M, the same rule, over the average $300M–$2B stock: +0.39% (907; t 0.72) in
+2010–2017, +0.49% (2005–2009), +0.17% (2018–2022), +0.08% (2023). The effect stops at about
+$300M: it lives where a fund's order is a large part of a stock's trading. The rule's capacity is
+the small companies only. 1 trial (family 49).
