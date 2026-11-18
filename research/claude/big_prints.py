@@ -81,13 +81,13 @@ def table() -> None:
                         + case when ok.adv < 1e6 then 0.0025 when ok.adv < 1e7 then 0.0010
                                when ok.adv < 1e8 then 0.0005 else 0.0002 end) as cost
             from ok join daily d on d.date = ok.date and d.size = ok.size
-            where ok.fp >= 2 and ok.dv >= 1.5 * ok.adv and ok.close / ok.prev_close - 1 between 0 and 0.04
+            where (ok.fp >= 2 or ok.fp < 1.2) and ok.dv >= 1.5 * ok.adv and ok.close / ok.prev_close - 1 between 0 and 0.04
               and d.share < 0.05
               and not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date)
-        ) to '{folder()}/events_v2.parquet' (format parquet)"""
+        ) to '{folder()}/events_v3.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, count(*) from '{folder()}/events_v2.parquet' group by 1").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*) from '{folder()}/events_v3.parquet' group by 1, 2").fetchall())
 
 
 def run(period, cells, name="events_v2") -> None:
@@ -100,7 +100,8 @@ def run(period, cells, name="events_v2") -> None:
     for size, hold, floor in cells:
         g = d[f"g{hold}"].astype(float)
         avg = d[f"all{hold}"].astype(float)
-        keep = (d["size"] == size) & (d["fp"] >= floor) & (d["yr"] >= first) & (d["yr"] <= last) & ~np.isnan(g)
+        band = (d["fp"] >= floor) if floor > 0 else (d["fp"] < 1.2)
+        keep = (d["size"] == size) & band & (d["yr"] >= first) & (d["yr"] <= last) & ~np.isnan(g)
         over = g[keep] - avg[keep]
         net = g[keep] - d["cost"][keep]
         _, tt, _ = weekly(over, d["week"][keep])
@@ -121,6 +122,9 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "control":
+        for period in ("search", "early", "late"):
+            run(period, [("small", 20, 0)], "events_v3")
     elif sys.argv[1] == "followup":
         run(sys.argv[2], [("mid", 20, 3), ("mid", 20, 4), ("small", 20, 2), ("small", 20, 3)])
     else:
