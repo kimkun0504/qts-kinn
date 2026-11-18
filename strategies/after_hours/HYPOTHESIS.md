@@ -153,3 +153,29 @@ and 2021 or 2021 alone. Hold kept to the next close: 1.68% in 2005–2009 (t 2.5
 of five) and 0.46% in 2018–2022 (t −0.10). 15 cells and 12 test runs: 27 trials;
 `after_hours` has 83 in all. The indicators sort the old years and not the recent ones:
 the gain after a rise on results has been small since 2020 however it is cut.
+
+## Addendum, 2026-11-17 20:59 ET: a resting order at the reading price instead of the minute's high
+
+Written before it is measured. `night_bids` showed tonight what trading after hours costs:
+a minute's best and worst prices are 1% to 3% apart, and every test in this family paid the
+worst one. The first part's long side made 0.9% to the next open **after** paying it. The
+owner asked for better entries; the plain one is not to cross that gap.
+
+**Rule.** As the first part (results 8-K accepted after the close, the reading 30 minutes
+later, $50,000 traded after hours, a rise of 5% to under 15% or of 15% or more). At the
+reading, a buy order rests **at the reading price** (the last trade before it) for 15
+minutes. It is filled, at that price, only if a later minute in those 15 trades **below**
+it. Not filled, no trade. Sold at the next open, the next close, or the close 15 sessions
+later. Costs as the first part.
+
+Cells: 3 sizes × 2 reactions × 3 exits = **18**, charged to `after_hours`.
+
+**What is already known, and what that does to the reading.** These are the first part's
+cells with a different fill, and the first part's results on all three periods are known
+(five met the search bar; none passed 2018–2022 at the minute's high). A better fill raises
+every period mechanically, so the search years say little here. What counts is whether a
+cell clears the test bar in **both** 2005–2009 and 2018–2022 (0.5% after costs, weekly t of
+2.5, four years of five) on the trades that fill, and how many fill. Each cell that meets the
+search bar is run once on the tests. A pass is a candidate for paper trading, not a finding:
+the order fills when the price comes back to it, which is the case a buyer should worry
+about, and the fill itself is assumed from trades by the minute.
