@@ -250,3 +250,13 @@ tests at 0.5%, t 2.5, four of five). 2023 is a check. Charged to `after_hours`.
 2010–2017: $50M–$300M +1.63% (26 trades, t 0.70); $300M–$2B +2.44% (71, t 1.55); $2B or
 more +2.87% (53, t 2.52, seven years of seven). Bad results before the open also keep falling
 through the session, on too few signals for a rule. 3 trials; `after_hours` has 112.
+
+## Addendum, 2026-11-17 23:18 ET: when to buy the short back
+
+Written before it is measured. The short buys back at the next open; bought back at the next
+close it made more in every period (3.41% against 2.82% in 2010–2017), so the selling goes on
+into the session. Two more exits from the minute bars of the next session: **the price at 10:00**
+(the close of the last minute before it) and **at 15:30**. Judged as the exits of the earnings
+rule: an exit is better only if it beats the open in all three periods (2023 shown). The 10:00
+and 15:30 prices are bought back with the spread crossed (half the modelled spread added) since
+they are not auctions. **2 cells**, charged to `after_hours`.
