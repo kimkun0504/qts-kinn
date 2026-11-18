@@ -49,3 +49,14 @@ of 3 or more, and of 4 or more; $50M–$300M ($250,000 a day, $2 or more) with a
 or more, and of 3 or more. Every other condition as above (the share of footprint days is
 counted within each size). Same bars. These were chosen after seeing the first four cells, so
 the search years carry less weight than the tests.
+
+## Checks for the passed cell (written 2026-11-18 00:03 ET, after both tests passed)
+
+1. **2023** (to 13 October): the same cell, read once.
+2. **Is it the trade size, or only a quiet up day on heavy volume?** The same events with a
+   footprint under 1.2 (an ordinary trade size), $50M–$300M, 20 sessions, in all three periods.
+   If these do as well, the indicator adds nothing to the known high-volume premium.
+3. **Year by year after costs**, and the share of signals in 2018–2022 whose stock trades
+   under $1M a day (the price paid is least certain there).
+
+Each is one trial: 3.

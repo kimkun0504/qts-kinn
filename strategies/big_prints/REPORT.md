@@ -31,3 +31,20 @@ Trials: 4.
 
 A larger footprint does not help in mid-sized companies. In small companies both cells meet
 the search bar, and go to their tests.
+
+## Tests of the two small-company cells (read 18 November 2026, 00:03 ET)
+
+| $50M–$300M, 20 sessions | 2005–2009 | 2018–2022 |
+|---|---|---|
+| Footprint 2+ | +1.89% (6,489; t 7.41; 5 of 5; after costs +1.62%) **passed** | +0.90% (4,288; t 1.78; 4 of 5; after costs +0.01%) failed |
+| **Footprint 3+** | **+1.85% (2,554; t 4.21; 5 of 5; after costs +1.46%) passed** | **+1.77% (1,858; t 3.09; 4 of 5; after costs +0.83%) passed** |
+
+Over the average small stock, by year:
+
+- Footprint 3+: 2005 +1.9%, 2006 +1.8%, 2007 +1.7%, 2008 +2.3%, 2009 +1.4%; 2018 +2.2%,
+  2019 +2.2%, 2020 −1.4%, 2021 +1.7%, 2022 +3.7%.
+- Footprint 2+: 2018 +1.0%, 2019 +1.0%, 2020 −1.6%, 2021 +1.3%, 2022 +2.3%.
+
+**Small companies with a footprint of 3 or more pass both tests**, the first cell to do so
+tonight. It was chosen after the first four cells were read, so its search figures count for
+less; the two test periods were unread when it was chosen.
