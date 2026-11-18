@@ -87,7 +87,7 @@ def table() -> None:
                      and date between DATE '2005-01-03' and DATE '2023-10-13'),
             daily as (select date, size, avg(g10) as all10, avg(g20) as all20, avg(g40) as all40,
                              avg(case when fp >= 2 then 1.0 else 0.0 end) as share from ok group by 1, 2)
-            select ok.date as signal_day, ok.permaticker, ok.size, ok.fp, ok.prior_fp, ok.dv / ok.adv as dvr,
+            select ok.date as signal_day, ok.permaticker, ok.size, ok.mcap, ok.fp, ok.prior_fp, ok.dv / ok.adv as dvr,
                    ok.c20_full is null as stopped,
                    exists (select 1 from filed f where f.permaticker = ok.permaticker and f.day = ok.date) as news_today,
                    exists (select 1 from filed f where f.permaticker = ok.permaticker and f.results
@@ -104,9 +104,9 @@ def table() -> None:
               and d.share < 0.05
               and (ok.fp >= 3 or not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date))
-        ) to '{folder()}/events_v9.parquet' (format parquet)"""
+        ) to '{folder()}/events_v10.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v9.parquet' group by 1, 2").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v10.parquet' group by 1, 2").fetchall())
 
 
 def news(period) -> None:
@@ -157,6 +157,25 @@ def repeat() -> None:
             pos = sum(over[years == y].mean() > 0 for y in set(years))
             print(f"{period:7} {label:12} {len(over):>5} trades  over the average {100 * over.mean():>6.2f}%  "
                   f"t {tt:>5.2f}  yrs {pos} of {len(set(years))}")
+
+
+def next_size() -> None:
+    """Follow-up 16: companies of $300M to $600M."""
+    for period in ("search", "early", "late", "check"):
+        t = duckdb.sql(
+            f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
+                from '{folder()}/events_v10.parquet'
+                where ret >= 0 and fp >= 3 and quiet and mcap >= 3e8 and mcap < 6e8"""
+        ).to_arrow_table()
+        d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+        first, last = PERIODS[period]
+        keep = (d["yr"] >= first) & (d["yr"] <= last)
+        over = d["g20"][keep] - d["all20"][keep]
+        _, tt, _ = weekly(over, d["week"][keep])
+        years = d["yr"][keep]
+        pos = sum(over[years == y].mean() > 0 for y in set(years))
+        print(f"$300M-$600M {period:7} {len(over):>5} trades  over the average {100 * over.mean():>6.2f}%  t {tt:>5.2f}  "
+              f"yrs {pos} of {len(set(years))}")
 
 
 def falls(period) -> None:
@@ -270,6 +289,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "next_size":
+        next_size()
     elif sys.argv[1] == "falls":
         falls(sys.argv[2])
     elif sys.argv[1] == "crowd":
