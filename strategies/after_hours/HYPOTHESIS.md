@@ -110,3 +110,35 @@ open (2.82%, 251 trades, weekly t 3.89, six years of eight) and at the next clos
 3.12, five of five); 2018–2022 was positive in all five years and missed the weekly t (1.60%,
 t 1.15; 2.10%, t 1.87). **Not passed** by the rule set beforehand. 12 cells and 4 test runs;
 `after_hours` has 56 trials in all. The 2023 check has not been looked at for these cells.
+
+## Addendum, 2026-11-17 20:41 ET: two indicators of our own for the long side
+
+Written before it is measured. The owner asked whether indicators of our own could be built.
+The first part used one crude reading (how far the price had moved 30 minutes after the
+report). Two more readings of the same half hour, neither of which a daily chart can show:
+
+- **Pressure:** the dollars traded after hours up to the reading, as a share of the stock's
+  normal day (20-day dollar volume). A rise that many people traded into is agreed; a rise on
+  little trading is a few orders.
+- **Hold:** the reading as a share of the highest price reached between the close and the
+  reading (1.00 is still at its peak; 0.50 has given back half). The same thought as the
+  earnings rule's second session, inside the first half hour.
+
+Only the two feature distributions were looked at before writing this (no returns): among
+search-year reports after the close in companies of $300M or more with a rise of 5% or more
+(1,802), the pressure thirds are cut at 6% and 22% of a normal day. Companies under $300M
+have 213 such reports in eight years and are left out.
+
+**Rule.** As the first part: results 8-K accepted after the close, reading 30 minutes later,
+$50,000 traded after hours, **buy at the high of the next minute that trades**. Company
+$300M or more, rise of 5% or more. Sold at the next open, the next close, or the close 15
+sessions later.
+
+Cells: pressure in three groups (under 6%, 6% to 22%, over 22%) × 3 exits = 9; hold in two
+groups cut at the search-year median (taken without returns, after the collection) × 3 exits
+= 6. **15 cells**, charged to `after_hours`.
+
+**What counts:** as the first part. Search 2010–2017: 150 trades, 1% after costs, weekly t
+of 3, six years of eight. Tests on 2005–2009 and 2018–2022, each cell that goes forward run
+once: 0.5%, t of 2.5, four years of five, in both. An indicator is only worth keeping if its
+groups differ: the report gives every group, not only the best.
