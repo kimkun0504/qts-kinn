@@ -42,3 +42,17 @@ this reading with the lead's; it is counted as a trial. **17 trials.**
 Search 2010–2017: 150 trades, 1% a trade after costs, weekly t of 3, six years of eight.
 Tests on 2005–2009 and 2018–2022 for any cell that meets it: 0.5%, t of 2.5, four years of
 five. 2023 is a check for a cell that passes both. The holdout stays sealed.
+
+## Follow-up: selling short a no-news rise (written 2026-11-17 23:47 ET, after the 16 cells were read)
+
+Rises of 10% after hours with no 8-K gave back overnight in 2010–2017 when bought (above). The
+opposite trade was not measured: **sold short at the low of the entry minute** (the harsh side
+for a seller), bought back at the next open or close, with the same costs and a night's
+borrow. Because the search years have been seen in the mirror, they are read only to see that
+the short clears the bar after its own fill; the evidence is the test years.
+
+Stricter events: no 8-K and no 6-K by the company accepted from the day before D to four days
+after it (results filed late and foreign companies' results drop out).
+
+**4 cells:** size ($50M–$300M, $300M–$2B) × exit (next open, next close). Same bars: search
+150 trades, 1% after costs, t of 3, six years of eight; tests 0.5%, t 2.5, four of five.
