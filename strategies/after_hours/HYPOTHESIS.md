@@ -345,3 +345,12 @@ what the rest make on their own, in each period.
 The same split for $300M–$2B, up 5% to 15% after hours on results, bought at the next open
 (the auction, no after-hours fill), held 15 sessions. **1 cell:** the larger-piece half,
 judged as a filter: better per trade than the whole cell in all three periods, 2023 a check.
+
+## Addendum, 2026-11-18 00:48 ET: the evening version of A50's jump (1 trial)
+
+What can be known on the evening: a small company ($50M–$300M) already up **15% or more**
+after hours on results (A50's jump size), with its after-hours trading in large pieces (the
+2.31 cut of the small-company cell, fixed). Bought at the next open, held 15 sessions, after
+the auction allowance and commission. **1 cell**, against all such 15%+ evenings bought the same
+way; judged as a filter (better per trade in all three periods, 2023 a check) and reported with
+its counts and t.
