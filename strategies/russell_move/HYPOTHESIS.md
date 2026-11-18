@@ -47,3 +47,13 @@ the small-company average; IWM would be the tradable hedge), and also after cost
 at 10% a year for the days held, unhedged. **2 cells** (moved down, moved clearly). The search
 years are the mirror of what was read, so only the tests count: 2005–2009 and 2018–2022, 0.5%
 over the average, t of 2.5 over the five years, four years of five. 2023 is a check if both pass.
+
+## Follow-up 2: companies that enter the Russell 2000 from below (written 2026-11-18 00:24 ET)
+
+The other boundary. A company that ranked worse than 3,000 on the previous year's rank day (and
+was in the price table then) and ranks 3,000 or better now joins the Russell 2000, whose funds
+must buy it at the close of reconstitution day. Bought at the open of the first session after
+the rank day, sold at the close of reconstitution day, against the average of ranks 1,001 to
+3,000 over the same days. **2 cells:** entered (rank 3,000 or better now) and entered clearly
+(2,800 or better). Same bars as the plan (150 trades, 1%, t of 3 over years, six of eight,
+positive after costs; tests at 0.5%, t 2.5, four of five). 2 trials.
