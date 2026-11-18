@@ -17,7 +17,10 @@ from kinn.data.store import DataStore
 from swing_earnings import weekly
 
 
-def main() -> None:
+SMALLER = "earn and ret2 >= 0.05 and ret2 < 0.15 and dvr2 >= 3 and mcap >= 5e7 and mcap < 3e8"
+
+
+def main(rule: str = A50, floor: float = 1.0) -> None:
     settings = load_settings()
     store = DataStore(settings)
     base = settings.data_dir / "research" / "swing"
@@ -27,10 +30,10 @@ def main() -> None:
     rows = con.sql(
         f"""with s as (
                 select day, permaticker, close, adv from read_parquet('{base}/early_*.parquet')
-                where {A50} and next_open is not null and day >= DATE '2005-01-03'
+                where {rule} and next_open is not null and day >= DATE '2005-01-03'
                 union all
                 select day, permaticker, close, adv from read_parquet('{base}/wide_*.parquet')
-                where {A50} and next_open is not null and day <= DATE '2023-10-13'),
+                where {rule} and next_open is not null and day <= DATE '2023-10-13'),
             p as (select permaticker, date, symbol, close, open / close as oc,
                          sum(ln(close / prev_close)) over w as c
                   from read_parquet('{store.root}/panel/*.parquet')
@@ -57,12 +60,19 @@ def main() -> None:
         net = rows["net"][k]
         has = ~np.isnan(fp)
         out = []
-        for label, keep in (("all A50", np.ones(len(net), bool)), ("footprint 1+", has & (fp >= 1)),
-                            ("footprint under 1", has & (fp < 1))):  # fmt: skip
+        for label, keep in (("all", np.ones(len(net), bool)), (f"footprint {floor}+", has & (fp >= floor)),
+                            (f"footprint under {floor}", has & (fp < floor))):  # fmt: skip
             _, t, _ = weekly(net[keep], rows["week"][k][keep])
-            out.append(f"{label} {keep.sum()} {100 * net[keep].mean():+.2f}% (t {t:.2f})")
+            yrs = rows["yr"][k][keep]
+            pos = sum(net[keep][yrs == y].mean() > 0 for y in set(yrs))
+            out.append(f"{label} {keep.sum()} {100 * net[keep].mean():+.2f}% (t {t:.2f}; {pos} of {len(set(yrs))})")
         print(f"{name}: " + "; ".join(out) + f"; footprint median {np.nanmedian(fp):.2f}")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "smaller":
+        main(SMALLER, 1.5)
+    else:
+        main()
