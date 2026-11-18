@@ -119,3 +119,24 @@ fires in about one trade in eleven (39, 47 and 50 trades), changing those by +5.
 +1.3 points, paired t 2.06, 0.48 and 0.30. Better by the rule set, on too few firings to be
 sure; the other three variants are not better in all three. 4 trials; `intraday_shape` has
 32.
+
+## Addendum, 2026-11-17 22:44 ET: the push into the close, in the most traded large companies
+
+Written before it is measured. The parent cells of 2010–2017 are seen (large companies pushed
+up into the close for 10 sessions trailed the average stock by 0.48% in 5 sessions and 0.73%
+in 10, weekly t −5.6 and −5.0); the short failed only on costs, because the stocks it picked
+were thin. This asks whether the effect lives in stocks that cost almost nothing to trade or
+borrow, where a short is practical for the owner. The test periods of this family are unseen.
+
+**Universe:** listed common stock of $2B or more, **$50M a day or more, a price of $10 or
+more**. **Rule:** each session, the 10 with the highest last-half-hour score over 10 sessions,
+**sold short** at D+1's open and bought back at the close 5 or 10 sessions later, with SPY
+**bought** for the same money over the same sessions (open to close). Costs: the auction
+allowance and commission both ways on the stocks, 0.03% on SPY, borrow at 1% a year. A second
+version also buys the 10 with the lowest score instead of SPY (long-short, both legs priced as
+above).
+
+Cells: 2 hedges (SPY; the 10 lowest) × 2 holds = **4**, charged to `intraday_shape`. **What
+counts:** search 2010–2017 (shown; the parent is seen): 0.3% a trade for 5 sessions, 0.5% for
+10, weekly t of 3, six years of eight. Tests on 2005–2009 and 2018–2022, run once each: half
+those, weekly t of 2.5, four years of five, in both.
