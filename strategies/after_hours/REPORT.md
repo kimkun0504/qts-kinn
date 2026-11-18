@@ -187,6 +187,11 @@ years positive**, about $1,900 a year on average. 537 evenings; at most six sign
 evening, three or more on only nine. Most come in the reporting months (February, May, July and
 August, October and November).
 
+**Beside the earnings rule** (a description): every A50 signal and every short signal at $2,000 a
+trade, by year: the two barely move together (correlation of yearly dollars −0.09). The short
+adds most where A50 is weakest: 2008 ($3,296 against A50's $3,222), 2012, 2014, 2015 and 2022;
+A50's one losing year (2011, −$671) becomes −$164 with both.
+
 **Checked for data errors** (the danger for a short bought back at the open is a bad, too-low
 open price): the eight largest winners all have next-day opens equal to the first regular
 minute in the minute data, and are real collapses (Green Dot 2012-07-27, Sequenom 2009-04-30,

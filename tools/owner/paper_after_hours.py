@@ -146,6 +146,22 @@ def price_at_1530(symbol: str, day: date, key: str) -> float | None:
     return ahp.price_at(ahp.minute_bars(results, day), 930)
 
 
+def common_stock(tickers: list[str], day: date, key: str) -> tuple[str, dict]:
+    """The first of a company's tickers that the vendor calls common stock (a company can list
+    warrants, units or preferred shares beside it), with its details; else the first ticker."""
+    first = None
+    for symbol in tickers[:4]:
+        try:
+            details = tool.massive(f"/v3/reference/tickers/{urllib.parse.quote(symbol)}", key,
+                                   date=day.isoformat()).get("results") or {}  # fmt: skip
+        except tool.FetchError:
+            continue
+        first = first or (symbol, details)
+        if details.get("type") in ("CS", "ADRC"):
+            return symbol, details
+    return first or (tickers[0], {})
+
+
 def evening(day: date, key: str, agent: str) -> tuple[list[dict], list[dict]]:
     ciks = sorted(set(index_ciks(day, agent)) | set(index_ciks(next_weekday(day), agent)))
     print(f"{day}: {len(ciks)} 8-K filers in the SEC's index; reading their filings", flush=True)
@@ -165,7 +181,8 @@ def evening(day: date, key: str, agent: str) -> tuple[list[dict], list[dict]]:
         tickers = subs.get("tickers") or []
         if not filings or not tickers:
             continue
-        symbol, minute = tickers[0], filings[0]["minute"]
+        minute = filings[0]["minute"]
+        symbol, details = common_stock(tickers, day, key)
         row = {
             "day": day.isoformat(),
             "cik": cik,
@@ -173,12 +190,6 @@ def evening(day: date, key: str, agent: str) -> tuple[list[dict], list[dict]]:
             "accepted": f"{minute // 60:02d}:{minute % 60:02d}",
         }
         try:
-            details = (
-                tool.massive(
-                    f"/v3/reference/tickers/{urllib.parse.quote(symbol)}", key, date=day.isoformat()
-                ).get("results")
-                or {}
-            )
             if details.get("type") not in ("CS", "ADRC"):
                 seen.append({**row, "why": f"not common stock ({details.get('type')})"})
                 continue

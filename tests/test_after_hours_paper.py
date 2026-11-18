@@ -189,7 +189,7 @@ def test_tool_finds_a_signal_from_fetched_answers(monkeypatch):
     monkeypatch.setattr(tool, "index_ciks", lambda d, agent: [42] if d == day else [])
     monkeypatch.setattr(tool.time, "sleep", lambda s: None)
     subs = {
-        "tickers": ["ABCD"],
+        "tickers": ["ABCDW", "ABCD"],
         "filings": {
             "recent": {
                 "form": ["8-K"],
@@ -211,6 +211,10 @@ def test_tool_finds_a_signal_from_fetched_answers(monkeypatch):
             return {"results": bars}
         if "/range/1/day/" in route:
             return {"results": [{"vw": 20.0, "v": 100_000, "o": 15.0}] * 20}
+        if "ABCDW" in route:
+            return {"results": {"type": "WARRANT"}}
+        if "ABCDW" in route:
+            return {"results": {"type": "WARRANT"}}
         return {"results": {"type": "CS", "market_cap": 8e8}}
 
     monkeypatch.setattr(tool.tool, "massive", massive)
