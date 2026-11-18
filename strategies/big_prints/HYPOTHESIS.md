@@ -227,3 +227,12 @@ signals whose stock traded in large pieces (footprint 2 or more on any of the fi
 before the signal day) may be the jumps that informed buyers saw coming. **1 cell:** those A50
 signals, plain exit, after costs, against all A50 signals; judged as a filter: better per trade
 in all three periods, 2023 a check. 1 trial (A50 unchanged).
+
+## Follow-up 15: a report due by last year's calendar (written 2026-11-18 00:45 ET)
+
+Follow-up 10 guessed the next report from the last one (63–91 days) and failed. Companies tend
+to report on about the same week each year, so the report a year earlier is a better guess: a
+signal is "due" if the company had a results 8-K reacting 336 to 364 days before D (its
+anniversary falls inside the next four weeks). **1 cell:** the passed cell, due, in all three
+periods and 2023; worth using only if better per trade than the passed cell in all three
+periods and meeting the test bars (0.5%, t 2.5, four of five) in both test periods. 1 trial.
