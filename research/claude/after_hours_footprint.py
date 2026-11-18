@@ -12,28 +12,38 @@ from collections import defaultdict
 import duckdb
 import numpy as np
 
-from after_hours import CLOSE, folder, load_short
+from after_hours import CLOSE, folder, load, load_short
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
 from swing_earnings import weekly
 
 
-def main() -> None:
+def main(side: str = "short") -> None:
     store = DataStore(load_settings())
-    d = load_short()
-    keep = (d["mcap"] >= 3e8) & (d["mcap"] < 2e9) & (d["reaction"] <= -0.15)
+    if side == "short":
+        d = load_short()
+        keep = (d["mcap"] >= 3e8) & (d["mcap"] < 2e9) & (d["reaction"] <= -0.15)
+    else:
+        d = load()
+        keep = (d["timing"] == "after") & (d["mcap"] >= 2e9) & (d["reaction"] >= 0.05) & (d["reaction"] < 0.15)
     rows = duckdb.sql(
         f"""select n.day, n.symbol, v.minute from read_parquet('{folder()}/entries_*.parquet') n
             join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
             where n.timing = 'after'"""
     ).fetchall()
     minute_of = {(r[0], r[1]): r[2] for r in rows}
-    names = duckdb.sql(
-        f"""select n.day, n.symbol from read_parquet('{folder()}/entries_*.parquet') n
-            join read_parquet('{folder()}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
-            join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
-            where n.timing = 'after'"""
-    ).fetchall()
+    if side == "short":
+        names = duckdb.sql(
+            f"""select n.day, n.symbol from read_parquet('{folder()}/entries_*.parquet') n
+                join read_parquet('{folder()}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
+                join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+                where n.timing = 'after'"""
+        ).fetchall()
+    else:
+        names = duckdb.sql(
+            f"""select n.day, n.symbol from read_parquet('{folder()}/entries_*.parquet') n
+                join '{folder()}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing"""
+        ).fetchall()
     assert len(names) == len(d["day"])
     picked = [(i, names[i][0], names[i][1]) for i in np.flatnonzero(keep)]
     by_day = defaultdict(list)
@@ -70,7 +80,7 @@ def main() -> None:
     for i, _, _ in picked:
         if i in after and normal.get(i):
             fp[i] = after[i] / normal[i]
-    net = d["g_open"] - d["cost"]
+    net = (d["g_open"] if side == "short" else d["g_fifteen"]) - d["cost"]
     years = d["yr"]
     base = keep & ~np.isnan(fp)
     cut = np.median(fp[base & (years >= 2010) & (years <= 2017)])
@@ -79,11 +89,13 @@ def main() -> None:
                          "2023": (2023, 2023)}.items():  # fmt: skip
         k = base & (years >= a) & (years <= b)
         out = []
-        for label, m in (("short", k), ("large pieces", k & (fp >= cut)), ("small pieces", k & (fp < cut))):
+        for label, m in ((side, k), ("large pieces", k & (fp >= cut)), ("small pieces", k & (fp < cut))):
             _, t, _ = weekly(net[m], d["week"][m])
             out.append(f"{label} {m.sum()} {100 * net[m].mean():+.2f}% (t {t:.2f})")
         print(f"{name}: " + "; ".join(out))
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(sys.argv[1] if len(sys.argv) > 1 else "short")
