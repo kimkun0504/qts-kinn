@@ -1,5 +1,5 @@
 name: premarket_price_discovery
-status: hypothesis
+status: event-study
 engine: intraday
 universe: domestic common stocks with distributed premarket activity
 cost_calibration: ibkr_pro_tiered
@@ -10,8 +10,8 @@ record:
   title: Distributed premarket price discovery
   idea: Early price discovery sustained across active minutes
   horizon: Thirty minutes before the first liquidation attempt
-  verdict: hypothesis
-  label: Preregistered
+  verdict: event-study
+  label: Development study ready
   result: Untested
   summary: >-
     A premarket momentum score discounts choppy price paths and

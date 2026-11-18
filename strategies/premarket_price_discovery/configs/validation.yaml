@@ -1,0 +1,20 @@
+params: {}
+risk:
+  equity: 20000
+  position_dollars: 2000
+  buying_power: 20000
+  max_positions: 10
+fills:
+  session: extended_v1
+  participation: 0.05
+  entry_start_minute: 426
+  entry_end_minute: 526
+  extended_slippage_multiplier: 2.0
+  liquidation_limit_pct: 0.02
+  flatten_before_close: 0
+  no_entry_before_close: 0
+period:
+  start: 2017-01-03
+  end: 2023-11-08
+lookahead_check_rate: 1.0
+seed: 0
