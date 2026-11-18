@@ -179,3 +179,22 @@ cell clears the test bar in **both** 2005–2009 and 2018–2022 (0.5% after cos
 search bar is run once on the tests. A pass is a candidate for paper trading, not a finding:
 the order fills when the price comes back to it, which is the case a buyer should worry
 about, and the fill itself is assumed from trades by the minute.
+
+**Results of the resting order, 2026-11-17 21:02 ET.** In REPORT.md. About 64% of the orders fill (55%
+to 92% by cell). **The better price is cancelled by which orders fill:** companies of $300M
+to $2B up 5% to 15%, sold at the next open, made 0.79% on the 493 fills of the search years,
+no more than buying at the minute's high made on every signal. The stock that comes back to
+the order is the weaker one. One cell met the search bar: $2B or more, up 5% to 15%, held 15
+sessions (1.45%, weekly t 3.20, seven years of eight). Tested once: 2005–2009 passed (1.21%,
+t 2.68, four years of five); 2018–2022 made 1.45% and **missed** (t 1.98, three years of
+five; 2020 −0.17%, 2021 −1.79%). 18 cells and 2 test runs; `after_hours` has 103 trials.
+
+## Addendum, 2026-11-17 21:02 ET: is the large-company cell the stock or the market?
+
+Written before it is measured. The one long cell that keeps making the same amount (1.2% to
+1.5% for 15 sessions in all three periods, by either fill) is in companies of $2B or more
+with a rise of 5% to 15%. Fifteen sessions of the market are worth about half a percent on
+their own, and its bad years (2008, 2020) are market years. Two cells: that trade with **SPY
+sold short for the same dollars over the same sessions** (SPY's close on the report day to
+its close 16 sessions on; 0.03% added for its costs), by the minute's high and by the
+resting order. Same bar and tests. **2 cells**, charged to `after_hours`.
