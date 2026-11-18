@@ -1,10 +1,10 @@
 name: busy_day
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: closed            # failed the search period 2026-11-17
 engine: daily
 universe: common stock $300M-$2B up 5% on results
 family: busy_day
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Busy day
   idea: A jump on results released on a day crowded with other results
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: closed
+  result: "Mid-sized jumps drift 0.8% in four weeks in every search year; crowded days add little"
   summary: >-
     On days when very many companies report, each report gets less attention and more of the
     move comes later. Buy mid-sized companies up 5% on results on the busiest days.
+  weaknesses:
+    - Ranked against the past year, "busy" means "in reporting season"; it barely separates days within one.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2010 to 2017, kind: failed, text: "Busy +0.81% (20 sessions, t 4.24, 8 of 8) and +1.54% (60); quiet +0.63% and +1.36%."}
+  studies:
+    - {name: Results jumps on crowded days, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
