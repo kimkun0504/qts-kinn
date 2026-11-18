@@ -1,6 +1,6 @@
 name: bad_items
 kind: swing               # research script first; no runner yet
-status: closed            # failed the search period 2026-11-18
+status: closed            # failed the search period 2026-11-17
 engine: daily
 universe: common stock $50M-$2B after an 8-K with item 3.02, 4.02, 2.04, 3.01, 4.01 or 2.06
 family: bad_items
@@ -21,6 +21,6 @@ record:
     - Borrow at 10% a year takes 0.8% a month; the drift is 1% to 3% over one to three months.
     - Small-company impairments (+5.3% in 20 sessions, 8 of 8 years) come 11 times a year.
   evidence:
-    - {when: 2026-11-18, title: 24 cells on 2010 to 2017, kind: failed, text: "17 of 24 on the short's side; only small impairments clear the return and t, on 85 shorts."}
+    - {when: 2026-11-17, title: 24 cells on 2010 to 2017, kind: failed, text: "17 of 24 on the short's side; only small impairments clear the return and t, on 85 shorts."}
   studies:
-    - {name: Shorts after six bad 8-K items, when: 2026-11-18, trials: 24, result: "No cell meets the bar", verdict: failed}
+    - {name: Shorts after six bad 8-K items, when: 2026-11-17, trials: 24, result: "No cell meets the bar", verdict: failed}

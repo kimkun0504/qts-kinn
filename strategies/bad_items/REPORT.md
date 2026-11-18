@@ -1,6 +1,6 @@
 # Bad items: report
 
-Read on 18 November 2026 (23:59 ET), after the plan. Code: `research/claude/bad_items.py`.
+Read on 17 November 2026 (23:59 ET), after the plan. Code: `research/claude/bad_items.py`.
 
 ## The 24 cells, 2010–2017: the short's return over the average stock of its size
 
