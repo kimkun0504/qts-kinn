@@ -142,7 +142,7 @@ function Facts({ detail }: { detail: RunDetail }) {
     ["Period", s.period_label ?? "–"],
     ["First entry to last exit", `${day(s.first_entry)} to ${day(s.last_exit)}`],
     ["Stocks in the universe", int(s.universe_stocks)],
-    ["Signals", int(s.signals)],
+    [s.settings?.entry.mode === "rank" ? "Scores given" : "Signals", int(s.signals)],
     ["Trial", s.trial_number ? `#${s.trial_number} for this algorithm` : "–"],
     ["Costs", `${s.cost_model ?? "–"}; 2× doubles the slippage`],
     ["Exit signal", s.has_exit_signal ? "yes" : "no"],
