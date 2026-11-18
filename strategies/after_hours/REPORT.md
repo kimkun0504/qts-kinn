@@ -135,6 +135,31 @@ Nothing here has passed. Three leads, in the order I rate them:
 pays or receives), the broker's rules and borrow for short sales after hours, and a forward
 record. All three can be followed on paper each evening at no cost.
 
+## Following the short on paper (built 2026-11-17)
+
+`tools/owner/paper_after_hours.py` keeps a paper ledger of the after-hours short, the strongest
+lead (+6.7% a trade on 44 trades in 2023, read once; see `strategies/leads_2023`). Run it the
+morning after an evening of results (after 09:35, so the next open exists):
+
+```
+export SEC_USER_AGENT="Your Name your@email"
+uv run python tools/owner/paper_after_hours.py                   # the last evening
+uv run python tools/owner/paper_after_hours.py --day 2026-11-18  # a given evening
+uv run python tools/owner/paper_after_hours.py --borrow "ABCD=yes, 0.4%"   # what IBKR showed
+```
+
+It reads every 8-K in the SEC's daily index for the evening (and the next day, where filings
+accepted after 17:30 are dated), keeps the results 8-Ks accepted between 16:00 and 18:30, and
+for each fetches the stock's market value, normal volume and that evening's minute bars from
+Massive. The rule is the research rule exactly (a test holds the reading to the research code
+on 400 random days); the candidates come from the filings, never from the next morning's
+price. Ledger: `paper/after_hours/report.md`. It sends no order.
+
+What the ledger is for: about one signal a week, most in the reporting seasons. For each, record
+whether IBKR showed shares to borrow and at what fee (`--borrow`); whether the trade could have
+been made at all is the first question. The fill (the low of the first minute after the
+reading) is the second: a third of 2023's entries traded under $5,000 in that minute.
+
 ## Reproduce
 
 ```
