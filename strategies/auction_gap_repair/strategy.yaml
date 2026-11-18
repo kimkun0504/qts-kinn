@@ -1,5 +1,5 @@
 name: auction_gap_repair
-status: event-study
+status: parked
 engine: intraday
 universe: domestic common stocks trading actively before the open
 cost_calibration: ibkr_pro_tiered
@@ -10,9 +10,9 @@ record:
   title: Opening discount to active premarket trading
   idea: Test repair of a sharp opening discount to a recent traded reference
   horizon: Thirty minutes before the first liquidation attempt
-  verdict: event-study
-  label: Development study ready
-  result: Untested
+  verdict: parked
+  label: No qualifying development signals
+  result: Zero signals and zero filled events; no return estimate
   summary: >-
     Compare the first regular-session bar with a volume-weighted
     median of recent active premarket closes, and enter after
