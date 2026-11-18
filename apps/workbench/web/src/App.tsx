@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { EmptyState } from "./components/ui/EmptyState";
 import { api, type Board, type Family, type RunRow } from "./lib/api";
@@ -14,7 +14,10 @@ import { StrategyPage } from "./pages/StrategyPage";
 import { Studies } from "./pages/Studies";
 import { Trials } from "./pages/Trials";
 
-const TITLES = { home: "Home", strategies: "Strategies", strategy: null, studies: "Studies", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
+// The Lab carries the code editor; it loads when first opened, so the other pages stay light.
+const Lab = lazy(() => import("./pages/Lab").then((module) => ({ default: module.Lab })));
+
+const TITLES = { home: "Home", strategies: "Strategies", strategy: null, studies: "Studies", lab: "Lab", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
 type Theme = "dark" | "light";
 
 // Light unless the owner picked dark. The key is new so the old app's auto-saved "dark" is ignored.
@@ -77,6 +80,7 @@ export default function App() {
     go({ page: "runs" });
   };
   const openStrategy = (name: string, tab = "results") => go({ page: "strategy", name, tab });
+  const openLab = useCallback((name?: string, runId?: string) => go({ page: "lab", name, tab: runId }, { scroll: false }), [go]);
   const toggleCompare = (run: RunRow) =>
     setCompare((current) => (current.includes(run.run_id) ? current.filter((id) => id !== run.run_id) : current.length < 4 ? [...current, run.run_id] : current));
   const ledgers = board?.rows.filter((row) => row.paper).length ?? 0;
@@ -97,7 +101,11 @@ export default function App() {
       onToggleTheme={toggleTheme}
       onReload={load}
     >
-      {error ? (
+      {route.page === "lab" ? (
+        <Suspense fallback={<p className="text-ink-2">Loading the Lab…</p>}>
+          <Lab name={route.name} runId={route.tab} onOpen={openLab} />
+        </Suspense>
+      ) : error ? (
         <EmptyState title="Could not load the Workbench">{error}</EmptyState>
       ) : !board ? (
         <p className="text-ink-2">Loading…</p>
