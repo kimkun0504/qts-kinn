@@ -65,14 +65,15 @@ def table() -> None:
     con.execute(
         f"""copy (
             with q as (select *, lead(c, 1) over w as c1, lead(open, 1) over w as o1, lead(close, 1) over w as cl1,
-                              lead(c, 10) over w as c10,
+                              last_value(c) over (partition by permaticker order by date
+                                                  rows between current row and 10 following) as c10,
                               last_value(c) over (partition by permaticker order by date
                                                   rows between current row and 20 following) as c20,
                               lead(c, 20) over w as c20_full
                        from '{tmp}/fp.parquet' window w as (partition by permaticker order by date)),
             ok as (select *, case when mcap < 3e8 then 'small' when mcap < 2e9 then 'mid' else 'large' end as size,
                           exp(c10 - c1) * cl1 / o1 - 1 as g10, exp(c20 - c1) * cl1 / o1 - 1 as g20
-                   from q where nfp = 60 and c1 is not null and c10 is not null
+                   from q where nfp = 60 and c1 is not null
                      and ((mcap >= 3e8 and adv >= 1e6 and prev_close >= 5)
                           or (mcap >= 5e7 and mcap < 3e8 and adv >= 250000 and prev_close >= 2))
                      and date between DATE '2005-01-03' and DATE '2023-10-13'),
