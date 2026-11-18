@@ -281,3 +281,24 @@ costs, split at the 2010–2017 median after-hours footprint (1.76):
 
 Not a filter: the larger-piece half did worse in every period but 2023. 2 trials for the two
 footprint splits (family 122).
+
+## Who buys after hours in small companies (2 trials, read 18 November 2026, 00:39 ET)
+
+$50M–$300M, up 5% or more after hours on results, bought at the minute's high, held 15
+sessions, after costs, split at the 2010–2017 median after-hours footprint (2.31):
+
+| Period | Small-company long | Large pieces | Small pieces |
+|---|---|---|---|
+| 2005–2009 | +4.22% (208; t 1.66) | +5.35% (55; t 1.02; median −2.39%) | +3.81% (153) |
+| 2010–2017 | +5.25% (210; t 3.61) | +6.14% (105; t 2.75; median +5.06%) | +4.36% (105) |
+| 2018–2022 | +3.65% (251; t 0.58) | **+9.93%** (80; t 2.03; median +4.46%) | +0.71% (171; t −0.12) |
+| 2023 | +6.43% (44) | +7.62% (30; median +4.41%) | +3.90% (14) |
+
+**As a filter it passes the rule set beforehand**: the larger-piece half is better per trade in
+all three periods and in 2023, and since 2018 it carries all of the small-company long (the
+small-piece half made 0.7%). This is the owner's "enter earlier" idea on A50's ground: buying
+on the evening of the results when the after-hours buying comes in large pieces. It is a lead,
+not a rule: 10 to 16 trades a year, weekly t of 1.0 to 2.8, a negative median in 2005–2009 (the
+mean there rests on one +231% trade), and half the entry minutes traded under $5,000, so the
+price paid is the weakest part. The paper ledger for the short could record these evenings
+too; not built tonight.

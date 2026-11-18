@@ -96,6 +96,11 @@ def main(side: str = "short") -> None:
             _, t, _ = weekly(net[m], d["week"][m])
             out.append(f"{label} {m.sum()} {100 * net[m].mean():+.2f}% (t {t:.2f})")
         print(f"{name}: " + "; ".join(out))
+        if side == "small":
+            m = k & (fp >= cut)
+            thin = np.mean(d["bar_dollars"][m] < 5000) if m.any() else float("nan")
+            print(f"    large pieces: median {100 * np.median(net[m]):+.2f}%, share of entry minutes under $5,000 "
+                  f"{100 * thin:.0f}%, worst {100 * net[m].min():+.1f}%, best {100 * net[m].max():+.1f}%")
 
 
 if __name__ == "__main__":
