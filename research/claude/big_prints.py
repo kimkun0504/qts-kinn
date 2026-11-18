@@ -158,6 +158,31 @@ def repeat() -> None:
                   f"t {tt:>5.2f}  yrs {pos} of {len(set(years))}")
 
 
+def crowd(period) -> None:
+    """Follow-up 7: quiet up days in small pieces (footprint 0.5 or less), read as a short."""
+    t = duckdb.sql(
+        f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
+            from '{folder()}/events_v8.parquet' where ret >= 0 and fp <= 0.5 and quiet"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    first, last = PERIODS[period]
+    for size in ("small", "mid"):
+        keep = (d["size"] == size) & (d["yr"] >= first) & (d["yr"] <= last)
+        over = d["all20"][keep] - d["g20"][keep]
+        net = -d["g20"][keep] - d["cost"][keep] - 0.10 * 20 / 252
+        _, tt, _ = weekly(over, d["week"][keep])
+        years = d["yr"][keep]
+        yearly = {int(y): over[years == y].mean() for y in sorted(set(years))}
+        pos = sum(v > 0 for v in yearly.values())
+        bar = (150, 0.01, 3, 6) if period == "search" else (0, 0.005, 2.5, 4)
+        ok = len(over) >= bar[0] and over.mean() >= bar[1] and tt >= bar[2] and pos >= bar[3] and net.mean() > 0
+        print(f"crowd {size:5} {period:7} {len(over):>6} shorts  over the average {100 * over.mean():>6.2f}%  "
+              f"t {tt:>5.2f}  yrs {pos} of {len(yearly)}  after costs and borrow {100 * net.mean():>6.2f}%"
+              + ("  MEETS THE BAR" if ok else ""))  # fmt: skip
+        if period != "search":
+            print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in yearly.items()))
+
+
 def sellers(period) -> None:
     """Follow-up 2: quiet down days in large pieces, read as a short over the average."""
     t = duckdb.sql(
@@ -215,6 +240,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "crowd":
+        crowd(sys.argv[2])
     elif sys.argv[1] == "repeat":
         repeat()
     elif sys.argv[1] == "news":
