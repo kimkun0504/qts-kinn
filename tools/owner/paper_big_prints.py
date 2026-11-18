@@ -12,7 +12,8 @@ finished one) it:
 3. for each stock that passes, looks up its type and market value at Massive and its 8-Ks at
    the SEC, and records each signal of strategies/big_prints ("small 20 fp>=3");
 4. on every run, fills in open signals from the stock's adjusted daily bars: bought at the
-   next open, sold at the close 20 sessions after the signal, with IWM beside it.
+   next open, sold at the close 20 sessions after the signal (and, beside it, 40), with IWM
+   over the same days.
 
     export SEC_USER_AGENT="Your Name your@email"     # the SEC asks who is calling
     uv run python tools/owner/paper_big_prints.py                      # the latest session

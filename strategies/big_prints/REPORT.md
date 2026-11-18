@@ -126,7 +126,9 @@ Each evening it fetches the vendor's grouped daily bars (unadjusted, with the tr
 keeps them in `paper/big_prints/bars/` so later evenings fetch one day, reads every stock's
 footprint, and for the stocks that pass looks up the type and market value (Massive) and
 the 8-Ks (SEC). Signals are bought at the next open and sold at the close 20 sessions after
-the signal, from the stock's adjusted bars, with IWM over the same days beside each. The page
+the signal, from the stock's adjusted bars, with IWM over the same days beside each; a second
+column holds the same trade sold after 40 sessions (better per trade in every period of the
+neighbours check, with twice the money tied up). The page
 is `paper/big_prints/report.md`. Code: `src/kinn/big_prints_paper.py`,
 `tools/owner/paper_big_prints.py`, tests in `tests/test_big_prints_paper.py` (the footprint
 and normal volume equal the research's window functions; the tool is run end to end on

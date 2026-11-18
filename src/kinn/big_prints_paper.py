@@ -28,7 +28,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 NEW_YORK = ZoneInfo("America/New_York")
-NORM, ADV_SESSIONS, HOLD = 60, 20, 20
+NORM, ADV_SESSIONS, HOLD, LONG_HOLD = 60, 20, 20, 40
 CAP_MIN, CAP_MAX = 5e7, 3e8
 MIN_ADV, MIN_PRICE = 250_000.0, 2.0
 FOOTPRINT, MARKET_FOOTPRINT, VOLUME_RATIO, UP_MAX, SHARE_MAX = 3.0, 2.0, 1.5, 0.04, 0.05
@@ -172,25 +172,31 @@ def settle(
     last_session: date,
 ) -> None:
     """Fill a signal from the stock's adjusted (day, open, close) bars after its day: bought
-    at the first open, sold at the close of the ``HOLD``-th session. A stock that stops
-    trading is sold at its last close once ten sessions pass with no bar."""
+    at the first open, sold at the close of the ``HOLD``-th session (the rule as tested) and,
+    beside it, of the ``LONG_HOLD``-th (the longer hold that did better in every period of the
+    research). A stock that stops trading is sold at its last close once 14 days pass with no
+    bar."""
     after = sorted(b for b in bars if b[0] > date.fromisoformat(signal["day"]))
     if not after:
         return
     signal["entry_day"], signal["entry"] = after[0][0].isoformat(), after[0][1]
-    if len(after) >= HOLD:
-        exit_day, exit_price = after[HOLD - 1][0], after[HOLD - 1][2]
-    elif (last_session - after[-1][0]).days > 14:
-        exit_day, exit_price = after[-1][0], after[-1][2]
-        signal["stopped"] = True
-    else:
-        return
-    signal["exit_day"], signal["exit"] = exit_day.isoformat(), exit_price
-    signal["gross"] = exit_price / signal["entry"] - 1
-    signal["net"] = signal["gross"] - cost(signal["close"], signal["adv"])
     own = {b[0]: b for b in benchmark}
-    start, end = own.get(after[0][0]), own.get(exit_day)
-    signal["benchmark"] = end[2] / start[1] - 1 if start and end else None
+    stopped = len(after) < LONG_HOLD and (last_session - after[-1][0]).days > 14
+    for hold, suffix in ((HOLD, ""), (LONG_HOLD, "_40")):
+        if signal.get("net" + suffix) is not None:
+            continue
+        if len(after) >= hold:
+            exit_day, exit_price = after[hold - 1][0], after[hold - 1][2]
+        elif stopped:
+            exit_day, exit_price = after[-1][0], after[-1][2]
+            signal["stopped"] = True
+        else:
+            continue
+        signal["exit_day" + suffix], signal["exit" + suffix] = exit_day.isoformat(), exit_price
+        signal["gross" + suffix] = exit_price / signal["entry"] - 1
+        signal["net" + suffix] = signal["gross" + suffix] - cost(signal["close"], signal["adv"])
+        start, end = own.get(after[0][0]), own.get(exit_day)
+        signal["benchmark" + suffix] = end[2] / start[1] - 1 if start and end else None
 
 
 def new_state() -> dict:
@@ -209,7 +215,7 @@ def record(state: dict, day: date, share: float, signals: list[dict], screened: 
 
 
 def pending(state: dict) -> list[dict]:
-    return [s for s in state["signals"] if s.get("net") is None]
+    return [s for s in state["signals"] if s.get("net") is None or s.get("net_40") is None]
 
 
 def report(state: dict) -> str:
@@ -233,6 +239,10 @@ def report(state: dict) -> str:
             + (f"; {100 * sum(over) / len(over):+.2f}% over IWM." if over else ".")
         )
     skipped = [e["day"] for e in state["evenings"] if e["share"] >= SHARE_MAX]
+    longer = [s["net_40"] for s in done if s.get("net_40") is not None]
+    if longer:
+        average = 100 * sum(longer) / len(longer)
+        lines.append(f"Held 40 sessions instead: average {average:+.2f}% on {len(longer)}.")
     if skipped:
         lines.append(
             f"Skipped as index days (share of large-trade stocks 5% or more): {', '.join(skipped)}."
@@ -240,8 +250,8 @@ def report(state: dict) -> str:
     lines += [
         "",
         "| Day | Stock | Value | Trade size x | Up | Volume x | Bought | Sold | After costs "
-        "| IWM |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| IWM | 40 sessions |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for s in sorted(state["signals"], key=lambda s: (s["day"], s["symbol"])):
         bought = "" if s.get("entry") is None else f"{s['entry_day']} ${s['entry']:.2f}"
@@ -252,10 +262,11 @@ def report(state: dict) -> str:
         )
         out = "open" if s.get("net") is None else f"{100 * s['net']:+.2f}%"
         bench = "" if s.get("benchmark") is None else f"{100 * s['benchmark']:+.2f}%"
+        longer = "" if s.get("net_40") is None else f"{100 * s['net_40']:+.2f}%"
         lines.append(
             f"| {s['day']} | {s['symbol']} | ${s['market_cap'] / 1e6:,.0f}M | {s['footprint']:.1f} "
             f"| {100 * s['ret']:+.1f}% | {s['volume_ratio']:.1f} | {bought} | {sold} | {out} "
-            f"| {bench} |"
+            f"| {bench} | {longer} |"
         )
     lines.append("")
     return "\n".join(lines)

@@ -114,6 +114,16 @@ def test_settle_costs_and_benchmark():
     assert signal["exit_day"] == days[19].isoformat()
     assert math.isclose(signal["net"], 0.10 - 2 * (0.00035 + 0.0025))
     assert math.isclose(signal["benchmark"], 0.05)
+    assert signal.get("net_40") is None
+    longer = weekdays(date(2026, 11, 19), 45)
+    bars40 = [(d, 10.0, 12.0 if i == 39 else 10.5) for i, d in enumerate(longer)]
+    iwm40 = [(d, 200.0, 220.0 if i == 39 else 205.0) for i, d in enumerate(longer)]
+    bpp.settle(signal, bars40, iwm40, longer[-1])
+    assert signal["exit_day_40"] == longer[39].isoformat() and math.isclose(
+        signal["benchmark_40"], 0.10
+    )
+    assert math.isclose(signal["net_40"], 0.20 - 2 * (0.00035 + 0.0025))
+    assert math.isclose(signal["net"], 0.10 - 2 * (0.00035 + 0.0025))  # the 20-session result stays
     gone = {"day": "2026-11-18", "close": 10.0, "adv": 2e6}
     bpp.settle(gone, bars[:5], iwm, days[-1])
     assert gone["stopped"] and math.isclose(gone["gross"], 0.05)
