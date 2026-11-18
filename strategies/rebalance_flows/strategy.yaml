@@ -4,7 +4,7 @@ status: parked            # one cell met the bar and failed both tests; closed 2
 engine: daily
 universe: SPY and TLT
 family: rebalance_flows
-prior_trials: 6
+prior_trials: 7
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -22,4 +22,5 @@ record:
   evidence:
     - {when: 2026-11-17, title: First days, kind: failed, text: "0.72% a month in 2010 to 2017 (t 3.06); 0.41% and 0.26% in the tests, t 1.11 and 0.90."}
   studies:
+    - {name: The 2023 check (leads_2023), when: 2026-11-17, trials: 1, result: "+1.17% a month, 8 of 10 positive", verdict: note}
     - {name: SPY against TLT at month end, when: 2026-11-17, trials: 6, result: "One cell met the search bar and failed both tests", verdict: failed}

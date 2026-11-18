@@ -4,7 +4,7 @@ status: event-study       # one cell met the search bar and failed the weekly t 
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, no results due, down in the last ten minutes
 family: closing_bids
-prior_trials: 31
+prior_trials: 32
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -33,4 +33,5 @@ record:
     - {name: Limit-on-close orders under a late fall, when: 2026-11-17, trials: 20, result: "$2B+ at 2%: +1.3% to +1.5% overnight in every period; failed the weekly t in both tests", verdict: lead}
     - {name: Bought after the close, and hedged with SPY, when: 2026-11-17, trials: 2, result: "After the close +0.9% to +1.3%; hedged +1.2% in quiet years, +0.3% in crisis years", verdict: lead}
     - {name: SPY QQQ and IWM after a late sell-off, when: 2026-11-17, trials: 6, result: "No cell clears the bar", verdict: failed}
+    - {name: The 2023 check (leads_2023), when: 2026-11-17, trials: 1, result: "+0.56% on 39 fills, median −0.14%", verdict: note}
     - {name: The stock pushed down alone, when: 2026-11-17, trials: 3, result: "Hedged: +1.4% in 2010 to 2017, +0.6% in the other periods, 16 years of 18 positive; t too low", verdict: lead}

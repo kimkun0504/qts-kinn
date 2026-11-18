@@ -1,0 +1,24 @@
+name: leads_2023
+kind: swing               # a reading, not a strategy
+status: event-study       # four leads read once on 2023; see REPORT.md
+engine: daily
+universe: the four leads of 2026-11-17
+family: leads_2023
+prior_trials: 0               # the 4 readings are charged to after_hours (2), closing_bids (1), rebalance_flows (1)
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: 2023 check of four leads
+  idea: Each lead that failed on steadiness, read once on 2023
+  horizon: One night to 15 sessions
+  verdict: note
+  result: "After-hours short: +6.7% a trade on 44 trades in 2023; the large-company after-hours long is contradicted"
+  summary: >-
+    Before any lead is proposed for paper trading beside the earnings rule, each was read once
+    on January to October 2023, which none of them had seen.
+  evidence:
+    - {when: 2026-11-17, title: After-hours short, kind: open, text: "2023: +6.66% to the next open on 44 trades (median +6.13%). Positive in all 10 test years before."}
+    - {when: 2026-11-17, title: After-hours long, kind: failed, text: "2023: −0.85% on 139 trades. Contradicted."}
+  studies:
+    - {name: The 2023 check of four leads, when: 2026-11-17, trials: 0, result: "One strongly confirmed, two weakly, one contradicted", verdict: note}

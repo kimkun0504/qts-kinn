@@ -4,7 +4,7 @@ status: event-study       # nothing passed both tests in 105 trials; three leads
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
-prior_trials: 105
+prior_trials: 107
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -14,7 +14,7 @@ record:
   horizon: Overnight to 15 sessions
   verdict: weak
   label: "Leads, not passed"
-  result: "Large companies up 5% to 15% after hours: +1.2% to +1.5% in 15 sessions in every period, not steady enough"
+  result: "Short after a 15% fall after hours ($300M to $2B): positive in all 10 test years and +6.7% a trade in 2023; not passed"
   summary: >-
     The owner's idea. Half an hour after results released after the close, trade in
     after-hours at the worst price of the minute: buy a rise, or sell short a fall, and close
@@ -25,7 +25,7 @@ record:
     - No after-hours quotes on disk, so the price a small order would get is assumed.
     - Borrow and short-sale rules after hours at a retail broker are not checked; single shorts lost 20% to 35% overnight.
   waiting:
-    - "After-hours leads: say whether to follow the large-company lead (and record the short one) on paper in the nightly run."
+    - "After-hours short: say whether to follow it on paper, recording whether IBKR shows shares to borrow and at what fee on each signal night."
   evidence:
     - {when: 2026-11-17, title: Long side, kind: found, text: "Up 5% to 15% after hours kept rising: +0.9% to the next open, +2.5% in 15 sessions (2010 to 2017). Five cells met the bar."}
     - {when: 2026-11-17, title: Long side tested, kind: failed, text: "None passed both. Mid to the next open worked in 14 of 15 years to 2019 and lost in 2020 to 2022."}
@@ -37,4 +37,5 @@ record:
     - {name: Selling short after hours on a bad report, when: 2026-11-17, trials: 16, result: "Down 15%+, $300M to $2B: +1.6% to +3.0% overnight in every test year; t too low since 2018", verdict: lead}
     - {name: Pressure and hold indicators, when: 2026-11-17, trials: 27, result: "Six cells met the search bar, none passed 2018 to 2022", verdict: failed}
     - {name: A resting order at the reading price, when: 2026-11-17, trials: 20, result: "No better than the minute's high; $2B+ for 15 sessions 1.2% to 1.5% in all periods, missed on the t", verdict: lead}
+    - {name: The 2023 check (leads_2023), when: 2026-11-17, trials: 2, result: "Short +6.66% on 44 trades; the large-company long −0.85% (contradicted)", verdict: lead}
     - {name: The large-company cell hedged with SPY, when: 2026-11-17, trials: 2, result: "1.08% a trade, seven years of eight, weekly t 2.80: under the search bar", verdict: failed}
