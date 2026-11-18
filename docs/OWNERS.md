@@ -51,6 +51,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/earnings_model` | claude | 2026-11-17 | one fixed model of the drift after results, with intraday features |
 | `strategies/late_filer` | claude | 2026-11-17 | buying when an overdue 10-Q or 10-K arrives after a late-filing notice |
 | `strategies/friday_reports` | claude | 2026-11-17 | the earnings rule on results first read on a Friday (inattention) |
+| `strategies/rebalance_flows` | claude | 2026-11-17 | stocks against bonds in the last days of the month (fund rebalancing) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
