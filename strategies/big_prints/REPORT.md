@@ -296,3 +296,21 @@ Down 5% or more with no 8-K, bought at the next open, 10 sessions, over the aver
 No cell meets the bar. In small companies the pattern of the night repeats faintly: after a fall
 in small pieces the stock keeps trailing; after a fall in large pieces it does better than the
 average. Too noisy to trade. 4 trials (family 39).
+
+## Check 8: is it buying ahead of results? (read 18 November 2026, 00:28 ET)
+
+The passed cell split by whether a results 8-K reacted inside the 20-session hold (known only
+afterwards), over the average small stock:
+
+| Period | Results inside the hold | No results |
+|---|---|---|
+| 2010–2017 | +1.60% (597; t 2.15) | +0.68% (1,558; t 1.13) |
+| 2005–2009 | +1.76% (697) | +1.79% (1,936; t 3.85) |
+| 2018–2022 | +4.50% (337; t 2.74) | +1.26% (1,569; t 1.70) |
+| 2023 | +4.82% (45) | +1.76% (360) |
+
+In three of the four periods the signals followed by results did two to four times better: part
+of the large-piece buying is informed buying ahead of results. Those without results are still
+positive. A calendar of coming report dates (the Benzinga question still open) would let the
+rule favour signals with a report due inside the hold; that is a new rule and would need its
+own test. 1 trial (family 40).
