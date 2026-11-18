@@ -128,3 +128,20 @@ SPY +0.11% on 63 trades (weekly t −0.15), QQQ +0.09% on 69, IWM −0.24% on 91
 in at least one period. After a fall of 1% or more the averages are 0.4% to 1.4%, on 18 to 20
 trades in eighteen years. The 1% seen over the stock fills came from weighting the worst
 days by how many stocks they hit. 6 cells; `closing_bids` has 28 trials.
+
+## Addendum, 2026-11-17 21:22 ET: the stock pushed down alone
+
+Written before it is measured, with all three periods of the parent cell already seen (so
+this is a refinement, not a blind test). The follow-ups showed two things mixed together: a
+stock pushed down on its own, which came back (1.2% hedged in the quiet years), and days
+when everything is sold, where the gain is the market's. The rule that separates them at
+15:59 is the stock's late fall **against SPY's** over the same ten minutes.
+
+**Rule.** As the parent ($2B or more, no results due, an auction of $50,000, the data
+check), but the fill is counted when the stock's move from 15:49 to the close is **2% or more
+under SPY's** move over the same minutes (and the close is still under the 15:49 price).
+Three cells: the auction fill sold at the next open; the same with SPY sold short overnight;
+bought after the close (first minute from 16:06, at its high) and sold at the next open.
+
+**3 cells.** Search bar on 2010–2017 and the test bar on the other two periods, as before;
+all three periods are shown. Charged to `closing_bids`.
