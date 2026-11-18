@@ -116,3 +116,12 @@ reaction session D, bought at the next open), whatever the day's crowding, with 
 read on D. **2 cells:** footprint 1.5 or more, held 20 and 60 sessions, against the average
 stock of that size; the rest (under 1.5) printed beside. Bars: 1% (20) and 2% (60) over the
 average, t 3, six of eight, positive after costs; tests at half. 2 trials.
+
+## Follow-up 6: a footprint that repeats (written 2026-11-18 00:18 ET)
+
+A fund building a position over weeks should leave more than one footprint. The passed cell
+($50M–$300M, quiet up day, footprint 3+, 20 sessions), split by whether the stock also had a
+footprint of 2 or more on at least one of the 10 sessions before D. **1 cell** (repeated), read
+in all three periods with stopped stocks kept, against the passed cell: it is worth using only
+if it is better per trade in all three periods and still meets the test bars (0.5%, t 2.5,
+four of five) in both test periods. The single-footprint rest is printed beside. 1 trial.
