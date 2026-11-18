@@ -142,6 +142,40 @@ def search() -> None:
     print("\nMeet the search bar:", passed or "none")
 
 
+BORROW_DAY = 0.01 / 252
+
+
+def pairs(hold: int, size: str) -> dict[str, np.ndarray]:
+    small, big = SIZES[size]
+    t = duckdb.sql(
+        f"""with s as (
+                select *, row_number() over (partition by day order by l10 asc) as lo,
+                       row_number() over (partition by day order by l10 desc) as hi
+                from '{folder()}/scores.parquet' where mcap >= {small} and mcap < {big}),
+            legs as (
+                select day, avg(g{hold} - cost) filter (where lo <= {BOOK}) as long_net,
+                       avg(-g{hold} - cost - {BORROW_DAY} * {hold * 1.4}) filter (where hi <= {BOOK}) as short_net
+                from s group by day)
+            select day, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week,
+                   (long_net + short_net) / 2 as net, long_net, short_net, (long_net + short_net) / 2 as over
+            from legs order by day"""
+    ).to_arrow_table()
+    return {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+
+
+def pair_run(*names) -> None:
+    for size in ("mid", "large"):
+        for hold in (5, 10):
+            d = pairs(hold, size)
+            for name in names:
+                keep = period(d, name)
+                m = measure(d, keep)
+                print(show(f"pair {hold} {size} {name}", m)
+                      + f"  long {100 * d['long_net'][keep].mean():.2f}%  short {100 * d['short_net'][keep].mean():.2f}%")
+                if name != "search":
+                    print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in m["yearly"].items()))
+
+
 def search_low() -> None:
     passed = []
     for score, hold, size in CELLS:
@@ -169,6 +203,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         search()
+    elif sys.argv[1] == "pairs":
+        pair_run(*sys.argv[2:])
     elif sys.argv[1] == "search_low":
         search_low()
     else:

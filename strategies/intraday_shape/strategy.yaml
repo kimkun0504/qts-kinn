@@ -1,18 +1,29 @@
 name: intraday_shape
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 28 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k
 family: intraday_shape
-prior_trials: 0
+prior_trials: 28
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
 record:
   title: Intraday shape
-  idea: Stocks pushed up in the first or last half hour, session after session
+  idea: Stocks pushed up or down in the first or last half hour, session after session
   horizon: 5 to 10 sessions
-  verdict: planned
+  verdict: closed
+  result: "Pushed up into the close for two weeks: trails other stocks by 0.5% to 1.4% (t −4 to −6); no trade after costs"
   summary: >-
-    An indicator of our own from minute bars: where in the session a stock moves. A stock
-    pushed up in the same half hour day after day may have a buyer who is not finished.
+    An indicator of our own from minute bars: where in the session a stock moves. The 10
+    stocks most pushed up (or down) in the first or last half hour over 10 sessions.
+  weaknesses:
+    - The push up into the close predicts a fall, but the stocks are thin and the short keeps 0.03% after costs.
+    - The push down predicts little; the first half hour predicts nothing.
+  evidence:
+    - {when: 2026-11-17, title: Pushed up into the close, kind: found, text: "Trails the average stock of its size by 0.48% to 1.36% over 5 to 10 sessions, weekly t −3.7 to −6.3, every size (2010 to 2017)."}
+    - {when: 2026-11-17, title: The trades, kind: failed, text: "No cell meets the bar; long-short in $2B+ 0.20% a trade, t 1.79."}
+  studies:
+    - {name: First and last half-hour scores, when: 2026-11-17, trials: 12, result: "Pushed up into the close trails other stocks; no long cell meets the bar", verdict: note}
+    - {name: The other end bought, when: 2026-11-17, trials: 12, result: "Up to +0.72% over the average stock; no cell meets the bar", verdict: failed}
+    - {name: Long-short in $300M and over, when: 2026-11-17, trials: 4, result: "0.20% a trade; t 1.79", verdict: failed}

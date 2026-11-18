@@ -85,3 +85,9 @@ Cells: 2 sizes ($300M to $2B; $2B or more) × 2 holds = **4**, charged to `intra
 its legs, shown for the record): 0.4% a trade for 10 sessions, 0.2% for 5, weekly t of 3,
 six years of eight. Tests on 2005–2009 and 2018–2022, run once each: **0.2% a trade for 10
 sessions, 0.1% for 5, weekly t of 2.5, four years of five, in both.**
+
+**Result of the pair, 2026-11-17 22:30 ET.** **None of the 4 cells meets the bar** (0.20% a trade for 10
+sessions in $2B or more, weekly t 1.79; 0.22% and t 1.50 in $300M to $2B). The stocks most
+pushed up into the close are thin and cheap for their size: costs both ways average 0.21% in
+$2B or more, and the short leg keeps 0.03% of their 0.29% fall. 4 trials; `intraday_shape`
+has 28. No tests run.
