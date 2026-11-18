@@ -1,10 +1,10 @@
 name: quarter_turn
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: closed            # failed the search period 2026-11-17
 engine: daily
 universe: worst tenth by 120-session return, $50M-$2B, at quarter ends
 family: quarter_turn
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Quarter turn
   idea: The half-year's worst losers bought at the last close of a quarter
   horizon: 10 sessions
-  verdict: planned
+  verdict: closed
+  result: "Losers bought at a quarter's last close do no better than other stocks (+0.2% to +0.4%)"
   summary: >-
     Window dressing and tax-loss selling push losers down until the last day of a quarter.
     Buy them at that close and hold two weeks.
+  weaknesses:
+    - No rebound shows at the turn of the year or any other quarter.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2010 to 2017, kind: failed, text: "+0.19% to +0.41% over the average stock, t under 0.4."}
+  studies:
+    - {name: Losers at the turn of a quarter, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
