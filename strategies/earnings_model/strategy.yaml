@@ -1,10 +1,10 @@
 name: earnings_model
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing fitted yet
+status: parked            # both cells fail; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $2B, the session after a results 8-K
 family: earnings_model
-prior_trials: 0
+prior_trials: 2
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Earnings model
   idea: One model of the drift after results, with the new intraday measurements
   horizon: 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "Its picks lose in 2005 to 2009 and 2023 and are not steady in 2018 to 2022"
   summary: >-
-    A single model, fixed in advance, fitted on 2010 to 2017 on every results event in
+    A single model, fixed in advance and fitted on 2010 to 2017, on every results event in
     companies of $50M to $2B, to find trades the fixed earnings rule misses.
+  weaknesses:
+    - 95% of its picks are not A50 signals, and those are not steady (2008 −5%, 2020 +6% to +8%, 2023 −3%).
+  evidence:
+    - {when: 2026-11-17, title: Two cells, kind: failed, text: "Top 10%: −0.69% (2005 to 2009), +1.52% t 0.83 (2018 to 2022), −2.76% (2023)."}
+  studies:
+    - {name: One fixed LightGBM model on results events, when: 2026-11-17, trials: 2, result: "Both cells fail", verdict: failed}

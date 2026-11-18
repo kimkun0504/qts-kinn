@@ -38,3 +38,16 @@ In **both** 2005–2009 and 2018–2022: 2% a trade after costs, a weekly t of 2
 five positive; **and** the trades that are not A50 signals must make 1% a trade or more in
 both, or the model has only found A50 again. 2023 is shown. **2 cells**, family
 `earnings_model`. The holdout stays sealed.
+
+**Results, 2026-11-17 22:36 ET.** In REPORT.md. **Both cells fail.** 149,263 events (1,560 of them A50
+signals). Out of fold in 2010–2017 the top 10% made 0.99% a trade and the top 5% 1.72%
+(t 3.9 and 4.0). Fitted on those years and applied elsewhere: 2005–2009 −0.69% and −1.18% a
+trade (2008 −5%); 2018–2022 +1.52% and +2.08% with a weekly t of 0.83 and 0.36 (2019 −2% to
+−3.5%, 2020 +6% to +8%); 2023 −2.8% and −2.9%. The trades it adds beyond A50 (95% of them)
+are worth nothing steady. The half-hour features are not among its ten most used. 2 trials.
+
+A data error found on the way: the panel's open for ASEI on 2007-08-09 is $0.01 (close
+$63.46), which makes a 15-session trade from the session before read +711,200%. The panel
+has 18 opens under 20% of the previous close on a session that closed within 20% of it, 4 of
+them in stocks of $50M and $250,000 a day; any study buying or selling at the open should
+drop them.
