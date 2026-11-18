@@ -61,6 +61,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/report_timing` | claude | 2026-11-17 | late and early results against the company's own calendar (Johnson and So) |
 | `strategies/sympathy` | claude | 2026-11-17 | peers that gap down after an industry name collapses after hours on results |
 | `strategies/first_report` | claude | 2026-11-17 | the drift after a new listing's first strong results |
+| `strategies/uplisting` | claude | 2026-11-17 | a company that moves up to Nasdaq or the NYSE (Sharadar exchange changes) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
