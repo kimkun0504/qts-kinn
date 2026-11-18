@@ -68,6 +68,8 @@ def table() -> None:
     con.execute(
         f"""copy (
             with q as (select *, lead(c, 1) over w as c1, lead(open, 1) over w as o1, lead(close, 1) over w as cl1,
+                              count(*) filter (where fp >= 2) over (partition by permaticker order by date
+                                  rows between 10 preceding and 1 preceding) as prior_fp,
                               last_value(c) over (partition by permaticker order by date
                                                   rows between current row and 10 following) as c10,
                               last_value(c) over (partition by permaticker order by date
@@ -85,10 +87,13 @@ def table() -> None:
                      and date between DATE '2005-01-03' and DATE '2023-10-13'),
             daily as (select date, size, avg(g10) as all10, avg(g20) as all20, avg(g40) as all40,
                              avg(case when fp >= 2 then 1.0 else 0.0 end) as share from ok group by 1, 2)
-            select ok.date as signal_day, ok.permaticker, ok.size, ok.fp, ok.dv / ok.adv as dvr, ok.c20_full is null as stopped,
+            select ok.date as signal_day, ok.permaticker, ok.size, ok.fp, ok.prior_fp, ok.dv / ok.adv as dvr,
+                   ok.c20_full is null as stopped,
                    exists (select 1 from filed f where f.permaticker = ok.permaticker and f.day = ok.date) as news_today,
                    exists (select 1 from filed f where f.permaticker = ok.permaticker and f.results
                            and f.day between ok.date - 4 and ok.date) as results_near,
+                   not exists (select 1 from filed f where f.permaticker = ok.permaticker
+                               and f.day between ok.date - 4 and ok.date) as quiet,
                    ok.close / ok.prev_close - 1 as ret, ok.g10, ok.g20, ok.g40, d.all10, d.all20, d.all40, d.share,
                    2 * (least(0.01, greatest(0.000175, 0.0035 / ok.close))
                         + case when ok.adv < 1e6 then 0.0025 when ok.adv < 1e7 then 0.0010
@@ -98,9 +103,9 @@ def table() -> None:
               and d.share < 0.05
               and (ok.fp >= 3 or not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date))
-        ) to '{folder()}/events_v7.parquet' (format parquet)"""
+        ) to '{folder()}/events_v8.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v7.parquet' group by 1, 2").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v8.parquet' group by 1, 2").fetchall())
 
 
 def news(period) -> None:
@@ -129,6 +134,28 @@ def news(period) -> None:
               + ("  MEETS THE BAR" if ok else ""))  # fmt: skip
         if period != "search":
             print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in yearly.items()))
+
+
+def repeat() -> None:
+    """Follow-up 6: the passed cell split by an earlier footprint in the 10 sessions before."""
+    for period in ("search", "early", "late", "check"):
+        t = duckdb.sql(
+            f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
+                from '{folder()}/events_v8.parquet'
+                where ret >= 0 and size = 'small' and fp >= 3 and not news_today and not exists_near"""
+            .replace("not exists_near", "true")
+        ).to_arrow_table()
+        d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+        first, last = PERIODS[period]
+        base = (d["yr"] >= first) & (d["yr"] <= last) & d["quiet"].astype(bool)
+        for label, keep in (("passed cell", base), ("repeated", base & (d["prior_fp"] >= 1)),
+                            ("single", base & (d["prior_fp"] == 0))):  # fmt: skip
+            over = d["g20"][keep] - d["all20"][keep]
+            _, tt, _ = weekly(over, d["week"][keep])
+            years = d["yr"][keep]
+            pos = sum(over[years == y].mean() > 0 for y in set(years))
+            print(f"{period:7} {label:12} {len(over):>5} trades  over the average {100 * over.mean():>6.2f}%  "
+                  f"t {tt:>5.2f}  yrs {pos} of {len(set(years))}")
 
 
 def sellers(period) -> None:
@@ -188,6 +215,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "repeat":
+        repeat()
     elif sys.argv[1] == "news":
         news(sys.argv[2])
     elif sys.argv[1] == "sellers":
