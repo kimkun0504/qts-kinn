@@ -274,3 +274,12 @@ Rule I signals, held 15 sessions, after costs:
 
 No better: insider purchases and large pieces do not add up. Rule I is unchanged. 1 trial
 (family 35).
+
+## Beside the earnings rule (a description)
+
+A50's signals at $2,000 a trade (plain 15-session exit) and big prints with ten positions, by
+year, after costs: the two move together more than A50 and the after-hours short do
+(correlation of yearly dollars 0.51; both are small-company longs). Together every year from
+2005 to 2023 is positive; the weakest are 2008 (+$514: A50 +$3,222, big prints −$2,708) and
+2011 (+$931: A50 −$671, big prints +$1,602). Big prints adds most in 2010, 2013 and 2019 and
+costs in 2018, 2022 and 2023.
