@@ -229,3 +229,19 @@ minutes do not carry the result; the price the order gets does, most in 2018–2
 interest before the signal (2018–2023, 244 signals): median 8.2% of shares and 7.0 days to cover
 against 2.7% and 4.6 for all stocks of the size; a tenth above 23%. 2 trials; `after_hours`
 has 109.
+
+## Addendum, 2026-11-17 23:12 ET: the short before the open
+
+Written before it is measured. The short after the close works, by the reading of this family,
+because the first prices after bad results are set by few traders and the funds sell later. The
+same may hold for results filed **before the open** (06:00 to 08:30): the first part measured
+only the long side there ("before the open: nothing").
+
+**Rule.** As the first part's "before" events (results 8-K accepted 06:00 to 08:30; the reading
+at 09:00 against the previous close; $50,000 traded in the premarket by then). Down **15% or
+more**: **sold short at the low of the next minute that trades** (by 09:20), **bought back at
+that session's close**. Costs: the auction allowance and commission, and a day's borrow.
+
+Cells: 3 sizes ($50M to $300M, $300M to $2B, $2B or more) = **3**, the first part's bar
+(150 trades, or fewer reported and taken on if the rest is met; 1%, t of 3, six years of eight;
+tests at 0.5%, t 2.5, four of five). 2023 is a check. Charged to `after_hours`.
