@@ -219,3 +219,11 @@ a footprint of 2 or more that day (market-wide days out). Bought at the next ope
 sessions, against SPY over the same days (open to close); costs 0.02% a side and commission.
 **1 cell.** Search bar: 150 trades, 1% over SPY, weekly t 3, six of eight; tests at half, t
 2.5, four of five. 1 trial.
+
+## Follow-up 14: large pieces before an A50 jump (written 2026-11-18 00:39 ET)
+
+Check 8 found big-print signals followed by results did best. Read from the other side: A50
+signals whose stock traded in large pieces (footprint 2 or more on any of the five sessions
+before the signal day) may be the jumps that informed buyers saw coming. **1 cell:** those A50
+signals, plain exit, after costs, against all A50 signals; judged as a filter: better per trade
+in all three periods, 2023 a check. 1 trial (A50 unchanged).
