@@ -1,6 +1,6 @@
 # After hours: an overnight gain in most years, missing in 2020 to 2022
 
-**Verdict: not passed; the nearest thing to a new result on 17 November.** Seven studies, 109
+**Verdict: not passed; the nearest thing to a new result on 17 November.** Eight studies, 112
 trials, nothing passed both tests. The holdout is untouched.
 
 Plan: [HYPOTHESIS.md](HYPOTHESIS.md). An earnings 8-K accepted after the close (or before
@@ -151,6 +151,11 @@ record. All three can be followed on paper each evening at no cost.
   last report was a median 8.2% of shares (7.0 days to cover), three times the 2.7% of other
   companies of the size; a tenth were above 23%. Those are the ones a broker may not lend, or
   lend dearly. Code: `research/claude/after_hours_robust.py`.
+
+**The same short before the open** (results filed 06:00–08:30, down 15%+ at 09:00, sold at the
+next minute's low, bought back at that session's close; 3 cells): 2010–2017 +1.63% (26 trades,
+$50M–$300M), +2.44% (71, t 1.55, $300M–$2B), +2.87% (53, t 2.52, seven years of seven, $2B+).
+The same direction, on too few signals to meet the bar.
 
 ## Following the short on paper (built 2026-11-17)
 

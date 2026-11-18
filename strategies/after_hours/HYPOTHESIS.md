@@ -245,3 +245,8 @@ that session's close**. Costs: the auction allowance and commission, and a day's
 Cells: 3 sizes ($50M to $300M, $300M to $2B, $2B or more) = **3**, the first part's bar
 (150 trades, or fewer reported and taken on if the rest is met; 1%, t of 3, six years of eight;
 tests at 0.5%, t 2.5, four of five). 2023 is a check. Charged to `after_hours`.
+
+**Results of the short before the open, 2026-11-17 23:13 ET.** **None of the 3 cells meets the bar.**
+2010–2017: $50M–$300M +1.63% (26 trades, t 0.70); $300M–$2B +2.44% (71, t 1.55); $2B or
+more +2.87% (53, t 2.52, seven years of seven). Bad results before the open also keep falling
+through the session, on too few signals for a rule. 3 trials; `after_hours` has 112.

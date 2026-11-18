@@ -112,5 +112,83 @@ def read() -> None:
           f"all stocks of $300M-$2B: median {100 * crowd[3]:.1f}%, {crowd[4]:.1f} days, 90th percentile {100 * crowd[5]:.1f}%")
 
 
+
+
+
+def before_lows(first: int, last: int) -> None:
+    """For results filed before the open: the low of the entry minute against the previous
+    close, and the session's close against the previous close."""
+    store = DataStore(load_settings())
+    out = ah.folder()
+    rows = [r for r in pq.read_table(out / "events.parquet").to_pylist() if r["timing"] == "before"]
+    entries = set(duckdb.sql(
+        f"select day, symbol from read_parquet('{out}/entries_*.parquet') where timing = 'before'").fetchall())  # fmt: skip
+    by_day = defaultdict(list)
+    for r in rows:
+        if (r["day"], r["symbol"]) in entries and first <= r["day"].year <= last:
+            by_day[r["day"]].append(r)
+    found = []
+    for day, items in sorted(by_day.items()):
+        bars = store.minute(day, symbols=[r["symbol"] for r in items], columns="symbol, minute_et, low, close")
+        sym = bars.column("symbol").to_pylist()
+        cols = {n: bars.column(n).to_numpy(zero_copy_only=False) for n in ("minute_et", "low", "close")}
+        where: dict = {}
+        for i, s in enumerate(sym):
+            where.setdefault(s, [i, i])[1] = i
+        for r in items:
+            if r["symbol"] not in where:
+                continue
+            a, b = where[r["symbol"]]
+            minute, low, price = (cols[n][a : b + 1].astype(float) for n in ("minute_et", "low", "close"))
+            regular = np.flatnonzero((minute >= ah.OPEN) & (minute <= ah.CLOSE))
+            if not len(regular):
+                continue
+            last_price = price[regular[-1]]
+            prev = last_price / float(np.exp(r["c"] - r["c_prev"]))
+            e = int(np.searchsorted(minute, 540))
+            if e >= len(minute) or minute[e] >= ah.OPEN or minute[e] > 560:
+                continue
+            found.append({"day": day, "symbol": r["symbol"], "low_rel": float(low[e] / prev), "close_rel": float(last_price / prev)})
+    schema = pa.schema([("day", pa.date32()), ("symbol", pa.string()), ("low_rel", pa.float64()), ("close_rel", pa.float64())])
+    pq.write_table(pa.Table.from_pylist(found, schema=schema), out / "before_lows.parquet")
+    print(len(found), "events")
+
+
+def before_search(*periods) -> None:
+    out = ah.folder()
+    t = duckdb.sql(
+        f"""select n.day, year(n.day) as yr, (date_diff('day', DATE '2003-12-29', n.day) // 7) as week, v.mcap,
+                   n.reaction, 1 - b.close_rel / b.low_rel as g,
+                   case when v.adv < 1e6 then 0.0025 when v.adv < 1e7 then 0.0010
+                        when v.adv < 1e8 then 0.0005 else 0.0002 end
+                   + 2 * least(0.01, greatest(0.000175, 0.0035 / n.paid)) + {ah.BORROW_NIGHT} as cost
+            from read_parquet('{out}/entries_*.parquet') n
+            join '{out}/before_lows.parquet' b on b.day = n.day and b.symbol = n.symbol
+            join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+            where n.timing = 'before' and n.reaction <= -0.15"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    net = d["g"] - d["cost"]
+    for size, (lo, hi) in ah.SIZES.items():
+        for period in periods:
+            a, b = ah.PERIODS[period]
+            k = (d["mcap"] >= lo) & (d["mcap"] < hi) & (d["yr"] >= a) & (d["yr"] <= b)
+            if k.sum() < 3:
+                print(f"before short {size} {period}: {k.sum()}")
+                continue
+            _, tt, _ = weekly(net[k], d["week"][k])
+            years = d["yr"][k]
+            pos = sum(net[k][years == y].mean() > 0 for y in set(years))
+            print(f"before short {size:5} {period:6} {k.sum():>4} trades  net {100 * net[k].mean():6.2f}%  median "
+                  f"{100 * np.median(net[k]):6.2f}%  t {tt:5.2f}  yrs {pos} of {len(set(years))}  worst {100 * net[k].min():.0f}%")  # fmt: skip
+
+
 if __name__ == "__main__":
-    lows5(int(sys.argv[2]), int(sys.argv[3])) if sys.argv[1] == "lows5" else read()
+    if sys.argv[1] == "lows5":
+        lows5(int(sys.argv[2]), int(sys.argv[3]))
+    elif sys.argv[1] == "before_lows":
+        before_lows(int(sys.argv[2]), int(sys.argv[3]))
+    elif sys.argv[1] == "before_search":
+        before_search(*sys.argv[2:])
+    else:
+        read()
