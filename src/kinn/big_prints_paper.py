@@ -219,7 +219,9 @@ def pending(state: dict) -> list[dict]:
 
 
 def report(state: dict) -> str:
-    done = [s for s in state["signals"] if s.get("net") is not None]
+    rule = [s for s in state["signals"] if not s.get("index_day")]
+    skipped_signals = [s for s in state["signals"] if s.get("index_day")]
+    done = [s for s in rule if s.get("net") is not None]
     lines = [
         "# Paper ledger: big prints",
         "",
@@ -227,8 +229,8 @@ def report(state: dict) -> str:
         "its usual volume, up 0% to 4%, with no recent 8-K; bought at the next open, sold at the",
         "close 20 sessions later. Paper only; IWM over the same days is shown beside each trade.",
         "",
-        f"Evenings recorded: {len(state['evenings'])}. Signals: {len(state['signals'])} "
-        f"({len(done)} closed, {len(state['signals']) - len(done)} open).",
+        f"Evenings recorded: {len(state['evenings'])}. Signals: {len(rule)} "
+        f"({len(done)} closed, {len(rule) - len(done)} open).",
     ]
     if done:
         net = [s["net"] for s in done]
@@ -238,14 +240,24 @@ def report(state: dict) -> str:
             f"{sum(n > 0 for n in net)} of {len(net)} made money"
             + (f"; {100 * sum(over) / len(over):+.2f}% over IWM." if over else ".")
         )
-    skipped = [e["day"] for e in state["evenings"] if e["share"] >= SHARE_MAX]
     longer = [s["net_40"] for s in done if s.get("net_40") is not None]
     if longer:
         average = 100 * sum(longer) / len(longer)
         lines.append(f"Held 40 sessions instead: average {average:+.2f}% on {len(longer)}.")
+    skipped = [e["day"] for e in state["evenings"] if e["share"] >= SHARE_MAX]
     if skipped:
         lines.append(
             f"Skipped as index days (share of large-trade stocks 5% or more): {', '.join(skipped)}."
+        )
+    if skipped_signals:
+        closed = [s["net"] for s in skipped_signals if s.get("net") is not None]
+        text = (
+            f"{100 * sum(closed) / len(closed):+.2f}% on {len(closed)} closed"
+            if closed
+            else "none closed"
+        )
+        lines.append(
+            f"Signals on those days, kept apart (not the rule): {len(skipped_signals)}; {text}."
         )
     lines += [
         "",
@@ -263,8 +275,9 @@ def report(state: dict) -> str:
         out = "open" if s.get("net") is None else f"{100 * s['net']:+.2f}%"
         bench = "" if s.get("benchmark") is None else f"{100 * s['benchmark']:+.2f}%"
         longer = "" if s.get("net_40") is None else f"{100 * s['net_40']:+.2f}%"
+        day = s["day"] + (" (index day)" if s.get("index_day") else "")
         lines.append(
-            f"| {s['day']} | {s['symbol']} | ${s['market_cap'] / 1e6:,.0f}M | {s['footprint']:.1f} "
+            f"| {day} | {s['symbol']} | ${s['market_cap'] / 1e6:,.0f}M | {s['footprint']:.1f} "
             f"| {100 * s['ret']:+.1f}% | {s['volume_ratio']:.1f} | {bought} | {sold} | {out} "
             f"| {bench} | {longer} |"
         )

@@ -7,8 +7,9 @@ finished one) it:
 1. fetches the vendor's grouped daily bars, unadjusted, for that session and the 70 sessions
    before it (kept in the ledger folder, so later evenings fetch one day);
 2. reads each stock's footprint (shares per trade against its own previous 60 sessions),
-   normal dollar volume, and the day's return and volume, and skips the evening if 5% or
-   more of liquid stocks trade in large pieces (an index day);
+   normal dollar volume, and the day's return and volume; if 5% or more of liquid stocks
+   trade in large pieces (an index day) the rule skips the evening, and its signals are
+   recorded apart, marked "index day", outside the rule's figures;
 3. for each stock that passes, looks up its type and market value at Massive and its 8-Ks at
    the SEC, and records each signal of strategies/big_prints ("small 20 fp>=3");
 4. on every run, fills in open signals from the stock's adjusted daily bars: bought at the
@@ -19,6 +20,7 @@ finished one) it:
     uv run python tools/owner/paper_big_prints.py                      # the latest session
     uv run python tools/owner/paper_big_prints.py --day 2026-11-17     # a given session
     uv run python tools/owner/paper_big_prints.py --since 2026-10-20   # every session since
+    uv run python tools/owner/paper_big_prints.py --since 2026-10-20 --redo   # read them again
 
 The Massive key is read from MASSIVE_API_KEY or `.env`, sent only to api.massive.com and never
 printed. The SEC gets no key. The ledger (state.json, report.md, bars/) is written beside the
@@ -89,8 +91,7 @@ def window_to(last: date, key: str, folder: Path) -> bpp.Window:
 def evening(day: date, window: bpp.Window, key: str, agent: str) -> tuple[float, list, list]:
     found = bpp.measures(window, day)
     share = bpp.market_share(found)
-    if share >= bpp.SHARE_MAX:
-        return share, [], []
+    index_day = share >= bpp.SHARE_MAX  # the rule skips the day; its signals are kept apart
     sessions = sorted(window)
     previous = max(d for d in sessions if d < day)
     signals, screened = [], []
@@ -105,6 +106,8 @@ def evening(day: date, window: bpp.Window, key: str, agent: str) -> tuple[float,
         ok, why = bpp.confirm(c, details.get("type"), details.get("market_cap"),
                               bpp.quiet(times, day, sessions))  # fmt: skip
         row = {**c, "day": day.isoformat(), "market_cap": details.get("market_cap") or 0.0}
+        if index_day:
+            row["index_day"] = True
         if ok:
             signals.append(row)
         else:
@@ -129,6 +132,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--day", help="the session to read (YYYY-MM-DD); default: the latest")
     parser.add_argument("--since", help="read every session from this date to the latest")
+    parser.add_argument("--redo", action="store_true", help="read again evenings already recorded")
     args = parser.parse_args()
     agent = os.environ.get("SEC_USER_AGENT") or raise_agent()
     key = tool.api_key()
@@ -142,7 +146,7 @@ def main() -> None:
             if day.weekday() < 5:
                 days.append(day)
             day += timedelta(days=1)
-    done = {e["day"] for e in state["evenings"]}
+    done = set() if args.redo else {e["day"] for e in state["evenings"]}
     for day in days:
         if day.isoformat() in done:
             continue

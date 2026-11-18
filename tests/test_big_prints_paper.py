@@ -142,6 +142,11 @@ def test_ledger_record_and_report(tmp_path):
     ]
     page = bpp.report(state)
     assert "ABCD" in page and "Skipped as index days" in page and "2026-11-16" in page
+    apart = {**sig, "day": "2026-11-16", "symbol": "WXYZ", "index_day": True, "net": -0.5}
+    bpp.record(state, date(2026, 11, 16), 0.07, [apart], [])
+    page = bpp.report(state)
+    assert "Signals: 1 " in page and "kept apart (not the rule): 1; -50.00% on 1 closed" in page
+    assert "2026-11-16 (index day) | WXYZ" in page
     bpp.save(tmp_path, state)
     assert bpp.load_state(tmp_path)["signals"][0]["symbol"] == "ABCD"
 
@@ -180,10 +185,13 @@ def test_tool_finds_a_signal_from_fetched_answers(monkeypatch, tmp_path):
     window = tool.window_to(day, "key", tmp_path)
     assert len(window) == tool.SESSIONS and (tmp_path / "bars" / f"{day.isoformat()}.json").exists()
     share, signals, screened = tool.evening(day, window, "key", "me@x")
-    assert share < bpp.SHARE_MAX
+    assert share < bpp.SHARE_MAX and not any(s.get("index_day") for s in signals)
     assert [s["symbol"] for s in signals] == ["ABCD"] and math.isclose(
         signals[0]["footprint"], 20.0
     )
     assert [s["symbol"] for s in screened] == ["WRNT"] and "common" in screened[0]["why"]
+    monkeypatch.setattr(bpp, "SHARE_MAX", 0.0)  # every day an index day: signals kept apart
+    _, apart, _ = tool.evening(day, window, "key", "me@x")
+    assert [s["symbol"] for s in apart] == ["ABCD"] and apart[0]["index_day"]
     again = tool.window_to(day, "key", tmp_path)  # read back from the ledger's folder
     assert again[day]["ABCD"] == window[day]["ABCD"]
