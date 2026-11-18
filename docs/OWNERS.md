@@ -49,6 +49,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/fragmented_selloff_exhaustion` | gpt | 2026-11-18 | smaller-print selloff exhaustion with a frozen unfiltered control |
 | `strategies/quiet_size_breakout` | gpt | 2026-11-18 | larger-print narrow-range breakout at one fixed clock time |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
+| `strategies/timed_filing_dislocation` | gpt | 2026-11-18 | as-of-time original 8-K exclusion on the existing date-filtered size-peer reversal |
 | `strategies/timed_earnings_discovery` | gpt | 2026-11-18 | frozen after-hours earnings rule; scoped timed-input adapter/build authorized |
 | `strategies/fragmented_demand_burst` | gpt | 2026-11-18 | transaction-count acceleration with a smaller-print ablation and a prior share-count proxy |
 | `strategies/active_gap_recovery` | gpt | 2026-11-18 | recovery after a dense-trading stock resumes at a discount; missing bars are a proxy only |
