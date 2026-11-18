@@ -339,3 +339,9 @@ on their first day, which A50's entry (the open after the signal day) does not g
 15 sessions: the larger-piece half −0.53% (2005–2009), +1.77%, +0.43%, −3.12% (2023), against
 +0.34%, +1.39%, −0.29%, −3.04% for all. Worse in 2005–2009: not a filter; and the cell itself
 is flat outside 2010–2017.
+
+**The evening version of A50's jump** (1 trial): small companies already up 15%+ after hours,
+bought at the next open, 15 sessions: all +2.97% (44), +3.53% (48), +4.96% (79), +8.03% (2023,
+10); with large after-hours pieces −4.73% (8), +7.15% (23), +10.56% (20), +2.23% (6). Far too
+few, and worse in 2005–2009 and 2023: not a filter. A50's own two-day test stays the better
+gate.

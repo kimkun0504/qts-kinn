@@ -4,7 +4,7 @@ status: event-study       # nothing passed both tests in 105 trials; three leads
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
-prior_trials: 128
+prior_trials: 129
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -45,6 +45,7 @@ record:
     - {name: The same signal bought at the next open, when: 2026-11-18, trials: 1, result: "Large pieces +4.3%, +5.1%, +8.5% (2023 +7.0%), better than the whole cell in every period; ~10 trades a year, t under 2.5", verdict: lead}
     - {name: Its overlap with A50, when: 2026-11-18, trials: 1, result: "35–40% become A50 signals and make 7–17%; the rest −2.7%, +3.4%, +5.5%, +0.1%: mostly A50 a day early", verdict: note}
     - {name: Who buys after hours in mid-sized companies, when: 2026-11-18, trials: 1, result: "Not a filter; the cell is flat outside 2010–2017", verdict: failed}
+    - {name: The evening version of A50's jump, when: 2026-11-18, trials: 1, result: "8 to 23 a period; worse in 2005–2009 and 2023; not a filter", verdict: failed}
     - {name: Later buy-backs for the short, when: 2026-11-17, trials: 2, result: "Bought back at 15:30: +4.55%, +3.47%, +2.37% (t 2.10), 2023 +8.82%; better than the open in every period", verdict: lead}
     - {name: The short before the open, when: 2026-11-17, trials: 3, result: "Same direction ($2B+ +2.87%, 7 of 7 years) on too few signals", verdict: failed}
     - {name: Harsher fills for the short, when: 2026-11-17, trials: 2, result: "Thin minutes do not matter; the worst of five minutes leaves 0.7% in 2018 to 2022", verdict: note}
