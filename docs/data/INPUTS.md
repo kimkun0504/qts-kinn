@@ -108,3 +108,55 @@ no analyst estimates on disk (Sharadar's fundamentals are as reported, dated by 
 measured against a consensus. The price move on the day of the report is the nearest
 measure available: `strategies/earnings_drift` uses a two-day jump of 15% on five times
 normal volume.
+
+## `form8k_timed`: original SEC 8-K accessions with acceptance time
+
+This separate owner-authorized input reads the existing
+`raw/sec/filing_times/8k.jsonl.gz` and identity fields from the
+Sharadar snapshot of the pinned build. Build only its new derived
+dataset with `kinn inputs build form8k_timed`; no bar/panel rebuild
+or download is involved. `kinn inputs show form8k_timed` gives the
+id, code version, observed archive coverage and rejections.
+
+Declare `inputs = {"form8k_timed": {"sessions": 1}}`.
+Here one session means acceptance on the current New York date,
+rather than the date-only form8k input's prior-day rule. Only this
+one-session contract is supported. `view.timed_reports[symbol]`
+contains immutable `TimedReport(symbol, permaticker, accession,
+form, filed, accepted, items, earnings, usable_minute)` values,
+oldest acceptance first with accession tie-breaks.
+
+Acceptance requires an explicit timezone, is stored as aware UTC,
+and is converted through America/New_York. Missing/naive/invalid
+times are rejected. A filing accepted during minute m becomes
+usable at completed-bar label m+1; its earliest signal can act
+at the opening minute m+2. `DayView.upto(cut)` hides filings with
+usable_minute > cut alongside later price bars. The filing's items
+are never combined with a later accession. Original 8-K only;
+amendments and stake filings are outside this adapter.
+
+The input joins issuer CIK to an unambiguous permaticker within
+the pinned pre-seal build, then uses the session's trading symbol.
+Missing and conflicting identities are excluded, including
+accessions appearing with conflicting issuer/time/item records.
+Exact duplicates collapse. The derived table retains issuer CIK
+for provenance. Static SEC-link mapping remains a snapshot-based
+identity limitation and is not a solution for stake-subject roles.
+
+Each immutable id fingerprints parser version, source contents,
+identity snapshot and master content, and data build id. Runs,
+resume, sweeps and worker processes pin that id. A sweep refuses
+different pinned input sets. The run manifest records input
+version, build, rows and observed source coverage.
+
+Both filed and local acceptance dates must precede 2023-11-09.
+Requested dates pass the seal even if a DataStore otherwise has
+unsealed access: this input adds no unseal path. Reading outside
+the observed valid source archive envelope fails explicitly.
+An envelope is not a completeness guarantee for every issuer.
+Rejection and identity counts are preserved in input metadata.
+
+SEC acceptance establishes public-by timing for the filing, not
+the first release of a press announcement. No analyst consensus,
+text sentiment, trading halt status, quoted depth or execution
+latency is supplied by this input.

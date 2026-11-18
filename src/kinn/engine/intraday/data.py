@@ -9,7 +9,7 @@ from datetime import date
 
 import numpy as np
 
-from kinn.core.types import RTH_CLOSE, RTH_OPEN, CurrentReport, Disclosure
+from kinn.core.types import RTH_CLOSE, RTH_OPEN, CurrentReport, Disclosure, TimedReport
 from kinn.data.inputs import EARNINGS_CODE, FORM8K_ITEMS, item
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
@@ -74,6 +74,7 @@ class DayView:
     # 8-K filings by symbol, oldest first, for strategies that declare the ``form8k`` input:
     # again only filings dated before ``day``.
     reports: Mapping[str, tuple[CurrentReport, ...]] = field(default_factory=dict)
+    timed_reports: Mapping[str, tuple[TimedReport, ...]] = field(default_factory=dict)
 
     def upto(self, last_minute: int) -> DayView:
         return DayView(
@@ -83,6 +84,10 @@ class DayView:
             {s: sd.upto(last_minute) for s, sd in self.symbols.items()},
             self.disclosures,
             self.reports,
+            {
+                symbol: tuple(r for r in rows if r.usable_minute <= last_minute)
+                for symbol, rows in self.timed_reports.items()
+            },
         )
 
 
@@ -159,6 +164,35 @@ def load_reports(
     return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
 
 
+def load_timed_reports(
+    store: DataStore, day: date, members: Mapping[str, Mapping]
+) -> dict[str, tuple[TimedReport, ...]]:
+    """Match immutable accession records by company and the session's traded symbol."""
+    symbols_of: dict[int, list[str]] = {}
+    for symbol, row in members.items():
+        symbols_of.setdefault(int(row["permaticker"]), []).append(symbol)
+    found: dict[str, list[TimedReport]] = {}
+    for row in store.form8k_timed(day).to_pylist():
+        symbols = symbols_of.get(int(row["permaticker"]), ())
+        if len(symbols) != 1:
+            continue  # missing or ambiguous session identity, never guess a trading symbol
+        symbol = symbols[0]
+        found.setdefault(symbol, []).append(
+            TimedReport(
+                symbol,
+                int(row["permaticker"]),
+                row["accession"],
+                row["form"],
+                row["filed"],
+                row["accepted"],
+                tuple(row["items"]),
+                row["earnings"],
+                row["usable_minute"],
+            )
+        )
+    return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
+
+
 def load_day(
     store: DataStore,
     day: date,
@@ -166,6 +200,7 @@ def load_day(
     *,
     form4_sessions: int = 0,
     form8k_sessions: int = 0,
+    form8k_timed_sessions: int = 0,
 ) -> DayData:
     """Load the universe's members for ``day`` with their minute bars, and, when asked for,
     that many sessions of insider disclosures (``form4_sessions``) and of 8-K filings
@@ -218,7 +253,10 @@ def load_day(
             )  # fmt: skip
     disclosures = load_disclosures(store, day, form4_sessions, members) if form4_sessions else {}
     reports = load_reports(store, day, form8k_sessions, members) if form8k_sessions else {}
+    if form8k_timed_sessions not in (0, 1):
+        raise ValueError("form8k_timed supports only the current session")
+    timed = load_timed_reports(store, day, members) if form8k_timed_sessions else {}
     view = DayView(
-        day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())), disclosures, reports
+        day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())), disclosures, reports, timed
     )
     return DayData(view, {s: r["close"] for s, r in members.items() if r["close"] is not None})

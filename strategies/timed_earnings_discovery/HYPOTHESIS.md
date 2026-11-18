@@ -135,3 +135,13 @@ range or volume can change that inferred fill. This is a
 selection assumption, not just uncertain costs. Prefix replay
 can test signal availability, not certify those fills.
 A numerical pass remains provisional pending quote/trade checks.
+
+## Implementation addendum before the first empirical run
+
+On 2026-11-18 the owner explicitly authorized the scoped native
+input and separate derived-input build. The native type, view
+prefix, input pinning and runner/CLI adapter were implemented.
+The derived schema also retains issuer CIK for provenance.
+Synthetic tests now exercise the actual native DayView rather
+than the proposed fixture's prefix implementation. No event,
+threshold, order, exit, selection gate or period changes.

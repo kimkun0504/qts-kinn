@@ -1,22 +1,17 @@
 # Timed after-hours earnings discovery
 
-Prepared; no empirical run. The hypothesis was committed before
-implementation. A new declared timestamped input is required.
-The owner has not yet authorized that platform adapter or the
-new derived-input build from existing raw files.
+No empirical run yet. The owner authorized the scoped timestamped
+8-K adapter and separate derived-input build on 2026-11-18.
+The native input, typed view, availability delay, worker/resume
+pinning and CLI are implemented.
 
-Strategy tests use synthetic contract fixtures only. They do not
-certify the unimplemented real loader, timestamp semantics,
-identity mapping, input coverage or actual fills. No return,
-sample size or risk estimate exists for this rule yet.
+Focused tests and the full test suite passed, as did lint and
+import contracts. Synthetic checks cover native parsing, issuer
+ambiguity, conflicting accessions, date boundaries, explicit
+offsets and DST, missing timestamps, the seal, the actual
+DayView prefix, future-filing canaries, input hash/pinning,
+resume/spawn workers and capped after-hours execution.
 
-Focused strategy/repository tests, lint and import contracts passed.
-Synthetic checks include winter/summer timezone conversion, the
-availability delay, earliest-filing selection, a later filing unable
-to rescue a failed event, deliberate future-filing cheating,
-future-price perturbations and after-hours timed execution.
-Additional synthetic checks cover the last permitted entry
-minute, acceptance seconds, entry expiry after a cap rejection,
-and failed liquidation retained as unresolved exposure with
-no completed event return. An official regular close cannot
-silently flatten that residual.
+Only the new derived input will be built from existing files.
+The frozen development study follows successful input creation.
+No return, sample size or risk estimate exists for the rule yet.

@@ -7,7 +7,7 @@ A bar with ``minute = m`` covers ``[m, m + 1)`` and is known only at ``m + 1``. 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 RTH_OPEN = 570  # 09:30
 RTH_CLOSE = 960  # 16:00
@@ -75,6 +75,22 @@ class Disclosure:
     director: bool
     ten_percent_owner: bool
     title: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class TimedReport:
+    """One original 8-K accession. Acceptance is aware UTC; usable_minute is a
+    completed-bar label one full minute after its New York acceptance minute."""
+
+    symbol: str
+    permaticker: int
+    accession: str
+    form: str
+    filed: date
+    accepted: datetime
+    items: tuple[str, ...]
+    earnings: bool
+    usable_minute: int
 
 
 @dataclass(frozen=True, slots=True)

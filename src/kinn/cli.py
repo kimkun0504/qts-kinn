@@ -119,8 +119,11 @@ def _inputs(args: argparse.Namespace) -> int:
             print(json.dumps(DataStore(settings).form8k_info(), indent=2))
             return 0
         if args.action == "build":
-            input_id = inputs.build_form4(settings)
-            print(f"form4 input {input_id}: built and current")
+            builder = (
+                inputs.build_form8k_timed if args.name == "form8k_timed" else inputs.build_form4
+            )
+            input_id = builder(settings)
+            print(f"{args.name} input {input_id}: built and current")
         print(json.dumps(inputs.info(settings, args.name), indent=2))
     except inputs.InputError as error:
         raise SystemExit(f"refused: {error}") from error
@@ -441,7 +444,7 @@ def main(argv: list[str] | None = None) -> int:
         "inputs", help="versioned inputs: kinn inputs build form4, kinn inputs show form8k"
     )
     extra.add_argument("action", choices=("build", "show"))
-    extra.add_argument("name", choices=("form4", "form8k"))
+    extra.add_argument("name", choices=("form4", "form8k", "form8k_timed"))
     extra.set_defaults(func=_inputs)
     swing = sub.add_parser(
         "swing", help="run a daily event rule as a book: kinn swing <strategy> --config <name>"

@@ -38,6 +38,7 @@ from kinn.engine.intraday.strategy import (
     day_signals,
     form4_sessions,
     form8k_sessions,
+    form8k_timed_sessions,
 )
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
@@ -124,10 +125,12 @@ def run_month_multi(job: dict) -> str:
     )
     insider_sessions = max(form4_sessions(r["strategy"]) for r in runs)
     report_sessions = max(form8k_sessions(r["strategy"]) for r in runs)
+    timed_sessions = max(form8k_timed_sessions(r["strategy"]) for r in runs)
     for day in (date.fromisoformat(d) for d in job["sessions"]):
         data = load_day(
             store, day, first.universe,
             form4_sessions=insider_sessions, form8k_sessions=report_sessions,
+            form8k_timed_sessions=timed_sessions,
         )  # fmt: skip
         shared = compute_features(first, data.view) if share_features and len(runs) > 1 else None
         for r in runs:
@@ -272,6 +275,23 @@ def start_run(
     if form8k_sessions(declared):  # read from the data build this run is pinned to
         found = store.form8k_info()
         used["form8k"] = {k: found[k] for k in ("input_id", "version", "last_filed", "rows")}
+    if form8k_timed_sessions(declared):
+        found = store.check_timed_coverage(start, end)
+        used["form8k_timed"] = {
+            k: found[k]
+            for k in (
+                "input_id",
+                "version",
+                "last_filed",
+                "rows",
+                "data_build_id",
+                "coverage_start",
+                "coverage_end",
+                "coverage_basis",
+                "first_accepted_day",
+                "last_accepted_day",
+            )
+        }
     short = registry.config_hash(
         {
             "meta": meta,
@@ -414,6 +434,8 @@ def continue_sweep(
             head["strategy"], head["sessions"], head["data_build_id"]
         ):  # fmt: skip
             raise ValueError("a sweep needs one strategy, one period and one data build")
+        if m.get("inputs", {}) != head.get("inputs", {}):
+            raise ValueError("a sweep needs one pinned input set")
     if any(m.get("unsealed") for m in manifests):
         raise ValueError("the holdout takes one run of one frozen variant, never a sweep")
     months: dict[str, list[str]] = {}
@@ -432,6 +454,7 @@ def continue_sweep(
                 "settings": {k: str(v) for k, v in dataclasses.asdict(settings).items()},
                 "build_id": head["data_build_id"], "strategy": head["strategy"],
                 "cost_calibration": head["cost_calibration"], "month": month,
+                "inputs": {k: v["input_id"] for k, v in head.get("inputs", {}).items()},
                 "sessions": sessions, "runs": todo, "deadline": deadline,
             })  # fmt: skip
     if workers <= 1:

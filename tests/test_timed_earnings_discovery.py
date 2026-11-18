@@ -1,4 +1,4 @@
-"""Synthetic proposed-input contract tests; no real loader or input build is exercised."""
+"""Synthetic signal and execution tests using the native timed type and prefix view."""
 
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from kinn import run as runner
+from kinn.core.types import TimedReport
 from kinn.engine.intraday.data import DayData, DayView, make_symbol_day
 from kinn.engine.intraday.simulator import FillConfig, simulate_day
 from kinn.engine.intraday.strategy import check_no_lookahead, day_signals, input_sessions
@@ -24,8 +25,8 @@ SPEC.loader.exec_module(MODULE)
 
 
 @dataclass(frozen=True)
-class FilingFixture:
-    """Proposed TimedReport fields, deliberately confined to this synthetic test."""
+class FilingFixture(TimedReport):
+    """Synthetic defaults for the native immutable filing type."""
 
     symbol: str = "ABC"
     permaticker: int = 1
@@ -36,27 +37,6 @@ class FilingFixture:
     items: tuple = ("2.02", "9.01")
     earnings: bool = True
     usable_minute: int = 961
-
-
-@dataclass(frozen=True)
-class ViewFixture:
-    """Synthetic prefix behavior only; never used as a research-data loader."""
-
-    day: date
-    open_minute: int
-    close_minute: int
-    symbols: dict
-    timed_reports: dict
-
-    def upto(self, cut):
-        return replace(
-            self,
-            symbols={s: b.upto(cut) for s, b in self.symbols.items()},
-            timed_reports={
-                s: tuple(r for r in rows if r.usable_minute <= cut)
-                for s, rows in self.timed_reports.items()
-            },
-        )
 
 
 def stock():
@@ -76,12 +56,12 @@ def stock():
 
 
 def view(*, bars=None, filings=None):
-    return ViewFixture(
+    return DayView(
         date(2010, 1, 4),
         570,
         960,
         {"ABC": stock() if bars is None else bars},
-        {"ABC": (FilingFixture(),) if filings is None else filings},
+        timed_reports={"ABC": (FilingFixture(),) if filings is None else filings},
     )
 
 
@@ -213,12 +193,10 @@ def test_existing_extended_simulator_applies_next_minute_and_after_hours_exit():
     assert fills.liquidation_limit_pct == 0.02
 
 
-def test_unimplemented_input_is_not_bypassed_and_params_are_frozen():
+def test_native_input_declaration_and_missing_reports_and_frozen_params():
     strategy = MODULE.build({})
-    with pytest.raises(RuntimeError, match="authorization and adapter"):
-        day_signals(strategy, DayView(date(2010, 1, 4), 570, 960, {"ABC": stock()}))
-    with pytest.raises(ValueError, match="unknown inputs"):
-        input_sessions(strategy, "form8k_timed")
+    assert not day_signals(strategy, DayView(date(2010, 1, 4), 570, 960, {"ABC": stock()}))
+    assert input_sessions(strategy, "form8k_timed") == 1
     with pytest.raises(ValueError, match="no tunable parameters"):
         MODULE.build({"gain": 0.1})
 

@@ -207,6 +207,58 @@ class DataStore:
             [first, day],
         )
 
+    def form8k_timed_info(self) -> dict:
+        """Metadata for this store's pinned timed input, never a silently newer version."""
+        meta = inputs_module.info(self._settings, "form8k_timed", self.input_id("form8k_timed"))
+        if (
+            meta.get("version") != inputs_module.FORM8K_TIMED_VERSION
+            or meta.get("data_build_id") != self.build_id
+            or not meta.get("rows")
+        ):
+            raise inputs_module.InputError("timed input version/build mismatch or empty input")
+        return meta
+
+    def check_timed_coverage(self, start: date, end: date) -> dict:
+        # This separately scoped input has no unseal path, even in an unsealed DataStore.
+        seal.check_range(start, end, source="form8k_timed")
+        meta = self.form8k_timed_info()
+        if start < date.fromisoformat(meta["coverage_start"]) or end > date.fromisoformat(
+            meta["coverage_end"]
+        ):
+            raise inputs_module.InputError(
+                f"timed input {meta['input_id']} covers the observed archive envelope "
+                f"{meta['coverage_start']}..{meta['coverage_end']}, not {start}..{end}"
+            )
+        return meta
+
+    def form8k_timed(self, day: date, *, sessions: int = 1, asof_minute: int = 1439) -> pa.Table:
+        """Original 8-K accessions accepted on this New York date, after their delay.
+
+        sessions=1 means the current session for this timed input. Earlier/future session
+        filings are absent. asof_minute is a completed-bar label, not wall-clock time.
+        """
+        if type(sessions) is not int or sessions != 1:
+            raise ValueError("form8k_timed supports only sessions=1 (current session)")
+        if type(asof_minute) is not int or not -1 <= asof_minute <= 1439:
+            raise ValueError("asof_minute must be a completed-bar label in [-1, 1439]")
+        meta = self.check_timed_coverage(day, day)
+        path = (
+            inputs_module.root(self._settings, "form8k_timed")
+            / meta["input_id"]
+            / "reports.parquet"
+        )
+        return self._query(
+            """select * from read_parquet(?)
+               where day = ? and day < ? and filed < ?
+                 and cast(timezone('America/New_York', accepted) as date) = day
+                 and usable_minute =
+                     60 * date_part('hour', timezone('America/New_York', accepted))
+                     + date_part('minute', timezone('America/New_York', accepted)) + 1
+                 and usable_minute <= ? and form = '8-K'
+               order by accepted, accession, permaticker""",
+            [str(path), day, HOLDOUT_START, HOLDOUT_START, asof_minute],
+        )
+
     def minute(
         self, day: date, *, symbols: list[str] | None = None, columns: str = "*"
     ) -> pa.Table:
