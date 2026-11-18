@@ -1,10 +1,10 @@
 name: russell_move
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: closed            # long failed the search; the short failed both tests 2026-11-17
 engine: daily
 universe: companies moving from the Russell 1000 to the Russell 2000 (rebuilt from market values)
 family: russell_move
-prior_trials: 0
+prior_trials: 6
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,8 @@ record:
   title: Russell move
   idea: A company that drops from the Russell 1000 to the top of the Russell 2000
   horizon: about 20 sessions
-  verdict: planned
+  verdict: failed_holdout
+  result: Leavers lost 2.6% to small stocks into the rebuild in 2010–17; the short failed 2018–22
   summary: >-
     Russell 2000 funds must buy the largest newcomers at the June rebuild. Buy them after the
     May rank day and sell at the rebuild, or buy after it.

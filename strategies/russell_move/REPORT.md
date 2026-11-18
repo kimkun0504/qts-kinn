@@ -20,3 +20,20 @@ year's large losers and keep losing for a month (momentum), or the funds trackin
 the last day. The selling-short side is planned below before its test years are read.
 
 Trials: 4.
+
+## Follow-up: the short into reconstitution, test years (read 17 November 2026, 23:55 ET)
+
+The short's return over the small-company average (the sign turned from the table's "over"):
+
+| Kind | 2005–2009 | 2018–2022 |
+|---|---|---|
+| Moved down | +4.46% (344; t 1.45; 4 of 5) | −0.86% (462; t −1.02; 1 of 5) |
+| Moved clearly | +6.27% (110; t 1.66; 4 of 5) | −2.19% (189; t −1.45; 1 of 5) |
+
+Year by year (moved down, short): 2005 +0.3%, 2006 −1.9%, 2007 +0.7%, 2008 +11.1%, 2009 +8.2%;
+2018 −0.1%, 2019 −2.3%, 2020 +1.9%, 2021 −0.8%, 2022 −3.4%.
+
+**Failed both tests.** The gain was a 2008 to 2017 pattern, largest in 2008 and 2009, and gone
+since 2018; it was the momentum of the year's losers, not a rule. **Verdict: closed.**
+
+Trials: 2 (family total 6).
