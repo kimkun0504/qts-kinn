@@ -82,7 +82,7 @@ export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey,
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={onRowClick ? (event) => event.key === "Enter" && onRowClick(row) : undefined}
               className={`${onRowClick ? "cursor-pointer hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent" : ""} ${
-                selected ? "bg-raised shadow-[inset_2px_0_0_var(--accent)]" : ""
+                selected ? "bg-raised font-medium" : ""
               }`}
             >
               {columns.map((column) => {

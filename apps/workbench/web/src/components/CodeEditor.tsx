@@ -30,7 +30,7 @@ interface CodeEditorProps {
 const theme = EditorView.theme({
   "&": { backgroundColor: "var(--surface)", color: "var(--ink)", fontSize: "13.5px" },
   "&.cm-focused": { outline: "none" },
-  ".cm-scroller": { fontFamily: '"JetBrains Mono", "SF Mono", Menlo, Consolas, monospace', lineHeight: "1.55" },
+  ".cm-scroller": { fontFamily: "var(--code-font)", lineHeight: "1.6" },
   ".cm-content": { caretColor: "var(--ink)", padding: "10px 0" },
   ".cm-gutters": { backgroundColor: "var(--surface)", color: "var(--ink-3)", border: "none", borderRight: "1px solid var(--line-soft)" },
   ".cm-activeLine": { backgroundColor: "color-mix(in srgb, var(--raised) 60%, transparent)" },
@@ -72,7 +72,7 @@ function fieldCompletions(fields: Field[]) {
 
 /** The Python editor of the Lab (CodeMirror 6). Cmd/Ctrl+S saves, Cmd/Ctrl+Enter runs. */
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor(
-  { value, onChange, onSave, onRun, fields = [], readOnly = false, label, minHeight = 420 },
+  { value, onChange, onSave, onRun, fields = [], readOnly = false, label, minHeight = 200 },
   ref,
 ) {
   const host = useRef<HTMLDivElement>(null);
@@ -98,7 +98,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
         ]),
         theme,
         EditorView.theme({
-          "&": { maxHeight: "72vh" },
+          "&": { height: "100%" },
           ".cm-scroller": { overflow: "auto" },
           ".cm-content, .cm-gutter": { minHeight: `${minHeight}px` },
         }),
@@ -147,5 +147,5 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
     focus: () => view.current?.focus(),
   }));
 
-  return <div ref={host} className="overflow-hidden" />;
+  return <div ref={host} className="h-full min-h-0 overflow-hidden" />;
 });

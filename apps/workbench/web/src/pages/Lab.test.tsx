@@ -1,9 +1,16 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LabSettings, RunDetail, StockRow } from "../lib/lab";
 import { Lab } from "./Lab";
 
 afterEach(cleanup);
+
+// jsdom does not lay text out; the editor measures it.
+beforeAll(() => {
+  const empty = () => ({ length: 0, item: () => null, [Symbol.iterator]: [][Symbol.iterator] }) as unknown as DOMRectList;
+  Range.prototype.getClientRects = empty;
+  Range.prototype.getBoundingClientRect = () => new DOMRect();
+});
 
 const DEFAULTS: LabSettings = {
   period: "search",
@@ -57,7 +64,7 @@ beforeEach(() => {
 describe("the Lab", () => {
   it("shows the algorithm, its warnings and its best and worst stocks", async () => {
     render(<Lab name="two_up" onOpen={() => undefined} />);
-    expect(await screen.findByText("two_up.py")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "two_up" })).toBeTruthy();
     expect(await screen.findByText("The code looks ahead")).toBeTruthy();
     expect(screen.getByText("Fragile")).toBeTruthy();
     expect(await screen.findByText("Best stocks")).toBeTruthy();
@@ -83,6 +90,21 @@ describe("the Lab", () => {
     const post = calls.find((c) => c.init?.method === "POST");
     expect((post?.init?.headers as Record<string, string>)["X-Kinn-Token"]).toBe("tok");
     expect(JSON.parse(String(post?.init?.body))).toEqual({ algorithm: "two_up", code: CODE, settings: { exit: { hold_days: 5 } } });
+  });
+
+  it("lists the algorithms without opening one, and opens one on a click", async () => {
+    const onOpen = vi.fn();
+    render(<Lab onOpen={onOpen} />);
+    fireEvent.click(await screen.findByText("two_up"));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onOpen).toHaveBeenCalledWith("two_up", undefined);
+  });
+
+  it("goes back to the list from an algorithm", async () => {
+    const onOpen = vi.fn();
+    render(<Lab name="two_up" onOpen={onOpen} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Lab" }));
+    expect(onOpen).toHaveBeenCalledWith(undefined, undefined);
   });
 
   it("refuses a bad setting before running", async () => {

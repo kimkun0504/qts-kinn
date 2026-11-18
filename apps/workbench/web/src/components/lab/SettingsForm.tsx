@@ -1,3 +1,5 @@
+// Unused since the redesign of 2026-11-18 (the Inspector replaced it). Kept only because the
+// agent cannot delete files on the Mac; delete it with git rm.
 import type { LabSettings, Meta } from "../../lib/lab";
 import { changed, type Draft, NUMBERS, type NumberSpec, shown } from "../../lib/labSettings";
 import { Segmented } from "../ui/Segmented";

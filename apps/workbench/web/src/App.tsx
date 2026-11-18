@@ -89,7 +89,7 @@ export default function App() {
     <AppShell
       page={route.page}
       onNavigate={(page) => go({ page })}
-      title={TITLES[route.page]}
+      title={route.page === "lab" && route.name ? null : TITLES[route.page]}
       counts={{
         strategies: board ? board.rows.filter((row) => !row.variant).length : undefined,
         runs: live.length || undefined,

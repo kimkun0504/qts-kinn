@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { lab, type RunDetail, type StockRow, type TradePage, type TradeRow, type YearRow } from "../../lib/lab";
+import { lab, type RunDetail, type RunListRow, type RunState, type StockRow, type TradePage, type TradeRow, type YearRow } from "../../lib/lab";
 import { day, dollars, int, money, num, pct, plainPct } from "../../lib/format";
 import { useLoad } from "../../lib/useLoad";
 import { Histogram } from "../charts/Histogram";
 import { LineChart } from "../charts/LineChart";
 import { YearBars } from "../charts/YearBars";
 import { CodeEditor } from "../CodeEditor";
-import { Badge } from "../ui/Badge";
+import { Badge, type Tone } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { type Column, DataTable, type Sort } from "../ui/DataTable";
 import { Panel } from "../ui/Panel";
@@ -14,12 +14,6 @@ import { Segmented } from "../ui/Segmented";
 import { StatStrip } from "../ui/StatStrip";
 
 type Tab = "overview" | "stocks" | "trades" | "years" | "code";
-
-interface RunResultsProps {
-  detail: RunDetail;
-  onRestoreCode: (code: string) => void;
-  onUseSettings: () => void;
-}
 
 const field = "min-h-8 rounded-md border border-line bg-surface px-2.5 text-sm text-ink placeholder:text-ink-3 focus-visible:outline-2 focus-visible:outline-accent";
 
@@ -346,64 +340,200 @@ function Code({ runId, onRestoreCode, onUseSettings }: { runId: string; onRestor
         </span>
       }
     >
-      {data ? <CodeEditor value={data.code} readOnly label="The code this run used" minHeight={200} /> : <p className="m-0 px-4 py-6 text-ink-2">Loading…</p>}
+      {data ? (
+        <div className="h-[420px]">
+          <CodeEditor value={data.code} readOnly label="The code this run used" />
+        </div>
+      ) : (
+        <p className="m-0 px-4 py-6 text-ink-2">Loading…</p>
+      )}
     </Panel>
   );
 }
 
-/** A finished run: warnings first, then the summary, stocks, trades, years and code. */
-export function RunResults({ detail, onRestoreCode, onUseSettings }: RunResultsProps) {
-  const [tab, setTab] = useState<Tab>("overview");
+export interface RunRow extends RunListRow {
+  /** The trial number: the runs of this algorithm that computed signals, oldest first. */
+  number: number | null;
+}
+
+const STATE_TONE: Record<RunState, Tone> = {
+  queued: "info",
+  running: "info",
+  complete: "ok",
+  failed: "bad",
+  cancelled: "muted",
+  interrupted: "warn",
+};
+export const STATE_LABEL: Record<RunState, string> = {
+  queued: "Starting",
+  running: "Running",
+  complete: "Done",
+  failed: "Failed",
+  cancelled: "Cancelled",
+  interrupted: "Stopped",
+};
+
+/** "18 Nov 14:22" in the viewer's time. */
+export function when(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso.slice(0, 16).replace("T", " ");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getDate()} ${months[date.getMonth()]} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function runLabel(run: RunRow): string {
+  return [run.number ? `Trial ${run.number}` : "Not a trial", when(run.created_at), run.period].filter(Boolean).join(", ");
+}
+
+/** The line of an error that says what went wrong (a traceback ends with it). */
+function lastLine(text: string): string {
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  return lines[lines.length - 1] ?? text;
+}
+
+const runColumns: Column<RunRow>[] = [
+  { key: "trial", header: "Trial", align: "left", render: (r) => (r.number ? String(r.number) : "–") },
+  { key: "created", header: "Started", align: "left", muted: true, render: (r) => when(r.created_at) },
+  { key: "period", header: "Period", align: "left", muted: true, render: (r) => r.period ?? "–" },
+  { key: "state", header: "State", align: "left", render: (r) => <Badge tone={STATE_TONE[r.state]}>{STATE_LABEL[r.state]}</Badge> },
+  { key: "headline", header: "Result", align: "left", max: 460, render: (r) => r.headline ?? (r.error ? lastLine(r.error) : (r.stage ?? "–")) },
+];
+
+function Failure({ detail }: { detail: RunDetail }) {
+  const [log, setLog] = useState<string | null>(null);
+  const status = detail.status;
+  const ours = (status.error ?? "").startsWith("The Lab failed");
+  return (
+    <Panel padded>
+      <div role="alert" className="flex flex-col gap-2">
+        <Badge tone={STATE_TONE[status.state]}>{STATE_LABEL[status.state]}</Badge>
+        {status.error && <pre className="m-0 max-h-[360px] overflow-auto rounded-md bg-raised p-3 font-mono text-[13px] leading-relaxed whitespace-pre-wrap">{status.error}</pre>}
+        {status.signals_computed && <span className="text-[13px] text-ink-3">It got as far as the signals, so it counts as trial {status.trial_number}.</span>}
+        {ours && log == null && (
+          <button type="button" onClick={() => lab.log(detail.run_id).then((found) => setLog(found.log))} className="cursor-pointer self-start text-[13px] font-medium text-accent hover:underline">
+            Show the worker's log
+          </button>
+        )}
+        {log != null && <pre className="m-0 max-h-[360px] overflow-auto rounded-md bg-raised p-3 font-mono text-[13px] whitespace-pre-wrap">{log || "The log is empty."}</pre>}
+      </div>
+    </Panel>
+  );
+}
+
+interface RunResultsProps {
+  /** The run on screen, once loaded. */
+  detail: RunDetail | null;
+  runs: RunRow[];
+  selected: string | null;
+  onSelect: (runId: string) => void;
+  onRestoreCode: (code: string) => void;
+  onUseSettings: (detail: RunDetail) => void;
+}
+
+/** The results of the run on screen, a choice of run, and every run of the algorithm. */
+export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, onUseSettings }: RunResultsProps) {
+  const [tab, setTab] = useState<Tab | "runs">("overview");
   const [ticker, setTicker] = useState("");
-  const { data: stocks } = useLoad(() => lab.stocks(detail.run_id), `stocks-${detail.run_id}`);
-  const s = detail.summary;
-  if (!s) return null;
+  const complete = detail?.status.state === "complete" && detail.summary ? detail : null;
+  const { data: stocks } = useLoad(() => (complete ? lab.stocks(complete.run_id) : Promise.resolve(null)), `stocks-${complete?.run_id ?? "none"}`);
+  useEffect(() => setTicker(""), [selected]);
+  const s = complete?.summary;
   const openStock = (name: string) => {
     setTicker(name);
     setTab("trades");
   };
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "overview", label: "Overview" },
-    { key: "stocks", label: `Stocks${stocks ? ` ${int(stocks.length)}` : ""}` },
-    { key: "trades", label: `Trades ${int(s.trades)}` },
-    { key: "years", label: "Years" },
-    { key: "code", label: "Code" },
-  ];
+  const tabs: { key: Tab | "runs"; label: string }[] = complete
+    ? [
+        { key: "overview", label: "Overview" },
+        { key: "stocks", label: `Stocks${stocks ? ` ${int(stocks.length)}` : ""}` },
+        { key: "trades", label: `Trades ${int(s?.trades)}` },
+        { key: "years", label: "Years" },
+        { key: "code", label: "Code" },
+        { key: "runs", label: `Runs ${runs.length}` },
+      ]
+    : [
+        { key: "overview", label: "Result" },
+        { key: "code", label: "Code" },
+        { key: "runs", label: `Runs ${runs.length}` },
+      ];
+  const active = tabs.some((t) => t.key === tab) ? tab : "overview";
+  const current = runs.find((r) => r.run_id === selected);
   return (
-    <div className="flex flex-col gap-4">
-      {!s.lookahead.passed && (
+    <section aria-label="Results" className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-line">
+        <div role="tablist" aria-label="Run results" className="flex flex-wrap gap-6">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={active === t.key}
+              onClick={() => setTab(t.key)}
+              className={`-mb-px cursor-pointer border-b-2 pb-2.5 text-sm font-medium focus-visible:outline-2 focus-visible:outline-accent ${
+                active === t.key ? "border-accent text-ink" : "border-transparent text-ink-2 hover:text-ink"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1" />
+        {runs.length > 1 && (
+          <select aria-label="Run shown" value={selected ?? ""} onChange={(e) => onSelect(e.target.value)} className="mb-2 h-8 max-w-[340px] rounded-md border border-line bg-surface px-2 text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent">
+            {runs.map((r) => (
+              <option key={r.run_id} value={r.run_id}>
+                {runLabel(r)}
+              </option>
+            ))}
+          </select>
+        )}
+        {runs.length === 1 && current && <span className="mb-2.5 text-[13px] text-ink-3">{runLabel(current)}</span>}
+      </div>
+      {complete && !s?.lookahead.passed && active !== "runs" && (
         <div role="alert" className="rounded-lg border border-neg bg-surface px-4 py-3">
           <Badge tone="bad">The code looks ahead</Badge>
-          <p className="m-0 mt-1 max-w-[100ch] text-sm text-ink-2">{s.lookahead.detail}</p>
+          <p className="m-0 mt-1 max-w-[100ch] text-sm text-ink-2">{s?.lookahead.detail}</p>
         </div>
       )}
-      {s.fragile && (
+      {complete && s?.fragile && active !== "runs" && (
         <div className="rounded-lg border border-warn bg-surface px-4 py-3">
           <Badge tone="warn">Fragile</Badge>
           <p className="m-0 mt-1 text-sm text-ink-2">It makes money at the expected costs and loses at twice the slippage.</p>
         </div>
       )}
-      <div role="tablist" aria-label="Run results" className="flex flex-wrap gap-6 border-b border-line">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.key}
-            onClick={() => setTab(t.key)}
-            className={`-mb-px cursor-pointer border-b-2 pb-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-accent ${
-              tab === t.key ? "border-accent text-ink" : "border-transparent text-ink-2 hover:text-ink"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      {tab === "overview" && <Overview detail={detail} stocks={stocks} onStock={openStock} onAllStocks={() => setTab("stocks")} />}
-      {tab === "stocks" && (stocks ? <Stocks stocks={stocks} onStock={openStock} /> : <p className="text-ink-2">Loading…</p>)}
-      {tab === "trades" && <Trades runId={detail.run_id} ticker={ticker} onTicker={setTicker} />}
-      {tab === "years" && <Years runId={detail.run_id} />}
-      {tab === "code" && <Code runId={detail.run_id} onRestoreCode={onRestoreCode} onUseSettings={onUseSettings} />}
-    </div>
+      {active === "runs" ? (
+        <Panel>
+          <DataTable
+            columns={runColumns}
+            rows={runs}
+            rowKey={(r) => r.run_id}
+            selectedKey={selected}
+            onRowClick={(r) => {
+              onSelect(r.run_id);
+              setTab("overview");
+            }}
+          />
+        </Panel>
+      ) : active === "code" && detail ? (
+        <Code runId={detail.run_id} onRestoreCode={onRestoreCode} onUseSettings={() => onUseSettings(detail)} />
+      ) : !detail ? (
+        <p className="m-0 text-ink-2">Loading the run…</p>
+      ) : !complete ? (
+        detail.status.state === "queued" || detail.status.state === "running" ? (
+          <p className="m-0 text-ink-2">The results appear here when the run ends.</p>
+        ) : (
+          <Failure detail={detail} />
+        )
+      ) : active === "overview" ? (
+        <Overview detail={complete} stocks={stocks} onStock={openStock} onAllStocks={() => setTab("stocks")} />
+      ) : active === "stocks" ? (
+        stocks ? <Stocks stocks={stocks} onStock={openStock} /> : <p className="text-ink-2">Loading…</p>
+      ) : active === "trades" ? (
+        <Trades runId={complete.run_id} ticker={ticker} onTicker={setTicker} />
+      ) : (
+        <Years runId={complete.run_id} />
+      )}
+    </section>
   );
 }
