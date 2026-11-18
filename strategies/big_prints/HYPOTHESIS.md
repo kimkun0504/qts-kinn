@@ -151,3 +151,13 @@ rule I signals whose signal day is traded in large pieces should do better. **1 
 with a footprint of 1.5 or more on the signal day, against all rule I signals, after costs.
 Judged as a filter: better per trade in all three periods (2005–2009, 2010–2017, 2018–2022),
 2023 a check; the rest printed beside. 1 trial (charged here; rule I is unchanged).
+
+## Follow-up 9: a quiet fall, by who sold (written 2026-11-18 00:25 ET)
+
+A stock that falls 5% or more on a day with no 8-K (reaction session from four days before to
+D) and 1.5x its normal dollar volume: if the selling came in small pieces (footprint under
+0.8, the crowd) it may be an overreaction that comes back; in large pieces (2 or more) it may be
+a fund that has not finished. Bought at the next open, held 10 sessions, against the average
+stock of its size. **4 cells:** size ($50M–$300M, $300M–$2B) × footprint (under 0.8, 2 or
+more). Search bar: 150 trades, 1% over the average, t 3, six of eight, positive after costs;
+tests at half. 4 trials.
