@@ -1,0 +1,18 @@
+name: quarter_turn
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: worst tenth by 120-session return, $50M-$2B, at quarter ends
+family: quarter_turn
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Quarter turn
+  idea: The half-year's worst losers bought at the last close of a quarter
+  horizon: 10 sessions
+  verdict: planned
+  summary: >-
+    Window dressing and tax-loss selling push losers down until the last day of a quarter.
+    Buy them at that close and hold two weeks.

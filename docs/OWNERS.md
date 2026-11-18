@@ -68,6 +68,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/after_hours_other` | claude | 2026-11-17 | large after-hours moves that are not results |
 | `strategies/russell_move` | claude | 2026-11-17 | companies moving from the Russell 1000 to the Russell 2000 |
 | `strategies/busy_day` | claude | 2026-11-17 | results jumps on crowded reporting days |
+| `strategies/quarter_turn` | claude | 2026-11-17 | losers bought at the last close of a quarter |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
