@@ -74,7 +74,7 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
   if (!s.trades) return <Panel padded>The algorithm made no trades in this period with these settings.</Panel>;
   const best = (stocks ?? []).slice(0, 8);
   const worst = (stocks ?? []).slice(-8).reverse().filter((row) => !best.includes(row));
-  const small: Column<StockRow>[] = [stockColumns[0], { ...stockColumns[2], max: 150 }, stockColumns[3], stockColumns[5], stockColumns[7]];
+  const small: Column<StockRow>[] = [stockColumns[0], stockColumns[3], stockColumns[4], stockColumns[5], stockColumns[7]];
   const exits = Object.entries(s.exits ?? {}).sort((a, b) => b[1] - a[1]);
   return (
     <div className="flex flex-col gap-5">
