@@ -1,5 +1,5 @@
 name: fragmented_demand_burst
-status: study
+status: parked
 engine: intraday
 universe: domestic common stocks with a low prior estimated share-count proxy
 cost_calibration: ibkr_pro_tiered
@@ -10,7 +10,9 @@ record:
   title: Fragmented demand burst
   idea: Test accelerating transaction activity with smaller average prints
   horizon: Sixty minutes after first fill
-  verdict: untested
+  verdict: parked
+  label: Empty primary and sparse losing control
+  result: No primary events; nine control events averaged -1.01% net and -1.30% at doubled slippage
   summary: >-
     At a fixed morning time, compare a count-burst rule with its
     smaller-print subset in stocks with low estimated share counts.
