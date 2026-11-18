@@ -189,3 +189,14 @@ uses the previous close, so the buy is at the first session's open), held 20 ses
 the average stock of the size over the same days. **2 cells** (small, mid). Bar: 1% over the
 average, t over the months of 3, six of eight years, positive after costs; tests at half, t
 2.5, four of five. 2 trials.
+
+## Follow-up 12: the smaller results jumps, traded in large pieces (written 2026-11-18 00:28 ET)
+
+A50 takes only jumps of 15% or more on 5x volume; the smaller jumps (5% to 15%, 3x volume or
+more) in the same $50M–$300M companies drift less (the earlier families found them under the
+bar). If large pieces mark institutions buying into the news, the smaller jumps traded in large
+pieces may drift like A50's. Events from the same tables as A50 (results day, 2-day return 5%
+to 15%, 2-day volume 3x or more), footprint read on the signal day. **1 cell:** footprint 1.5 or
+more, held as A50's plain exit (next open to the close 15 sessions later), after costs; the rest
+printed beside. Search bar: 150 trades, 1% a trade after costs, weekly t 3, six of eight;
+tests at 0.5%, t 2.5, four of five. 1 trial.
