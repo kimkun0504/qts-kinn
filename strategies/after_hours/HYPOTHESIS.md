@@ -275,3 +275,8 @@ may come back. **Bought at the close of the session after the report** (D+1), so
 5 or 10 sessions later. Costs: the auction allowance and commission. The bar of the first part
 (1% a trade, t of 3, six years of eight on 2010–2017, 150 trades or fewer if the rest is met;
 tests at 0.5%, t 2.5, four of five). **2 cells**, charged to `after_hours`.
+
+**Results of the rebound, 2026-11-17 23:21 ET.** **Neither cell meets the bar.** Bought at the close of
+the session after the report: −0.50% in 5 sessions (median −0.60%, two years of eight), +0.19%
+in 10 (median −1.80%). The fall does not overshoot; it is slow and then it stops. 2 trials;
+`after_hours` has 116.

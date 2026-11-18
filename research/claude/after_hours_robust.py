@@ -226,11 +226,51 @@ def exits() -> None:
         print(f"bought back at {name:6} " + "  ".join(cells))
 
 
+def rebound(*periods) -> None:
+    """The short's events, bought at the close of the next session and held 5 or 10 sessions."""
+    out = ah.folder()
+    store = DataStore(load_settings())
+    t = duckdb.sql(
+        f"""with n as (
+                select n.day, n.symbol, year(n.day) as yr, (date_diff('day', DATE '2003-12-29', n.day) // 7) as week,
+                       v.adv
+                from read_parquet('{out}/entries_*.parquet') n
+                join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+                where n.timing = 'after' and v.mcap >= 3e8 and v.mcap < 2e9 and n.reaction < -0.15),
+            p as (select symbol, date, close, sum(ln(close / prev_close)) over w as c, row_number() over w as rn
+                  from read_parquet('{store.root}/panel/*.parquet')
+                  where date <= DATE '2023-11-08' and prev_close > 0 and close > 0
+                    and symbol in (select symbol from n)
+                  window w as (partition by symbol order by date)),
+            q as (select *, lead(c, 1) over w as c1, lead(c, 6) over w as c6, lead(c, 11) over w as c11,
+                         lead(close, 1) over w as close1
+                  from p window w as (partition by symbol order by date))
+            select n.*, exp(q.c6 - q.c1) - 1 as g5, exp(q.c11 - q.c1) - 1 as g10,
+                   2 * (least(0.01, greatest(0.000175, 0.0035 / q.close1))
+                        + case when n.adv < 1e6 then 0.0025 when n.adv < 1e7 then 0.0010
+                               when n.adv < 1e8 then 0.0005 else 0.0002 end) as cost
+            from n join q on q.symbol = n.symbol and q.date = n.day where q.c11 is not null"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    for hold in ("g5", "g10"):
+        net = d[hold].astype(float) - d["cost"]
+        for period in periods:
+            a, b = ah.PERIODS[period]
+            k = (d["yr"] >= a) & (d["yr"] <= b)
+            _, tt, _ = weekly(net[k], d["week"][k])
+            years = d["yr"][k]
+            pos = sum(net[k][years == y].mean() > 0 for y in set(years))
+            print(f"rebound {hold} {period:6} {k.sum():>4} trades  net {100 * net[k].mean():6.2f}%  median "
+                  f"{100 * np.median(net[k]):6.2f}%  t {tt:5.2f}  yrs {pos} of {len(set(years))}")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "lows5":
         lows5(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == "before_lows":
         before_lows(int(sys.argv[2]), int(sys.argv[3]))
+    elif sys.argv[1] == "rebound":
+        rebound(*sys.argv[2:])
     elif sys.argv[1] == "exits":
         exits()
     elif sys.argv[1] == "before_search":

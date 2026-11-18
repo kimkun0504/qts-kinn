@@ -1,6 +1,6 @@
 # After hours: an overnight gain in most years, missing in 2020 to 2022
 
-**Verdict: not passed; the nearest thing to a new result on 17 November.** Nine studies, 114
+**Verdict: not passed; the nearest thing to a new result on 17 November.** Ten studies, 116
 trials, nothing passed both tests. The holdout is untouched.
 
 Plan: [HYPOTHESIS.md](HYPOTHESIS.md). An earnings 8-K accepted after the close (or before
@@ -168,7 +168,9 @@ all three periods):
 | … at the close | +4.42% | +3.41% | +2.10% (t 1.87) | +8.80% |
 
 Holding the short through the next session is better in every period: the selling after bad
-results goes on all day. Bought back at 15:30 the short is closer to the bar it failed (t 2.10
+results goes on all day. It then stops: bought at that session's close, the same stocks lose
+0.5% over the next five sessions and are flat over ten (median −1.8%), so there is no rebound
+to buy (2 trials). Bought back at 15:30 the short is closer to the bar it failed (t 2.10
 in 2018–2022 against 2.5), and the paper ledger records it beside the open.
 
 **As a book** (a description, not a test): $2,000 a trade, every signal taken, after costs, 639
