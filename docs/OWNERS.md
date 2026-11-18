@@ -47,6 +47,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/lockup_end` | claude | 2026-11-17 | the weeks around an IPO's lockup end (insiders may first sell) |
 | `strategies/filing_drift` | claude | 2026-11-17 | the earnings rule on 10-Q and 10-K filings of companies with no results 8-K |
 | `strategies/intraday_shape` | claude | 2026-11-17 | first and last half-hour pressure over days, from minute bars (indicator of our own) |
+| `strategies/holders13f` | claude | 2026-11-17 | small companies whose number of 13F holders jumped (13F data, 2013 on) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
