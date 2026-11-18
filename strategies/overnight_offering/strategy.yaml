@@ -1,0 +1,18 @@
+name: overnight_offering
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, a prospectus supplement filed overnight
+family: overnight_offering
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: The morning after an offering
+  idea: Trading the first session after a company sells new shares overnight
+  horizon: One to 15 sessions
+  verdict: planned
+  summary: >-
+    A company that sells shares overnight opens near the offering price. Buy the drop, or
+    sell it short, at the open, by the size of the company and the gap.
