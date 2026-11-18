@@ -52,3 +52,10 @@ The trade needs the report date five sessions ahead. Most companies announce it 
 weeks ahead; some small ones give little notice. The test uses the actual date, so a cell
 that passes is then re-run with the date **predicted** from the company's own calendar a
 year earlier, and has to survive that before it is believed.
+
+**Results, 2026-11-17 20:58 ET.** In REPORT.md. **None of the 18 cells meets the bar; the best makes
+0.29% a trade.** A company's past reactions say nothing about its next one: after a report
+that jumped 10% or more, the next report's two-session reaction averaged about zero, the
+same as every report. The five sessions before a report gained nothing either (−0.5% after
+costs under $300M, about zero above). Holding small companies through the report lost 0.9%
+a trade in the search years. 18 trials. No tests run.
