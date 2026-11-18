@@ -236,3 +236,11 @@ signal is "due" if the company had a results 8-K reacting 336 to 364 days before
 anniversary falls inside the next four weeks). **1 cell:** the passed cell, due, in all three
 periods and 2023; worth using only if better per trade than the passed cell in all three
 periods and meeting the test bars (0.5%, t 2.5, four of five) in both test periods. 1 trial.
+
+## Follow-up 16: the next size up (written 2026-11-18 00:46 ET)
+
+Whether the passed rule reaches more liquid companies: the same conditions (footprint 3+,
+quiet up day, 1.5x volume, $1M a day and $5 or more as for mid-sized stocks), in companies of
+**$300M to $600M**, 20 sessions, against the average $300M–$2B stock, in all three periods and
+2023. **1 cell**, judged by the test bars in all three periods (0.5%, t 2.5, four of five years
+in the tests; six of eight in 2010–2017). 1 trial.
