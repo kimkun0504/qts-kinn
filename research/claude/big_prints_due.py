@@ -17,7 +17,7 @@ from big_prints import folder
 from swing_earnings import weekly
 
 
-def main() -> None:
+def main(low: int = 63, high: int = 91, labels: tuple = ("report due", "not due")) -> None:
     stocks, days = sec_times.numbers(), sec_times.sessions()
     reports: dict = {}
     for row in sec_times.filings("8k.jsonl.gz"):
@@ -42,14 +42,14 @@ def main() -> None:
     for day, p, yr, week, over in t:
         got = reports.get(p, [])
         i = bisect.bisect_right(got, day) - 1  # the last results reaction on or before the signal
-        due = i >= 0 and 63 <= (day - got[i]).days <= 91
+        due = i >= 0 and low <= (day - got[i]).days <= high
         rows.append((yr, week, over, due))
     yr, wk, o, due = (np.array(c) for c in zip(*rows, strict=True))
     for name, (a, b) in {"2010-2017": (2010, 2017), "2005-2009": (2005, 2009), "2018-2022": (2018, 2022),
                          "2023": (2023, 2023)}.items():  # fmt: skip
         k = (yr >= a) & (yr <= b)
         out = []
-        for label, m in (("passed cell", k), ("report due", k & due), ("not due", k & ~due)):
+        for label, m in (("passed cell", k), (labels[0], k & due), (labels[1], k & ~due)):
             _, tt, _ = weekly(o[m], wk[m])
             years = yr[m]
             pos = sum(o[m][years == y].mean() > 0 for y in set(years))
@@ -58,4 +58,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == "after":
+        main(5, 30, ("after results", "later"))
+    else:
+        main()
