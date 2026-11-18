@@ -33,3 +33,8 @@ As `dividend_signal`: search 2010–2017 against the average stock, 1% a trade f
 and 2% for 60, a weekly t of 3, six years of eight, positive after costs; tests on 2005–2009
 and 2018–2022 at half those, t of 2.5, four years of five, in both. 2023 is a check. The
 holdout stays sealed.
+
+**Results, 2026-11-17 22:55 ET.** In REPORT.md. **None of the 8 cells meets the bar; every small-company
+cell trails the average stock.** $50M to $300M: −1.0% to −3.1% against other stocks over 20
+to 60 sessions (one to three years of eight positive); $300M or more: −1.6% to +0.1%. Climbing
+back over $5 marks the end of a rally, not the arrival of new buyers. 8 trials. No tests run.

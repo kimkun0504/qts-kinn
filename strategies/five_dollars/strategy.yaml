@@ -1,10 +1,10 @@
 name: five_dollars
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 8 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $50M, back over $5 after 60 sessions under it
 family: five_dollars
-prior_trials: 0
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Back over five dollars
   idea: A small company that climbs back over $5, where funds and margin can own it again
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: closed
+  result: "No trade: small companies back over $5 trail other stocks by 1% to 3%"
   summary: >-
-    Many funds may not own a stock under $5 and brokers do not lend against one. Buy a company
-    that closes back over $5 after months under it.
+    Many funds may not own a stock under $5 and brokers do not lend against one. Bought when a
+    company closes back over $5 after months under it.
+  weaknesses:
+    - Small companies that cross back over $5 give some of the run back.
+  evidence:
+    - {when: 2026-11-17, title: 8 cells on 2010 to 2017, kind: failed, text: "Every small-company cell trails the average stock."}
+  studies:
+    - {name: Back over $5, when: 2026-11-17, trials: 8, result: "No cell meets the bar", verdict: failed}
