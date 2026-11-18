@@ -198,6 +198,7 @@ morning after an evening of results (after 09:35, so the next open exists):
 export SEC_USER_AGENT="Your Name your@email"
 uv run python tools/owner/paper_after_hours.py                   # the last evening
 uv run python tools/owner/paper_after_hours.py --day 2026-11-18  # a given evening
+uv run python tools/owner/paper_after_hours.py --since 2026-11-09   # catch up: every evening since
 uv run python tools/owner/paper_after_hours.py --borrow "ABCD=yes, 0.4%"   # what IBKR showed
 ```
 
@@ -209,6 +210,10 @@ on 400 random days); the candidates come from the filings, never from the next m
 price. Ledger: `paper/after_hours/report.md`. It sends no order. Each signal is settled at the
 next open (the rule as tested) and, from a run after 15:32 the next day, also as held to 15:30
 (the better exit).
+
+**Start with `--since 2026-11-09`.** The holdout ends on 2026-11-06 and November is the busiest
+month of the small and mid-sized companies' reporting season, so the evenings since then give a
+first forward reading at once. A market holiday simply has no filings.
 
 What the ledger is for: about one signal a week, most in the reporting seasons. For each, record
 whether IBKR showed shares to borrow and at what fee (`--borrow`); whether the trade could have

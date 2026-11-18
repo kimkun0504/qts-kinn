@@ -17,6 +17,7 @@ before today) it:
     export SEC_USER_AGENT="Your Name your@email"     # the SEC asks who is calling
     uv run python tools/owner/paper_after_hours.py                     # the last evening
     uv run python tools/owner/paper_after_hours.py --day 2026-11-17    # a given evening
+    uv run python tools/owner/paper_after_hours.py --since 2026-11-09  # every evening since
     uv run python tools/owner/paper_after_hours.py --borrow "ABCD=yes, 0.4%"   # what IBKR showed
 
 The Massive key is read from MASSIVE_API_KEY or `.env`, sent only to api.massive.com and never
@@ -227,6 +228,7 @@ def evening(day: date, key: str, agent: str) -> tuple[list[dict], list[dict]]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--day", help="the evening to read (YYYY-MM-DD); default: the last one")
+    parser.add_argument("--since", help="read every weekday evening from this date to the last one")
     parser.add_argument("--borrow", action="append", default=[], help='SYMBOL="what IBKR showed"')
     args = parser.parse_args()
     folder = ahp.paper_dir(load_settings().runs_dir)
@@ -241,10 +243,19 @@ def main() -> None:
         agent = os.environ.get("SEC_USER_AGENT") or raise_agent()
         key = tool.api_key()
         now = datetime.now(ZoneInfo("America/New_York"))
-        day = date.fromisoformat(args.day) if args.day else last_evening(now)
-        if day.isoformat() not in state["evenings"]:
-            signals, seen = evening(day, key, agent)
-            ahp.record(state, day, signals, seen)
+        last = date.fromisoformat(args.day) if args.day else last_evening(now)
+        days = [last]
+        if args.since:
+            days, day = [], date.fromisoformat(args.since)
+            while day <= last:
+                if day.weekday() < 5:
+                    days.append(day)
+                day += timedelta(days=1)
+        for day in days:
+            if day.isoformat() not in state["evenings"]:
+                signals, seen = evening(day, key, agent)
+                ahp.record(state, day, signals, seen)
+                ahp.save(folder, state)  # a long catch-up keeps what it has read
         for s in state["signals"]:
             if s.get("net") is not None and s.get("net_1530") is not None:
                 continue
