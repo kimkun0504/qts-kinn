@@ -1,6 +1,6 @@
 # Closing bids: a large stock pushed down into the close comes back by the morning, but not steadily enough to pass
 
-**Verdict: not passed; a lead.** 26 cells and 2 test runs, 28 trials. One cell met the search
+**Verdict: not passed; a lead.** 29 cells and 2 test runs, 31 trials. One cell met the search
 bar and failed the weekly t in both tests. The holdout is untouched.
 
 Plan: [HYPOTHESIS.md](HYPOTHESIS.md). A limit-on-close buy order entered at 15:49, a few
@@ -68,6 +68,23 @@ By year: 2005 +2.11% (11), 2006 +1.04% (6), 2007 +0.94% (32), 2008 +1.86% (688),
   0.9% to 1.3%. That matters because a limit-on-close order has to be resting in every large
   stock at 15:49, which a small account cannot fund; a scan at 16:01 can.
 
+## The stock pushed down alone (3 cells)
+
+The same rule, counting a fill when the stock's move from 15:49 to the close is 2% or more
+under SPY's over the same minutes. Measured with all three periods of the parent already
+seen.
+
+| After costs | 2010–2017 | 2005–2009 | 2018–2022 |
+|---|---|---|---|
+| Fills | 152 | 338 | 707 |
+| Auction fill, sold at the next open | +1.50% (t 3.78) | +0.86% (t 0.19) | +0.55% (t 1.47) |
+| With SPY sold short overnight | +1.36% (t 3.39) | +0.66% (t 0.20) | +0.56% (t 1.26) |
+| Bought after the close instead | +1.09% (t 2.20) | +0.20% | +0.32% |
+
+Hedged, it is positive in 16 years of 18 (2017 −0.11%, 2019 −0.63%), and outside the search
+years it is about half a percent a night with a t the test does not accept. Bought after the
+close it is worth little outside the search years, so the gain is in the auction fill.
+
 ## The market itself after a late sell-off (6 cells)
 
 SPY, QQQ and IWM bought in the last minute when the price at 15:58 is under the 15:49 price,
@@ -87,12 +104,13 @@ to 20 nights.
 
 ## What it is worth
 
-Not passed, and the honest size of it is small: in a normal year about 20 trades of 1.2%, on
-$2,000 each about $500. Its interest is that it is the first positive result that has
+Not passed, and the honest size of it is small: in a normal year about 20 trades of 0.6% to
+1.4%, on $2,000 each $250 to $550. Its interest is that it is the first positive result that has
 nothing to do with earnings, it needs no borrow, and it fills most when the market is being
-sold, which is when the earnings book is losing. As a lead to follow on paper it needs a
-scan a minute after the close each day (stocks of $2B or more that closed 2% or more under
-their 15:49 price), which the nightly run can reconstruct afterwards from minute bars.
+sold, which is when the earnings book is losing. To trade it, limit-on-close orders have to be resting before the cut-off,
+so it needs a program that picks the large stocks already sliding at 15:45 and places a
+handful of orders; buying after the close does not hold up. On paper the nightly run can
+reconstruct the fills afterwards from minute bars.
 
 Not tested: quotes in the auction or after hours (none on disk); the opening auction.
 
@@ -106,6 +124,7 @@ uv run python closing_bids.py collect 2005 2023
 uv run python closing_bids.py search
 uv run python closing_bids.py test 2 large open
 uv run python closing_bids.py followups
+uv run python closing_bids.py alone
 uv run python closing_funds.py collect
 uv run python closing_funds.py measure
 ```

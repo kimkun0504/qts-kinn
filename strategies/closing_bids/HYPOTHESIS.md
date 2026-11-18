@@ -145,3 +145,11 @@ bought after the close (first minute from 16:06, at its high) and sold at the ne
 
 **3 cells.** Search bar on 2010–2017 and the test bar on the other two periods, as before;
 all three periods are shown. Charged to `closing_bids`.
+
+**Results for the stock pushed down alone, 2026-11-17 21:22 ET.** In REPORT.md. Search years: 1.50% a
+night on 152 fills (weekly t 3.78, seven years of eight), 1.36% with SPY sold against it (t
+3.39); both meet the search bar. The other two periods: 0.86% and 0.55% unhedged, 0.66% and
+0.56% hedged, with a weekly t of 0.2 to 1.5: **not passed**. Hedged it is positive in 16
+years of 18. Bought after the close instead it made 1.09% in the search years and 0.20% and
+0.32% in the others, so the gain depends on being filled in the auction itself. 3 cells;
+`closing_bids` has 31 trials.

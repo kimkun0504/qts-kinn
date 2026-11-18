@@ -108,6 +108,53 @@ def followups() -> None:
               f"15:59 price against the close {100 * np.nanmedian(d['last_gap'][keep].astype(float)):.2f}%")
 
 
+def alone() -> None:
+    """The addendum's three cells: the stock's late fall 2% or more under SPY's."""
+    store = DataStore(load_settings())
+    root = store.bars_roots[0]
+    rows = duckdb.sql(
+        f"""with b as (
+                select cast(regexp_extract(filename, '(\\d{{4}}-\\d{{2}}-\\d{{2}})\\.parquet', 1) as date) as day,
+                       arg_max(close, minute_et) as before
+                from read_parquet('{root}/minute/year=*/*.parquet', filename = true)
+                where symbol = 'SPY' and minute_et between 940 and 949 group by 1),
+            d as (select date, close, lead(open) over (order by date) / close - 1 as night
+                  from read_parquet('{root}/daily/*.parquet') where symbol = 'SPY')
+            select b.day, d.close / b.before - 1 as late, d.night from b join d on d.date = b.day"""
+    ).fetchall()
+    fund_late = {day: late for day, late, _ in rows}
+    fund_night = {day: night for day, _, night in rows if night is not None}
+    t = duckdb.sql(
+        f"""select f.day, f.symbol, year(f.day) as yr, (date_diff('day', DATE '2003-12-29', f.day) // 7) as week,
+                   f.mcap, f.ref / f.before - 1 as late, f.later / f.ref - 1 as later_gap, f.to_open - 1 as g_open,
+                   2 * (case when f.adv < 1e6 then 0.0025 when f.adv < 1e7 then 0.0010
+                             when f.adv < 1e8 then 0.0005 else 0.0002 end)
+                   + 2 * least(0.01, greatest(0.000175, 0.0035 / f.ref)) as cost
+            from read_parquet('{folder()}/falls3_*.parquet') f
+            where f.late >= -0.30 and f.auction >= {MIN_AUCTION} and f.ref between f.print_low and f.print_high
+              and f.mcap >= 2e9
+              and not exists (select 1 from '{shared()}/results_due.parquet' r
+                              where r.permaticker = f.permaticker and r.day = f.day)
+            order by f.day, f.symbol"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    days = d["day"].astype(object)
+    market = np.array([fund_late.get(day, np.nan) for day in days])
+    night = np.array([fund_night.get(day, np.nan) for day in days])
+    d["g_hedged"] = d["g_open"].astype(float) - night - 0.0003
+    d["g_later"] = (1 + d["g_open"].astype(float)) / (1 + d["later_gap"].astype(float)) - 1
+    picked = (d["late"] - market <= -0.02) & ~np.isnan(night)
+    for period in ("search", "early", "late"):
+        keep = picked & pick(d, "large", period)
+        print(show(f"alone auction {period}", measure(d, keep, "open")))
+        print(show(f"alone hedged {period}", measure(d, keep, "hedged")))
+        after = keep & ~np.isnan(d["later_gap"].astype(float))
+        print(show(f"alone after close {period}", measure(d, after, "later")) + f"  of {keep.sum()}")
+        net = d["g_hedged"] - d["cost"]
+        print("    hedged by year: " + "  ".join(f"{y} {100 * net[keep & (d['yr'] == y)].mean():.2f}% ({(keep & (d['yr'] == y)).sum()})"
+                                                  for y in sorted(set(d["yr"][keep]))))
+
+
 def measure(d, keep, exit_) -> dict:
     n = int(keep.sum())
     if n < 3:
@@ -158,7 +205,9 @@ def test(depth, size, exit_) -> None:
 
 
 if __name__ == "__main__":
-    if sys.argv[1] == "followups":
+    if sys.argv[1] == "alone":
+        alone()
+    elif sys.argv[1] == "followups":
         followups()
     elif sys.argv[1] == "collect":
         collect(int(sys.argv[2]), int(sys.argv[3]))
