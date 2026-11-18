@@ -53,3 +53,33 @@ three rows of ACTIONS, SP500 and SF3A were printed. They were rows from 2026 (th
 stock splits; institutional holdings of NVDA, AAPL and MSFT at 30 September 2026). No return
 or price was shown, nothing was measured on them, and the extracted copies were deleted.
 Every query on raw tables from now on is filtered to dates before 2023-11-09.
+
+**Search result, 2026-11-17 22:12 ET.** In REPORT.md. **No cell meets the bar at the costs set above.**
+The day books lose before costs. The night books gain before costs in every size, most with
+the 60-session score: 0.30% a night under $300M, 0.24% from $300M to $2B, 0.14% at $2B
+and over (2010–2017, top 10 a night). The auction allowance (0.20% to 0.50% a round trip)
+takes all of it: after costs −0.13%, −0.005% and −0.02%. 12 trials.
+
+## Addendum, 2026-11-17 22:12 ET: is the night gain in the prices a seller actually gets?
+
+Written after the search above, before any test period is looked at. The allowance is an
+assumption written for a different trade (buy at the open, sell at the close), where the
+tick check of 16 November found it about right. For a $2,000 market-on-close buy and
+market-on-open sale, what is paid is commission and the exchanges' auction fees, if the
+official close and open are prices that really printed and are large enough to fill
+against. So the night books are priced again, conservatively, from minute bars:
+
+- **Bought at D's official close only if** it lies inside the prices printed from 16:00 to
+  16:05 in the minute data and those minutes traded $100,000 or more. Otherwise that stock
+  is left out that night.
+- **Sold at the lowest price of D+1's first regular minute** (09:30), not at the official
+  open, and only if that minute traded $50,000 or more (otherwise sold at that minute's low
+  anyway, and counted).
+- **Costs:** commission and auction fees both ways, $0.0045 a share with a floor of 0.0175%
+  a side. No other allowance.
+
+The six night cells (2 windows × 3 sizes), same picks, same bar: search 2010–2017 at 0.08% a
+session, weekly t of 3, six years of eight; each cell that meets it goes once to 2005–2009
+and 2018–2022 at 0.04%, t of 2.5, four years of five. **6 cells**, charged to
+`overnight_hold`. This re-reading is made after seeing the search years; the test periods
+of this family have not been looked at.
