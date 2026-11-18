@@ -56,3 +56,38 @@ the worst 1%, and how many of the fills were followed by a filing the next morni
 There are no after-hours quotes on disk, only trades by the minute. The fill rule is built
 to be on the careful side (the whole minute under our price, several trades), but whether an
 order at a retail broker would have been the one filled is not proven until it is tried.
+
+**Results, 2026-11-17 20:51 ET.** In REPORT.md. **Every one of the 18 cells loses**, in every search
+year for 14 of them: −0.9% to −8.5% a trade after costs, weekly t from −3.8 to −11.5. The
+median fill loses little (−0.3% to −1.2% to the next open for the 3% and 5% orders in
+companies of $300M or more) and the average is pulled down by collapses of 50% to 87%:
+FXCM on 15 January 2015, NVAX on 15 September 2016, drug-trial failures told by press
+release after the close with no SEC filing until the next day. A quarter to two fifths of
+the fills were followed by a filing before the next open. The resting buyer after hours is
+filled by someone who has read the news. 18 trials. No tests run (nothing met the bar).
+
+## Addendum, 2026-11-17 20:51 ET: trading with the move instead (the price as the news feed)
+
+Written before it is measured, and after seeing the result above on the search years: a fall
+after hours with real trading and no results due is, more often than not, news that has not
+reached a filing. So the same reading may work as a detector of news, in both directions.
+That the falls continue from the order's price is known from the search years; what a trader
+who acts **after** the signal gets is not, and neither is anything about rises.
+
+**Signal.** As above (common stock, $50M, $250,000 a day, no results due, no filing of ours
+since 16:00, the bad-data rule), at the first minute T from 16:05 by which the minutes lying
+wholly beyond the level add up to 5 trades and $5,000:
+
+- **Fall** of 3%, 5% or 8%: minutes whose high is under the close × (1 − x).
+- **Rise** of 3%, 5% or 8%: minutes whose low is over the close × (1 + x).
+
+**Trade**, in the first minute that trades after T (within 20 minutes, by 19:59):
+
+- Rise: **buy at that minute's high**; sold at the next open, or the next close.
+- Fall: **sell short at that minute's low**; bought back at the next open. A borrow fee of
+  10% a year for the night. This side also says what a holder should do with a position
+  that falls after hours, which matters whether or not shorts can be borrowed.
+
+Cells: rise 3 levels × 3 sizes × 2 exits = 18; fall 3 levels × 3 sizes × 1 exit = 9.
+**27 cells**, charged to `night_bids`. What counts: as above. For the short cells the
+report gives the worst trade and worst 1%.
