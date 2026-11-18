@@ -1,5 +1,5 @@
 name: active_gap_recovery
-status: study
+status: parked
 engine: intraday
 universe: domestic common stocks resuming after a gap in dense trading
 cost_calibration: ibkr_pro_tiered
@@ -10,7 +10,9 @@ record:
   title: Recovery after an active-stock trading gap
   idea: Test a discounted resumption with recovery in its first returning bar
   horizon: Thirty minutes after first fill
-  verdict: untested
+  verdict: parked
+  label: No qualifying development events
+  result: The frozen definition produced no signals and no return estimate
   summary: >-
     Observe a gap in an actively rising stock's bars, a discounted
     return and initial recovery. Other company observations reject
