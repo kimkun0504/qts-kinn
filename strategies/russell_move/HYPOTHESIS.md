@@ -36,3 +36,14 @@ common stock ranked 1,001 to 3,000 on the same rank day, bought and sold at the 
 One event date a year, so the weekly t is a t over years. Search 2010–2017: 150 trades, 1% a
 trade over that average, t of 3, six years of eight, positive after costs. Tests on 2005–2009
 and 2018–2022 at 0.5%, t of 2.5, four years of five. 2023 is a check. The holdout stays sealed.
+
+## Follow-up: selling them short into reconstitution (written 2026-11-17 23:54 ET, after the 4 cells)
+
+The companies that moved down lost to the average small company from the rank day to
+reconstitution in all eight search years (above). The trade, **sold short at the open of the
+first session after the rank day and bought back at the close of reconstitution day**,
+measured as the short's return over the average of ranks 1,001 to 3,000 (a short hedged with
+the small-company average; IWM would be the tradable hedge), and also after costs and borrow
+at 10% a year for the days held, unhedged. **2 cells** (moved down, moved clearly). The search
+years are the mirror of what was read, so only the tests count: 2005–2009 and 2018–2022, 0.5%
+over the average, t of 2.5 over the five years, four years of five. 2023 is a check if both pass.
