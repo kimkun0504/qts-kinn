@@ -93,6 +93,15 @@ def main(side: str = "short") -> None:
     base = keep & ~np.isnan(fp)
     cut = np.median(fp[base & (years >= 2010) & (years <= 2017)])
     print(f"events {keep.sum()}, with a footprint {base.sum()}, the 2010-2017 median footprint {cut:.2f}")
+    if side == "small_open":
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        large = base & (fp >= cut)
+        idx = np.flatnonzero(large)
+        pq.write_table(pa.table({"day": [names[i][0] for i in idx], "symbol": [names[i][1] for i in idx],
+                                 "net": [float(net[i]) for i in idx], "yr": [int(years[i]) for i in idx]}),
+                       folder() / "small_large_open.parquet")  # fmt: skip
     for name, (a, b) in {"2005-2009": (2005, 2009), "2010-2017": (2010, 2017), "2018-2022": (2018, 2022),
                          "2023": (2023, 2023)}.items():  # fmt: skip
         k = base & (years >= a) & (years <= b)

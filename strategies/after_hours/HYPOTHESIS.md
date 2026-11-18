@@ -333,3 +333,9 @@ Same events and the same median split; **bought at the next open**, sold at the 
 sessions after it; the auction allowance and commission. **1 cell:** the larger-piece half,
 judged as the after-hours version was (better per trade than the whole cell, bought the same
 way, in all three periods; 2023 a check), and reported beside the after-hours fill.
+
+## Addendum, 2026-11-18 00:42 ET: overlap with A50 (1 trial)
+
+How many of the small-company long's large-piece signals (bought at the next open) are also
+A50 signals (the same company, an A50 signal day one to three sessions after the evening), and
+what the rest make on their own, in each period.
