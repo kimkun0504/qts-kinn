@@ -69,18 +69,21 @@ def table() -> None:
                                                   rows between current row and 10 following) as c10,
                               last_value(c) over (partition by permaticker order by date
                                                   rows between current row and 20 following) as c20,
+                              last_value(c) over (partition by permaticker order by date
+                                                  rows between current row and 40 following) as c40,
                               lead(c, 20) over w as c20_full
                        from '{tmp}/fp.parquet' window w as (partition by permaticker order by date)),
             ok as (select *, case when mcap < 3e8 then 'small' when mcap < 2e9 then 'mid' else 'large' end as size,
-                          exp(c10 - c1) * cl1 / o1 - 1 as g10, exp(c20 - c1) * cl1 / o1 - 1 as g20
+                          exp(c10 - c1) * cl1 / o1 - 1 as g10, exp(c20 - c1) * cl1 / o1 - 1 as g20,
+                          exp(c40 - c1) * cl1 / o1 - 1 as g40
                    from q where nfp = 60 and c1 is not null
                      and ((mcap >= 3e8 and adv >= 1e6 and prev_close >= 5)
                           or (mcap >= 5e7 and mcap < 3e8 and adv >= 250000 and prev_close >= 2))
                      and date between DATE '2005-01-03' and DATE '2023-10-13'),
-            daily as (select date, size, avg(g10) as all10, avg(g20) as all20,
+            daily as (select date, size, avg(g10) as all10, avg(g20) as all20, avg(g40) as all40,
                              avg(case when fp >= 2 then 1.0 else 0.0 end) as share from ok group by 1, 2)
             select ok.date as signal_day, ok.permaticker, ok.size, ok.fp, ok.dv / ok.adv as dvr, ok.c20_full is null as stopped,
-                   ok.close / ok.prev_close - 1 as ret, ok.g10, ok.g20, d.all10, d.all20, d.share,
+                   ok.close / ok.prev_close - 1 as ret, ok.g10, ok.g20, ok.g40, d.all10, d.all20, d.all40, d.share,
                    2 * (least(0.01, greatest(0.000175, 0.0035 / ok.close))
                         + case when ok.adv < 1e6 then 0.0025 when ok.adv < 1e7 then 0.0010
                                when ok.adv < 1e8 then 0.0005 else 0.0002 end) as cost
@@ -89,9 +92,9 @@ def table() -> None:
               and d.share < 0.05
               and not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date)
-        ) to '{folder()}/events_v4.parquet' (format parquet)"""
+        ) to '{folder()}/events_v5.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v4.parquet' group by 1, 2").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v5.parquet' group by 1, 2").fetchall())
 
 
 def run(period, cells, name="events_v2") -> None:
@@ -126,6 +129,10 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "neighbours":
+        for period in ("search", "early", "late"):
+            run(period, [("small", 20, 2.5), ("small", 20, 4), ("small", 20, 5), ("small", 10, 3), ("small", 40, 3)],
+                "events_v5")
     elif sys.argv[1] == "stopped":
         for period in ("search", "early", "late", "check"):
             run(period, [("small", 20, 3)], "events_v4")
