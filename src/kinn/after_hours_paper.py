@@ -3,7 +3,8 @@
 A company of $300M to $2B files its results (an 8-K with item 2.02) after the close; half an
 hour after the SEC accepted it, its stock trades 15% or more under the 16:00 price with at
 least $50,000 traded since 16:00. The paper trade sells short at the low of the next minute
-that trades and buys back at the next session's open. Nothing here sends an order or touches
+that trades and buys back at the next session's open; beside it the ledger records the
+better exit of the research, held through that session and bought back at 15:30. Nothing here sends an order or touches
 the network or the research data: the owner's tool (``tools/owner/paper_after_hours.py``)
 fetches the SEC's filings and the vendor's minute bars and hands them to these functions.
 
@@ -162,6 +163,25 @@ def settle(entry: float, next_open: float, adv: float) -> dict:
     return {"next_open": next_open, "gross": gross, "net": gross - cost}
 
 
+def price_at(bars: list[MinuteBar], minute: int) -> float | None:
+    """The last regular-session price before ``minute`` (the close of the last bar before it)."""
+    before = [b for b in bars if OPEN <= b.minute < minute]
+    return before[-1].close if before else None
+
+
+def half_spread(adv: float) -> float:
+    """The modelled half-spread for a market order inside the session, by normal dollar volume."""
+    return 0.0065 if adv < 1e6 else 0.0018 if adv < 1e7 else 0.0010 if adv < 1e8 else 0.0005
+
+
+def settle_held(entry: float, price: float, adv: float) -> dict:
+    """The short held through the next session and bought back at 15:30 (the better exit of
+    the research, a market order with the spread crossed)."""
+    gross = 1 - price / entry
+    cost = half_spread(adv) + 2 * min(0.01, max(0.000175, 0.0035 / entry)) + BORROW_NIGHT
+    return {"price_1530": price, "net_1530": gross - cost}
+
+
 def new_state() -> dict:
     return {"strategy": "after_hours_short", "evenings": [], "signals": [], "seen": []}
 
@@ -194,25 +214,31 @@ def report(state: dict) -> str:
         f"Signals: {len(state['signals'])} ({len(done)} closed, "
         f"{len(state['signals']) - len(done)} waiting).",
     ]
+    held = [s["net_1530"] for s in done if s.get("net_1530") is not None]
     if done:
         net = [s["net"] for s in done]
         lines.append(
             f"Closed: average {100 * sum(net) / len(net):+.2f}% after costs; "
             f"{sum(n > 0 for n in net)} of {len(net)} made money."
         )
+    if held:
+        lines.append(
+            f"Held to 15:30 instead: average {100 * sum(held) / len(held):+.2f}% on {len(held)}."
+        )
     lines += [
         "",
         "| Evening | Stock | Value | After hours | Sold at | Thin minute | Next open "
-        "| After costs | Borrow (IBKR) |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| After costs | Held to 15:30 | Borrow (IBKR) |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for s in sorted(state["signals"], key=lambda s: (s["day"], s["symbol"])):
         out = "waiting" if s.get("net") is None else f"{100 * s['net']:+.2f}%"
         opened = "" if s.get("next_open") is None else f"${s['next_open']:.2f}"
+        held = "" if s.get("net_1530") is None else f"{100 * s['net_1530']:+.2f}%"
         lines.append(
             f"| {s['day']} | {s['symbol']} | ${s['market_cap'] / 1e6:,.0f}M "
             f"| {100 * s['reaction']:+.1f}% | ${s['entry']:.2f} "
-            f"| {'yes' if s['entry_dollars'] < THIN else 'no'} | {opened} | {out} | "
+            f"| {'yes' if s['entry_dollars'] < THIN else 'no'} | {opened} | {out} | {held} | "
             f"{s.get('borrow') or 'not recorded'} |"
         )
     lines += [

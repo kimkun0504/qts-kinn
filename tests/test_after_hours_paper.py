@@ -127,6 +127,20 @@ def test_settle_charges_the_research_costs():
     assert abs(out["net"] - (0.10 - cost)) < 1e-12
 
 
+def test_held_to_1530_crosses_the_spread():
+    day = date(2026, 11, 18)
+    bars = ahp.minute_bars(
+        [
+            {"t": ms(day, m), "h": p, "l": p, "c": p, "v": 100}
+            for m, p in ((570, 9.0), (929, 8.5), (931, 8.0))
+        ],
+        day,
+    )
+    assert ahp.price_at(bars, 930) == 8.5
+    out = ahp.settle_held(entry=10.0, price=8.5, adv=5e6)
+    assert abs(out["net_1530"] - (0.15 - 0.0018 - 2 * 0.00035 - 0.10 / 252)) < 1e-12
+
+
 def test_ledger_records_an_evening_once_and_reports(tmp_path, monkeypatch):
     monkeypatch.setenv("KINN_PAPER_DIR", str(tmp_path))
     folder = ahp.paper_dir(tmp_path / "runs")

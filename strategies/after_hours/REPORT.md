@@ -204,7 +204,9 @@ accepted after 17:30 are dated), keeps the results 8-Ks accepted between 16:00 a
 for each fetches the stock's market value, normal volume and that evening's minute bars from
 Massive. The rule is the research rule exactly (a test holds the reading to the research code
 on 400 random days); the candidates come from the filings, never from the next morning's
-price. Ledger: `paper/after_hours/report.md`. It sends no order.
+price. Ledger: `paper/after_hours/report.md`. It sends no order. Each signal is settled at the
+next open (the rule as tested) and, from a run after 15:32 the next day, also as held to 15:30
+(the better exit).
 
 What the ledger is for: about one signal a week, most in the reporting seasons. For each, record
 whether IBKR showed shares to borrow and at what fee (`--borrow`); whether the trade could have

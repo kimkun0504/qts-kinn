@@ -111,13 +111,38 @@ def normal_volume(symbol: str, day: date, key: str) -> float | None:
     return sum(values) / len(values) if len(values) >= 10 else None
 
 
-def next_open(symbol: str, day: date, key: str) -> float | None:
+def next_session(symbol: str, day: date, key: str) -> tuple[date, float] | None:
+    """The stock's next session after ``day`` and its open, once the vendor has it."""
     route = (
         f"/v2/aggs/ticker/{urllib.parse.quote(symbol)}/range/1/day/"
         f"{next_weekday(day).isoformat()}/{(day + timedelta(days=8)).isoformat()}"
     )
     bars = tool.massive(route, key, adjusted="false", sort="asc", limit="10").get("results") or []
-    return float(bars[0]["o"]) if bars and bars[0].get("o") else None
+    if not bars or not bars[0].get("o"):
+        return None
+    when = (
+        datetime.fromtimestamp(int(bars[0]["t"]) / 1000, tz=ahp.NEW_YORK).date()
+        if "t" in bars[0]
+        else next_weekday(day)
+    )
+    return when, float(bars[0]["o"])
+
+
+def next_open(symbol: str, day: date, key: str) -> float | None:
+    found = next_session(symbol, day, key)
+    return found[1] if found else None
+
+
+def price_at_1530(symbol: str, day: date, key: str) -> float | None:
+    stock, d = urllib.parse.quote(symbol), day.isoformat()
+    results = tool.massive(
+        f"/v2/aggs/ticker/{stock}/range/1/minute/{d}/{d}",
+        key,
+        adjusted="false",
+        sort="asc",
+        limit="50000",
+    ).get("results")
+    return ahp.price_at(ahp.minute_bars(results, day), 930)
 
 
 def evening(day: date, key: str, agent: str) -> tuple[list[dict], list[dict]]:
@@ -186,6 +211,8 @@ def evening(day: date, key: str, agent: str) -> tuple[list[dict], list[dict]]:
                     "next_open": None,
                     "gross": None,
                     "net": None,
+                    "price_1530": None,
+                    "net_1530": None,
                     "borrow": None,
                 }
             )
@@ -218,10 +245,19 @@ def main() -> None:
         if day.isoformat() not in state["evenings"]:
             signals, seen = evening(day, key, agent)
             ahp.record(state, day, signals, seen)
-        for s in ahp.pending(state):
-            opened = next_open(s["symbol"], date.fromisoformat(s["day"]), key)
-            if opened:
+        for s in state["signals"]:
+            if s.get("net") is not None and s.get("net_1530") is not None:
+                continue
+            found = next_session(s["symbol"], date.fromisoformat(s["day"]), key)
+            if not found:
+                continue
+            when, opened = found
+            if s.get("net") is None:
                 s.update(ahp.settle(s["entry"], opened, s["adv"]))
+            if s.get("net_1530") is None and (now.date(), now.hour * 60 + now.minute) > (when, 932):
+                price = price_at_1530(s["symbol"], when, key)
+                if price:
+                    s.update(ahp.settle_held(s["entry"], price, s["adv"]))
     ahp.save(folder, state)
     print(ahp.report(state))
     print(f"Ledger: {folder}")
