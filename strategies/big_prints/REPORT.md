@@ -144,3 +144,20 @@ is counted over a slightly different pool; see the module's note).
 a first count and two or three months a first reading of the average. The research figure
 to compare is +1.8% a trade over small stocks; the median trade is near zero, so a few
 months can easily look flat.
+
+## Follow-up 2: the seller's footprint (read 18 November 2026, 00:15 ET)
+
+Quiet **down** days (0% to −4%) in large pieces, read as a short over the average, 2010–2017:
+
+| Cell | Shorts | Short over the average | t | Years positive | After costs and borrow |
+|---|---|---|---|---|---|
+| $50M–$300M, footprint 3+ | 1,691 | −0.79% | −2.12 | 1 of 8 | −3.05% |
+| $300M–$2B, footprint 2+ | 6,571 | −0.14% | −0.92 | 2 of 8 | −2.22% |
+
+**The short fails, and the stocks did better than average after a down day in large pieces
+too** (small companies +0.8% over 20 sessions, seven years of eight). So the large pieces do not
+mark only a buyer: in small companies they mark institutional trading of either kind, after
+which the stock does better than the average, and best when the day closed up. That weakens
+the "a fund is still buying" story and leaves "large traders are involved" (a seller's block
+in a thin stock is absorbed, then the price recovers). The long cell's numbers are unchanged
+(the up-day signals are the same in both tables). Not followed further; 2 trials (family 24).
