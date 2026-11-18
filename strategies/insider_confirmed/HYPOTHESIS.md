@@ -28,3 +28,8 @@ As A50's search: 2010–2017, 1% a trade after costs, weekly t of 3, six years o
 trades (fewer reported and taken on if the rest is met). Tests on 2006–2009 (where rule I's
 insider data starts) and 2018–2022, each cell that goes forward run once: 0.5%, t of 2.5,
 three years of four and four of five. 2023 is a check. The holdout stays sealed.
+
+**Results, 2026-11-17 23:03 ET.** In REPORT.md. **None of the 4 cells meets the bar.** In 2010–2017 the
+confirmed purchases made 1.25% to 3.51% a trade after costs, with **negative medians** (−1.2%
+to −2.1%) and a weekly t of 0.8 to 1.6. Waiting for the market to agree makes rule I worse,
+not better (rule I itself made 3.2% a trade in these years). 4 trials. No tests run.

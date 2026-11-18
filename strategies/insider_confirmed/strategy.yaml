@@ -1,10 +1,10 @@
 name: insider_confirmed
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 4 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $300M, an insider purchase of $100k+ then a strong rise on volume
 family: insider_confirmed
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Insider buying, confirmed
   idea: Insiders bought, then the stock rose hard on volume within weeks
   horizon: 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "Worse than rule I alone: negative medians, t under 2"
   summary: >-
-    The two rules that work, together: an insider purchase in a small company, then a strong
-    rise on heavy volume within 10 or 20 sessions. Buy at the next open, hold 15 sessions.
+    An insider purchase in a small company, then a strong rise on heavy volume within 10 or 20
+    sessions; bought at the next open and held 15 sessions.
+  weaknesses:
+    - The typical confirmed purchase gives some of the rise back.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2010 to 2017, kind: failed, text: "1.25% to 3.51% a trade with negative medians; rule I alone made 3.2%."}
+  studies:
+    - {name: Insider purchases confirmed by a rise, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
