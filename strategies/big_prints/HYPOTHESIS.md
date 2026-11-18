@@ -60,3 +60,10 @@ the search years carry less weight than the tests.
    under $1M a day (the price paid is least certain there).
 
 Each is one trial: 3.
+
+## Check 4: stocks that stop trading inside the hold (written 2026-11-18 00:04 ET)
+
+The tables so far keep only signals whose stock still trades 20 sessions later, which drops
+companies taken over or delisted in the hold. The passed cell is read again with the last
+close inside the 20 sessions in place of the 20th (as the after_hours study does), in all
+three periods and 2023. One trial.
