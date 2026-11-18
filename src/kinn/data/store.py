@@ -117,6 +117,29 @@ class DataStore:
             [start, end],
         )
 
+    def universe_members(self, start: date, end: date, universe: Universe) -> list[int]:
+        """Every company in ``universe`` on at least one session from ``start`` to ``end``."""
+        self._check(start, end, "panel")
+        table = self._query(
+            f"""select distinct permaticker from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()} and {universe.where()}
+                order by 1""",
+            [start, end],
+        )
+        return table["permaticker"].to_pylist()
+
+    def panel_of(
+        self, start: date, end: date, *, permatickers: list[int], columns: str
+    ) -> pa.Table:
+        """The panel's rows for the given companies only (what the Lab loads)."""
+        self._check(start, end, "panel")
+        return self._query(
+            f"""select {columns} from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()}
+                  and permaticker in (select unnest(?)) order by date, permaticker""",
+            [start, end, permatickers],
+        )
+
     def events(self, start: date, end: date) -> pa.Table:
         """Sharadar EVENTS (8-K event codes) by company and filing date."""
         self._check(start, end, "events")
