@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 import pandas as pd
 import pytest
@@ -223,3 +224,149 @@ def test_the_worker_runs_as_its_own_process(root, tmp_path):
     )
     assert done.returncode == 0, done.stderr
     assert store.status(run_dir)["error"].startswith("Syntax error at line 1")
+
+
+# -- helper modules, the time limit, the cache and the command line -------------------------
+HELPER = '''"""Shared."""
+
+
+def up_days(data, n):
+    up = data.returns > 0
+    out = up
+    for k in range(1, n):
+        out = out & up.shift(k, fill_value=False)
+    return out
+'''
+USES_HELPER = '''"""Uses the library."""
+from lab.helpers import up_days
+
+
+def signal(data):
+    return up_days(data, 2)
+'''
+
+
+def test_a_helper_module_is_imported_and_kept_with_the_run(root, fake):
+    store.save_module(root, "helpers", HELPER)
+    run_dir = go(root, fake, name="helped", code=USES_HELPER)
+    assert store.status(run_dir)["state"] == "complete", store.status(run_dir).get("error")
+    assert (run_dir / "pkg" / "lab" / "helpers.py").read_text() == HELPER
+    manifest = json.loads((run_dir / "manifest.json").read_text())
+    assert set(manifest["library"]) == {"helpers"}
+    # Changing the library later changes neither the old run's copy nor its hash.
+    store.save_module(root, "helpers", HELPER.replace("n):", "n, extra=0):"))
+    assert (run_dir / "pkg" / "lab" / "helpers.py").read_text() == HELPER
+    again = store.new_run(root, "helped", USES_HELPER, PERIOD)
+    assert again.name.split("_")[-1] != run_dir.name.split("_")[-1]
+
+
+def test_an_error_in_a_helper_names_the_helper_line(root, fake):
+    store.save_module(root, "helpers", "def up_days(data, n):\n    return data.nope\n")
+    run_dir = go(root, fake, name="helped", code=USES_HELPER)
+    error = store.status(run_dir)["error"]
+    assert "lab/helpers.py, line 2" in error and "your code, line 6" in error
+
+
+def test_a_missing_helper_fails_plainly(root, fake):
+    run_dir = go(root, fake, name="helped", code=USES_HELPER)
+    assert "No module named 'lab.helpers'" in store.status(run_dir)["error"]
+
+
+def test_module_names_must_be_importable(root):
+    for bad in ("Helpers", "2x", "my-tools", "class", ""):
+        with pytest.raises(store.LabError):
+            store.save_module(root, bad, HELPER)
+    with pytest.raises(store.LabError):
+        store.check_name("library")
+
+
+def test_a_run_past_its_time_limit_stops(root, fake):
+    code = "import time\n\ndef signal(data):\n    time.sleep(5)\n    return data.close > 0\n"
+    store.save_algorithm(root, "slow", code)
+    run_dir = store.new_run(root, "slow", code, PERIOD)
+    started = time.time()
+    runner.run(run_dir, open_store=lambda: fake, time_limit=0.5)
+    state = store.status(run_dir)
+    assert state["state"] == "failed" and "time limit" in state["error"]
+    assert time.time() - started < 4
+
+
+def test_the_owners_except_cannot_swallow_the_time_limit(root, fake):
+    code = ("import time\n\ndef signal(data):\n    try:\n        time.sleep(5)\n"
+            "    except Exception:\n        pass\n    return data.close > 0\n")  # fmt: skip
+    store.save_algorithm(root, "stubborn", code)
+    run_dir = store.new_run(root, "stubborn", code, PERIOD)
+    runner.run(run_dir, open_store=lambda: fake, time_limit=0.5)
+    assert "time limit" in store.status(run_dir)["error"]
+
+
+def test_a_second_run_reads_the_cache_and_gets_the_same_result(root, fake):
+    first = go(root, fake)
+    second = go(root, fake)
+    a, b = store.result(first, "summary"), store.result(second, "summary")
+    assert (a["cache"], b["cache"]) == ("miss", "hit")
+    for key in ("trades", "mean_net", "book_profit", "signals"):
+        assert a[key] == b[key]
+    assert pd.read_parquet(first / "trades.parquet").equals(
+        pd.read_parquet(second / "trades.parquet")
+    )
+    assert "Loading prices" in a["timings"] and "Loading prices" not in b["timings"]
+    log = (second / "log.txt").read_text()
+    assert "Prices loaded from the cache" in log
+
+
+def test_a_damaged_cache_entry_is_read_again(root, fake):
+    go(root, fake)
+    entry = next(p for p in (root / "cache").iterdir() if p.is_dir())
+    (entry / "close.npy").write_bytes(b"not an array")
+    run_dir = go(root, fake)
+    assert store.status(run_dir)["state"] == "complete"
+    assert store.result(run_dir, "summary")["cache"] == "miss"
+
+
+def test_the_cache_keeps_to_its_limit(root, fake, monkeypatch):
+    monkeypatch.setenv("KINN_LAB_CACHE_GB", "0")
+    go(root, fake)
+    go(root, fake, settings={**PERIOD, "end": "2015-06-30"})
+    entries = [p for p in (root / "cache").iterdir() if p.is_dir() and not p.name.startswith(".")]
+    assert len(entries) == 1  # the newest stays; the older one went
+
+
+def test_the_command_line_runs_lists_and_refuses(root, fake, tmp_path, capsys):
+    from functools import partial
+
+    from kinn.lab import commands
+
+    script = tmp_path / "Two Up.py"
+    script.write_text(GOOD)
+    lines = []
+    run = partial(runner.run, open_store=lambda: fake)
+    assert commands.run_algorithm(root, str(script), PERIOD, time_limit=60, out=lines.append,
+                                  runner=run) == 0  # fmt: skip
+    assert lines[0].startswith("run ") and "trades" in lines[1] and "best:" in lines[3]
+    assert store.read_algorithm(root, "two_up") == GOOD
+    lines.clear()
+    assert commands.run_algorithm(root, "two_up", {"exit": {"hold_days": 0}}, time_limit=60,
+                                  out=lines.append, runner=run) == 2  # fmt: skip
+    assert "exit.hold_days" in lines[0]
+    lines.clear()
+    store.save_algorithm(root, "broken", "def signal(data)\n")
+    assert commands.run_algorithm(root, "broken", {}, time_limit=60, out=lines.append,
+                                  runner=run) == 2  # fmt: skip
+    assert "line 1" in lines[0]
+    assert commands.list_algorithms(root) == 0
+    assert "two_up" in capsys.readouterr().out
+
+
+def test_the_selfcheck_passes_on_good_templates(fake):
+    from functools import partial
+
+    from kinn.lab import commands
+
+    lines = []
+    small = {**PERIOD, "universe": {"min_market_cap": 1e6, "max_market_cap": None}}
+    run = partial(runner.run, open_store=lambda: fake)
+    code = commands.selfcheck(out=lines.append, runner=run, period=small)
+    assert code == 0, lines
+    assert lines[-1] == "self-check passed"
+    assert any("caught a deliberate peek" in line for line in lines)

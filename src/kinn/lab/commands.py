@@ -21,7 +21,7 @@ SELFCHECK_PERIOD = {"period": "custom", "start": "2015-01-02", "end": "2015-12-3
 PEEK = '''"""A deliberate peek at the next day, to show the lookahead test works."""
 
 def signal(data):
-    return data.returns.shift(-1) > 0.02
+    return data.returns.shift(-1) > 0
 '''
 
 

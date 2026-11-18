@@ -49,10 +49,14 @@ const routes: Record<string, unknown> = {
 };
 
 let calls: { url: string; init?: RequestInit }[] = [];
+let findings: unknown[] = [];
 beforeEach(() => {
   calls = [];
+  findings = [];
   vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
+    if (url === "/api/lab/check") return new Response(JSON.stringify({ findings }));
+    if (url === "/api/lab/library") return new Response(JSON.stringify([]));
     if (url.includes("/trades?")) return new Response(JSON.stringify({ total: 1, offset: 0, limit: 100, rows: [] }));
     if (url === "/api/lab/session") return new Response(JSON.stringify({ token: "tok" }));
     if (init?.method === "POST") return new Response(JSON.stringify({ run_id: RUN, status: { state: "queued" } }), { status: 202 });
@@ -105,6 +109,26 @@ describe("the Lab", () => {
     render(<Lab name="two_up" onOpen={onOpen} />);
     fireEvent.click(await screen.findByRole("button", { name: "Lab" }));
     expect(onOpen).toHaveBeenCalledWith(undefined, undefined);
+  });
+
+  it("blocks Run while the code check finds an error, and says where", async () => {
+    findings = [{ severity: "error", message: "Syntax error: invalid syntax", line: 1, column: 0, end_line: 1, end_column: 3 }];
+    render(<Lab name="two_up" onOpen={() => undefined} />);
+    expect(await screen.findByText(/1 error, line 1/, undefined, { timeout: 3000 })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+    expect(await screen.findByText(/Fix line 1 first/)).toBeTruthy();
+    expect(calls.some((c) => c.url === "/api/lab/runs" && c.init?.method === "POST")).toBe(false);
+  });
+
+  it("never drops a field into the code where there is no cursor: it copies it", async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.assign(navigator, { clipboard: { writeText } });
+    render(<Lab name="two_up" onOpen={() => undefined} />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Data" }));
+    fireEvent.click(screen.getByTitle("Put data.close at the cursor in the code"));
+    expect(writeText).toHaveBeenCalledWith("data.close");
+    expect(screen.getByRole("status").textContent).toMatch(/Copied data.close/);
+    expect(screen.getByRole("textbox", { name: "two_up.py" }).textContent).not.toContain("data.closedef");
   });
 
   it("refuses a bad setting before running", async () => {

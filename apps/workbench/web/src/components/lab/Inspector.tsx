@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import type { LabSettings, Meta } from "../../lib/lab";
 import { changed, type Draft, NUMBERS, type NumberSpec, shown } from "../../lib/labSettings";
 
@@ -8,7 +8,8 @@ interface InspectorProps {
   base: LabSettings;
   draft: Draft;
   onChange: (draft: Draft) => void;
-  onInsert: (text: string) => void;
+  /** Put text at the editor's cursor; false when the editor has no cursor yet. */
+  onInsert: (text: string) => boolean;
 }
 
 // One control width and one row height for every setting, so the column reads as a table.
@@ -199,22 +200,42 @@ function Settings({ meta, base, draft, onChange }: Omit<InspectorProps, "onInser
   );
 }
 
-function Fields({ meta, onInsert }: { meta: Meta; onInsert: (text: string) => void }) {
+function Fields({ meta, onInsert }: { meta: Meta; onInsert: (text: string) => boolean }) {
   const [search, setSearch] = useState("");
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!note) return;
+    const timer = window.setTimeout(() => setNote(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [note]);
+  const use = (text: string) => {
+    if (onInsert(text)) {
+      setNote(`Put ${text} at the cursor.`);
+      return;
+    }
+    // No cursor in the code yet: never write at an unseen place. Copy it instead.
+    navigator.clipboard?.writeText(text).catch(() => undefined);
+    setNote(`Copied ${text}. Click where it goes in the code and paste.`);
+  };
   const words = search.trim().toLowerCase();
   const rows = meta.fields.filter((f) => !words || f.name.includes(words) || f.description.toLowerCase().includes(words));
   return (
     <div className="flex flex-col">
       <div className="sticky top-0 z-[1] border-b border-line-soft bg-surface px-4 py-3">
         <input type="search" aria-label="Find a field" placeholder="Find a field" value={search} onChange={(e) => setSearch(e.target.value)} className={`${control} px-2.5 placeholder:text-ink-3`} />
+        {note && (
+          <p role="status" className="m-0 mt-2 text-[13px] text-ink-2">
+            {note}
+          </p>
+        )}
       </div>
       <ul className="m-0 list-none p-0">
         {rows.map((f) => (
           <li key={f.name}>
             <button
               type="button"
-              onClick={() => onInsert(`data.${f.name}`)}
-              title={`Put data.${f.name} in the code`}
+              onClick={() => use(`data.${f.name}`)}
+              title={`Put data.${f.name} at the cursor in the code`}
               className="flex w-full cursor-pointer flex-col gap-0.5 border-b border-line-soft px-4 py-2.5 text-left hover:bg-raised focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent"
             >
               <span className="flex items-baseline justify-between gap-3">

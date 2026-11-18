@@ -220,6 +220,28 @@ export interface TradeRow {
   taken: boolean;
 }
 
+/** A problem the Lab's code check found (it reads the code, never runs it). */
+export interface Finding {
+  severity: "error" | "warning";
+  message: string;
+  line: number; // 1-based
+  column: number; // 0-based
+  end_line: number;
+  end_column: number;
+}
+
+export interface ModuleRow {
+  name: string;
+  description: string;
+  updated: string;
+}
+
+export interface ModuleFile {
+  name: string;
+  code: string;
+  description: string;
+}
+
 export interface TradePage {
   total: number;
   offset: number;
@@ -305,7 +327,15 @@ export const lab = {
     return read<TradePage>(`/runs/${id(runId)}/trades?${params}`);
   },
   csvUrl: (runId: string) => `${BASE}/runs/${id(runId)}/trades.csv`,
+  check: (code: string, module = false) => write<{ findings: Finding[] }>("POST", "/check", { code, module }),
+  library: () => read<ModuleRow[]>("/library"),
+  module: (name: string) => read<ModuleFile>(`/library/${id(name)}`),
+  saveModule: (name: string, code: string) => write<{ name: string; description: string }>("PUT", `/library/${id(name)}`, { code }),
+  removeModule: (name: string) => write<{ deleted: string }>("DELETE", `/library/${id(name)}`),
 };
+
+/** A helper module's name: importable, so letters, digits and _ only. */
+export const MODULE_NAME = /^[a-z][a-z0-9_]{0,63}$/;
 
 /** A name for a new algorithm: lower-case letters, digits, - and _. */
 export function cleanName(text: string): string {

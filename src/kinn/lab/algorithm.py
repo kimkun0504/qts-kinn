@@ -87,8 +87,9 @@ def _call(algorithm: Algorithm, name: str, data: LabData) -> pd.DataFrame:
     try:
         out = getattr(algorithm.module, name)(data)
     except AttributeError as error:
-        if "data has no field" in str(error):
-            raise AlgorithmError(f"{name}(data): {error}") from None
+        if "data has no field" in str(error):  # the message says it all; then where it was
+            where = "\n".join(_user_trace(error).splitlines()[:-1])
+            raise AlgorithmError(f"{name}(data): {error}\n{where}") from None
         raise AlgorithmError(f"{name}(data) failed:\n" + _user_trace(error)) from None
     except MemoryError:
         raise AlgorithmError(f"{name}(data) ran out of memory. Use fewer fields, a shorter "

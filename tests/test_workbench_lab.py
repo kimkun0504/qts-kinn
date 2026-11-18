@@ -287,3 +287,35 @@ def test_the_lab_is_off_when_the_server_listens_beyond_this_machine(server):
 
 def test_other_writes_are_not_found(server):
     assert call(server, "POST", "/api/runs", {"x": 1})[0] == 404
+
+
+def test_the_code_check_endpoint_reads_without_running(root):
+    status, payload = lab.route(
+        "POST", ["check"], {}, {"code": "import os\nos.remove('x')\n"}, root
+    )
+    assert status == 200
+    assert [f["severity"] for f in payload["findings"]] == ["error"]  # no signal; nothing ran
+    status, payload = lab.route("POST", ["check"], {}, {"code": "x = 1\n", "module": True}, root)
+    assert (status, payload) == (200, {"findings": []})
+    assert lab.route("POST", ["check"], {}, {"code": 3}, root)[0] == 400
+
+
+def test_a_run_of_broken_code_is_refused_and_makes_no_run(root):
+    status, payload = lab.route(
+        "POST", ["runs"], {}, {"algorithm": "x", "code": "def signal(data)\n"}, root,
+        launch=lambda run_dir: pytest.fail("must not start"),
+    )  # fmt: skip
+    assert status == 400 and payload["error"].startswith("Line 1: Syntax error")
+    assert lab.route("GET", ["runs"], {}, None, root)[1] == []
+
+
+def test_the_library_endpoints(root):
+    code = '"""Shared helpers."""\n\ndef f(x):\n    return x\n'
+    assert lab.route("PUT", ["library", "helpers"], {}, {"code": code}, root)[0] == 200
+    assert lab.route("PUT", ["library", "Bad-Name"], {}, {"code": code}, root)[0] == 400
+    status, rows = lab.route("GET", ["library"], {}, None, root)
+    assert status == 200 and rows[0]["name"] == "helpers" and rows[0]["description"]
+    assert lab.route("GET", ["library", "helpers"], {}, None, root)[1]["code"] == code
+    assert lab.route("DELETE", ["library", "helpers"], {}, None, root)[0] == 200
+    assert lab.route("GET", ["library", "helpers"], {}, None, root)[0] == 404
+    assert any(p.name.startswith("library-helpers-") for p in (root / "trash").iterdir())
