@@ -390,14 +390,14 @@ export function Lab({ name, runId, onOpen }: LabProps) {
       const started = await lab.start(name, code, patch);
       setSaved(code);
       setStatus(started.status);
-      await refreshRuns(name);
+      await Promise.all([refreshRuns(name), refreshList()]);
       onOpen(name, started.run_id);
     } catch (e) {
       setMessage({ tone: "bad", text: (e as Error).message });
     } finally {
       setBusy(false);
     }
-  }, [name, meta, busy, draft, code, refreshRuns, onOpen]);
+  }, [name, meta, busy, draft, code, refreshRuns, refreshList, onOpen]);
 
   const cancel = async () => {
     if (!shownRun) return;
