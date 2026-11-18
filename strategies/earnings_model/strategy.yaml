@@ -1,0 +1,18 @@
+name: earnings_model
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing fitted yet
+engine: daily
+universe: listed common stock, $50M to $2B, the session after a results 8-K
+family: earnings_model
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Earnings model
+  idea: One model of the drift after results, with the new intraday measurements
+  horizon: 15 sessions
+  verdict: planned
+  summary: >-
+    A single model, fixed in advance, fitted on 2010 to 2017 on every results event in
+    companies of $50M to $2B, to find trades the fixed earnings rule misses.
