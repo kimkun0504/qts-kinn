@@ -157,6 +157,14 @@ next minute's low, bought back at that session's close; 3 cells): 2010–2017 +1
 $50M–$300M), +2.44% (71, t 1.55, $300M–$2B), +2.87% (53, t 2.52, seven years of seven, $2B+).
 The same direction, on too few signals to meet the bar.
 
+**As a book** (a description, not a test): $2,000 a trade, every signal taken, after costs, 639
+signals 2005 to October 2023. By year: 2005 $1,143, 2006 $373, 2007 $1,178, 2008 $3,296, 2009
+$2,547, 2010 $745, 2011 $507, 2012 $2,980, 2013 −$124, 2014 $2,956, 2015 $2,848, 2016 $4,601,
+2017 −$347, 2018 $146, 2019 $752, 2020 $1,653, 2021 $649, 2022 $3,212, 2023 $5,864. **17 of 19
+years positive**, about $1,900 a year on average. 537 evenings; at most six signals on one
+evening, three or more on only nine. Most come in the reporting months (February, May, July and
+August, October and November).
+
 ## Following the short on paper (built 2026-11-17)
 
 `tools/owner/paper_after_hours.py` keeps a paper ledger of the after-hours short, the strongest
