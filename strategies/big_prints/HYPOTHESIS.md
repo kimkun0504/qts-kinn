@@ -125,3 +125,11 @@ footprint of 2 or more on at least one of the 10 sessions before D. **1 cell** (
 in all three periods with stopped stocks kept, against the passed cell: it is worth using only
 if it is better per trade in all three periods and still meets the test bars (0.5%, t 2.5,
 four of five) in both test periods. The single-footprint rest is printed beside. 1 trial.
+
+## Check 7: the price a buyer gets, and the largest winners (written 2026-11-18 00:20 ET)
+
+(a) The passed cell entered not at the official open but at the volume-weighted price of the
+first 30 minutes of D+1 (09:30–10:00, from minute bars), sold as before, in 2010–2017,
+2018–2022 and 2023; and the average gap between that price and the official open. (b) The ten
+largest winners of the cell in 2005–2023, checked against the price table for data errors.
+2 trials.
