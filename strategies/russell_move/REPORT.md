@@ -37,3 +37,10 @@ Year by year (moved down, short): 2005 +0.3%, 2006 −1.9%, 2007 +0.7%, 2008 +11
 since 2018; it was the momentum of the year's losers, not a rule. **Verdict: closed.**
 
 Trials: 2 (family total 6).
+
+## Follow-up 2: entrants to the Russell 2000 (read 18 November 2026, 00:25 ET)
+
+Bought after the rank day, sold at reconstitution, 2010–2017, over the average of ranks 1,001 to
+3,000: entered −0.23% (820; t −0.37; 4 of 8), entered clearly −0.94% (360; t −0.81; 3 of 8).
+The index buying at the rebuild is anticipated; nothing left for a buyer after the rank day.
+2 trials (family total 8).

@@ -4,7 +4,7 @@ status: closed            # long failed the search; the short failed both tests 
 engine: daily
 universe: companies moving from the Russell 1000 to the Russell 2000 (rebuilt from market values)
 family: russell_move
-prior_trials: 6
+prior_trials: 8
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -23,3 +23,4 @@ record:
     - {when: 2026-11-17, title: 4 cells and 2 short tests, kind: failed, text: "Long fails (−2.61%, 0 of 8 years); the short made +4.5% in 2005–09 (t 1.45) and lost 0.9% in 2018–22."}
   studies:
     - {name: Russell 1000 leavers into and after the rebuild, when: 2026-11-17, trials: 6, result: "The long fails; the short failed both tests", verdict: failed}
+    - {name: Entrants to the Russell 2000, when: 2026-11-18, trials: 2, result: "No gain after the rank day", verdict: failed}
