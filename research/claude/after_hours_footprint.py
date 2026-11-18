@@ -26,7 +26,7 @@ def main(side: str = "short") -> None:
     elif side == "long":
         d = load()
         keep = (d["timing"] == "after") & (d["mcap"] >= 2e9) & (d["reaction"] >= 0.05) & (d["reaction"] < 0.15)
-    else:  # "small": the small-company long
+    else:  # "small" or "small_open": the small-company long
         d = load()
         keep = (d["timing"] == "after") & (d["mcap"] >= 5e7) & (d["mcap"] < 3e8) & (d["reaction"] >= 0.05)
     rows = duckdb.sql(
@@ -84,6 +84,8 @@ def main(side: str = "short") -> None:
         if i in after and normal.get(i):
             fp[i] = after[i] / normal[i]
     net = (d["g_open"] if side == "short" else d["g_fifteen"]) - d["cost"]
+    if side == "small_open":
+        net = d["g_open15"] - d["cost_auction"] - 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / 10))
     years = d["yr"]
     base = keep & ~np.isnan(fp)
     cut = np.median(fp[base & (years >= 2010) & (years <= 2017)])
@@ -96,7 +98,7 @@ def main(side: str = "short") -> None:
             _, t, _ = weekly(net[m], d["week"][m])
             out.append(f"{label} {m.sum()} {100 * net[m].mean():+.2f}% (t {t:.2f})")
         print(f"{name}: " + "; ".join(out))
-        if side == "small":
+        if side == "small":  # fills of the after-hours entry
             m = k & (fp >= cut)
             thin = np.mean(d["bar_dollars"][m] < 5000) if m.any() else float("nan")
             thick = m & (d["bar_dollars"] >= 5000)

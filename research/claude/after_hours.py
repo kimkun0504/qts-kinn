@@ -246,6 +246,9 @@ def load() -> dict[str, np.ndarray]:
                         else 1 / n.rel - 1 end as g_close,
                    case when n.timing = 'after' then exp(v.c16 - v.c) / n.rel - 1
                         else exp(v.c15 - v.c) / n.rel - 1 end as g_fifteen,
+                   exp(v.c16 - v.c_next) / v.oc_next - 1 as g_open15,
+                   2 * (case when v.adv < 1e6 then 0.0025 when v.adv < 1e7 then 0.0010
+                             when v.adv < 1e8 then 0.0005 else 0.0002 end) as cost_auction,
                    case when v.adv < 1e6 then 0.0025 when v.adv < 1e7 then 0.0010
                         when v.adv < 1e8 then 0.0005 else 0.0002 end
                    + 2 * least(0.01, greatest(0.000175, 0.0035 / n.paid)) as cost
