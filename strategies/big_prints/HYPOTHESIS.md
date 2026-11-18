@@ -168,3 +168,12 @@ A diagnostic of the passed cell, not a rule (it uses what happened later): its s
 whether a results 8-K reacted inside the 20-session hold. If the gain sits in the signals
 followed by results, the large pieces are informed buying ahead of them, and an earnings
 calendar would sharpen the rule. 1 trial.
+
+## Follow-up 10: large pieces with a report expected inside the hold (written 2026-11-18 00:26 ET)
+
+Check 8 used what happened later. A rule must use what is known on D: the company's last
+results 8-K. Companies report about every 91 days, so if the last results reacted 63 to 91
+calendar days before D, the next is expected within the next four weeks, inside the hold.
+**1 cell:** the passed cell with that condition, in all three periods and 2023. It is worth
+using only if better per trade than the passed cell in all three periods and it meets the test
+bars (0.5%, t 2.5, four of five) in both test periods. 1 trial.
