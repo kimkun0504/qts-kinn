@@ -1,0 +1,22 @@
+name: fragmented_selloff_exhaustion
+status: hypothesis
+engine: intraday
+universe: domestic common stocks after a fast regular-session decline
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Smaller-print selloff exhaustion
+  idea: Diminishing price impact with persistent activity and smaller average prints
+  horizon: Two hours after first fill
+  verdict: hypothesis
+  label: Preregistered primary and control
+  result: Untested
+  summary: >-
+    After a shock, test whether smaller average shares per
+    transaction and accelerating transaction activity improve
+    a fixed price-impact recovery signal.
+  weaknesses:
+    - Aggregate print size does not identify signed flow or trader identity.
+    - The event study approximates execution and ignores account capital conflicts.
