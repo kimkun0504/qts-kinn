@@ -205,3 +205,19 @@ costs by the minute's high (860 trades, weekly t 2.80, seven years of eight) and
 resting order (698 trades, t 2.07, seven of eight). **Neither meets the search bar** (the t
 of 3), so no tests were run. The market was about 0.4 of the cell's 1.5 points; the rest is
 the stocks. 2 cells; `after_hours` has 105 trials.
+
+## Addendum, 2026-11-17 23:10 ET: how robust is the short to the fill, and how crowded is it
+
+Written before it is measured. The short ($300M–$2B, down 15% or more, sold at the low of the
+next minute, bought back at the next open) is the lead being followed on paper. All its periods
+are seen; these are not new rules but the same rule priced more harshly, to see whether the
+result depends on the fill:
+
+1. **Only entries whose minute traded $5,000 or more** (the others dropped).
+2. **Sold at the lowest price of the five minutes after the reading** (from the first minute
+   that trades), instead of the first minute's low.
+
+Each is read on 2005–2009, 2010–2017, 2018–2022 and 2023 together with the plain rule. 2
+trials. And, as a description that counts no trial: for the signals of 2018–2023 (the years
+with short-interest data on disk), the short interest as a share of shares and as days to cover
+at the last report before the signal, against all stocks of the same size.
