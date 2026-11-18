@@ -324,3 +324,12 @@ The small-company long ($50M–$300M, up 5% or more after hours on results, boug
 of the next minute, held 15 sessions) had the largest averages and the least steadiness. Split
 at the 2010–2017 median after-hours footprint. **1 cell:** the larger-piece half, judged as a
 filter: better per trade in all three periods, 2023 as a check.
+
+## Addendum, 2026-11-18 00:41 ET: the same signal, bought at the next open (1 trial)
+
+The small-company long with large after-hours pieces leans on thin after-hours fills. The
+signal is known before the next open, so it can be bought in the opening auction instead.
+Same events and the same median split; **bought at the next open**, sold at the close 15
+sessions after it; the auction allowance and commission. **1 cell:** the larger-piece half,
+judged as the after-hours version was (better per trade than the whole cell, bought the same
+way, in all three periods; 2023 a check), and reported beside the after-hours fill.
