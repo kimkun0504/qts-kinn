@@ -96,3 +96,18 @@ make 27% to 69% of the excess. With each trade's excess capped at ±30%: +0.64% 
   months of signals. It was not run on the holdout.
 
 Trials: 4 cells + 4 follow-up cells + 4 test runs + 5 checks = **17** (family `big_prints`).
+
+## Check 6: neighbours (read 18 November 2026, 00:09 ET)
+
+$50M–$300M, over the average small stock, stopped stocks kept:
+
+| Cell | 2010–2017 | 2005–2009 | 2018–2022 |
+|---|---|---|---|
+| Footprint 2.5+, 20 sessions | +0.99% (3,307; t 4.68; 8 of 8) | +1.75% (t 4.82) | +1.69% (t 3.33) |
+| Footprint 4+, 20 sessions | +1.65% (1,112; t 4.36) | +1.24% (t 2.03) | +1.38% (t 2.58) |
+| Footprint 5+, 20 sessions | +2.04% (687; t 3.35) | +0.89% (t 0.50) | +2.14% (t 3.50) |
+| Footprint 3+, 10 sessions | +0.53% (2,155; t 1.91) | +1.33% (t 4.65) | +0.99% (t 2.84) |
+| Footprint 3+, 40 sessions | +2.13% (t 2.41) | +1.92% (t 3.45) | +2.44% (t 2.06) |
+
+All fifteen readings are positive, from +0.5% to +2.4%; the cell is not a knife-edge. The gain
+keeps building past 20 sessions (about +2% by 40). Trials: 5 (family total 22).
