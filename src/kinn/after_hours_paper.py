@@ -4,9 +4,10 @@ A company of $300M to $2B files its results (an 8-K with item 2.02) after the cl
 hour after the SEC accepted it, its stock trades 15% or more under the 16:00 price with at
 least $50,000 traded since 16:00. The paper trade sells short at the low of the next minute
 that trades and buys back at the next session's open; beside it the ledger records the
-better exit of the research, held through that session and bought back at 15:30. Nothing here sends an order or touches
-the network or the research data: the owner's tool (``tools/owner/paper_after_hours.py``)
-fetches the SEC's filings and the vendor's minute bars and hands them to these functions.
+better exit of the research, held through that session and bought back at 15:30. Nothing
+here sends an order or touches the network or the research data: the owner's tool
+(``tools/owner/paper_after_hours.py``) fetches the SEC's filings and the vendor's minute bars
+and hands them to these functions.
 
 The rule is the one measured in ``research/claude/after_hours.py`` (``collect`` and
 ``collect_lows``, the cell "short mid down15 open"); a test holds this code to the same
