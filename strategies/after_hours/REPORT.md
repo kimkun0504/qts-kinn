@@ -334,3 +334,8 @@ Those made +14.7%, +7.4%, +14.1% and +17.5%; **the rest made −2.68% (2005–20
 which jumps A50 will take; on its own it is weak. It stays a note on A50's timing, not a second
 strategy: it suggests the A50 jumps that began after hours in large pieces gained a great deal
 on their first day, which A50's entry (the open after the signal day) does not get.
+
+**Mid-sized companies** (1 trial): $300M–$2B up 5% to 15% after hours, bought at the next open,
+15 sessions: the larger-piece half −0.53% (2005–2009), +1.77%, +0.43%, −3.12% (2023), against
++0.34%, +1.39%, −0.29%, −3.04% for all. Worse in 2005–2009: not a filter; and the cell itself
+is flat outside 2010–2017.
