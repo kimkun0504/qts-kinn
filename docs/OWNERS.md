@@ -48,6 +48,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/fragmented_selloff_exhaustion` | gpt | 2026-11-18 | smaller-print selloff exhaustion with a frozen unfiltered control |
 | `strategies/quiet_size_breakout` | gpt | 2026-11-18 | larger-print narrow-range breakout at one fixed clock time |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
+| `strategies/active_gap_recovery` | gpt | 2026-11-18 | recovery after a dense-trading stock resumes at a discount; missing bars are a proxy only |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |
 | `docs/`, repo config, CI | owner (Kun) | 2026-11-15 | agents propose by PR |
