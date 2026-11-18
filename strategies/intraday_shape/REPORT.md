@@ -1,7 +1,7 @@
 # Intraday shape: a stock pushed up into the close, day after day, gives it back
 
-**Verdict: closed; one finding worth keeping as a warning.** 28 cells on 2010 to 2017, none
-meets the bar set in [HYPOTHESIS.md](HYPOTHESIS.md), so no test was run. 28 trials. The
+**Verdict: closed; one finding worth keeping as a warning, and an exit for the earnings rule to follow on paper.** 32 cells on 2010 to 2017, none
+meets the bar set in [HYPOTHESIS.md](HYPOTHESIS.md), so no test was run. 32 trials. The
 holdout is untouched.
 
 From minute bars, for every listed common stock of $50M or more and every session from 2005
@@ -35,6 +35,27 @@ open and held 5 or 10 sessions. Code: `research/claude/intraday_shape.py`.
 earnings rule or the insider rule that has been pushed up into the close for two weeks is
 worth checking against this before it is bought; that check has not been run.
 
+## An exit for the earnings rule (4 variants)
+
+Every A50 trade from 2005 to October 2023 with a full 15-session path (1,558), plain exit
+against four exits on a late push, sold at the next open. Judged as the exits of 16 November:
+better only if better in all three periods. Code: `research/claude/a50_late_exit.py`.
+
+| After costs, a trade | 2010–2017 | 2005–2009 | 2018–2022 | 2023 |
+|---|---|---|---|---|
+| Plain (the close 15 sessions after the signal) | 3.26% | 4.47% | 4.13% | 5.95% |
+| **Sell after a held session up 4%+ in its last half hour** | **3.59%** | **4.61%** | **4.27%** | 5.43% |
+| … up 2%+ | 3.33% | 3.70% | 4.15% | 4.63% |
+| … three sessions' last half hours adding to 6%+ | 3.40% | 4.41% | 4.44% | 6.18% |
+| … adding to 3%+ | 3.05% | 3.90% | 4.06% | 4.34% |
+
+The first is better in all three periods. It fires in about one trade in eleven (39, 47 and
+50), and on those it adds 5.1, 1.3 and 1.3 points with a paired t of 2.06, 0.48 and 0.30; in
+2023 it took 4 points off 8 trades. It is the first exit that has not lost to the plain rule
+somewhere, but the evidence is about 45 trades a period. **Not a change to the frozen rule:**
+the paper ledger can carry it as a column (a late push of 4% on a held name, and what selling
+at the next open would have done) until the forward record says more.
+
 ## Reproduce
 
 ```
@@ -45,4 +66,5 @@ uv run python intraday_shape.py table
 uv run python intraday_shape.py search
 uv run python intraday_shape.py search_low
 uv run python intraday_shape.py pairs search
+uv run python a50_late_exit.py
 ```

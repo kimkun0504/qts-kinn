@@ -110,3 +110,12 @@ allowance both ways).
 **How it is read:** each variant against the plain rule on 2010–2017, 2005–2009 and 2018–2022
 apart (2023 shown). A variant is better only if it beats the plain rule's mean a trade in all
 three. **4 cells**, charged to `intraday_shape`.
+
+**Results of the A50 exits, 2026-11-17 22:33 ET.** In REPORT.md. 1,558 A50 trades with a full path. **One
+variant beats the plain rule in all three periods:** sell at the next open after a held
+session that rose 4% or more in its last half hour (3.59% against 3.26% in 2010–2017, 4.61%
+against 4.47% in 2005–2009, 4.27% against 4.13% in 2018–2022; 2023 5.43% against 5.95%). It
+fires in about one trade in eleven (39, 47 and 50 trades), changing those by +5.1, +1.3 and
++1.3 points, paired t 2.06, 0.48 and 0.30. Better by the rule set, on too few firings to be
+sure; the other three variants are not better in all three. 4 trials; `intraday_shape` has
+32.

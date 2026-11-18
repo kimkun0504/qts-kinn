@@ -1,6 +1,6 @@
 name: overnight_hold
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # three cells passed 2005-2009 and failed 2018-2022; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, price >= $5, no results due
 family: overnight_hold
@@ -10,10 +10,21 @@ owner: claude
 
 record:
   title: Holding only overnight
-  idea: Owning a stock only at night (or only by day), chosen by where its gains have come
-  horizon: One night or one session
-  verdict: planned
+  idea: Owning a stock only at night, chosen by where its gains have come
+  horizon: One night
+  verdict: closed
+  result: "+0.2% to +0.7% a night to 2017 at auction prices; nothing since 2018"
   summary: >-
     An indicator of our own: where a stock's move happens, overnight or in the session.
-    Buy in the closing auction and sell in the opening auction the stocks whose gains have
-    come at night (or the reverse by day).
+    Bought in the closing auction and sold in the opening auction, the stocks whose gains
+    have come at night.
+  weaknesses:
+    - Since 2018 the night gain is gone except in 2020; 2021 and 2022 lost most of the book.
+    - It depends on filling in both auctions at their prints; only one to six stocks a night can be checked.
+  evidence:
+    - {when: 2026-11-17, title: Night books, kind: found, text: "Before costs +0.14% to +0.30% a night (2010 to 2017); the day books lose."}
+    - {when: 2026-11-17, title: Tested at auction prices, kind: failed, text: "Three cells passed 2005 to 2009 (+0.32% to +0.67% a night) and failed 2018 to 2022 (−0.12% to +0.05%)."}
+  studies:
+    - {name: Night and day books with the auction allowance, when: 2026-11-17, trials: 12, result: "No cell meets the bar after the allowance", verdict: failed}
+    - {name: Sold at the first minute's low, when: 2026-11-17, trials: 6, result: "Every cell loses; the wrong price for an on-open order", verdict: failed}
+    - {name: Auction prices where both auctions are seen, when: 2026-11-17, trials: 12, result: "Passed 2005 to 2009, failed 2018 to 2022", verdict: failed}
