@@ -39,3 +39,18 @@ Search 2010–2017: over the average stock of its size, **1% a trade for 20 sess
 trades (fewer reported and taken on if the rest is met). Tests on 2005–2009 and 2018–2022,
 each cell that goes forward run once: half those, t of 2.5, four years of five, in both. 2023
 is a check. The holdout stays sealed.
+
+**Results, 2026-11-17 22:51 ET.** In REPORT.md. **None of the 8 cells meets the bar.** Against the average
+stock of its size: initiations −0.45% to +2.07% (t −0.38 to 0.92), raises −0.11% to +1.79%
+(t 0.61 to 1.82). The averages after costs are positive (1% to 5%) because the market rose;
+the dividend adds little and nothing steady. 8 trials. No tests run.
+
+## Addendum, 2026-11-17 22:51 ET: forward splits, in the same frame
+
+Written before it is measured. A forward split (two shares for one, and the like) is the other
+corporate act with a published drift after it (Ikenberry and others). Same data (Sharadar
+actions, "split", a factor of 1.5 or more, dated at the split; read before 2023-11-09), same
+trade (bought at the open of the first session on or after the split, held 20 or 60 sessions),
+same bar against the average stock of the size. Splits are rare in small companies, so the
+sizes are $300M to $2B and $2B or more (the average stock of $2B or more measured the same
+way). **4 cells**, family `dividend_signal`.
