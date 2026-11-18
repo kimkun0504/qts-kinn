@@ -89,3 +89,35 @@ nothing below is a blind test. Two questions decide whether the lead is usable:
 
 **2 cells** on the search years, the same bar; the other two periods are shown beside them
 because they are already known for the base cell. Charged to `closing_bids`.
+
+**Results of the two follow-ups, 2026-11-17 21:19 ET.** In REPORT.md. In the search years the fills are
+scattered (173 fills on 149 days), SPY did nothing overnight after them (+0.05%), and the
+hedged trade made 1.20% (weekly t 3.23, seven years of eight): the stocks' own rebound. In
+the two test periods two thirds of the fills are on days with ten or more (market-wide
+sell-offs into the close, mostly 2008 and 2020), SPY itself was up 1.0% to 1.1% by the next
+open on those fills, and the hedged trade made 0.35% and 0.32%. Bought after the close
+instead: 0.91% in the search years (143 of the 173 traded after hours; weekly t 2.08, under
+the bar), 1.21% and 1.32% in the other two. 2 cells; `closing_bids` has 22 trials.
+
+So there are two things here. A large stock pushed down alone into the close comes back by
+the morning (about 20 a year, 1.2% each, and it has to be bought in the auction). And when
+the whole market is sold into the close, the market itself comes back overnight.
+
+## Addendum, 2026-11-17 21:19 ET: the market itself after a late sell-off (SPY, QQQ, IWM)
+
+Written before it is measured. What is already seen: SPY's overnight return averaged over
+the stock fills above (near zero in 2010–2017, about 1% in the other two periods, weighted
+towards the worst days of 2008 and 2020). Not seen: the funds' own late falls, day by day.
+
+**Rule.** For SPY, QQQ (QQQQ before 2011) and IWM, each session: if the price at 15:58 is
+**0.5% or more** (or **1.0% or more**) under the price at 15:49, **buy at the high of the
+15:59 minute** and **sell at the next session's open**. Costs 0.03% a round trip plus
+commission. An overnight move beyond 15% either way is dropped as a split or bad data.
+
+Cells: 3 funds × 2 depths = **6**, charged to `closing_bids`.
+
+**What counts.** One fund cannot make 150 trades in eight years, so the bar is set for this
+part now: over 2005–2022 together at least 40 trades, 0.3% a trade after costs, a weekly t
+of 3, and a positive average in each of 2005–2009, 2010–2017 and 2018–2022 separately. All
+three periods are used, so there is no untouched test: a cell that clears this is a **lead
+to follow on paper**, not a pass. 2023 to 13 October is its only unseen check.

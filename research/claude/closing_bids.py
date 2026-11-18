@@ -38,7 +38,7 @@ def collect(first: int, last: int) -> None:
     store = DataStore(load_settings())
     con = connect()
     for year in range(first, last + 1):
-        target = folder() / f"falls2_{year}.parquet"
+        target = folder() / f"falls3_{year}.parquet"
         if target.exists():
             continue
         files = str(store.bars_roots[0] / "minute" / f"year={year}" / "*.parquet")
@@ -51,7 +51,7 @@ def collect(first: int, last: int) -> None:
                            min(low) filter (where minute_et between 960 and 965) as print_low,
                            max(high) filter (where minute_et between 960 and 965) as print_high,
                            arg_max(close, minute_et) filter (where minute_et between 955 and 959) as last,
-                           arg_min(close, minute_et) filter (where minute_et between 966 and 980) as later
+                           arg_min(high, minute_et) filter (where minute_et between 966 and 980) as later
                     from read_parquet('{files}', filename = true)
                     where minute_et between 940 and 980 group by 1, 2)
                 select b.day, b.symbol, d.permaticker, d.ref, d.mcap, d.adv, d.to_open, d.to_close,
@@ -72,7 +72,7 @@ def load(depth: int) -> dict[str, np.ndarray]:
                    2 * (case when f.adv < 1e6 then 0.0025 when f.adv < 1e7 then 0.0010
                              when f.adv < 1e8 then 0.0005 else 0.0002 end)
                    + 2 * least(0.01, greatest(0.000175, 0.0035 / f.ref)) as cost
-            from read_parquet('{folder()}/falls2_*.parquet') f
+            from read_parquet('{folder()}/falls3_*.parquet') f
             where f.late <= {-depth / 100} and f.late >= -0.30 and f.auction >= {MIN_AUCTION}
               and f.ref between f.print_low and f.print_high
               and not exists (select 1 from '{shared()}/results_due.parquet' r
@@ -80,6 +80,32 @@ def load(depth: int) -> dict[str, np.ndarray]:
             order by f.day, f.symbol"""
     ).to_arrow_table()
     return {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+
+
+def followups() -> None:
+    """The two cells of the addendum, by period: bought after the close, and hedged with SPY."""
+    store = DataStore(load_settings())
+    spy = duckdb.sql(
+        f"""select date, lead(open) over (order by date) / close - 1 as r
+            from read_parquet('{store.bars_roots[0]}/daily/*.parquet') where symbol = 'SPY'"""
+    ).fetchall()
+    market = {day: r for day, r in spy if r is not None}
+    d = load(2)
+    fund = np.array([market.get(day, np.nan) for day in d["day"].astype(object)])
+    d["g_hedged"] = d["g_open"].astype(float) - fund - 0.0003
+    d["g_later"] = (1 + d["g_open"].astype(float)) / (1 + d["later_gap"].astype(float)) - 1
+    for period in ("search", "early", "late"):
+        keep = pick(d, "large", period)
+        print(show(f"auction {period}", measure(d, keep, "open")))
+        print(show(f"hedged {period}", measure(d, keep & ~np.isnan(fund), "hedged")))
+        after = keep & ~np.isnan(d["later_gap"].astype(float))
+        print(show(f"after close {period}", measure(d, after, "later"))
+              + f"  of {keep.sum()}; paid {100 * np.median(d['later_gap'][after].astype(float)):.2f}% over the close")
+        days = d["day"][keep]
+        counts = np.unique(days, return_counts=True)[1]
+        print(f"    {len(counts)} days; {100 * counts[counts >= 10].sum() / max(1, len(days)):.0f}% of fills on days with 10 or more; "
+              f"SPY overnight on those fills {100 * np.nanmean(fund[keep]):.2f}%; "
+              f"15:59 price against the close {100 * np.nanmedian(d['last_gap'][keep].astype(float)):.2f}%")
 
 
 def measure(d, keep, exit_) -> dict:
@@ -132,7 +158,9 @@ def test(depth, size, exit_) -> None:
 
 
 if __name__ == "__main__":
-    if sys.argv[1] == "collect":
+    if sys.argv[1] == "followups":
+        followups()
+    elif sys.argv[1] == "collect":
         collect(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == "search":
         search()
