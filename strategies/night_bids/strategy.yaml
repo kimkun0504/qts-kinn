@@ -1,6 +1,6 @@
 name: night_bids
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 45 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, no results due
 family: night_bids
@@ -12,8 +12,19 @@ record:
   title: Resting bids after hours
   idea: Leaving small buy orders below the market after hours
   horizon: Overnight
-  verdict: planned
+  verdict: closed
+  result: "Loses 1% to 8% a trade: the after-hours seller has read the news"
   summary: >-
-    The owner's idea. After 16:00 almost nobody quotes, so a hurried seller can push a stock
-    down several percent on a few thousand dollars. A small buy order left below the close is
-    filled by such a seller and sold at the next open.
+    The owner's idea. After 16:00 almost nobody quotes, so a small buy order left below the
+    close might be paid for being there. Also tried: trading with an after-hours move once it
+    shows, in either direction.
+  weaknesses:
+    - A resting buy order is filled on the way down by news told in a press release before any SEC filing; single fills lost 50% to 87%.
+    - Following the move loses too: about a tenth of an after-hours move is given back by the next open.
+    - No after-hours quotes on disk; fills are read from trades by the minute.
+  evidence:
+    - {when: 2026-11-17, title: Resting buy orders, kind: failed, text: "All 18 cells lose, in every search year for 14 of them: −0.9% to −8.5% a trade, weekly t −4 to −12."}
+    - {when: 2026-11-17, title: Trading with the move, kind: failed, text: "25 of 27 cells lose. A rise seen at 5% is paid for at 7.0% and opens at 6.2%."}
+  studies:
+    - {name: A buy order resting below the close after hours, when: 2026-11-17, trials: 18, result: "Every cell loses; the seller has read the news", verdict: failed}
+    - {name: Trading with an after-hours move, when: 2026-11-17, trials: 27, result: "No cell meets the bar; the move gives a tenth back by the open", verdict: failed}

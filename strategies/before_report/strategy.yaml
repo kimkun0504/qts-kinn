@@ -1,6 +1,6 @@
 name: before_report
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 18 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, results due in five sessions
 family: before_report
@@ -12,8 +12,16 @@ record:
   title: Buying before the report
   idea: Buying ahead of results in companies whose last report jumped
   horizon: 4 to 6 sessions
-  verdict: planned
+  verdict: closed
+  result: "No trade: a company's past reactions do not predict its next one"
   summary: >-
     The owner asked for earlier entries. Buy five sessions before results, chosen by how the
     stock reacted to the company's last reports, and sell just before the report or the
     session after it.
+  weaknesses:
+    - After a report that jumped 10% or more, the next report's reaction averaged about zero.
+    - Holding small companies through results lost 0.9% a trade, with single losses of 50% to 86%.
+  evidence:
+    - {when: 2026-11-17, title: 18 cells on 2010 to 2017, kind: failed, text: "The best makes 0.29% a trade. No run-up before results in any size."}
+  studies:
+    - {name: Buying five sessions before results, when: 2026-11-17, trials: 18, result: "No cell meets the bar", verdict: failed}

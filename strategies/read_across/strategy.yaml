@@ -1,6 +1,6 @@
 name: read_across
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 18 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, market value >= $50M, in the industry of a company that just jumped on results, own results still to come
 family: read_across
@@ -12,7 +12,15 @@ record:
   title: Read-across to peers
   idea: Buying the peers of a company that jumped on results, before they report
   horizon: 5 to 15 sessions
-  verdict: planned
+  verdict: closed
+  result: "Too small: large peers gain 0.8% over the average stock, small peers nothing"
   summary: >-
     The owner asked for earlier signals. When a company jumps on results and holds it, buy
     the companies in the same industry that have not reported yet.
+  weaknesses:
+    - Small peers, where the earnings rule itself works, do not follow at all.
+    - The gain in large peers is the known industry effect and does not cover costs.
+  evidence:
+    - {when: 2026-11-17, title: 18 cells on 2010 to 2017, kind: failed, text: "The best makes 0.47% a trade after costs."}
+  studies:
+    - {name: Unreported peers after a confirmed jump, when: 2026-11-17, trials: 18, result: "No cell meets the bar", verdict: failed}

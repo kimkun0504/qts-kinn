@@ -1,6 +1,6 @@
 name: after_hours
 kind: swing               # research script first; no runner yet
-status: event-study       # nothing passed both tests; three leads in REPORT.md (the short after a 15% fall is the steadiest)
+status: event-study       # nothing passed both tests in 105 trials; three leads in REPORT.md
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, traded outside regular hours after results
 family: after_hours
@@ -14,22 +14,27 @@ record:
   horizon: Overnight to 15 sessions
   verdict: weak
   label: "Leads, not passed"
-  result: "Short after a 15% fall: +1.6% to +3.0% overnight in every test year, t too low since 2018"
+  result: "Large companies up 5% to 15% after hours: +1.2% to +1.5% in 15 sessions in every period, not steady enough"
   summary: >-
     The owner's idea. Half an hour after results released after the close, trade in
     after-hours at the worst price of the minute: buy a rise, or sell short a fall, and close
     at the next open or later.
   weaknesses:
-    - Nothing passed both tests; the short side failed on steadiness since 2018, the long side lost in 2020 to 2022.
+    - Nothing passed both tests in 105 trials; every long cell lost in 2020 or 2021, the short side failed on steadiness since 2018.
+    - Indicators of our own (pressure, hold) sorted the years to 2017 and not the years since; a resting order was no better than paying the minute's high.
     - No after-hours quotes on disk, so the price a small order would get is assumed.
     - Borrow and short-sale rules after hours at a retail broker are not checked; single shorts lost 20% to 35% overnight.
   waiting:
-    - "After-hours leads: check with your broker whether shares can be sold short after hours, and say whether to follow the three leads on paper."
+    - "After-hours leads: say whether to follow the large-company lead (and record the short one) on paper in the nightly run."
   evidence:
     - {when: 2026-11-17, title: Long side, kind: found, text: "Up 5% to 15% after hours kept rising: +0.9% to the next open, +2.5% in 15 sessions (2010 to 2017). Five cells met the bar."}
     - {when: 2026-11-17, title: Long side tested, kind: failed, text: "None passed both. Mid to the next open worked in 14 of 15 years to 2019 and lost in 2020 to 2022."}
     - {when: 2026-11-17, title: Short side, kind: found, text: "$300M to $2B down 15% or more: +2.8% to the next open, +3.4% to the next close (2010 to 2017)."}
     - {when: 2026-11-17, title: Short side tested, kind: open, text: "2005 to 2009 passed (+3.0%, +4.4%). 2018 to 2022 positive every year (+1.6%, +2.1%) but the t misses. Not passed."}
+    - {when: 2026-11-17, title: Indicators and a resting order, kind: failed, text: "Pressure and hold worked to 2017 only. A resting order fills on the weaker stocks. 49 more trials, nothing passed."}
   studies:
     - {name: After-hours and premarket entries after results, when: 2026-11-17, trials: 40, result: "An overnight gain in 15 of 19 years, lost 2020 to 2022; large companies for 15 sessions a near miss", verdict: lead}
     - {name: Selling short after hours on a bad report, when: 2026-11-17, trials: 16, result: "Down 15%+, $300M to $2B: +1.6% to +3.0% overnight in every test year; t too low since 2018", verdict: lead}
+    - {name: Pressure and hold indicators, when: 2026-11-17, trials: 27, result: "Six cells met the search bar, none passed 2018 to 2022", verdict: failed}
+    - {name: A resting order at the reading price, when: 2026-11-17, trials: 20, result: "No better than the minute's high; $2B+ for 15 sessions 1.2% to 1.5% in all periods, missed on the t", verdict: lead}
+    - {name: The large-company cell hedged with SPY, when: 2026-11-17, trials: 2, result: "1.08% a trade, seven years of eight, weekly t 2.80: under the search bar", verdict: failed}
