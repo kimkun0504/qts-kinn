@@ -1,0 +1,8 @@
+name: filing_aware_dislocation
+status: parked
+engine: intraday
+universe: filing_aware_dislocation
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
