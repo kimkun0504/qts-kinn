@@ -31,3 +31,7 @@ As `dividend_signal`: search 2010–2017 against the average stock, 1% a trade f
 and 2% for 60, a weekly t of 3, six years of eight, positive after costs; 100 trades (fewer
 reported and taken on if the rest is met). Tests on 2005–2009 and 2018–2022 at half those, t of
 2.5, four years of five. 2023 is a check. The holdout stays sealed.
+
+**Results, 2026-11-17 23:28 ET.** **None of the 4 cells meets the bar.** 2010–2017, against the average
+stock: $50M–$300M −2.06% (20 sessions) and −5.42% (60), one or two years of eight positive;
+$300M–$2B +0.59% and −0.97%. Small companies that move up trail other stocks. 4 trials.

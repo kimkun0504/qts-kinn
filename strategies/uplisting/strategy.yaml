@@ -1,10 +1,10 @@
 name: uplisting
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 4 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M to $2B, moved from OTC or NYSE American to Nasdaq or the NYSE
 family: uplisting
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Uplisting
   idea: A company that moves up to Nasdaq or the NYSE
   horizon: 20 to 60 sessions
-  verdict: planned
+  verdict: closed
+  result: "Small companies that move up trail other stocks by 2% to 5%"
   summary: >-
-    A move from the over-the-counter market or NYSE American to Nasdaq or the NYSE makes a
-    company visible to many more funds. Buy after its first session there.
+    A move from the over-the-counter market or NYSE American to Nasdaq or the NYSE, bought
+    after its first session there.
+  weaknesses:
+    - Small uplistings trail the average stock; the new buyers do not show.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2010 to 2017, kind: failed, text: "Small −2.1% (20 sessions) and −5.4% (60) against other stocks."}
+  studies:
+    - {name: Moves up to Nasdaq or the NYSE, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}
