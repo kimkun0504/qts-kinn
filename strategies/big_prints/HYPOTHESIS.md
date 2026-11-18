@@ -161,3 +161,10 @@ a fund that has not finished. Bought at the next open, held 10 sessions, against
 stock of its size. **4 cells:** size ($50M–$300M, $300M–$2B) × footprint (under 0.8, 2 or
 more). Search bar: 150 trades, 1% over the average, t 3, six of eight, positive after costs;
 tests at half. 4 trials.
+
+## Check 8: is it buying ahead of results? (written 2026-11-18 00:26 ET)
+
+A diagnostic of the passed cell, not a rule (it uses what happened later): its signals split by
+whether a results 8-K reacted inside the 20-session hold. If the gain sits in the signals
+followed by results, the large pieces are informed buying ahead of them, and an earnings
+calendar would sharpen the rule. 1 trial.
