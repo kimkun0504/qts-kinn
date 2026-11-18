@@ -298,3 +298,15 @@ $2B+ down 15%+ +1.37% (108, t 1.06); $300M–$2B down 10–15% +0.77% (301, t 0.
 10–15% +0.97% (205, t 1.84); **each positive in seven years of eight.** The slow absorption of bad
 results is broad; it is largest, and only tradable, in the mid-sized companies with a fall of
 15% or more. 4 trials; `after_hours` has 120.
+
+## Addendum, 2026-11-18 00:29 ET: who sells after hours (1 trial)
+
+Big prints (strategies/big_prints) found that in small companies the size of the pieces says
+who is trading. For the after-hours short: if a stock's after-hours selling comes in large
+pieces (funds), the selling may go on at the open; if in small pieces (the public), less so.
+**After-hours footprint:** shares per trade over the after-hours minutes up to the reading,
+against the geometric mean of the stock's shares per trade over its 60 previous sessions (daily
+bars). The short cell ($300M–$2B, down 15%+, sold at the low of the next minute, bought back
+at the next open), split at the median footprint of its 2010–2017 events. **1 cell:** the
+larger-piece half, judged as a filter on the short: better per trade in all three periods, 2023
+as a check; the other half printed beside.
