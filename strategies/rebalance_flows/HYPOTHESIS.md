@@ -39,3 +39,10 @@ version (owning the fund the rule favours, against owning both half and half).
 Search 2010–2017: 0.25% a trade after costs, a t over trades of 2.5, six years of eight
 positive. Tests on 2005–2009 and 2018–2022, each cell that goes forward run once: 0.12% a
 trade, t of 2.0, four years of five, in both. 2023 is a check. The holdout stays sealed.
+
+**Results, 2026-11-17 22:48 ET.** In REPORT.md. Search: the last-days trade points the way expected but is
+weak (0.40% a trade, t 1.65; 0.61% beyond ±3%, t 1.66). **The first-days cell met the bar**:
+over the first two sessions of a month, the side that won the month before beat the other by
+0.72% a trade after costs (96 months, t 3.06, seven years of eight). Tested once: 2005–2009
+0.41% (t 1.11, three years of five), 2018–2022 0.26% (t 0.90, four of five). **Not passed.**
+4 cells and 2 test runs: 6 trials.

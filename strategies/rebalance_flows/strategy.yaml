@@ -1,18 +1,25 @@
 name: rebalance_flows
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # one cell met the bar and failed both tests; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: SPY and TLT
 family: rebalance_flows
-prior_trials: 0
+prior_trials: 6
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
 record:
   title: Month-end rebalancing
-  idea: Stocks against bonds in the last days of the month, by which won during it
-  horizon: Three sessions
-  verdict: planned
+  idea: Stocks against bonds around the turn of the month, by which won during it
+  horizon: Two to three sessions
+  verdict: closed
+  result: "Right sign: +0.72% a month to 2017, +0.26% to +0.41% in the tests (t about 1)"
   summary: >-
-    Funds with fixed stock and bond weights restore them at month end. When stocks beat bonds
-    during the month, own bonds over stocks for the last three sessions, and the reverse.
+    Funds with fixed stock and bond weights restore them at month end. The side that won the
+    month does worse in its last days and better in the first days of the next.
+  weaknesses:
+    - The first-days trade made money in both test periods but with a t of about 1 on 60 months.
+  evidence:
+    - {when: 2026-11-17, title: First days, kind: failed, text: "0.72% a month in 2010 to 2017 (t 3.06); 0.41% and 0.26% in the tests, t 1.11 and 0.90."}
+  studies:
+    - {name: SPY against TLT at month end, when: 2026-11-17, trials: 6, result: "One cell met the search bar and failed both tests", verdict: failed}
