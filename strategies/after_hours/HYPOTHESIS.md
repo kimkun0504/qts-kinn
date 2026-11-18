@@ -317,3 +317,10 @@ The same footprint split for the closest long lead: a results release after the 
 company of $2B or more, up 5% to 15% half an hour later, bought at the high of the next minute
 and held 15 sessions. Split at the 2010–2017 median of the after-hours footprint. **1 cell:** the
 larger-piece half, judged as a filter: better per trade in all three periods, 2023 as a check.
+
+## Addendum, 2026-11-18 00:37 ET: who buys after hours in small companies (1 trial)
+
+The small-company long ($50M–$300M, up 5% or more after hours on results, bought at the high
+of the next minute, held 15 sessions) had the largest averages and the least steadiness. Split
+at the 2010–2017 median after-hours footprint. **1 cell:** the larger-piece half, judged as a
+filter: better per trade in all three periods, 2023 as a check.
