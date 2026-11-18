@@ -111,3 +111,36 @@ $50M–$300M, over the average small stock, stopped stocks kept:
 
 All fifteen readings are positive, from +0.5% to +2.4%; the cell is not a knife-edge. The gain
 keeps building past 20 sessions (about +2% by 40). Trials: 5 (family total 22).
+
+## Following it on paper (built 18 November 2026)
+
+The ledger is ready; it sends no order and needs no borrow:
+
+```
+export SEC_USER_AGENT="Your Name your@email"
+uv run python tools/owner/paper_big_prints.py --since 2026-10-20   # first run: four weeks back
+uv run python tools/owner/paper_big_prints.py                      # then each evening after 16:30
+```
+
+Each evening it fetches the vendor's grouped daily bars (unadjusted, with the trade counts),
+keeps them in `paper/big_prints/bars/` so later evenings fetch one day, reads every stock's
+footprint, and for the stocks that pass looks up the type and market value (Massive) and
+the 8-Ks (SEC). Signals are bought at the next open and sold at the close 20 sessions after
+the signal, from the stock's adjusted bars, with IWM over the same days beside each. The page
+is `paper/big_prints/report.md`. Code: `src/kinn/big_prints_paper.py`,
+`tools/owner/paper_big_prints.py`, tests in `tests/test_big_prints_paper.py` (the footprint
+and normal volume equal the research's window functions; the tool is run end to end on
+made-up answers).
+
+**On real data:** run on 25 random sessions of 2022 with the processed daily bars, the
+panel's market value and the research's 8-K filter in place of the vendor's and the SEC's
+answers (`research/claude/big_prints_paper_check.py`), the ledger's code found 43 of the
+research's 46 signals; the 3 it missed are stocks whose ticker changed within their 60
+sessions (the research follows the company, the ledger the ticker). It found 4 more on 21
+December 2022, a day the research skipped as an index day (the share of large-trade stocks
+is counted over a slightly different pool; see the module's note).
+
+**What to watch:** about 25 signals a month at the research's rate, so a month of paper gives
+a first count and two or three months a first reading of the average. The research figure
+to compare is +1.8% a trade over small stocks; the median trade is near zero, so a few
+months can easily look flat.
