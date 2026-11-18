@@ -1,10 +1,10 @@
 name: ssr_day
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 4 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $300M or more, $1M a day, $5 or more, down 10% intraday with no results
 family: ssr_day
-prior_trials: 0
+prior_trials: 4
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: The SSR day
   idea: The session after the short-sale circuit breaker trips
   horizon: One session
-  verdict: planned
+  verdict: closed
+  result: "No effect: tripped stocks do slightly worse than near misses"
   summary: >-
     After a stock trades 10% down, short sales are restricted for the rest of the day and the
-    next. Buy at that close and sell at the next, against stocks that stopped just short of it.
+    next. Bought at that close and sold at the next, against stocks that stopped just short.
+  weaknesses:
+    - The restriction does not show in the next session's price.
+  evidence:
+    - {when: 2026-11-17, title: 4 cells on 2011 to 2017, kind: failed, text: "Tripped −0.43% against near misses −0.21% in $300M to $2B."}
+  studies:
+    - {name: Rule 201 tripped against near misses, when: 2026-11-17, trials: 4, result: "No cell meets the bar", verdict: failed}

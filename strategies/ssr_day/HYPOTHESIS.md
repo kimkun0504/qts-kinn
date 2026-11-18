@@ -35,3 +35,8 @@ group at least 0.2 of a point better than the near misses of the same size and c
 Test 2018–2022, each cell that goes forward run once: 0.15%, t of 2.5, four years of five.
 **Placebo** 2005–2010: if the same gap over the near misses is there before the rule existed,
 the cell is not the rule's doing and fails. 2023 is a check. The holdout stays sealed.
+
+**Results, 2026-11-17 22:58 ET.** In REPORT.md. **None of the 4 cells meets the bar, and there is no sign
+of the rule.** In 2011–2017 the tripped stocks did *worse* the next session than the near
+misses ($300M to $2B, recovered: −0.43% against −0.21%; $2B or more: −0.35% against −0.28%);
+those that stayed down made +0.07% and +0.29% (t under 1). 4 trials. No tests run.
