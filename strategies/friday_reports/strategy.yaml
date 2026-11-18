@@ -1,0 +1,18 @@
+name: friday_reports
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, $50M to $2B, results whose first reaction falls on a Friday
+family: friday_reports
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Friday reports
+  idea: The drift after results that were read on a Friday
+  horizon: 15 sessions
+  verdict: planned
+  summary: >-
+    Results read on a Friday get less attention and more of the move comes later. The
+    earnings rule's test, on Friday reports only, in small and mid-sized companies.
