@@ -121,3 +121,10 @@ part now: over 2005–2022 together at least 40 trades, 0.3% a trade after costs
 of 3, and a positive average in each of 2005–2009, 2010–2017 and 2018–2022 separately. All
 three periods are used, so there is no untouched test: a cell that clears this is a **lead
 to follow on paper**, not a pass. 2023 to 13 October is its only unseen check.
+
+**Results for the funds, 2026-11-17 21:20 ET.** In REPORT.md. **No cell clears the bar.** After a fall of
+0.5% or more in the last ten minutes, bought in the last minute and sold at the next open:
+SPY +0.11% on 63 trades (weekly t −0.15), QQQ +0.09% on 69, IWM −0.24% on 91, each negative
+in at least one period. After a fall of 1% or more the averages are 0.4% to 1.4%, on 18 to 20
+trades in eighteen years. The 1% seen over the stock fills came from weighting the worst
+days by how many stocks they hit. 6 cells; `closing_bids` has 28 trials.

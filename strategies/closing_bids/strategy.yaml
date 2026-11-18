@@ -1,19 +1,35 @@
 name: closing_bids
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: event-study       # one cell met the search bar and failed the weekly t in both tests; a lead; see REPORT.md
 engine: intraday
 universe: listed common stock, market value >= $50M, 20-day dollar volume >= $250k, no results due, down in the last ten minutes
 family: closing_bids
-prior_trials: 20
+prior_trials: 28
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
 record:
   title: Bids in the closing auction
-  idea: A limit-on-close order under a stock pushed down in the last ten minutes
+  idea: Buying a large stock pushed down in the last ten minutes, sold at the next open
   horizon: Overnight
-  verdict: planned
+  verdict: weak
+  label: "Lead, not passed"
+  result: "$2B+ down 2% into the close: +1.3% to +1.5% overnight in all three periods, 16 years of 18; fails the weekly t"
   summary: >-
     The owner's small-size idea moved to where there is selling without news. A
     limit-on-close buy order a few percent under the 15:49 price is filled only when a stock
     is pushed down into the close, and is sold at the next open.
+  weaknesses:
+    - Failed the weekly t in both tests (0.33 and 1.37): four fifths of those fills are in 2008 and 2020, when whole weeks win or lose together.
+    - About 20 trades in a quiet year; in crisis years most of the gain is the market's own overnight rebound.
+    - A limit-on-close order in every large stock cannot be funded by a small account; bought after the close instead it made 0.9% to 1.3%.
+  waiting:
+    - "Closing-auction lead: say whether to follow it on paper in the nightly run."
+  evidence:
+    - {when: 2026-11-17, title: 18 cells on 2010 to 2017, kind: found, text: "Every cell positive. $2B+ at 2%: +1.28% a night on 173 fills, weekly t 3.30, eight years of eight."}
+    - {when: 2026-11-17, title: Tested, kind: failed, text: "2005 to 2009 +1.51%, 2018 to 2022 +1.35%, four years of five each, weekly t 0.33 and 1.37. Not passed."}
+    - {when: 2026-11-17, title: What it is made of, kind: open, text: "Hedged with SPY: +1.2% in quiet years, +0.3% in crisis years. The funds themselves after a late fall: no trade."}
+  studies:
+    - {name: Limit-on-close orders under a late fall, when: 2026-11-17, trials: 20, result: "$2B+ at 2%: +1.3% to +1.5% overnight in every period; failed the weekly t in both tests", verdict: lead}
+    - {name: Bought after the close, and hedged with SPY, when: 2026-11-17, trials: 2, result: "After the close +0.9% to +1.3%; hedged +1.2% in quiet years, +0.3% in crisis years", verdict: lead}
+    - {name: SPY QQQ and IWM after a late sell-off, when: 2026-11-17, trials: 6, result: "No cell clears the bar", verdict: failed}
