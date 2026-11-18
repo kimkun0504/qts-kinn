@@ -443,9 +443,13 @@ export function Lab({ name, runId, onOpen }: LabProps) {
               >
                 <span className="flex w-full items-baseline justify-between gap-2">
                   <span className="truncate font-medium">{a.name}</span>
-                  <span className="shrink-0 text-[13px] text-ink-3" title="Trials: runs that computed signals">
-                    {a.trials ? `${a.trials} ${a.trials === 1 ? "trial" : "trials"}` : ""}
-                  </span>
+                  {a.last_run && LIVE.includes(a.last_run.state) ? (
+                    <Badge tone="info">Running</Badge>
+                  ) : (
+                    <span className="shrink-0 text-[13px] text-ink-3" title="Trials: runs that computed signals">
+                      {a.trials ? `${a.trials} ${a.trials === 1 ? "trial" : "trials"}` : ""}
+                    </span>
+                  )}
                 </span>
                 {a.description && <span className="line-clamp-2 text-[13px] text-ink-3">{a.description}</span>}
               </button>
