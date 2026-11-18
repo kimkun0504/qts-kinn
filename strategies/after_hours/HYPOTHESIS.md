@@ -291,3 +291,10 @@ to 15%**; **$2B or more down 10% to 15%**. The first part's bar (2010–2017: 1%
 six years of eight, 150 trades or fewer if the rest is met), and each cell that meets it goes
 once to 2005–2009 and 2018–2022 (0.5%, t of 2.5, four years of five). 2023 is a check for a cell
 that passes. **4 cells**, charged to `after_hours`.
+
+**Results of the neighbours, 2026-11-17 23:25 ET.** **None of the 4 cells meets the bar, and all four point
+the same way:** 2010–2017, held to 15:30: $50M–$300M down 15%+ +1.51% (68 trades, t 1.08);
+$2B+ down 15%+ +1.37% (108, t 1.06); $300M–$2B down 10–15% +0.77% (301, t 0.63); $2B+ down
+10–15% +0.97% (205, t 1.84); **each positive in seven years of eight.** The slow absorption of bad
+results is broad; it is largest, and only tradable, in the mid-sized companies with a fall of
+15% or more. 4 trials; `after_hours` has 120.

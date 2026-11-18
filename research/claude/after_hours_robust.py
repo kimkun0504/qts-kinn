@@ -264,11 +264,63 @@ def rebound(*periods) -> None:
                   f"{100 * np.median(net[k]):6.2f}%  t {tt:5.2f}  yrs {pos} of {len(set(years))}")
 
 
+def neighbours(*periods) -> None:
+    """Shorts of other sizes and smaller falls, bought back at 15:30 of the next session."""
+    out = ah.folder()
+    shape = load_settings().data_dir / "research" / "intraday_shape"
+    store = DataStore(load_settings())
+    t = duckdb.sql(
+        f"""with n as (
+                select n.day, n.symbol, year(n.day) as yr, (date_diff('day', DATE '2003-12-29', n.day) // 7) as week,
+                       v.mcap, v.adv, n.reaction, n.paid, w.rel_low, exp(v.c_next - v.c) * v.oc_next as to_open
+                from read_parquet('{out}/entries_*.parquet') n
+                join read_parquet('{out}/lows_*.parquet') w on w.day = n.day and w.symbol = n.symbol
+                join '{out}/events.parquet' v on v.day = n.day and v.symbol = n.symbol and v.timing = n.timing
+                where n.timing = 'after' and n.reaction < -0.10),
+            nx as (select n.*, (select min(date) from read_parquet('{store.root}/panel/*.parquet') p
+                                where p.symbol = n.symbol and p.date > n.day) as next_day from n)
+            select nx.*, g.p1530, p.open as next_open
+            from nx left join read_parquet('{shape}/segments_*.parquet') g on g.symbol = nx.symbol and g.day = nx.next_day
+            left join read_parquet('{store.root}/panel/*.parquet') p on p.symbol = nx.symbol and p.date = nx.next_day"""
+    ).to_arrow_table()
+    d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+    adv = d["adv"].astype(float)
+    half = np.where(adv < 1e6, 0.0065, np.where(adv < 1e7, 0.0018, np.where(adv < 1e8, 0.0010, 0.0005)))
+    comm = 2 * np.minimum(0.01, np.maximum(0.000175, 0.0035 / d["paid"].astype(float))) + ah.BORROW_NIGHT
+    scale = d["to_open"].astype(float) / d["next_open"].astype(float)
+    net = 1 - d["p1530"].astype(float) * scale / d["rel_low"].astype(float) - half - comm
+    mcap, reaction = d["mcap"].astype(float), d["reaction"].astype(float)
+    cells = {
+        "small down15": (mcap >= 5e7) & (mcap < 3e8) & (reaction <= -0.15),
+        "large down15": (mcap >= 2e9) & (reaction <= -0.15),
+        "mid down10": (mcap >= 3e8) & (mcap < 2e9) & (reaction > -0.15),
+        "large down10": (mcap >= 2e9) & (reaction > -0.15),
+    }
+    for name, mask in cells.items():
+        for period in periods:
+            a, b = ah.PERIODS[period]
+            k = mask & ~np.isnan(net) & (d["yr"] >= a) & (d["yr"] <= b)
+            if k.sum() < 3:
+                print(f"{name} {period}: {k.sum()}")
+                continue
+            _, tt, _ = weekly(net[k], d["week"][k])
+            years = d["yr"][k]
+            yearly = {int(y): net[k][years == y].mean() for y in sorted(set(years))}
+            pos = sum(v > 0 for v in yearly.values())
+            ok = period == "search" and net[k].mean() >= 0.01 and tt >= 3 and pos >= 6
+            print(f"{name:13} {period:6} {k.sum():>4} trades  net {100 * net[k].mean():6.2f}%  median {100 * np.median(net[k]):6.2f}%  "
+                  f"t {tt:5.2f}  yrs {pos} of {len(yearly)}" + ("  MEETS THE BAR" if ok else ""))  # fmt: skip
+            if period != "search":
+                print("    " + "  ".join(f"{y} {100 * v:.2f}%" for y, v in yearly.items()))
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "lows5":
         lows5(int(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == "before_lows":
         before_lows(int(sys.argv[2]), int(sys.argv[3]))
+    elif sys.argv[1] == "neighbours":
+        neighbours(*sys.argv[2:])
     elif sys.argv[1] == "rebound":
         rebound(*sys.argv[2:])
     elif sys.argv[1] == "exits":
