@@ -13,6 +13,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `kinn.engine` | claude | 2026-11-15 | |
 | Extended-hours execution in `kinn.engine.intraday`, `kinn.run`, `kinn.validation.event_study`, and execution-risk reporting | gpt | 2026-11-17 | Owner explicitly authorized the scoped changes in chat; regular-session behavior retained. This temporary sub-lane overrides the broader rows for this change only. |
 | Transaction-count field in `kinn.engine.intraday.data` and its replay tests | gpt | 2026-11-18 | Owner explicitly authorized the scoped existing-column view change in chat; no ingestion or build changes. |
+| Timestamped original 8-K input, typed view and runner/CLI wiring | gpt | 2026-11-18 | Owner explicitly authorized the scoped form8k_timed adapter and separate derived-input build from existing files; no download, raw write, sealed access or bar/panel rebuild. See docs/requests/2026-11-18-timed-8k-input.md. |
 | `kinn.validation` | claude | 2026-11-15 | open to gpt on request |
 | `kinn.registry`, `kinn.run`, `kinn.cli` | claude | 2026-11-15 | |
 | `kinn.reporting` | claude | 2026-11-15 | open to gpt on request |
@@ -48,7 +49,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/fragmented_selloff_exhaustion` | gpt | 2026-11-18 | smaller-print selloff exhaustion with a frozen unfiltered control |
 | `strategies/quiet_size_breakout` | gpt | 2026-11-18 | larger-print narrow-range breakout at one fixed clock time |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
-| `strategies/timed_earnings_discovery` | gpt | 2026-11-18 | prepared after-hours earnings rule; timed-input lane/build authorization pending |
+| `strategies/timed_earnings_discovery` | gpt | 2026-11-18 | frozen after-hours earnings rule; scoped timed-input adapter/build authorized |
 | `strategies/fragmented_demand_burst` | gpt | 2026-11-18 | transaction-count acceleration with a smaller-print ablation and a prior share-count proxy |
 | `strategies/active_gap_recovery` | gpt | 2026-11-18 | recovery after a dense-trading stock resumes at a discount; missing bars are a proxy only |
 | `research/claude` | claude | | sandbox |

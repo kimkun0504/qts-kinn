@@ -117,4 +117,6 @@ the relevant data/core/runner lanes to Claude. This request
 seeks an explicit narrow exception, including the separate
 derived-input build, before protected code or data is changed.
 
-Owner decision: pending.
+Owner decision, 2026-11-18: "Authorize scoped timed 8-K input and
+derived build." The owner explicitly supplied that answer to the
+prepared request in chat. This assigns only the scope above.
