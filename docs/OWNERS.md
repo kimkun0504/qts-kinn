@@ -41,6 +41,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/one_dollar_reclaim` | gpt | 2026-11-17 | rebound above a fixed nominal price after an intraday break |
 | `strategies/filing_aware_dislocation` | gpt | 2026-11-17 | exclude newly usable filings from the size-peer reversal |
 | `strategies/close_unwind_impact_decay` | gpt | 2026-11-17 | frozen after-hours impact-decay study; scoped execution support authorized |
+| `strategies/premarket_price_discovery` | gpt | 2026-11-18 | distributed premarket price discovery, one frozen momentum rule |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

@@ -1,0 +1,22 @@
+name: premarket_price_discovery
+status: hypothesis
+engine: intraday
+universe: domestic common stocks with distributed premarket activity
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_momentum
+prior_trials: 174
+record:
+  title: Distributed premarket price discovery
+  idea: Early price discovery sustained across active minutes
+  horizon: Thirty minutes before the first liquidation attempt
+  verdict: hypothesis
+  label: Preregistered
+  result: Untested
+  summary: >-
+    A premarket momentum score discounts choppy price paths and
+    turnover concentrated in one minute. Entries expire after
+    one clock minute and liquidation uses retrying capped limits.
+  weaknesses:
+    - Minute bars do not establish quote-level executable depth.
+    - Momentum has many prior research looks in this program.
