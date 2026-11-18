@@ -1,5 +1,5 @@
 name: quiet_size_breakout
-status: event-study
+status: parked
 engine: intraday
 universe: domestic common stocks with active narrow-range trading
 cost_calibration: ibkr_pro_tiered
@@ -10,9 +10,9 @@ record:
   title: Larger prints at a narrow-range breakout
   idea: Test large-print participation before a large price expansion
   horizon: Two hours after first fill
-  verdict: event-study
-  label: Development studies ready
-  result: Untested
+  verdict: parked
+  label: Insufficient return and sample
+  result: 48 primary events averaged -0.05% net and -0.27% at doubled slippage
   summary: >-
     At a fixed morning time, test a small breakout on active
     trading, then compare a larger-print condition with the
