@@ -314,3 +314,18 @@ of the large-piece buying is informed buying ahead of results. Those without res
 positive. A calendar of coming report dates (the Benzinga question still open) would let the
 rule favour signals with a report due inside the hold; that is a new rule and would need its
 own test. 1 trial (family 40).
+
+## Follow-up 10: a report expected inside the hold (read 18 November 2026, 00:28 ET)
+
+The passed cell kept only when the last results 8-K reacted 63 to 91 days before the signal (the
+next report due within about four weeks), over the average small stock:
+
+| Period | Passed cell | Report due | Not due |
+|---|---|---|---|
+| 2010–2017 | +0.94% (2,155) | +1.60% (500; t 2.06; 8 of 8) | +0.74% |
+| 2005–2009 | +1.78% (2,633) | +1.05% (545; t 0.82) | +1.98% |
+| 2018–2022 | +1.83% (1,906) | +2.70% (248; t 1.68; 5 of 5) | +1.70% |
+| 2023 | +2.10% (405) | +1.46% (32) | +2.15% |
+
+Worse in 2005–2009 and 2023, and its t is under 2.5 in both tests: guessing the report date
+from the last one does not make a better rule. The passed cell stands. 1 trial (family 41).
