@@ -145,3 +145,10 @@ the panel's documented weaknesses. No contemporary news label,
 headline timestamp or analyst expectation is inferred. No data
 rebuild, raw write, current motivating stock example, or date
 on or after 2023-11-09 is permitted.
+
+Implementation note before the first run: inclusive price
+boundaries permit one adjacent representable floating-point
+value to avoid rejecting exact decimal equality. Synthetic
+tests cover the median's lower-half convention, anchor freshness,
+the opening recovery boundary and prefix replay. This numerical
+tolerance does not change the economic thresholds.
