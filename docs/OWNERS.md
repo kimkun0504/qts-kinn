@@ -58,6 +58,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/net_net` | claude | 2026-11-17 | Graham net-nets in small companies (balance sheet from raw SF1) |
 | `strategies/insider_confirmed` | claude | 2026-11-17 | an insider purchase confirmed by a strong rise on volume within weeks |
 | `strategies/leads_2023` | claude | 2026-11-17 | the once-only 2023 reading of four leads |
+| `strategies/report_timing` | claude | 2026-11-17 | late and early results against the company's own calendar (Johnson and So) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

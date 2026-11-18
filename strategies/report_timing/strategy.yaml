@@ -1,0 +1,18 @@
+name: report_timing
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, $50M or more, results later or earlier than the company's own calendar
+family: report_timing
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Report timing
+  idea: A company later than its own reporting calendar (short) or earlier (long)
+  horizon: Days to 30 sessions
+  verdict: planned
+  summary: >-
+    A company that has not reported by the anniversary of last year's report tends to have bad
+    news; one that reports a week early, good news. Short the late ones, buy the early ones.
