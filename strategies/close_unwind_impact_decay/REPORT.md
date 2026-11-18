@@ -35,3 +35,13 @@ data need no rebuild. Today's motivating example belongs to
 the sealed period. Development remains 2003-09-10 through
 2016-12-30 and the candidate's possible validation remains
 2017-01-03 through 2023-11-08.
+
+The follow-up numerical audit found that exact inclusive price
+boundaries could be rejected by binary rounding. Regression
+tests now cover the exact discount, one-cent uptick and initial
+decline boundaries, with nearby ineligible values excluded.
+The candidate metadata marks it as awaiting execution support.
+Claude's new after-hours research at `2cc002a` supplies related
+prior looks and retains the registered runner's regular-session
+fill boundary. Historical performance for this candidate
+remains unmeasured.

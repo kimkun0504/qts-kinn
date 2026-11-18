@@ -63,6 +63,31 @@ def test_shape_errors_identify_an_incomplete_window():
         MODULE.impact_decay_score(WINDOW[:-1], VOLUME[:-1], 10.0)
 
 
+@pytest.mark.parametrize(
+    ("prices", "reference"),
+    [
+        ([50.0, 49.0, 48.0, 46.5, 46.1, 45.9, 46.0], 50.0),
+        ([18.0, 17.4, 17.0, 16.5, 16.2, 16.01, 16.02], 18.0),
+        ([16.01, 15.8, 15.6, 15.5297, 15.50, 15.49, 15.50], 17.0),
+    ],
+)
+def test_inclusive_price_boundaries_survive_binary_rounding(prices, reference):
+    score = MODULE.impact_decay_score(np.array(prices), VOLUME, reference)
+    assert score is not None and score > 0.04
+
+
+@pytest.mark.parametrize(
+    ("prices", "reference"),
+    [
+        ([50.0, 49.0, 48.0, 46.5, 46.1, 45.9, 46.0001], 50.0),
+        ([18.0, 17.4, 17.0, 16.5, 16.2, 16.01, 16.019], 18.0),
+        ([16.01, 15.8, 15.6, 15.5298, 15.50, 15.49, 15.50], 17.0),
+    ],
+)
+def test_rounding_tolerance_keeps_nearby_ineligible_prices_out(prices, reference):
+    assert MODULE.impact_decay_score(np.array(prices), VOLUME, reference) is None
+
+
 def test_first_candidate_is_stable_when_later_bars_are_removed():
     bars = stock()
     expected = MODULE.first_candidate(bars, 8.5, 960)

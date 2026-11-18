@@ -1,0 +1,24 @@
+name: close_unwind_impact_decay
+status: planned
+engine: intraday
+universe: domestic common stocks with a rally before the close
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Closing unwind and impact decay
+  idea: Recovery as selling impact subsides after the close
+  horizon: 15 minutes after the entry fill
+  verdict: planned
+  label: Awaiting extended-hours execution
+  result: Candidate calculation tested, empirical returns unmeasured
+  summary: >-
+    After a sharp drop following a regular-session rally, enter on
+    the first uptick when price impact per dollar of down-closing
+    turnover subsides while trading activity persists.
+  weaknesses:
+    - Turnover in down-closing minutes approximates selling activity.
+    - After-hours spread, depth and execution remain unmeasured.
+  waiting:
+    - Extended-hours execution support from the platform owner or an explicit lane reassignment.

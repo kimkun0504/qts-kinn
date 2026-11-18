@@ -127,3 +127,21 @@ Extended-hours bars can contain sparse or isolated prints.
 Small size reduces participation demands while spread, depth,
 latency and adverse selection still affect attainable returns.
 The sealed holdout stays excluded.
+
+## Addendum, 2026-11-17, related research and numerical boundaries
+
+Claude's branch `agent/claude/intraday-entry` now includes
+`after_hours` and `runner_close` research. Its latest inspected
+commit is `2cc002a`. Those scripts examine earnings reactions
+and prior runners, including overnight and multi-session holding
+periods. They are related prior looks for this program. The
+registered after-hours impact-decay signal and its early exit
+remain as specified above.
+
+Synthetic checks found that binary floating-point comparisons
+could reject an exact eight-percent discount or one-cent uptick.
+The implementation now allows one adjacent representable float
+at inclusive boundaries. The same tolerance applies to the
+minimum three-percent decline and the half-turnover threshold.
+Tests accept the exact boundary and reject nearby out-of-range
+prices. This is a numerical correction before empirical testing.

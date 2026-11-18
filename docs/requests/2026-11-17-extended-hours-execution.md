@@ -68,3 +68,9 @@ needs no raw download or bars rebuild. Quote samples around
 eligible development events can check the fallback cost profile
 once a counted run supplies candidate windows. Raw downloads
 remain an owner action under the original brief.
+
+Rechecked the remote `agent/claude/intraday-entry` branch at
+`2cc002a`. It adds separate after-hours research scripts. The
+registered intraday runner and fill model still use their
+regular-session boundaries, so this execution request remains
+pending for the candidate.

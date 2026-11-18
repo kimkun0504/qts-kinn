@@ -26,10 +26,11 @@ def impact_decay_score(closes: np.ndarray, volumes: np.ndarray, reference: float
         return None
 
     discount = 1 - prices[-1] / reference
+    # Allow one representable float of rounding at inclusive price boundaries.
     if (
-        prices[3] > 0.97 * prices[0]
-        or discount < 0.08
-        or prices[-1] < prices[-2] + 0.01
+        prices[3] > np.nextafter(0.97 * prices[0], np.inf)
+        or prices[-1] > np.nextafter(0.92 * reference, np.inf)
+        or prices[-1] < np.nextafter(prices[-2] + 0.01, -np.inf)
         or prices[-1] * shares[-1] < 20_000
     ):
         return None
@@ -38,7 +39,11 @@ def impact_decay_score(closes: np.ndarray, volumes: np.ndarray, reference: float
     falling = prices[1:] < prices[:-1]
     old_turnover = float(turnover[:3][falling[:3]].sum())
     new_turnover = float(turnover[3:][falling[3:]].sum())
-    if old_turnover <= 0 or new_turnover <= 0 or new_turnover < 0.5 * old_turnover:
+    if (
+        old_turnover <= 0
+        or new_turnover <= 0
+        or new_turnover < np.nextafter(0.5 * old_turnover, -np.inf)
+    ):
         return None
     old_impact = log(prices[0] / prices[3]) / old_turnover
     new_impact = max(0, log(prices[3] / prices[-1])) / new_turnover
