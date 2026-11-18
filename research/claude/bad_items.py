@@ -33,22 +33,27 @@ def folder():
     return out
 
 
-def table() -> None:
+def table(shelf: bool = False) -> None:
     stocks, days = sec_times.numbers(), sec_times.sessions()
     found = []
-    for row in sec_times.filings("8k.jsonl.gz"):
+    source = "other_forms.jsonl.gz" if shelf else "8k.jsonl.gz"
+    for row in sec_times.filings(source):
         if row["cik"] not in stocks or row["filed"] >= "2023-11-09":
             continue
-        items = set((row.get("items") or "").split(",")) & set(ITEMS)
+        if shelf:
+            items = {"S-3"} if row["form"] == "S-3" else set()
+        else:
+            items = set((row.get("items") or "").split(",")) & set(ITEMS)
         when = sec_times.accepted(row) if items else None
         if when:
             found.extend((when, row["cik"], item) for item in items)
     last: dict = {}
     rows = []
+    gap = 365 if shelf else 90
     for when, cik, item in sorted(found):
         previous = last.get((cik, item))
         last[(cik, item)] = when[0]
-        if previous is not None and (when[0] - previous).days <= 90:
+        if previous is not None and (when[0] - previous).days <= gap:
             continue
         day = entry_session(days, when)
         if day is None or not date(2005, 1, 1) <= day <= date(2023, 10, 13):
@@ -80,14 +85,15 @@ def table() -> None:
                                when ok.adv < 1e8 then 0.0005 else 0.0002 end) as cost
             from events e join ok on ok.permaticker = e.permaticker and ok.date = e.day
             left join avgs a on a.date = e.day and a.size = ok.size
-        ) to '{folder()}/events.parquet' (format parquet)"""
+        ) to '{folder()}/{"shelf" if shelf else "events"}.parquet' (format parquet)"""
     )
-    print(con.sql(f"select item, size, count(*) from '{folder()}/events.parquet' where year(day) between 2010 and 2017 group by 1, 2 order by 1, 2").fetchall())
+    name = "shelf" if shelf else "events"
+    print(con.sql(f"select item, size, count(*) from '{folder()}/{name}.parquet' where year(day) between 2010 and 2017 group by 1, 2 order by 1, 2").fetchall())
 
 
-def run(period, cells) -> None:
+def run(period, cells, name="events") -> None:
     t = duckdb.sql(
-        f"select *, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week from '{folder()}/events.parquet'"
+        f"select *, year(day) as yr, (date_diff('day', DATE '2003-12-29', day) // 7) as week from '{folder()}/{name}.parquet'"
     ).to_arrow_table()
     d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
     first, last = PERIODS[period]
@@ -124,5 +130,9 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(i, s, h) for i in ITEMS for s in ("small", "mid") for h in (20, 60)])
+    elif sys.argv[1] == "shelf_table":
+        table(shelf=True)
+    elif sys.argv[1] == "shelf":
+        run(sys.argv[2], [("S-3", s, h) for s in ("small", "mid") for h in (20, 60)], "shelf")
     else:
         run(sys.argv[2], [(sys.argv[3], sys.argv[4], int(sys.argv[5]))])
