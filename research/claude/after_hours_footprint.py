@@ -99,6 +99,10 @@ def main(side: str = "short") -> None:
         if side == "small":
             m = k & (fp >= cut)
             thin = np.mean(d["bar_dollars"][m] < 5000) if m.any() else float("nan")
+            thick = m & (d["bar_dollars"] >= 5000)
+            _, t2, _ = weekly(net[thick], d["week"][thick])
+            print(f"    large pieces, entry minute $5,000+: {thick.sum()} {100 * net[thick].mean():+.2f}% (t {t2:.2f}), "
+                  f"median {100 * np.median(net[thick]):+.2f}%")
             print(f"    large pieces: median {100 * np.median(net[m]):+.2f}%, share of entry minutes under $5,000 "
                   f"{100 * thin:.0f}%, worst {100 * net[m].min():+.1f}%, best {100 * net[m].max():+.1f}%")
 

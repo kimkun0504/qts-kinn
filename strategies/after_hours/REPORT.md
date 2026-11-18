@@ -302,3 +302,9 @@ not a rule: 10 to 16 trades a year, weekly t of 1.0 to 2.8, a negative median in
 mean there rests on one +231% trade), and half the entry minutes traded under $5,000, so the
 price paid is the weakest part. The paper ledger for the short could record these evenings
 too; not built tonight.
+
+**Its fills** (1 trial): kept only where the entry minute traded $5,000 or more, the larger-piece
+half makes +7.84% (28 trades; median +0.65%), +5.69% (50; median +4.94%), +5.42% (39; median
++0.66%) and +0.83% in 2023 (16; median −0.38%). Still positive on average, but outside
+2010–2017 the typical trade is near zero once the doubtful minutes are dropped: the price paid
+in a thin after-hours minute is carrying much of it. A lead to watch, not to trade.
