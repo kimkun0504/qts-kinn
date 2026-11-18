@@ -1,10 +1,10 @@
 name: report_timing
 kind: swing               # research script first; no runner yet
-status: event-study       # plan written 2026-11-17; nothing measured yet
+status: parked            # 6 cells, none meets the bar; closed 2026-11-17; see REPORT.md
 engine: daily
 universe: listed common stock, $50M or more, results later or earlier than the company's own calendar
 family: report_timing
-prior_trials: 0
+prior_trials: 6
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -12,7 +12,14 @@ record:
   title: Report timing
   idea: A company later than its own reporting calendar (short) or earlier (long)
   horizon: Days to 30 sessions
-  verdict: planned
+  verdict: closed
+  result: "No trade: late reporters do not fall, early ones do not rise"
   summary: >-
-    A company that has not reported by the anniversary of last year's report tends to have bad
-    news; one that reports a week early, good news. Short the late ones, buy the early ones.
+    A company that has not reported by the anniversary of last year's report, sold short; one
+    that reports a week early, bought.
+  weaknesses:
+    - Many late companies have only moved their calendar.
+  evidence:
+    - {when: 2026-11-17, title: 6 cells on 2010 to 2017, kind: failed, text: "Shorts −0.1% to −0.4% a trade; early longs −0.8% and +0.2%."}
+  studies:
+    - {name: Late and early reporters, when: 2026-11-17, trials: 6, result: "No cell meets the bar", verdict: failed}

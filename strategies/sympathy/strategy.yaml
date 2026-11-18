@@ -1,0 +1,18 @@
+name: sympathy
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, $300M or more, industry peers of a company down 15%+ after hours on results
+family: sympathy
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Sympathy
+  idea: Buying the peers that gap down after an industry name collapses on its results
+  horizon: One to five sessions
+  verdict: planned
+  summary: >-
+    When a company collapses after hours on its results, its peers often open lower on no news
+    of their own. Buy those gaps at the open.

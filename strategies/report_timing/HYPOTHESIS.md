@@ -31,3 +31,8 @@ Late: 2 waits × 2 sizes = 4; early: 2 sizes = 2. **6 cells**, family `report_ti
 Search 2010–2017: 1% a trade after costs, a weekly t of 3, six years of eight, 150 trades.
 Tests on 2005–2009 and 2018–2022, each cell that goes forward run once: 0.5%, t of 2.5, four
 years of five, in both. 2023 is a check. The holdout stays sealed.
+
+**Results, 2026-11-17 23:15 ET.** **None of the 6 cells meets the bar.** Late reporters, sold short at E+2
+or E+5: −0.11% to −0.44% a trade (they did not fall; 9,962 trades in $300M–$2B at E+2). Early
+reporters bought after the report: −0.79% ($50M–$300M) and +0.21% ($300M–$2B, t 2.50). 6
+trials. No tests run.
