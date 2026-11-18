@@ -1,0 +1,18 @@
+name: dividend_signal
+kind: swing               # research script first; no runner yet
+status: event-study       # plan written 2026-11-17; nothing measured yet
+engine: daily
+universe: listed common stock, $50M to $2B, a dividend initiation or a raise of a quarter or more
+family: dividend_signal
+prior_trials: 0
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Dividend signal
+  idea: A small company that starts paying a dividend, or raises it by a quarter or more
+  horizon: 20 to 60 sessions
+  verdict: planned
+  summary: >-
+    A dividend started or raised is a promise the company cannot easily take back. Buy at the
+    ex-date and hold 20 or 60 sessions.
