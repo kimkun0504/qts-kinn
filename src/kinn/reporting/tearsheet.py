@@ -234,6 +234,17 @@ def render(run_dir: Path) -> tuple[str, str]:
         ["lookahead replays passed", f"{counts['lookahead_checks']:,}"],
     ]
     exits = [[k, f"{v:,}"] for k, v in sorted(m["exit_reasons"].items(), key=lambda kv: -kv[1])]
+    execution_risk = m.get("execution_risk")
+    exposure_note = ""
+    if execution_risk is not None:
+        exposure_note = (
+            f"Extended_v1: {execution_risk['unresolved_positions']} unresolved positions, "
+            f"{execution_risk['held_shares']} shares still held. "
+            f"Sum of last marked exposures ${execution_risk['sum_last_marked_exposure']:,.2f}. "
+            "Statistics and the chart below cover completed trades only. "
+            "Unresolved positions invalidate the portfolio. Their marks are valuations, not fills; "
+            "see unresolved.parquet and marked_equity.parquet."
+        )
     git = manifest["git"]
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>{html.escape(manifest["run_id"])}</title><style>{CSS}</style></head><body class="viz-root">
@@ -243,7 +254,7 @@ def render(run_dir: Path) -> tuple[str, str]:
 agent {html.escape(manifest["agent"])} · commit <span class="mono">{git["commit"][:8]}</span>
 {"(uncommitted changes)" if git["dirty"] else ""} · data build <span class="mono">{manifest["data_build_id"]}</span>
 · costs {html.escape(manifest["cost_calibration"])}</div>
-<div class="tiles">{tile_html}</div>
+<p>{html.escape(exposure_note)}</p><div class="tiles">{tile_html}</div>
 <h2>Cumulative net profit, dollars</h2>{_equity_chart(equity["date"], equity["cum_net"], equity["cum_net_2x"])}
 <h2>By year</h2>{_table(["Year", "Trades", "Net / trade, 1×", "Net / trade, 2×", "Net $, 1×"], years)}
 <div class="cols"><div><h2>Round-trip costs, bps of entry notional</h2>{_table(["Cost", "bps"], cost_rows)}</div>
@@ -258,6 +269,7 @@ agent {html.escape(manifest["agent"])} · commit <span class="mono">{git["commit
             f"`{manifest['run_id']}` · {manifest['period']['start']} to {manifest['period']['end']} · "
             f"build `{manifest['data_build_id']}` · commit `{git['commit'][:8]}`",
             "",
+            exposure_note,
             "| | 1× slippage | 2× slippage |",
             "|---|---|---|",
             f"| Net return per trade | {_pct(one['mean_return'])} | {_pct(two['mean_return'])} |",

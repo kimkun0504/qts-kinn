@@ -145,3 +145,35 @@ at inclusive boundaries. The same tolerance applies to the
 minimum three-percent decline and the half-turnover threshold.
 Tests accept the exact boundary and reject nearby out-of-range
 prices. This is a numerical correction before empirical testing.
+
+## Addendum, owner-authorized execution contract before the first run
+
+The owner explicitly authorized GPT to implement the scoped
+platform changes. The opt-in profile is `extended_v1`; the
+calendar's regular close stays available to the signal.
+The execution window ends at 20:00 ET, with no auction fallback.
+
+Require modeled opening execution at **both** baseline and
+doubled slippage to fit the entry and liquidation caps. This
+conservative clarification prevents a stressed fill from
+violating the broker limit. Both reports use the same fills.
+Size against the buy cap. Each filled one-minute replacement
+sell order incurs its own commission minimum. Missing minutes
+produce no fills; a retry uses the last observed positive-volume
+completed close, even if stale, and never the current bar's
+close. Reject invalid OHLC or zero-volume execution bars.
+
+The event study measures only the registered fifteen-minute
+liquidation policy using the portfolio simulator, including
+participation, partial entry, expiry and any delayed exits.
+The fifteen minutes schedule the first exit attempt rather
+than guaranteeing a fill at exactly fifteen minutes. Retain
+unresolved events with null completed returns and explicit
+share counts and marks. Any unresolved position fails the
+study's same-day requirement and prevents advancement.
+
+The bar range and total volume enter the execution-cost and
+capacity approximation after a signal is made. These data
+cannot establish quote-level executability, queue position or
+available depth at the opening print. This limitation remains
+even for a small order and a passing numerical result.

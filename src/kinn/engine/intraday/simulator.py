@@ -3,7 +3,8 @@
 Execution rules (ARCHITECTURE.md rule 3), all in this file:
 
 - **Next bar at the earliest.** A signal from bar *m* can fill from bar *m + 1*.
-- **Regular session only.** Fills happen in bars from the open to the close.
+- **Regular session by default.** The opt-in extended_v1 profile in extended.py uses
+  opening-only marketable limits, retries timed liquidation, and records unsold exposure.
 - **Limit orders fill only on a trade-through**: the bar's low must be below the limit by the
   trade-through margin. The fill price is the limit (no price improvement) unless configured.
 - **Stops honour gaps.** A stop gapped through fills at the bar's open, not at the stop price.
@@ -21,6 +22,7 @@ and the book is flat every night, so sessions are independent.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 
 import numpy as np
 
@@ -38,6 +40,51 @@ class FillConfig:
     limit_fills_at_limit: bool = True  # False: a bar opening through the limit fills at its open
     flatten_before_close: int = 5  # minutes before the close when positions are sold
     no_entry_before_close: int = 10  # no new entries in the last minutes
+    session: str = "regular"  # opt-in extended_v1: opening-only marketable capped limits
+    entry_start_minute: int = 240
+    entry_end_minute: int = 1199
+    extended_slippage_multiplier: float = 2.0
+    liquidation_limit_pct: float = 0.02
+
+    def __post_init__(self):
+        if self.session not in ("regular", "extended_v1"):
+            raise ValueError("session must be regular or extended_v1")
+        if not 0 < self.participation <= 1:
+            raise ValueError("participation must be in (0, 1]")
+        if self.session == "extended_v1":
+            if not 240 <= self.entry_start_minute <= self.entry_end_minute < 1200:
+                raise ValueError("extended entry bounds must lie between 04:00 and 19:59 ET")
+            if (
+                not np.isfinite(self.extended_slippage_multiplier)
+                or self.extended_slippage_multiplier < 1
+            ):
+                raise ValueError("extended slippage multiplier must be finite and at least one")
+            if not 0 < self.liquidation_limit_pct < 1:
+                raise ValueError("liquidation_limit_pct must be in (0, 1)")
+
+    def replay_bounds(self, open_minute: int, close_minute: int) -> tuple[int, int]:
+        return (240, 1200) if self.session == "extended_v1" else (open_minute, close_minute)
+
+
+@dataclass(frozen=True)
+class UnresolvedPosition:
+    day: date
+    symbol: str
+    permaticker: int
+    signal_minute: int
+    entry_minute: int
+    bought: int
+    sold: int
+    held: int
+    notional: float
+    mark_minute: int
+    mark_price: float
+    marked_gross: float
+    commission: float
+    fees: float
+    slippage: float
+    marked_net: float
+    marked_net_2x: float
 
 
 @dataclass
@@ -48,6 +95,7 @@ class DayResult:
     rejected_size: int = 0  # one share costs more than the position size
     unfilled: int = 0  # entry order never filled
     rejected_risk: int = 0  # refused by the entry cap or the daily loss limit
+    unresolved: list[UnresolvedPosition] = field(default_factory=list)
 
 
 @dataclass
@@ -79,6 +127,10 @@ def simulate_signal(
 ) -> tuple[list[Fill], list[Fill], str, int]:
     """Walk one order through the session. Returns (entry fills, exit fills, exit reason,
     the minute its capital is released)."""
+    if config.session == "extended_v1":
+        from kinn.engine.intraday.extended import simulate_extended
+
+        return simulate_extended(sd, signal, quantity, config=config, costs=costs)
     live_from = max(signal.minute + 1, open_minute)
     last_entry = close_minute - config.no_entry_before_close - 1
     if signal.expire_minute is not None:
@@ -201,20 +253,16 @@ def _trade(day, sd: SymbolDay, path: _Path, costs: CostModel) -> Trade:
         return {
             "shares": shares,
             "value": value,
-            "marketable": sum(f.quantity for f in fills if f.kind in ("market", "stop")),
+            "marketable": sum(
+                f.quantity for f in fills if f.kind in ("market", "stop", "marketable_limit")
+            ),
             "passive": sum(f.quantity for f in fills if f.kind == "limit"),
             "auction": sum(f.quantity for f in fills if f.kind == "auction"),
             "slippage": sum(f.slippage for f in fills),
         }
 
     buy, sell = split(path.entry), split(path.exit)
-    commission = fees = 0.0
-    for side, part in (("buy", buy), ("sell", sell)):
-        c, f = costs.order_fees(
-            side=side, value=part["value"], marketable=part["marketable"],
-            passive=part["passive"], auction=part["auction"],
-        )  # fmt: skip
-        commission, fees = commission + c, fees + f
+    commission, fees = fill_fees(path.entry, path.exit, costs)
     gross = sell["value"] - buy["value"]
     slippage = buy["slippage"] + sell["slippage"]
     net = gross - commission - fees - slippage
@@ -290,14 +338,17 @@ def simulate_day(
             sd, signal, quantity, config=config, costs=costs, open_minute=view.open_minute,
             close_minute=view.close_minute, official_close=data.official_close.get(sd.symbol),
         )  # fmt: skip
-        live_from = max(signal.minute + 1, view.open_minute)
+        live_from = max(
+            signal.minute + 1,
+            config.entry_start_minute if config.session == "extended_v1" else view.open_minute,
+        )
         paths.append(
             (sd, _Path(signal, quantity, quantity * reference, live_from, release, entry, exit_,
                        reason))
         )  # fmt: skip
 
     power = BuyingPower(risk)
-    admitted: list[tuple[SymbolDay, _Path, Trade]] = []
+    admitted: list[tuple[SymbolDay, _Path, Trade | None]] = []
     paths.sort(key=lambda p: (p[1].live_from, -p[1].signal.weight, p[1].signal.symbol))
     for sd, path in paths:
         if path.entry and _risk_refuses(risk, admitted, path.entry[0].minute):
@@ -309,6 +360,9 @@ def simulate_day(
             result.rejected_capital += 1
         elif not path.entry:
             result.unfilled += 1
+        elif sum(f.quantity for f in path.entry) != sum(f.quantity for f in path.exit):
+            result.unresolved.append(unresolved_position(view.day, sd, path, costs))
+            admitted.append((sd, path, None))
         else:
             trade = _trade(view.day, sd, path, costs)
             admitted.append((sd, path, trade))
@@ -317,7 +371,7 @@ def simulate_day(
 
 
 def _risk_refuses(
-    risk: RiskConfig, admitted: list[tuple[SymbolDay, _Path, Trade]], minute: int
+    risk: RiskConfig, admitted: list[tuple[SymbolDay, _Path, Trade | None]], minute: int
 ) -> bool:
     """Session-level risk rules, judged at the moment a new entry would fill."""
     if risk.max_entries_per_session is not None and len(admitted) >= risk.max_entries_per_session:
@@ -327,12 +381,12 @@ def _risk_refuses(
     return _marked_pnl(admitted, minute) <= -risk.daily_loss_limit
 
 
-def _marked_pnl(admitted: list[tuple[SymbolDay, _Path, Trade]], minute: int) -> float:
+def _marked_pnl(admitted: list[tuple[SymbolDay, _Path, Trade | None]], minute: int) -> float:
     """The session's P&L as it stood before ``minute``: closed trades at their net result, open
     positions at the last traded price."""
     total = 0.0
     for sd, path, trade in admitted:
-        if path.exit[-1].minute < minute:
+        if trade is not None and path.exit[-1].minute < minute:
             total += trade.net
             continue
         bought = [f for f in path.entry if f.minute < minute]
@@ -348,3 +402,67 @@ def _marked_pnl(admitted: list[tuple[SymbolDay, _Path, Trade]], minute: int) -> 
             - sum(f.quantity * f.price for f in bought)
         )
     return total
+
+
+def unresolved_position(day, sd: SymbolDay, path: _Path, costs: CostModel) -> UnresolvedPosition:
+    """Value exposure without manufacturing an exit fill or a completed trade."""
+    bought = sum(f.quantity for f in path.entry)
+    sold = sum(f.quantity for f in path.exit)
+    notional = sum(f.price * f.quantity for f in path.entry)
+    proceeds = sum(f.price * f.quantity for f in path.exit)
+    known = np.flatnonzero(
+        (sd.minute >= path.entry[0].minute)
+        & (sd.minute < 1200)
+        & np.isfinite(sd.close)
+        & (sd.close > 0)
+        & (sd.volume > 0)
+    )
+    last = int(known[-1])
+    mark = float(sd.close[last])
+    commission, fees = fill_fees(path.entry, path.exit, costs)
+    slip = sum(f.slippage for f in path.entry + path.exit)
+    gross = proceeds + (bought - sold) * mark - notional
+    net = gross - commission - fees - slip
+    return UnresolvedPosition(
+        day,
+        sd.symbol,
+        sd.permaticker,
+        path.signal.minute,
+        path.entry[0].minute,
+        bought,
+        sold,
+        bought - sold,
+        notional,
+        int(sd.minute[last]),
+        mark,
+        gross,
+        commission,
+        fees,
+        slip,
+        net,
+        net - slip,
+    )
+
+
+def fill_fees(entry: list[Fill], exits: list[Fill], costs: CostModel) -> tuple[float, float]:
+    """Regular orders aggregate partial fills; extended one-minute replacements are new orders."""
+    commission = fees = 0.0
+    for side, fills in (("buy", entry), ("sell", exits)):
+        groups: dict[int, list[Fill]] = {}
+        for fill in fills:
+            groups.setdefault(fill.minute if fill.kind == "marketable_limit" else -1, []).append(
+                fill
+            )
+        for group in groups.values():
+            c, f = costs.order_fees(
+                side=side,
+                value=sum(x.price * x.quantity for x in group),
+                marketable=sum(
+                    x.quantity for x in group if x.kind in ("market", "stop", "marketable_limit")
+                ),
+                passive=sum(x.quantity for x in group if x.kind == "limit"),
+                auction=sum(x.quantity for x in group if x.kind == "auction"),
+            )
+            commission += c
+            fees += f
+    return commission, fees

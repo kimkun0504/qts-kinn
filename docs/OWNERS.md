@@ -11,6 +11,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `kinn.costs` | claude | 2026-11-15 | |
 | `kinn.risk` | claude | 2026-11-15 | |
 | `kinn.engine` | claude | 2026-11-15 | |
+| Extended-hours execution in `kinn.engine.intraday`, `kinn.run`, `kinn.validation.event_study`, and execution-risk reporting | gpt | 2026-11-17 | Owner explicitly authorized the scoped changes in chat; regular-session behavior retained. This temporary sub-lane overrides the broader rows for this change only. |
 | `kinn.validation` | claude | 2026-11-15 | open to gpt on request |
 | `kinn.registry`, `kinn.run`, `kinn.cli` | claude | 2026-11-15 | |
 | `kinn.reporting` | claude | 2026-11-15 | open to gpt on request |
@@ -39,7 +40,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/late_rally_selloff` | gpt | 2026-11-17 | rebound after a selloff in a late-session rally |
 | `strategies/one_dollar_reclaim` | gpt | 2026-11-17 | rebound above a fixed nominal price after an intraday break |
 | `strategies/filing_aware_dislocation` | gpt | 2026-11-17 | exclude newly usable filings from the size-peer reversal |
-| `strategies/close_unwind_impact_decay` | gpt | 2026-11-17 | after-hours impact-decay hypothesis, awaiting execution support |
+| `strategies/close_unwind_impact_decay` | gpt | 2026-11-17 | frozen after-hours impact-decay study; scoped execution support authorized |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

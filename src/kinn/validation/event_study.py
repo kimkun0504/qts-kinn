@@ -16,6 +16,13 @@ import pyarrow as pa
 from kinn.core.types import Signal
 from kinn.costs.model import CostModel
 from kinn.engine.intraday.data import SymbolDay
+from kinn.engine.intraday.simulator import (
+    FillConfig,
+    _Path,
+    simulate_signal,
+    trade_from_fills,
+    unresolved_position,
+)
 from kinn.validation.stats import bootstrap_mean_ci
 
 HORIZONS = (1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120, 180, 240)
@@ -28,6 +35,96 @@ SCHEMA = pa.schema(
      ("shares", pa.int32()), ("fees", pa.float64()), ("slippage", pa.float64())]
     + [(c, pa.float64()) for c in RETURN_COLUMNS]
 )  # fmt: skip
+EXTENDED_SCHEMA = pa.schema(
+    list(SCHEMA)
+    + [
+        ("completed", pa.bool_()),
+        ("exit_minute", pa.int32()),
+        ("held", pa.int64()),
+        ("mark_minute", pa.int32()),
+        ("mark_price", pa.float64()),
+        ("marked_net", pa.float64()),
+        ("marked_net_2x", pa.float64()),
+    ]
+)
+
+
+def measure_extended(
+    day: date,
+    sd: SymbolDay,
+    signal: Signal,
+    *,
+    config: FillConfig,
+    costs: CostModel,
+    position_dollars: float,
+) -> dict | None:
+    """One executable scheduled horizon, using the portfolio's exact cap/expiry/exit rules.
+
+    An unresolved event remains in the table with a null return and explicit exposure.
+    It invalidates the study's flatness gate, rather than disappearing as an unfilled entry.
+    """
+    if signal.max_hold_minutes not in HORIZONS:
+        raise ValueError("extended study needs a supported max_hold_minutes horizon")
+    quantity = int(position_dollars / signal.limit_price) if signal.limit_price else 0
+    if quantity <= 0:
+        return None
+    entry, exits, reason, release = simulate_signal(
+        sd,
+        signal,
+        quantity,
+        config=config,
+        costs=costs,
+        open_minute=240,
+        close_minute=1200,
+        official_close=None,
+    )
+    if not entry:
+        return None
+    shares = sum(f.quantity for f in entry)
+    value = sum(f.quantity * f.price for f in entry)
+    held = shares - sum(f.quantity for f in exits)
+    i = int(np.searchsorted(sd.minute, entry[0].minute))
+    row = dict.fromkeys(RETURN_COLUMNS)
+    row.update(
+        day=day,
+        symbol=sd.symbol,
+        permaticker=sd.permaticker,
+        signal_minute=signal.minute,
+        entry_minute=entry[0].minute,
+        entry_price=value / shares,
+        prev_close=sd.prior.get("prev_close"),
+        adv20_prev=sd.prior.get("adv20_prev"),
+        marketcap_prev=sd.prior.get("marketcap_prev"),
+        entry_bar_volume=int(sd.volume[i]),
+        shares=shares,
+        completed=not held,
+        held=held,
+        exit_minute=None,
+        mark_minute=None,
+        mark_price=None,
+        marked_net=None,
+        marked_net_2x=None,
+    )
+    if held:
+        path = _Path(signal, quantity, value, signal.minute + 1, release, entry, exits, reason)
+        unresolved = unresolved_position(day, sd, path, costs)
+        row.update(
+            fees=(unresolved.commission + unresolved.fees) / value,
+            slippage=unresolved.slippage / value,
+            mark_minute=unresolved.mark_minute,
+            mark_price=unresolved.mark_price,
+            marked_net=unresolved.marked_net,
+            marked_net_2x=unresolved.marked_net_2x,
+        )
+    else:
+        trade = trade_from_fills(day, sd, signal, quantity, entry, exits, reason, costs)
+        row.update(
+            fees=(trade.commission + trade.fees) / value,
+            slippage=trade.slippage / value,
+            exit_minute=trade.exit_minute,
+        )
+        row[f"r_{signal.max_hold_minutes}"] = trade.gross / value
+    return row
 
 
 def measure(
@@ -96,7 +193,8 @@ def _stats(values: np.ndarray, days: np.ndarray) -> dict:
 
 
 def _three(table: dict[str, np.ndarray], column: str, mask: np.ndarray) -> dict:
-    gross = table[column][mask]
+    mask = mask & np.isfinite(table[column].astype(float))
+    gross = table[column][mask].astype(float)
     cost1 = (table["fees"] + table["slippage"])[mask]
     cost2 = (table["fees"] + 2 * table["slippage"])[mask]
     days = table["day"][mask]
@@ -120,10 +218,19 @@ def summarize(events: pa.Table) -> dict:
     minute = table["signal_minute"]
     out["sessions_with_events"] = len(np.unique(table["day"]))
     out["curve"] = {c: _three(table, c, everything) for c in RETURN_COLUMNS}
+    if "completed" in table:
+        out["execution_profile"] = "extended_v1"
+        out["unresolved_positions"] = int((~table["completed"].astype(bool)).sum())
+        out["eligible_for_portfolio"] = out["unresolved_positions"] == 0
+        out["curve"] = {c: v for c, v in out["curve"].items() if v["gross"]["n"]}
+        out["horizons"] = [int(c[2:]) for c in out["curve"] if c != "r_close"]
+    completed = table["completed"].astype(bool) if "completed" in table else everything
     out["mean_cost"] = {
-        "fees": float(table["fees"].mean()),
-        "slippage_1x": float(table["slippage"].mean()),
-        "median_round_trip_1x": float(np.median(table["fees"] + table["slippage"])),
+        "fees": float(table["fees"][completed].mean()) if completed.any() else None,
+        "slippage_1x": float(table["slippage"][completed].mean()) if completed.any() else None,
+        "median_round_trip_1x": float(np.median((table["fees"] + table["slippage"])[completed]))
+        if completed.any()
+        else None,
     }
     out["median_entry_price"] = float(np.median(table["entry_price"]))
     out["median_adv"] = float(np.median(adv))
@@ -140,8 +247,12 @@ def summarize(events: pa.Table) -> dict:
         "by_year": {str(y): years == y for y in sorted(set(years.tolist()))},
     }  # fmt: skip
     for name, groups in splits.items():
+        columns = (
+            list(dict.fromkeys(["r_close", "r_60", *out["curve"]]))
+            if "completed" in table
+            else ["r_close", "r_60"]
+        )
         out[name] = {
-            label: {"r_close": _three(table, "r_close", mask), "r_60": _three(table, "r_60", mask)}
-            for label, mask in groups.items()
+            label: {c: _three(table, c, mask) for c in columns} for label, mask in groups.items()
         }
     return out

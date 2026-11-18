@@ -29,6 +29,8 @@ def _label(column: str) -> str:
 
 def _curve_chart(curve: dict) -> str:
     columns = list(curve)
+    if not columns:
+        return "<p>No completed executable horizons. Check unresolved exposure.</p>"
     width, height, left, right, top, bottom = 1000, 300, 56, 110, 12, 34
     series = {k: [curve[c][k]["mean"] for c in columns] for k in ("gross", "net_1x", "net_2x")}
     lows = [curve[c]["net_1x"]["low"] for c in columns]
@@ -40,7 +42,7 @@ def _curve_chart(curve: dict) -> str:
     n = len(columns)
 
     def x(i):
-        return left + (width - left - right) * i / (n - 1)
+        return left + (width - left - right) * i / max(n - 1, 1)
 
     def y(v):
         return top + (height - top - bottom) * (1 - (v - low) / span)
@@ -119,15 +121,15 @@ def _curve_chart(curve: dict) -> str:
     )
 
 
-def _split_rows(groups: dict) -> list[list[str]]:
+def _split_rows(groups: dict, primary="r_close", secondary="r_60") -> list[list[str]]:
     return [
         [
             label,
-            f"{g['r_close']['gross']['n']:,}",
-            _p(g["r_close"]["gross"]["mean"]),
-            _ci(g["r_close"]["net_1x"]),
-            _p(g["r_close"]["net_2x"]["mean"]),
-            _ci(g["r_60"]["net_1x"]),
+            f"{g[primary]['gross']['n']:,}",
+            _p(g[primary]["gross"]["mean"]),
+            _ci(g[primary]["net_1x"]),
+            _p(g[primary]["net_2x"]["mean"]),
+            _ci(g[secondary]["net_1x"]),
         ]
         for label, g in groups.items()
     ]
@@ -158,6 +160,20 @@ def render(run_dir: Path) -> tuple[str, str]:
             f"# {title}\n\nNo events.\n",
         )
     curve = s["curve"]
+    primary = next(iter(curve), "r_close") if s.get("execution_profile") else "r_close"
+    secondary = primary if s.get("execution_profile") else "r_60"
+    split_head = (
+        [
+            "",
+            "Completed events",
+            f"Gross, {_label(primary)} min",
+            "Net 1× (95% interval)",
+            "Net 2×",
+            "Net 1× (95% interval)",
+        ]
+        if s.get("execution_profile")
+        else SPLIT_HEAD
+    )
     rows = [
         [
             _label(c) + ("" if c == "r_close" else " min"),
@@ -173,11 +189,18 @@ def render(run_dir: Path) -> tuple[str, str]:
         f"{s['events']:,} events on {s['sessions_with_events']:,} sessions "
         f"({s['counts']['signals']:,} signals, {s['counts']['unfilled']:,} without an entry). "
         f"Median entry price ${s['median_entry_price']:.2f}, median 20-day dollar volume "
-        f"${s['median_adv']:,.0f}. Mean round-trip cost at 1×: {_p(cost['fees'] + cost['slippage_1x']).lstrip('+')} "
+        f"${s['median_adv']:,.0f}. Mean round-trip cost at 1×: {_p(cost['fees'] + cost['slippage_1x'] if cost['fees'] is not None else None).lstrip('+')} "
         f"(fees {_p(cost['fees']).lstrip('+')}, slippage {_p(cost['slippage_1x']).lstrip('+')}). "
         f"{100 * s['capacity_limited_share']:.0f}% of entries are larger than 5% of their bar's "
         f"volume. Lookahead replays passed: {s['counts']['lookahead_checks']:,}."
     )
+    if s.get("execution_profile"):
+        facts += (
+            f" Extended_v1: {s['unresolved_positions']} unresolved positions. "
+            "Returns include completed positions only; any unresolved exposure fails the study. "
+            "A horizon schedules liquidation; capped orders can fill later. "
+            "Both cost cases must fit each limit. Minute bars approximate executable liquidity."
+        )
     sections = [
         ("By period", "by_period"),
         ("By liquidity", "by_liquidity"),
@@ -194,7 +217,8 @@ def render(run_dir: Path) -> tuple[str, str]:
         f"<h2>Mean forward return after the event</h2>{_curve_chart(curve)}"
         f"<h2>Curve (95% intervals resample whole sessions)</h2>{_table(curve_head, rows)}"
         + "".join(
-            f"<h2>{name}</h2>{_table(SPLIT_HEAD, _split_rows(s[key]))}" for name, key in sections
+            f"<h2>{name}</h2>{_table(split_head, _split_rows(s[key], primary, secondary))}"
+            for name, key in sections
         )
         + f"<script>{JS}</script></body></html>"
     )
@@ -212,7 +236,7 @@ def render(run_dir: Path) -> tuple[str, str]:
                 md_table(curve_head, rows),
             ]
             + [
-                f"## {name}\n\n" + md_table(SPLIT_HEAD, _split_rows(s[key]))
+                f"## {name}\n\n" + md_table(split_head, _split_rows(s[key], primary, secondary))
                 for name, key in sections
             ]
         )

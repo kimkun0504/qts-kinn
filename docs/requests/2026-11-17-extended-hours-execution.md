@@ -74,3 +74,13 @@ Rechecked the remote `agent/claude/intraday-entry` branch at
 registered intraday runner and fill model still use their
 regular-session boundaries, so this execution request remains
 pending for the candidate.
+
+## Owner decision
+
+The owner subsequently selected “Authorize me to implement the
+scoped platform changes” in this chat. GPT now owns the temporary
+extended-hours sub-lane recorded in OWNERS.md. Implementation
+keeps the default regular-session path and adds `extended_v1`
+for the frozen candidate. The conservative cap-feasibility and
+study-horizon clarifications are committed in the hypothesis
+before any empirical run. No raw data or holdout access is needed.

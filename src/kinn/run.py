@@ -29,7 +29,7 @@ from kinn.data import holdout
 from kinn.data.inputs import info as input_info
 from kinn.data.store import DataStore
 from kinn.engine.intraday.data import load_day
-from kinn.engine.intraday.simulator import FillConfig, simulate_day
+from kinn.engine.intraday.simulator import FillConfig, UnresolvedPosition, simulate_day
 from kinn.engine.intraday.strategy import (
     Strategy,
     check_no_lookahead,
@@ -54,6 +54,7 @@ COUNT_KEYS = (
     "lookahead_checks",
     "rejected_risk",
     "paused_sessions",
+    "unresolved_positions",
 )
 
 
@@ -112,7 +113,7 @@ def run_month_multi(job: dict) -> str:
             "seed": cfg.get("seed", 0),
             "study": spec.get("kind") == "event_study",
             "parts": Path(spec["parts"]),
-            "trades": [], "events": [], "counts": dict.fromkeys(COUNT_KEYS, 0),
+            "trades": [], "events": [], "unresolved": [], "counts": dict.fromkeys(COUNT_KEYS, 0),
         })  # fmt: skip
     first = runs[0]["strategy"]
     if any(r["strategy"].universe.where() != first.universe.where() for r in runs):
@@ -136,26 +137,42 @@ def run_month_multi(job: dict) -> str:
                 signals = strategy.signals(data.view, shared)
             rng = random.Random(f"{r['seed']}:{day.isoformat()}")
             if signals and rng.random() < r["rate"]:
-                cut = rng.randrange(data.view.open_minute, data.view.close_minute)
-                check_no_lookahead(strategy, data.view, signals, [cut])
+                bounds = r["fills"].replay_bounds(data.view.open_minute, data.view.close_minute)
+                cuts = [rng.randrange(*bounds)]
+                if r["fills"].session == "extended_v1":
+                    cuts.extend(c for s in signals for c in (s.minute - 1, s.minute))
+                check_no_lookahead(strategy, data.view, signals, sorted(set(cuts)))
                 counts["lookahead_checks"] += 1
             if r["study"]:
                 counts["signals"] += len(signals)
                 for signal in signals:
-                    row = event_study.measure(
-                        day, data.view.symbols[signal.symbol], signal,
-                        open_minute=data.view.open_minute, close_minute=data.view.close_minute,
-                        official_close=data.official_close.get(signal.symbol), costs=costs,
-                        position_dollars=r["risk"].position_dollars,
-                        no_entry_before_close=r["fills"].no_entry_before_close,
-                    )  # fmt: skip
+                    if r["fills"].session == "extended_v1":
+                        row = event_study.measure_extended(
+                            day,
+                            data.view.symbols[signal.symbol],
+                            signal,
+                            config=r["fills"],
+                            costs=costs,
+                            position_dollars=r["risk"].position_dollars * signal.weight,
+                        )
+                    else:
+                        row = event_study.measure(
+                            day, data.view.symbols[signal.symbol], signal,
+                            open_minute=data.view.open_minute, close_minute=data.view.close_minute,
+                            official_close=data.official_close.get(signal.symbol), costs=costs,
+                            position_dollars=r["risk"].position_dollars,
+                            no_entry_before_close=r["fills"].no_entry_before_close,
+                        )  # fmt: skip
                     if row is None:
                         counts["unfilled"] += 1
                     else:
                         r["events"].append(row)
+                        counts["unresolved_positions"] += int(row.get("held", 0) > 0)
                 continue
             result = simulate_day(data, signals, risk=r["risk"], config=r["fills"], costs=costs)
             r["trades"].extend(result.trades)
+            r["unresolved"].extend(dataclasses.asdict(p) for p in result.unresolved)
+            counts["unresolved_positions"] += len(result.unresolved)
             for key in (
                 "signals",
                 "rejected_capital",
@@ -167,13 +184,53 @@ def run_month_multi(job: dict) -> str:
     for r in runs:
         tmp = r["parts"] / f"{job['month']}.parquet.tmp"
         if r["study"]:
-            table = pa.Table.from_pylist(r["events"], schema=event_study.SCHEMA)
+            schema = (
+                event_study.EXTENDED_SCHEMA
+                if r["fills"].session == "extended_v1"
+                else event_study.SCHEMA
+            )
+            table = pa.Table.from_pylist(r["events"], schema=schema)
         else:
             table = _trades_table(r["trades"])
+            if r["fills"].session == "extended_v1":
+                exposure_parts = r["parts"] / "unresolved"
+                exposure_parts.mkdir(exist_ok=True)
+                exposure_tmp = exposure_parts / f"{job['month']}.parquet.tmp"
+                pq.write_table(_unresolved_table(r["unresolved"]), exposure_tmp)
+                os.replace(exposure_tmp, exposure_parts / f"{job['month']}.parquet")
         pq.write_table(table, tmp)
         os.replace(tmp, r["parts"] / f"{job['month']}.parquet")
         registry.write_json(r["parts"] / f"{job['month']}.json", r["counts"])
     return job["month"]
+
+
+def _unresolved_table(rows: list[dict]) -> pa.Table:
+    floats = {
+        "notional",
+        "mark_price",
+        "marked_gross",
+        "commission",
+        "fees",
+        "slippage",
+        "marked_net",
+        "marked_net_2x",
+    }
+    schema = pa.schema(
+        [
+            (
+                f.name,
+                pa.date32()
+                if f.name == "day"
+                else pa.string()
+                if f.name == "symbol"
+                else pa.float64()
+                if f.name in floats
+                else pa.int64(),
+            )
+            for f in dataclasses.fields(UnresolvedPosition)
+        ]
+    )
+    return pa.Table.from_pylist(rows, schema=schema)
 
 
 def start_run(
@@ -193,6 +250,10 @@ def start_run(
     the owner's token (the data layer refuses otherwise) and is marked in the manifest."""
     settings = settings or load_settings()
     meta, cfg = load_config(strategy, config)
+    fills = FillConfig(**cfg.get("fills", {}))
+    execution = dataclasses.asdict(fills) if fills.session == "extended_v1" else None
+    if execution and cfg.get("breaker"):
+        raise ValueError("extended_v1 does not support a post-hoc circuit breaker")
     git = registry.git_state(repo)
     registry.check_clean(git, scratch=scratch)
     store = DataStore(settings, unseal=unseal)
@@ -217,6 +278,7 @@ def start_run(
             "commit": git["commit"],
             "build": store.build_id,
             "kind": kind,
+            **({"execution": execution} if execution else {}),
             **({"inputs": {k: v["input_id"] for k, v in used.items()}} if used else {}),
         }
     )
@@ -249,6 +311,8 @@ def start_run(
     }  # fmt: skip
     if used:
         manifest["inputs"] = used
+    if execution:
+        manifest["execution"] = execution
     if unseal:
         manifest["unsealed"] = True
     registry.write_json(run_dir / "manifest.json", manifest)
@@ -418,6 +482,43 @@ def finalize(run_dir: Path, *, settings: Settings) -> None:
             pa.table(metrics_module.daily_table(trades, sessions)), run_dir / "equity.parquet"
         )
         summary = metrics_module.summarize(trades, sessions, equity=equity, counts=counts)
+        if manifest.get("execution"):
+            expected = [parts / "unresolved" / p.name for p in sorted(parts.glob("*.parquet"))]
+            if any(not p.exists() for p in expected):
+                raise ValueError("extended run is missing unresolved-exposure part files")
+            exposure = [row for p in expected for row in pq.read_table(p).to_pylist()]
+            if len(exposure) != counts["unresolved_positions"]:
+                raise ValueError("unresolved exposure count does not match the part files")
+            pq.write_table(_unresolved_table(exposure), run_dir / "unresolved.parquet")
+            summary["execution_risk"] = {
+                "eligible": not exposure,
+                "unresolved_positions": len(exposure),
+                "held_shares": sum(p["held"] for p in exposure),
+                "sum_last_marked_exposure": sum(p["held"] * p["mark_price"] for p in exposure),
+                "unresolved_marked_net_1x": sum(p["marked_net"] for p in exposure),
+                "unresolved_marked_net_2x": sum(p["marked_net_2x"] for p in exposure),
+                "statistics_scope": (
+                    "completed trades only; unresolved exposure invalidates the portfolio"
+                ),
+            }
+            marked = metrics_module.daily_table(trades, sessions)
+            marked.update(unresolved_positions=[], held_shares=[], marked_exposure=[])
+            for i, day in enumerate(sessions):
+                positions = [p for p in exposure if p["day"] == day]
+                marked["unresolved_positions"].append(len(positions))
+                marked["held_shares"].append(sum(p["held"] for p in positions))
+                marked["marked_exposure"].append(
+                    sum(p["held"] * p["mark_price"] for p in positions)
+                )
+                marked["gross"][i] += sum(p["marked_gross"] for p in positions)
+                marked["notional"][i] += sum(p["notional"] for p in positions)
+                marked["net"][i] += sum(p["marked_net"] for p in positions)
+                marked["net_2x"][i] += sum(p["marked_net_2x"] for p in positions)
+            import numpy as np
+
+            marked["cum_net"] = np.cumsum(marked["net"]).tolist()
+            marked["cum_net_2x"] = np.cumsum(marked["net_2x"]).tolist()
+            pq.write_table(pa.table(marked), run_dir / "marked_equity.parquet")
         summary["schema"] = registry.METRICS_SCHEMA
         registry.write_json(run_dir / "metrics.json", summary)
     manifest["status"] = "complete"
