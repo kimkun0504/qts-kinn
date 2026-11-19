@@ -1,5 +1,5 @@
 name: disclosed_value_reversal
-status: prepared
+status: parked
 engine: intraday
 universe: smaller domestic common stocks with a recent disclosed material purchase
 cost_calibration: ibkr_pro_tiered
@@ -10,13 +10,12 @@ record:
   title: Intraday reversal with a recently disclosed insider purchase
   idea: Test a pre-open public purchase selector at an identical relative reversal event
   horizon: Two hours after first fill
-  verdict: preregistered studies pending
-  summary: >-
-    A fixed twenty-session disclosure window supplies the public-purchase
-    selector. Price, entry, exit and costs are identical in the primary
-    and its ineligible control. The purchase price is not used.
+  verdict: 'park: insufficient events and gross return; no validation'
+  summary: The recent-purchase selector improved descriptive development means but failed the
+    fixed sample and gross-return gates. The exact-subset audit passed. No portfolio or validation
+    was run.
   weaknesses:
-    - Form 4 P may include private or planned transactions; footnotes are unavailable.
-    - Ticker identity and snapshot classifications remain limitations.
-    - The existing archive needs an owner extension before any qualifying validation.
-    - Execution remains a minute-bar proxy.
+  - Form 4 P may include private or planned transactions; footnotes are unavailable.
+  - Ticker identity and snapshot classifications remain limitations.
+  - The existing archive needs an owner extension before any qualifying validation.
+  - Execution remains a minute-bar proxy.
