@@ -6,6 +6,7 @@ import argparse
 import hmac
 import json
 import secrets
+from datetime import date
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -142,9 +143,14 @@ class Handler(SimpleHTTPRequestHandler):
             store = self._store()
             if store is None:
                 return self._json({"error": "No data build to read prices from."}, 503)
-            pick = parse_qs(urlsplit(self.path).query).get("pt", [""])[0]
+            query = parse_qs(urlsplit(self.path).query)
+            pick = query.get("pt", [""])[0]
+            try:
+                on = date.fromisoformat(query.get("on", [""])[0])
+            except ValueError:
+                on = None
             found = stocks.stock(store, self.runs_dir, self.lab_dir, path.rsplit("/", 1)[1],
-                                 int(pick) if pick.isdigit() else None)  # fmt: skip
+                                 int(pick) if pick.isdigit() else None, on)  # fmt: skip
             return self._json(found, 200 if found else 404)
         if path == "/api/ledgers":
             return self._json(ledgers.ledgers(self.runs_dir))

@@ -215,7 +215,7 @@ def run_part(root: Path, run_id: str, part: str) -> Response:
             text = log.read_text(errors="replace")[-20_000:] if log.exists() else ""
             return 200, {"log": text}
         names = {"stocks": "by_stock", "years": "by_year", "equity": "equity",
-                 "lookahead": "lookahead", "summary": "summary"}  # fmt: skip
+                 "lookahead": "lookahead", "summary": "summary", "path": "path"}  # fmt: skip
         if part not in names:
             return _error(404, "Unknown part of a run.")
         found = store.result(run_dir, names[part])

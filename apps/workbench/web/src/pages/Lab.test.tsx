@@ -82,7 +82,8 @@ describe("the Lab", () => {
     render(<Lab name="two_up" onOpen={() => undefined} />);
     fireEvent.click(await screen.findByRole("tab", { name: /Stocks/ }));
     const panel = (await screen.findByText("Every stock it traded")).closest("section") as HTMLElement;
-    fireEvent.click(within(panel).getByText("LOSE"));
+    expect(within(panel).getByRole("link", { name: "LOSE" }).getAttribute("href")).toBe("#/stock/LOSE/2015-06-01");
+    fireEvent.click(within(panel).getByText("LOSE Inc"));
     expect(await screen.findByText("Trades in LOSE")).toBeTruthy();
     await waitFor(() => expect(calls.some((c) => c.url.includes("/trades?ticker=LOSE"))).toBe(true));
   });

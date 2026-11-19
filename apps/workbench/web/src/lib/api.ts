@@ -614,6 +614,7 @@ export const api = {
   trades: (runId: string) => get<{ count: number; rows: Trade[] }>(`/api/trades/${encodeURIComponent(runId)}`),
   ledgers: () => get<LedgerHead[]>("/api/ledgers"),
   stocks: (query: string) => get<StockHit[]>(`/api/stocks?q=${encodeURIComponent(query)}`),
-  stock: (symbol: string, permaticker?: string) => get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${permaticker ? `?pt=${permaticker}` : ""}`),
+  stock: (symbol: string, hint?: string) =>
+    get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
 };

@@ -18,6 +18,8 @@ interface LineChartProps {
   height?: number;
   /** Show every x label (few points) instead of one per year (dates). */
   everyLabel?: boolean;
+  labelAt?: (i: number) => boolean;
+  marks?: { i: number; label: string }[];
   caption?: string;
 }
 
@@ -25,7 +27,7 @@ const W = 780;
 const PAD = { left: 74, right: 136, top: 12, bottom: 32 };
 
 /** Lines on one shared axis, with direct end labels, a legend and a hover readout. */
-export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, caption }: LineChartProps) {
+export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, labelAt, marks = [], caption }: LineChartProps) {
   const [hover, setHover] = useState<number | null>(null);
   const n = labels.length;
   if (n < 2) return <p className="m-0 px-4 py-6 text-ink-2">Not enough points for a chart.</p>;
@@ -39,7 +41,8 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
   const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
 
   const xLabels: { i: number; text: string }[] = [];
-  if (everyLabel) labels.forEach((text, i) => xLabels.push({ i, text }));
+  if (labelAt) labels.forEach((text, i) => labelAt(i) && xLabels.push({ i, text }));
+  else if (everyLabel) labels.forEach((text, i) => xLabels.push({ i, text }));
   else {
     const years = new Set(labels.map((l) => l.slice(0, 4)));
     const every = years.size <= 12 ? 1 : 2;
@@ -119,6 +122,14 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
             <text key={end.text} x={W - PAD.right + 8} y={end.y + 4} fill="var(--ink)" fontWeight="600">
               {end.text}
             </text>
+          ))}
+          {marks.map((m) => (
+            <g key={`${m.i}-${m.label}`}>
+              <line x1={x(m.i)} x2={x(m.i)} y1={PAD.top} y2={height - PAD.bottom} stroke="var(--ink-3)" strokeDasharray="4 4" />
+              <text x={x(m.i) + 5} y={PAD.top + 12} fill="var(--ink-2)">
+                {m.label}
+              </text>
+            </g>
           ))}
           {hover != null && <line x1={x(hover)} x2={x(hover)} y1={PAD.top} y2={height - PAD.bottom} stroke="var(--chart-axis)" />}
         </svg>

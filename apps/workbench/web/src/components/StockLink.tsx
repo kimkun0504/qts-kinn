@@ -1,9 +1,9 @@
 import { href } from "../lib/route";
 
-export function StockLink({ symbol, strong = true }: { symbol: string; strong?: boolean }) {
+export function StockLink({ symbol, on, strong = true }: { symbol: string; on?: string | null; strong?: boolean }) {
   return (
     <a
-      href={href({ page: "stock", name: symbol })}
+      href={href({ page: "stock", name: symbol, tab: on ? on.slice(0, 10) : undefined })}
       onClick={(event) => event.stopPropagation()}
       className={`text-ink no-underline decoration-ink-3 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-accent ${strong ? "font-semibold" : ""}`}
     >

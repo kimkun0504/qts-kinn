@@ -194,8 +194,22 @@ export interface Equity {
   profit: (number | null)[];
   drawdown: (number | null)[];
   spy: (number | null)[];
+  spy_matched?: (number | null)[] | null;
   positions: number[];
   capital: number;
+}
+
+export interface SignalPath {
+  horizons: number[];
+  stock: (number | null)[];
+  universe: (number | null)[];
+  excess: (number | null)[];
+  low: (number | null)[];
+  high: (number | null)[];
+  count: number[];
+  trades: number;
+  of: number;
+  hold: number;
 }
 
 export interface TradeRow {
@@ -329,6 +343,7 @@ export const lab = {
   years: (runId: string) => read<YearRow[]>(`/runs/${id(runId)}/years`),
   equity: (runId: string) => read<Equity>(`/runs/${id(runId)}/equity`),
   code: (runId: string) => read<{ code: string }>(`/runs/${id(runId)}/code`),
+  path: (runId: string) => read<SignalPath>(`/runs/${id(runId)}/path`),
   log: (runId: string) => read<{ log: string }>(`/runs/${id(runId)}/log`),
   trades: (runId: string, query: { ticker?: string; book?: string; sort?: string; order?: string; offset?: number; limit?: number }) => {
     const params = new URLSearchParams();

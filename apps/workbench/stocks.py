@@ -277,12 +277,23 @@ def paper_trades(runs_dir: Path, symbols: list[str]) -> list[dict]:
     return out
 
 
+def held(idx: Index, perm: int, symbol: str, on: date) -> bool:
+    return any(
+        h["symbol"].upper() == symbol.upper()
+        and (h["valid_from"] or FIRST) <= on <= (h["valid_to"] or LAST)
+        for h in idx.history.get(perm, [])
+    )
+
+
 def stock(store: Store, runs_dir: Path, lab_dir: Path, symbol: str,
-          permaticker: int | None = None) -> dict | None:  # fmt: skip
+          permaticker: int | None = None, on: date | None = None) -> dict | None:  # fmt: skip
     idx = index(store)
     candidates = resolve(store, symbol)
+    holders = [p for p in candidates if on and held(idx, p, symbol, on)]
     if permaticker in idx.companies:
         chosen = permaticker
+    elif holders:
+        chosen = holders[0]
     elif candidates:
         chosen = candidates[0]
     else:

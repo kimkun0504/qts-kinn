@@ -168,7 +168,51 @@ def by_stock(table: pd.DataFrame) -> list[dict]:
     return rows
 
 
-def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capital: float) -> dict:
+def signal_path(trades: list[Trade], adj_close: np.ndarray, universe_cum: np.ndarray, hold: int,
+                limit: int = 20_000) -> dict | None:  # fmt: skip
+    """The average split-adjusted move of the traded stocks from their signal day's close, from
+    ``before`` sessions before it to ``after`` sessions after, beside the universe's over the same
+    days: how the edge builds and fades around the signal, past the exit too."""
+    if not trades:
+        return None
+    before, after = 20, int(min(120, max(40, 3 * hold)))
+    picked = trades
+    if len(trades) > limit:
+        keep = np.random.default_rng(0).choice(len(trades), size=limit, replace=False)
+        picked = [trades[i] for i in sorted(keep)]
+    rows = np.array([t.signal_row for t in picked])
+    cols = np.array([t.stock for t in picked])
+    horizons = np.arange(-before, after + 1)
+    sessions = adj_close.shape[0]
+    stock = np.full((len(picked), len(horizons)), np.nan)
+    market = np.full_like(stock, np.nan)
+    base = adj_close[rows, cols].astype(np.float64)
+    for k, h in enumerate(horizons):
+        at = rows + h
+        ok = (at >= 0) & (at < sessions) & (base > 0)
+        price = np.full(len(picked), np.nan)
+        price[ok] = adj_close[at[ok], cols[ok]]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            stock[:, k] = price / base - 1
+        market[ok, k] = np.expm1(universe_cum[at[ok]] - universe_cum[rows[ok]])
+    excess = stock - market
+    count = np.sum(np.isfinite(excess), axis=0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        mean_stock = np.nanmean(np.where(np.isfinite(excess), stock, np.nan), axis=0)
+        mean_market = np.nanmean(np.where(np.isfinite(excess), market, np.nan), axis=0)
+        mean_excess = np.nanmean(excess, axis=0)
+        spread = np.nanstd(excess, axis=0, ddof=1) / np.sqrt(np.maximum(count, 1))
+    clean = lambda a: [None if not np.isfinite(v) else round(float(v), 5) for v in a]  # noqa: E731
+    return {
+        "horizons": horizons.tolist(), "stock": clean(mean_stock), "universe": clean(mean_market),
+        "excess": clean(mean_excess), "low": clean(mean_excess - 1.96 * spread),
+        "high": clean(mean_excess + 1.96 * spread), "count": count.tolist(),
+        "trades": len(picked), "of": len(trades), "hold": hold,
+    }  # fmt: skip
+
+
+def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capital: float,
+           position_size: float | None = None) -> dict:  # fmt: skip
     pnl, positions = book["pnl"], book["positions"]
     active = np.flatnonzero(positions > 0)
     last = int(active[-1]) if active.size else first_row
@@ -177,6 +221,10 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
     peak = np.maximum.accumulate(np.concatenate([[0.0], cum]))[1:]
     base = spy[first_row] if first_row < len(spy) else np.nan
     spy_line = (spy[span] / base - 1) * capital if np.isfinite(base) else np.full(len(cum), np.nan)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        spy_day = np.nan_to_num(spy[span][1:] / spy[span][:-1] - 1, nan=0.0, posinf=0.0, neginf=0.0)
+    invested = np.minimum(positions[span][1:] * (position_size or 0.0), capital)
+    matched = np.concatenate([[0.0], np.cumsum(spy_day * invested)])
     step = max(1, len(cum) // 1200)  # at most about 1,200 points for the chart
     pick = np.arange(0, len(cum), step)
     if len(cum) and pick[-1] != len(cum) - 1:
@@ -186,5 +234,6 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
         "dates": [str(d)[:10] for d in dates[span][pick]],
         "profit": clean(cum[pick]), "drawdown": clean((cum - peak)[pick]),
         "spy": clean(spy_line[pick]), "positions": positions[span][pick].tolist(),
+        "spy_matched": clean(matched[pick]) if position_size else None,
         "capital": capital,
     }  # fmt: skip

@@ -132,7 +132,15 @@ def test_a_run_writes_its_results(root, fake):
     assert [y["year"] for y in years] == [2015]
     equity = store.result(run_dir, "equity")
     assert equity["profit"][-1] == pytest.approx(summary["book_profit"], abs=0.01)
-    assert len(equity["dates"]) == len(equity["spy"])
+    assert len(equity["dates"]) == len(equity["spy"]) == len(equity["spy_matched"])
+    assert equity["spy_matched"][0] == 0.0
+    path = store.result(run_dir, "path")
+    assert path["horizons"][0] == -20 and path["horizons"][-1] >= 40 and path["hold"] == 5
+    zero = path["horizons"].index(0)
+    assert path["stock"][zero] == 0.0 and path["excess"][zero] == 0.0
+    assert path["trades"] == path["of"] == summary["trades"]
+    assert all(lo <= hi for lo, hi in zip(path["low"], path["high"], strict=True)
+               if lo is not None and hi is not None)  # fmt: skip
     manifest = json.loads((run_dir / "manifest.json").read_text())
     assert manifest["data_build_id"] == "fake-build" and len(manifest["code_sha256"]) == 64
     assert (run_dir / "algorithm.py").read_text() == GOOD

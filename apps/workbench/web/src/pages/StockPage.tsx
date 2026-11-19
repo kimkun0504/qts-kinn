@@ -98,7 +98,7 @@ function Header({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string
           {[page.exchange, page.sector, page.industry, page.category, page.location].filter(Boolean).map((part) => (
             <span key={part}>{part}</span>
           ))}
-          <span>Prices {years(page)}</span>
+          {page.prices.date.length > 0 && <span>Daily prices {day(page.prices.date[0])} to {day(page.prices.date[page.prices.date.length - 1])}</span>}
         </div>
         {traded.length > 0 && (
           <div className="text-[13px] text-ink-3">
@@ -159,7 +159,7 @@ function Facts({ page, data }: { page: StockPageData; data: Adjusted }) {
         { label: "Market value", value: compact(page.prices.market_cap[last], "$"), note: "at the previous close" },
         { label: "Dollar volume", value: compact(page.prices.adv20[last], "$"), note: "median of 20 sessions" },
         { label: "One year", value: now != null && then ? pct(now / then - 1, 1) : "–", note: "split-adjusted" },
-        { label: "52-week range", value: lows.length ? `${price(Math.min(...lows))} – ${price(Math.max(...highs))}` : "–", note: "split-adjusted" },
+        { label: "52-week range", value: lows.length ? `${priceTick(Math.min(...lows))}–${priceTick(Math.max(...highs))}` : "–", note: "split-adjusted" },
         { label: "Trades recorded", value: int(page.trades.length), note: `${counts.run} runs, ${counts.lab} Lab, ${counts.paper} paper` },
       ]}
     />

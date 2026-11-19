@@ -3,8 +3,8 @@ import { lab, type RunDetail, type RunListRow, type RunState, type StockRow, typ
 import { day, dollars, int, money, num, pct, plainPct } from "../../lib/format";
 import { useLoad } from "../../lib/useLoad";
 import { Histogram } from "../charts/Histogram";
-import { LineChart } from "../charts/LineChart";
 import { YearBars } from "../charts/YearBars";
+import { StockLink } from "../StockLink";
 import { CodeEditor } from "../CodeEditor";
 import { Badge, type Tone } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -12,19 +12,15 @@ import { type Column, DataTable, type Sort } from "../ui/DataTable";
 import { Panel } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
 import { StatStrip } from "../ui/StatStrip";
+import { BookPanel, Compare, MonthTable, SignalPathPanel } from "./Analytics";
 
 type Tab = "overview" | "stocks" | "trades" | "years" | "code";
 
 const field = "min-h-8 rounded-md border border-line bg-surface px-2.5 text-sm text-ink placeholder:text-ink-3 focus-visible:outline-2 focus-visible:outline-accent";
 
-/** Fill gaps in a chart line with the last value. */
-function filled(values: (number | null)[]): number[] {
-  let last = 0;
-  return values.map((v) => (v == null ? last : (last = v)));
-}
 
 const stockColumns: Column<StockRow>[] = [
-  { key: "ticker", header: "Stock", align: "left", strong: true, sortable: true, render: (r) => r.ticker },
+  { key: "ticker", header: "Stock", align: "left", sortable: true, render: (r) => <StockLink symbol={r.ticker} on={r.last_entry} /> },
   { key: "name", header: "Company", align: "left", muted: true, max: 220, sortable: true, render: (r) => r.name ?? "–" },
   { key: "sector", header: "Sector", align: "left", muted: true, max: 160, sortable: true, render: (r) => r.sector ?? "–" },
   { key: "trades", header: "Trades", sortable: true, render: (r) => int(r.trades) },
@@ -39,7 +35,7 @@ const stockColumns: Column<StockRow>[] = [
 ];
 
 const tradeColumns: Column<TradeRow>[] = [
-  { key: "ticker", header: "Stock", align: "left", strong: true, sortable: true, render: (r) => r.ticker },
+  { key: "ticker", header: "Stock", align: "left", sortable: true, render: (r) => <StockLink symbol={r.ticker} on={r.entry_date} /> },
   { key: "signal_date", header: "Signal", muted: true, sortable: true, render: (r) => day(r.signal_date) },
   { key: "entry_date", header: "Bought", sortable: true, render: (r) => day(r.entry_date) },
   { key: "exit_date", header: "Sold", sortable: true, render: (r) => day(r.exit_date) },
@@ -81,21 +77,8 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
           { label: "Book profit", value: money(s.book_profit), note: `${pct(s.annual_return ?? null, 1)} a year on ${dollars(s.capital)}; Sharpe ${num(s.sharpe ?? null)}` },
         ]}
       />
-      <Panel title="The book" aside={`${s.settings?.book.max_positions || "Any number of"} positions of ${dollars(s.settings?.book.position_size)}; worst drawdown ${money(s.max_drawdown)}; SPY ${pct(s.spy_return ?? null, 0)}`}>
-        {equity ? (
-          <LineChart
-            title="The book's profit and SPY on the same capital"
-            labels={equity.dates}
-            series={[
-              { name: "The book", short: "Book", values: filled(equity.profit), color: "var(--series-1)" },
-              { name: "SPY on the same capital", short: "SPY", values: filled(equity.spy), color: "var(--series-2)", dash: "5 4" },
-            ]}
-            format={(v) => money(v)}
-          />
-        ) : (
-          <p className="m-0 px-4 py-6 text-ink-2">Loading the curve…</p>
-        )}
-      </Panel>
+      <BookPanel summary={s} equity={equity} />
+      <SignalPathPanel runId={detail.run_id} />
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Best stocks" aside={<LinkButton onClick={onAllStocks}>All {int(stocks?.length ?? 0)} stocks</LinkButton>}>
           <DataTable columns={small} rows={best} rowKey={(r) => r.ticker} onRowClick={(r) => onStock(r.ticker)} />
@@ -104,6 +87,7 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
           <DataTable columns={small} rows={worst} rowKey={(r) => r.ticker} onRowClick={(r) => onStock(r.ticker)} />
         </Panel>
       </div>
+      {equity && <MonthTable equity={equity} />}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <Panel title="Trades by return after costs" aside={`middle 90%: ${pct(s.p05, 1)} to ${pct(s.p95, 1)}`} padded>
           {s.histogram && <Histogram counts={s.histogram.counts} edges={s.histogram.edges} label="Trades by return after costs" />}
@@ -433,7 +417,7 @@ interface RunResultsProps {
 
 /** The results of the run on screen, a choice of run, and every run of the algorithm. */
 export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, onUseSettings }: RunResultsProps) {
-  const [tab, setTab] = useState<Tab | "runs">("overview");
+  const [tab, setTab] = useState<Tab | "runs" | "compare">("overview");
   const [ticker, setTicker] = useState("");
   const complete = detail?.status.state === "complete" && detail.summary ? detail : null;
   const { data: stocks } = useLoad(() => (complete ? lab.stocks(complete.run_id) : Promise.resolve(null)), `stocks-${complete?.run_id ?? "none"}`);
@@ -443,13 +427,15 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
     setTicker(name);
     setTab("trades");
   };
-  const tabs: { key: Tab | "runs"; label: string }[] = complete
+  const finished = runs.filter((r) => r.state === "complete").map((r) => ({ run_id: r.run_id, label: runLabel(r) }));
+  const tabs: { key: Tab | "runs" | "compare"; label: string }[] = complete
     ? [
         { key: "overview", label: "Overview" },
         { key: "stocks", label: `Stocks${stocks ? ` ${int(stocks.length)}` : ""}` },
         { key: "trades", label: `Trades ${int(s?.trades)}` },
         { key: "years", label: "Years" },
         { key: "code", label: "Code" },
+        ...(finished.length > 1 ? [{ key: "compare" as const, label: "Compare" }] : []),
         { key: "runs", label: `Runs ${runs.length}` },
       ]
     : [
@@ -502,7 +488,9 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
           <p className="m-0 mt-1 text-sm text-ink-2">It makes money at the expected costs and loses at twice the slippage.</p>
         </div>
       )}
-      {active === "runs" ? (
+      {active === "compare" && complete ? (
+        <Compare detail={complete} runs={finished} />
+      ) : active === "runs" ? (
         <Panel>
           <DataTable
             columns={runColumns}

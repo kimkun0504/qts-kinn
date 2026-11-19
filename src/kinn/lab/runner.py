@@ -198,9 +198,13 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
     store._write(run_dir / "lookahead.json", look)
     (run_dir / "by_year.json").write_text(json.dumps(metrics.by_year(table, daily, data.sessions)))
     (run_dir / "by_stock.json").write_text(json.dumps(metrics.by_stock(table)))
-    (run_dir / "equity.json").write_text(
-        json.dumps(metrics.equity(daily, data.sessions, spy, data.first_row, capital))
-    )
+    curve = metrics.equity(daily, data.sessions, spy, data.first_row, capital,
+                           settings.book.position_size)  # fmt: skip
+    (run_dir / "equity.json").write_text(json.dumps(curve))
+    path = metrics.signal_path(trades, market.adj_close, market.universe_cum,
+                               settings.exit.hold_days)  # fmt: skip
+    if path:
+        (run_dir / "path.json").write_text(json.dumps(path))
     manifest = json.loads((run_dir / "manifest.json").read_text())
     manifest.update(
         settings=settings.to_dict(), data_build_id=data._store.build_id,

@@ -101,3 +101,20 @@ def test_events_and_trades_from_the_run_store_the_lab_and_paper(store, tmp_path,
     assert sources == [("lab", "mine", 0.04), ("run", "x", 0.025)]
     assert page["symbols"][0]["symbol"] in ("OLDX", "ABCD")
     assert stocks.stock(store, runs, lab, "NOPE") is None
+
+
+def test_a_date_picks_the_company_that_held_the_symbol_then(tmp_path):
+    days = business_days()
+    n = len(days)
+    store = StockStore(
+        [Stock("NEWX", walk(n, 10.0, 0.0, seed=4)), Stock("ZZZZ", walk(n, 20.0, 0.0, seed=5))],
+        history=[(1001, "NEWX", date(2014, 1, 1), date(2015, 12, 31)),
+                 (1002, "NEWX", date(2008, 1, 1), date(2012, 12, 31)),
+                 (1002, "ZZZZ", date(2013, 1, 1), date(2015, 12, 31))],
+    )  # fmt: skip
+    runs, lab = tmp_path / "runs", tmp_path / "lab"
+    assert stocks.stock(store, runs, lab, "NEWX")["permaticker"] == 1001
+    then = stocks.stock(store, runs, lab, "NEWX", on=date(2010, 6, 1))
+    assert then["permaticker"] == 1002 and then["others"][0]["permaticker"] == 1001
+    chosen = stocks.stock(store, runs, lab, "NEWX", permaticker=1002, on=date(2015, 1, 2))
+    assert chosen["ticker"] == "ZZZZ"

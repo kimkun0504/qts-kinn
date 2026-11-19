@@ -105,6 +105,9 @@ export function PriceChart({ data, from, to, log, markers, results, filings, spa
     return PAD.top + (PRICE_BOTTOM - PAD.top) * (1 - (t - lo) / (hi - lo));
   };
   const ticks = (useLog ? logTicks(Math.exp(lo), Math.exp(hi)) : niceTicks(Math.max(0, lo), hi, 5)).filter((v) => y(v) >= PAD.top - 1 && y(v) <= PRICE_BOTTOM + 1);
+  const gap = ticks.length > 1 ? Math.min(...ticks.slice(1).map((v, k) => v - ticks[k])) : 1;
+  const digits = gap >= 1 ? 0 : Math.min(6, Math.max(2, 1 - Math.floor(Math.log10(gap))));
+  const tickText = (v: number) => `$${v.toFixed(digits)}`;
   const vy = (v: number) => VOLUME_BOTTOM - (VOLUME_BOTTOM - VOLUME_TOP) * (peak ? v / peak : 0);
   const candles = n <= CANDLES;
   const index = (clientX: number) => {
@@ -167,7 +170,7 @@ export function PriceChart({ data, from, to, log, markers, results, filings, spa
         <g key={v}>
           <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--chart-grid)" />
           <text x={W - PAD.right + 8} y={y(v) + 4} fill="var(--ink-2)">
-            {priceText(v)}
+            {tickText(v)}
           </text>
         </g>
       ))}
