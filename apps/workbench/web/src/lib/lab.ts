@@ -99,6 +99,7 @@ export interface RunListRow {
   trials?: number;
   period: string | null;
   headline: string | null;
+  note?: string;
 }
 
 export interface AlgorithmRow {
@@ -189,6 +190,7 @@ export interface RunDetail {
   status: Status;
   manifest: { algorithm: string; description: string; created_at: string; finished_at?: string; code_sha256: string; data_build_id?: string } | null;
   summary: Summary | null;
+  note?: string;
 }
 
 export interface StockRow {
@@ -377,6 +379,7 @@ export const lab = {
     write<{ run_id: string; status: Status }>("POST", "/runs", sweep ? { algorithm, code, settings, sweep } : { algorithm, code, settings }),
   sweep: (runId: string) => read<SweepResult>(`/runs/${id(runId)}/sweep`),
   cancel: (runId: string) => write<Status>("POST", `/runs/${id(runId)}/cancel`),
+  saveNote: (runId: string, note: string) => write<{ run_id: string; note: string }>("PUT", `/runs/${id(runId)}/note`, { note }),
   runs: (algorithm?: string) => read<RunListRow[]>(`/runs${algorithm ? `?algorithm=${id(algorithm)}` : ""}`),
   run: (runId: string) => read<RunDetail>(`/runs/${id(runId)}`),
   status: (runId: string) => read<Status>(`/runs/${id(runId)}/status`),

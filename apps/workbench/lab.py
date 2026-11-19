@@ -211,7 +211,19 @@ def run_detail(root: Path, run_id: str) -> Response:
         "status": store.status(run_dir),
         "manifest": store._read(run_dir / "manifest.json"),
         "summary": store.result(run_dir, "summary"),
+        "note": store.note(run_dir).strip(),
     }
+
+
+def save_note(root: Path, run_id: str, body: dict) -> Response:
+    try:
+        run_dir = _run(root, run_id)
+    except store.LabError as error:
+        return _error(404, str(error))
+    try:
+        return 200, {"run_id": run_id, "note": store.set_note(run_dir, body.get("note")).strip()}
+    except store.LabError as error:
+        return _error(400, str(error))
 
 
 def run_part(root: Path, run_id: str, part: str) -> Response:
@@ -356,4 +368,6 @@ def route(method: str, parts: list[str], query: dict, body: dict | None, root: P
         return start(root, body or {}, launch)
     elif method == "POST" and head == "runs" and len(parts) == 3 and parts[2] == "cancel":
         return cancel(root, parts[1])
+    elif method == "PUT" and head == "runs" and len(parts) == 3 and parts[2] == "note":
+        return save_note(root, parts[1], body or {})
     return _error(404, "No such Lab endpoint.")

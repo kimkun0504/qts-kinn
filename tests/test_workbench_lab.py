@@ -176,6 +176,22 @@ def test_cancel_only_a_running_run(root, finished):
     assert lab.route("POST", ["runs", finished, "cancel"], {}, None, root)[0] == 409
 
 
+def test_a_note_on_a_run_is_kept_listed_and_cleared(root, finished):
+    def put(note):
+        return lab.route("PUT", ["runs", finished, "note"], {}, {"note": note}, root)
+
+    assert put("  Tried a 20-day hold after the sweep.  ") == (
+        200,
+        {"run_id": finished, "note": "Tried a 20-day hold after the sweep."},
+    )
+    assert get(root, "runs", finished)[1]["note"] == "Tried a 20-day hold after the sweep."
+    assert get(root, "runs")[1][0]["note"] == "Tried a 20-day hold after the sweep."
+    assert put("x" * 2_001)[0] == 400 and put(5)[0] == 400
+    assert put("")[1]["note"] == "" and get(root, "runs", finished)[1]["note"] == ""
+    assert not (root / "runs" / finished / "note.txt").exists()
+    assert lab.route("PUT", ["runs", "nope", "note"], {}, {"note": "x"}, root)[0] == 404
+
+
 def test_cancel_stops_the_worker(root):
     import subprocess
     import sys

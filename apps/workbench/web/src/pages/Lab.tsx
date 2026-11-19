@@ -556,6 +556,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
           onSelect={(id) => onOpen(name, id)}
           onRestoreCode={setCode}
           onUseSettings={(found) => found.summary?.settings && setDraft(fromSettings(found.summary.settings, base))}
+          onChanged={refreshRuns}
         />
       ) : (
         <p className="m-0 text-ink-2">Press Run to test {name} over every stock in the universe. ⌘↵ runs, ⌘S saves.</p>

@@ -13,6 +13,7 @@ import { Panel } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
 import { StatStrip } from "../ui/StatStrip";
 import { BookPanel, Compare, FactorPanel, MonthTable, SignalPathPanel, SweepPanel } from "./Analytics";
+import { RunNote } from "./RunNote";
 
 type Tab = "overview" | "stocks" | "trades" | "years" | "code";
 
@@ -385,7 +386,8 @@ const runColumns: Column<RunRow>[] = [
   { key: "created", header: "Started", align: "left", muted: true, render: (r) => when(r.created_at) },
   { key: "period", header: "Period", align: "left", muted: true, render: (r) => r.period ?? "–" },
   { key: "state", header: "State", align: "left", render: (r) => <Badge tone={STATE_TONE[r.state]}>{STATE_LABEL[r.state]}</Badge> },
-  { key: "headline", header: "Result", align: "left", max: 460, render: (r) => r.headline ?? (r.error ? lastLine(r.error) : (r.stage ?? "–")) },
+  { key: "headline", header: "Result", align: "left", max: 420, render: (r) => r.headline ?? (r.error ? lastLine(r.error) : (r.stage ?? "–")) },
+  { key: "note", header: "Note", align: "left", muted: true, max: 280, render: (r) => r.note || "–" },
 ];
 
 function Failure({ detail }: { detail: RunDetail }) {
@@ -410,6 +412,7 @@ function Failure({ detail }: { detail: RunDetail }) {
 }
 
 interface RunResultsProps {
+  onChanged?: () => void;
   /** The run on screen, once loaded. */
   detail: RunDetail | null;
   runs: RunRow[];
@@ -420,7 +423,7 @@ interface RunResultsProps {
 }
 
 /** The results of the run on screen, a choice of run, and every run of the algorithm. */
-export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, onUseSettings }: RunResultsProps) {
+export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, onUseSettings, onChanged }: RunResultsProps) {
   const [tab, setTab] = useState<Tab | "runs" | "compare">("overview");
   const [ticker, setTicker] = useState("");
   const complete = detail?.status.state === "complete" && detail.summary ? detail : null;
@@ -480,6 +483,7 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
         )}
         {runs.length === 1 && current && <span className="mb-2.5 text-[13px] text-ink-3">{runLabel(current)}</span>}
       </div>
+      {detail && active !== "runs" && <RunNote key={detail.run_id} runId={detail.run_id} note={detail.note ?? ""} onSaved={onChanged} />}
       {complete && !s?.lookahead.passed && active !== "runs" && (
         <div role="alert" className="rounded-lg border border-neg bg-surface px-4 py-3">
           <Badge tone="bad">The code looks ahead</Badge>

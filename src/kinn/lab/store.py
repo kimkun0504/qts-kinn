@@ -38,6 +38,7 @@ TEMPLATES = Path(__file__).parent / "templates"
 STATES = ("queued", "running", "complete", "failed", "cancelled", "interrupted")
 FINAL = ("complete", "failed", "cancelled", "interrupted")
 START_GRACE = 120  # seconds a queued run may wait for its worker before it counts as lost
+NOTE_MAX = 2_000
 
 
 class LabError(ValueError):
@@ -351,6 +352,29 @@ def run_dir_of(root: Path, run_id: str) -> Path:
     return path
 
 
+def note(run_dir: Path) -> str:
+    try:
+        return (run_dir / "note.txt").read_text()
+    except OSError:
+        return ""
+
+
+def set_note(run_dir: Path, text: object) -> str:
+    if not isinstance(text, str):
+        raise LabError("A note is text.")
+    clean = text.strip()
+    if len(clean) > NOTE_MAX:
+        raise LabError(f"Keep a note under {NOTE_MAX:,} characters.")
+    path = run_dir / "note.txt"
+    if not clean:
+        path.unlink(missing_ok=True)
+        return ""
+    tmp = path.with_suffix(".txt.tmp")
+    tmp.write_text(clean + "\n")
+    os.replace(tmp, path)
+    return clean + "\n"
+
+
 def list_runs(root: Path, algorithm: str | None = None) -> list[dict]:
     folder = root / "runs"
     out = []
@@ -368,6 +392,7 @@ def list_runs(root: Path, algorithm: str | None = None) -> list[dict]:
             "trials": int(state.get("trials") or (1 if state.get("signals_computed") else 0)),
             "period": summary.get("period_label"),
             "headline": summary.get("headline"),
+            "note": note(run_dir).strip(),
         })  # fmt: skip
     out.sort(key=lambda r: (r["created_at"], r["run_id"]), reverse=True)  # newest first
     return out

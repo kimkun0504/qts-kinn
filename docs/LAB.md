@@ -195,6 +195,8 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
 - **Trades:** every trade, sorted and filtered by stock and by whether the book took it;
   **Download all as CSV** for your own analysis.
 - **Years**, and **Code**: the code and settings the run used.
+- **A note** on any run: why you tried it and what you made of it, shown above the results and
+  in the list of runs (`note.txt`). Writing one does not change the run or its trial count.
 - **Runs of this algorithm**, with its **trial count**: the runs that got as far as computing
   signals (a run that stops on a syntax error is not a trial). Ten tries that each look at the
   same years make the best of them less trustworthy; hold the 2018–2022 test years back until
@@ -258,6 +260,7 @@ counts are untouched) and says whether everything behaved: use it after an updat
 runs), `runs/<run_id>/` (a copy of the code, the library and the settings run, progress, the
 log, results: `summary.json`, `trades.parquet`, `by_stock.json`, `by_year.json`,
 `equity.json` (with `spy_matched` from 2026-11-19), `path.json` and, in ranking mode,
-`factor.json`, and for a sweep `sweep.json` (from 2026-11-19)). Runs from
+`factor.json`, for a sweep `sweep.json` (from 2026-11-19), and `note.txt` if you wrote a
+note on the run). Runs from
 before 2026-11-19 have no signal path and show SPY all-in only; run them again to see both. Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
 protocol (`docs/NEW_STRATEGY.md`).
