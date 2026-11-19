@@ -28,7 +28,9 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
 
 Search everything (pages, strategies, paper ledgers, Lab algorithms, runs, stocks) with the box
-in the top bar, Cmd+K or `/`.
+in the top bar, Cmd+K or `/`. `?` lists the keyboard shortcuts; G then a letter jumps to a page
+(G S stocks, G F screener, G L Lab, G R runs). A Lab run going shows in the top bar from any
+page, and a note appears when it ends. A page that fails shows its error in place of the page.
 
 ## Where the record comes from
 

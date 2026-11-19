@@ -75,6 +75,7 @@ interface AppShellProps {
   onToggleTheme: () => void;
   onReload: () => void;
   onSearch: () => void;
+  status?: ReactNode;
   children: ReactNode;
 }
 
@@ -126,6 +127,7 @@ export function AppShell(props: AppShellProps) {
           <div className="flex min-h-10 flex-wrap items-center gap-3">
             {props.title && <h1 className="m-0 text-[26px] font-semibold tracking-tight">{props.title}</h1>}
             <div className="flex-1" />
+            {props.status}
             <button
               type="button"
               onClick={props.onSearch}
