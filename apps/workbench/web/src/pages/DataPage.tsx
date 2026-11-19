@@ -35,7 +35,7 @@ const tableColumns: Column<Table>[] = [
 
 const inputColumns: Column<Input>[] = [
   { key: "name", header: "Input", align: "left", strong: true, render: (i) => i.name },
-  { key: "version", header: "Version", align: "left", muted: true, render: (i) => (i.built ? `${i.version ?? "–"} (${i.input_id ?? "–"})` : "not built") },
+  { key: "version", header: "Version", align: "left", muted: true, render: (i) => (i.built ? <span title={`input ${i.input_id ?? "–"}`}>{i.version ?? "–"}</span> : "not built") },
   { key: "rows", header: "Rows", render: (i) => (i.rows == null ? "–" : compact(i.rows)) },
   { key: "span", header: "Covers", render: (i) => (i.first ? `${day(i.first)} to ${day(i.last)}` : "–") },
   { key: "built", header: "Built", muted: true, render: (i) => (i.built_at ? stamp(i.built_at) : "–") },
