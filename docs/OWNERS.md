@@ -52,6 +52,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/air_pocket_reversal` | gpt | 2026-11-19 | parked: primary had no events; unfiltered control cannot substitute |
 | `strategies/volume_cost_reclaim` | gpt | 2026-11-19 | parked: four primary events, negative returns, no validation |
 | `strategies/disclosed_value_reversal` | gpt | 2026-11-19 | parked: sample and gross-return gates failed; no validation |
+| `strategies/cash_profit_reversal` | gpt | 2026-11-19 | preregistered; coherent intraday financial snapshot authorization pending |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `strategies/bid_replenishment_reversal` | gpt | 2026-11-18 | frozen bid-size transition; parked: acquired index failed frozen coverage gates before primary study |
 | `strategies/timed_filing_dislocation` | gpt | 2026-11-18 | as-of-time original 8-K exclusion on the existing date-filtered size-peer reversal |
