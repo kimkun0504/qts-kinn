@@ -16,13 +16,18 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Home | what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, and every idea tested with its verdict |
 | Strategies | every idea with its verdict; each opens a strategy page |
 | A strategy | Results (profit across its periods, the holdout marked, years, months, costs, weaknesses, the evidence in order), Trades, Paper book, Report (REPORT.md and HYPOTHESIS.md), Studies, Runs |
-| Studies | every search and test, including those done by research scripts, with its trial count and verdict |
-| Paper trading | each paper ledger: tonight's orders, positions, the books side by side |
-| Runs | every run with filters (kind, period, strategy); the selected run's tearsheet, event study, tick study or book |
+| Stocks | any company by ticker, old ticker or name: daily prices to the seal (split-adjusted, line or candles, volume, log scale, drag to zoom), its 8-K days, and every trade a strategy run, a Lab run or a paper ledger made in it, marked on the chart |
+| Studies | every search and test, including those done by research scripts, with its trial count and verdict; a search box, outcome filters and ordering |
+| Paper trading | every paper ledger: the earnings drift's books (tonight's orders, positions, the books side by side) and the big prints and after-hours short ledgers (signals, results, the alternative exit, the benchmark or borrow, the evenings read) |
+| Runs | every run with a search box, filters (kind, period, strategy) and sortable columns; the selected run (in the address, `#/runs/<run id>`) with its tearsheet, event study, tick study or book |
 | Compare | up to four backtests overlaid, with a side-by-side table |
 | Parameters | a map of any result across one or two settings that differ between runs |
 | Trials | trial counts by agent, Deflated Sharpe, probability of backtest overfitting |
-| Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book, the best and worst stocks, every trade, the years, the lookahead check and the trial count |
+| Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, and any two runs compared |
+| Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
+
+Search everything (pages, strategies, paper ledgers, Lab algorithms, runs, stocks) with the box
+in the top bar, Cmd+K or `/`.
 
 ## Where the record comes from
 
@@ -55,9 +60,13 @@ worked out: [docs/LAB.md](../../docs/LAB.md).
 
 ## How it is built
 
-- `api.py`, `record.py`, `lab.py`, `__main__.py`: a small standard-library server. `api.py`
-  reads runs; `record.py` reads the records, the documents and the paper ledger; `lab.py` is the
-  Lab. Restart the server after changing any of them.
+- `api.py`, `record.py`, `lab.py`, `ledgers.py`, `stocks.py`, `catalog.py`, `__main__.py`: a
+  small standard-library server. `api.py` reads runs; `record.py` reads the records, the
+  documents and the earnings drift's paper ledger; `ledgers.py` reads the event ledgers (big
+  prints, the after-hours short) into one shape (`paper-ledger-1`); `stocks.py` is the stock
+  page and search (prices through the sealed `DataStore`, trades from the run store, the Lab
+  and the ledgers); `catalog.py` is the Data page (file metadata and the sealed calendar only);
+  `lab.py` is the Lab. Restart the server after changing any of them.
 - `web/`: React, TypeScript, Tailwind and Vite (decision 0013).
   - `src/index.css`: the design tokens. Light is the default theme; dark is
     `data-theme="dark"`. Components use the token names, never raw colour values. The chart

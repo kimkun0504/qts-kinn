@@ -168,12 +168,24 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
 - **Summary:** trades, the average and median trade after costs, the share that made money,
   the weekly t (the average of each week's trades over its spread; over 3 is the research's
   bar), years positive, the book's profit, worst drawdown and return on the money tied up.
-- **Overview:** the summary, the book's profit beside SPY on the same capital, the best and
-  worst stocks, the spread of trade returns and how trades ended.
+- **Overview:** the summary; the book with a switch between its profit, its drawdown and its
+  open positions; the best and worst stocks; profit by month; the spread of trade returns and
+  how trades ended.
+  - The profit view shows SPY two ways. *SPY all-in* puts the whole capital in SPY every day.
+    *SPY matched* puts in SPY only the money the book had invested that day (open positions
+    times the position size), so it is the fair comparison: a book that is a fifth invested
+    should be judged against a fifth of SPY's moves on the same days.
+  - **After the signal** is the average split-adjusted move of the traded stocks from the close
+    of the signal day, beside the universe's, from 20 sessions before to well past the exit,
+    with a 95% band around the average excess. A line still rising at the exit says a longer
+    hold had more to give; one that peaks before it says the hold is too long.
+- **Compare** (two finished runs or more): the summary side by side with the difference, the
+  settings that differ, both profit curves, and what changed in the code.
 - **Stocks:** every stock that traded, best to worst or worst to best, with a search and a
   sector filter; every column sorts. *Profit* counts every trade at the position size (what
   the signal made on that stock); *In the book* counts only the trades the book had room for.
-  Click a stock for its trades.
+  Click a row for its trades; click the ticker for the stock page (its chart with every trade
+  any run made in it, opened at the company that held the ticker on the trade date).
 - **Trades:** every trade, sorted and filtered by stock and by whether the book took it;
   **Download all as CSV** for your own analysis.
 - **Years**, and **Code**: the code and settings the run used.
@@ -227,5 +239,6 @@ counts are untouched) and says whether everything behaved: use it after an updat
 `library/<name>.py` (helper modules), `trash/` (deleted files, kept), `cache/` (prices between
 runs), `runs/<run_id>/` (a copy of the code, the library and the settings run, progress, the
 log, results: `summary.json`, `trades.parquet`, `by_stock.json`, `by_year.json`,
-`equity.json`). Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
+`equity.json` (with `spy_matched` from 2026-11-19), `path.json` (from 2026-11-19)). Runs from
+before 2026-11-19 have no signal path and show SPY all-in only; run them again to see both. Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
 protocol (`docs/NEW_STRATEGY.md`).
