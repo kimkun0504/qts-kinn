@@ -1,0 +1,20 @@
+name: timed_filing_dislocation
+status: study
+engine: intraday
+universe: liquid domestic common stocks with no already-usable typed filing
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Relative dislocation with a timely filing exclusion
+  idea: Remove known-information events from the existing size-peer reversal
+  horizon: Two hours after first fill
+  verdict: untested
+  summary: >-
+    Preserve the existing price rule and prior-date filing screen,
+    then exclude only current filings usable by its first event minute.
+  weaknesses:
+    - Missing qualifying filings do not establish absence of news.
+    - SEC acceptance may follow an earlier press release.
+    - The normal study approximates fills and ignores account conflicts.
