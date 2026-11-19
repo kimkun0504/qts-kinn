@@ -1,0 +1,21 @@
+name: volume_cost_reclaim
+status: prepared
+engine: intraday
+universe: liquid domestic common stocks at their first eight-point relative decline
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Recovery above a volume-weighted bar-high reference
+  idea: Test a preceding volume-price reference at the first fixed relative reversal event
+  horizon: Two hours after first fill
+  verdict: preregistered studies pending
+  summary: >-
+    The primary requires recovery above a volume-weighted high reference
+    built from the fourteen preceding bars. It is a bar statistic,
+    not measured trade VWAP or inventory. The control cannot advance.
+  weaknesses:
+    - Reported volume and OHLC trade eligibility can differ.
+    - High prints can make the reference overly strict.
+    - Bar execution, costs and extensive adaptive search remain limitations.
