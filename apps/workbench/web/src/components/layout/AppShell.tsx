@@ -65,6 +65,7 @@ interface AppShellProps {
   theme: "dark" | "light";
   onToggleTheme: () => void;
   onReload: () => void;
+  onSearch: () => void;
   children: ReactNode;
 }
 
@@ -116,6 +117,19 @@ export function AppShell(props: AppShellProps) {
           <div className="flex min-h-10 flex-wrap items-center gap-3">
             {props.title && <h1 className="m-0 text-[26px] font-semibold tracking-tight">{props.title}</h1>}
             <div className="flex-1" />
+            <button
+              type="button"
+              onClick={props.onSearch}
+              aria-label="Search the Workbench"
+              className="flex min-h-9 w-[240px] cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 text-left text-sm text-ink-3 hover:border-ink-3 focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="7" cy="7" r="4.5" />
+                <path d="M10.5 10.5L14 14" strokeLinecap="round" />
+              </svg>
+              <span className="flex-1">Search</span>
+              <kbd className="rounded border border-line px-1.5 font-sans text-[11px]">⌘K</kbd>
+            </button>
             <button type="button" onClick={props.onToggleTheme} className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
               {props.theme === "dark" ? "Light theme" : "Dark theme"}
             </button>

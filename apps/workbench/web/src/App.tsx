@@ -1,7 +1,10 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { type Command, CommandPalette } from "./components/CommandPalette";
 import { AppShell } from "./components/layout/AppShell";
 import { EmptyState } from "./components/ui/EmptyState";
-import { api, type Board, type Family, type RunRow } from "./lib/api";
+import { api, type Board, type Family, type LedgerHead, type RunRow } from "./lib/api";
+import { shortTime } from "./lib/format";
+import { lab, type AlgorithmRow } from "./lib/lab";
 import { useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
@@ -41,12 +44,13 @@ export default function App() {
   const [runsDir, setRunsDir] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [route, go] = useRoute();
-  const [selected, setSelected] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [version, setVersion] = useState(0);
-  const [eventLedgers, setEventLedgers] = useState(0);
+  const [heads, setHeads] = useState<LedgerHead[]>([]);
+  const [palette, setPalette] = useState(false);
+  const [algorithms, setAlgorithms] = useState<AlgorithmRow[]>([]);
 
   const load = useCallback(() => {
     clearRunCache();
@@ -65,9 +69,31 @@ export default function App() {
   useEffect(() => {
     api
       .ledgers()
-      .then((heads) => setEventLedgers(heads.length))
-      .catch(() => setEventLedgers(0));
+      .then(setHeads)
+      .catch(() => setHeads([]));
   }, [version]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPalette((open) => !open);
+      } else if (event.key === "/" && !typing) {
+        event.preventDefault();
+        setPalette(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    if (palette)
+      lab
+        .algorithms()
+        .then(setAlgorithms)
+        .catch(() => setAlgorithms([]));
+  }, [palette]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
@@ -83,15 +109,26 @@ export default function App() {
 
   // Abandoned runs never produced results; they stay out of the lists (Trials still reports them).
   const live = runs.filter((run) => run.status !== "abandoned");
-  const open = (run: RunRow) => {
-    setSelected(run.run_id);
-    go({ page: "runs" });
-  };
+  const open = (run: RunRow) => go({ page: "runs", name: run.run_id }, { scroll: route.page !== "runs" });
   const openStrategy = (name: string, tab = "results") => go({ page: "strategy", name, tab });
   const openLab = useCallback((name?: string, runId?: string) => go({ page: "lab", name, tab: runId }, { scroll: false }), [go]);
   const toggleCompare = (run: RunRow) =>
     setCompare((current) => (current.includes(run.run_id) ? current.filter((id) => id !== run.run_id) : current.length < 4 ? [...current, run.run_id] : current));
-  const ledgers = (board?.rows.filter((row) => row.paper).length ?? 0) + eventLedgers;
+  const ledgers = (board?.rows.filter((row) => row.paper).length ?? 0) + heads.length;
+  const pages: [string, string][] = [
+    ["home", "Home"], ["strategies", "Strategies"], ["stock", "Stocks"], ["studies", "Studies"], ["paper", "Paper trading"],
+    ["lab", "Lab"], ["runs", "Runs"], ["compare", "Compare"], ["parameters", "Parameters"], ["trials", "Trials and overfitting"],
+  ];
+  const commands: Command[] = [
+    ...pages.map(([key, label]) => ({ id: `page-${key}`, group: "Pages", label, href: `#/${key}` })),
+    ...(board?.rows ?? []).filter((row) => !row.variant).map((row) => ({ id: `strategy-${row.strategy}`, group: "Strategies", label: row.title, hint: row.label ?? row.verdict, keywords: row.strategy, href: `#/strategy/${encodeURIComponent(row.strategy)}` })),
+    ...(board?.rows ?? []).filter((row) => row.paper).map((row) => ({ id: `ledger-${row.strategy}`, group: "Paper ledgers", label: row.title, hint: "paper ledger", href: `#/paper/${encodeURIComponent(row.strategy)}` })),
+    ...heads.map((h) => ({ id: `ledger-${h.name}`, group: "Paper ledgers", label: h.title, hint: "paper ledger", keywords: h.name, href: `#/paper/${encodeURIComponent(h.name)}` })),
+    ...algorithms.map((a) => ({ id: `algo-${a.name}`, group: "Lab algorithms", label: a.name, hint: a.description, href: `#/lab/${encodeURIComponent(a.name)}` })),
+    ...live.slice(0, 400).map((run) => ({ id: `run-${run.run_id}`, group: "Runs", label: run.strategy, hint: `${run.config}  ${shortTime(run.started_at)}`, keywords: `${run.config} ${run.run_id} ${run.agent}`, href: `#/runs/${encodeURIComponent(run.run_id)}` })),
+    { id: "action-theme", group: "Actions", label: theme === "dark" ? "Light theme" : "Dark theme", run: () => toggleTheme() },
+    { id: "action-reload", group: "Actions", label: "Reload the run store", run: () => load() },
+  ];
 
   return (
     <AppShell
@@ -108,7 +145,9 @@ export default function App() {
       theme={theme}
       onToggleTheme={toggleTheme}
       onReload={load}
+      onSearch={() => setPalette(true)}
     >
+      <CommandPalette open={palette} onClose={() => setPalette(false)} commands={commands} />
       {route.page === "lab" ? (
         <Suspense fallback={<p className="text-ink-2">Loading the Lab…</p>}>
           <Lab name={route.name} runId={route.tab} onOpen={openLab} />
@@ -130,7 +169,7 @@ export default function App() {
       ) : route.page === "paper" ? (
         <PaperPage key={version} board={board} name={route.name} onOpen={(name) => go({ page: "paper", name }, { scroll: false })} />
       ) : route.page === "runs" ? (
-        <Runs runs={live} selected={selected} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
+        <Runs runs={live} selected={route.page === "runs" ? (route.name ?? null) : null} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
       ) : route.page === "compare" ? (
         <Compare ids={compare} runs={runs} />
       ) : route.page === "parameters" ? (
