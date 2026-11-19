@@ -232,3 +232,30 @@ def test_the_book_profit_adds_up_to_the_trades_it_took():
     expected = sum(t.value * t.net for t, k in zip(trades, taken, strict=True) if k)
     assert daily["pnl"].sum() == pytest.approx(expected, rel=1e-6)
     assert daily["positions"].max() == 1
+
+
+def test_the_factor_report_sorts_returns_by_score():
+    from kinn.lab import metrics
+
+    rows, stocks, hold = 80, 40, 5
+    drift = np.linspace(-0.002, 0.002, stocks)
+    close = 50 * np.exp(np.cumsum(np.tile(drift, (rows, 1)), axis=0)).astype(np.float32)
+    ones = np.ones((rows, stocks), dtype=np.float32)
+    market = Market(
+        open=close.copy(), high=close * 1.01, low=close * 0.99, close=close, adj_close=close,
+        eligible=np.ones((rows, stocks), dtype=bool), adv=ones * 1e6, dollar_volume=ones * 1e6,
+        universe_return=np.zeros(rows, dtype=np.float32),
+        universe_intraday=np.zeros(rows, dtype=np.float32),
+    )  # fmt: skip
+    scores = np.tile(np.arange(stocks, dtype=np.float64), (rows, 1))
+    dates = np.array([f"2015-{1 + i // 28:02d}-{1 + i % 28:02d}" for i in range(rows)])
+    report = metrics.factor_report(scores, market, dates, 0, rows - 1, hold, "highest")
+    excess = [b["excess"] for b in report["buckets"]]
+    assert excess == sorted(excess) and excess[0] < 0 < excess[-1]
+    assert report["spread"] > 0 and report["ic"]["mean"] > 0.99
+    assert report["ic"]["days"] == rows - hold and report["ic_by_year"][0]["year"] == 2015
+    low = metrics.factor_report(scores, market, dates, 0, rows - 1, hold, "lowest")
+    assert low["spread"] == -report["spread"]
+    few = scores.copy()
+    few[:, 5:] = np.nan
+    assert metrics.factor_report(few, market, dates, 0, rows - 1, hold, "highest") is None

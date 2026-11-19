@@ -3,6 +3,7 @@ import { diffLines, flatten, hunks } from "../../lib/diff";
 import { dollars, int, money, num, pct, plainPct } from "../../lib/format";
 import { type Equity, lab, type RunDetail, type Summary } from "../../lib/lab";
 import { useLoad } from "../../lib/useLoad";
+import { BarChart } from "../charts/BarChart";
 import { LineChart } from "../charts/LineChart";
 import { Panel, PanelNote } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
@@ -362,5 +363,43 @@ export function Compare({ detail, runs }: { detail: RunDetail; runs: CompareRun[
         </>
       )}
     </div>
+  );
+}
+
+export function FactorPanel({ runId }: { runId: string }) {
+  const { data, error } = useLoad(() => lab.factor(runId), `factor-${runId}`);
+  if (error || !data) return null;
+  const top = data.order === "highest" ? data.buckets.length - 1 : 0;
+  const ic = data.ic;
+  return (
+    <Panel title="How the scores sorted the stocks" aside={`Tenths by score, ${data.hold}-session return from the next open, before costs`}>
+      <div className="grid gap-x-8 gap-y-3 px-4 pt-3 sm:grid-cols-4">
+        {[
+          ["Top tenth over bottom", pct(data.spread, 2), data.order === "highest" ? "highest scores less lowest" : "lowest scores less highest"],
+          ["Rank correlation (IC)", num(ic.mean, 3), `${plainPct(ic.positive)} of days above zero`],
+          ["IC t-stat", num(ic.t, 2), `on ${int(ic.independent_days)} days ${data.hold} sessions apart`],
+          ["Days measured", int(ic.days), "with 30 or more scored stocks"],
+        ].map(([label, value, note]) => (
+          <div key={label}>
+            <div className="text-[13px] text-ink-2">{label}</div>
+            <div className={`text-xl font-semibold tracking-tight ${value.startsWith("−") ? "text-neg" : ""}`}>{value}</div>
+            <div className="text-[12px] text-ink-3">{note}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-5 px-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <BarChart
+          title="Average return over the day's average, by tenth of the scores"
+          labels={data.buckets.map((b) => (b.bucket === 1 ? "1 low" : b.bucket === data.buckets.length ? `${b.bucket} high` : String(b.bucket)))}
+          values={data.buckets.map((b) => b.excess)}
+          marked={[top]}
+          format={(v) => pct(v, 2)}
+        />
+        <BarChart title="IC by year" labels={data.ic_by_year.map((y) => String(y.year))} values={data.ic_by_year.map((y) => y.mean)} format={(v) => num(v, 2)} width={480} height={240} />
+      </div>
+      <PanelNote>
+        Each day the stocks the book could have bought are split into tenths by score; the bold tenth is the end the book buys. A ranking that works rises steadily from one end to the other and keeps its IC above zero in most years. The IC t-stat uses days {data.hold} sessions apart so the returns do not overlap.
+      </PanelNote>
+    </Panel>
   );
 }

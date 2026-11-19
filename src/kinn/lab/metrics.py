@@ -211,6 +211,72 @@ def signal_path(trades: list[Trade], adj_close: np.ndarray, universe_cum: np.nda
     }  # fmt: skip
 
 
+def _ranks(values: np.ndarray) -> np.ndarray:
+    order = np.argsort(values, kind="stable")
+    ranks = np.empty(len(values))
+    ranks[order] = np.arange(len(values))
+    return ranks
+
+
+def factor_report(scores: np.ndarray, market, dates: np.ndarray, first_row: int,
+                  last_signal_row: int, hold: int, order: str, buckets: int = 10,
+                  minimum: int = 30) -> dict | None:  # fmt: skip
+    """How a ranking's scores line up with what followed: each day the scored stocks the book
+    could have bought are split into ``buckets`` by score, and each bucket's return from the next
+    open to the close ``hold`` sessions later is measured against that day's average; the
+    rank correlation of score and return (IC) is taken each day. Before costs."""
+    rows = scores.shape[0]
+    last = min(last_signal_row, rows - hold - 1)
+    sums = np.zeros(buckets)
+    raw = np.zeros(buckets)
+    days_in = np.zeros(buckets)
+    ics, ic_rows = [], []
+    for t in range(first_row, last + 1):
+        score = scores[t]
+        entry = market.adjusted(market.open, t + 1, slice(None))
+        exit_ = market.adj_close[t + hold]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            forward = exit_ / entry - 1
+        ok = np.isfinite(score) & np.isfinite(forward) & market.enterable(t + 1)
+        if ok.sum() < minimum:
+            continue
+        s, f = score[ok], forward[ok].astype(np.float64)
+        rank = _ranks(s)
+        bucket = np.minimum((rank * buckets / len(s)).astype(int), buckets - 1)
+        mean = f.mean()
+        for b in range(buckets):
+            mine = bucket == b
+            if mine.any():
+                sums[b] += f[mine].mean() - mean
+                raw[b] += f[mine].mean()
+                days_in[b] += 1
+        ics.append(float(np.corrcoef(rank, _ranks(f))[0, 1]))
+        ic_rows.append(t)
+    if not ics:
+        return None
+    ic = np.array(ics)
+    spaced = ic[:: max(1, hold)]
+    years: dict[int, list[float]] = defaultdict(list)
+    for t, value in zip(ic_rows, ics, strict=True):
+        years[int(str(dates[t])[:4])].append(value)
+    excess = np.where(days_in > 0, sums / np.maximum(days_in, 1), np.nan)
+    top, bottom = (buckets - 1, 0) if order == "highest" else (0, buckets - 1)
+    clean = lambda v: None if not np.isfinite(v) else round(float(v), 6)  # noqa: E731
+    return {
+        "buckets": [{"bucket": b + 1, "excess": clean(excess[b]),
+                     "mean": clean(raw[b] / days_in[b]) if days_in[b] else None,
+                     "days": int(days_in[b])} for b in range(buckets)],
+        "spread": clean(excess[top] - excess[bottom]), "order": order, "hold": hold,
+        "ic": {"mean": clean(ic.mean()), "std": clean(ic.std(ddof=1)) if len(ic) > 1 else None,
+               "t": clean(spaced.mean() / spaced.std(ddof=1) * np.sqrt(len(spaced)))
+               if len(spaced) > 2 and spaced.std(ddof=1) > 0 else None,
+               "positive": clean(float((ic > 0).mean())), "days": len(ics),
+               "independent_days": len(spaced)},
+        "ic_by_year": [{"year": y, "mean": clean(float(np.mean(v))), "days": len(v)}
+                       for y, v in sorted(years.items())],
+    }  # fmt: skip
+
+
 def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capital: float,
            position_size: float | None = None) -> dict:  # fmt: skip
     pnl, positions = book["pnl"], book["positions"]

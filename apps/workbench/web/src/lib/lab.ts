@@ -199,6 +199,15 @@ export interface Equity {
   capital: number;
 }
 
+export interface FactorReport {
+  buckets: { bucket: number; excess: number | null; mean: number | null; days: number }[];
+  spread: number | null;
+  order: "highest" | "lowest";
+  hold: number;
+  ic: { mean: number | null; std: number | null; t: number | null; positive: number | null; days: number; independent_days: number };
+  ic_by_year: { year: number; mean: number | null; days: number }[];
+}
+
 export interface SignalPath {
   horizons: number[];
   stock: (number | null)[];
@@ -344,6 +353,7 @@ export const lab = {
   equity: (runId: string) => read<Equity>(`/runs/${id(runId)}/equity`),
   code: (runId: string) => read<{ code: string }>(`/runs/${id(runId)}/code`),
   path: (runId: string) => read<SignalPath>(`/runs/${id(runId)}/path`),
+  factor: (runId: string) => read<FactorReport>(`/runs/${id(runId)}/factor`),
   log: (runId: string) => read<{ log: string }>(`/runs/${id(runId)}/log`),
   trades: (runId: string, query: { ticker?: string; book?: string; sort?: string; order?: string; offset?: number; limit?: number }) => {
     const params = new URLSearchParams();

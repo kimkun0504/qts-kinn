@@ -12,7 +12,7 @@ import { type Column, DataTable, type Sort } from "../ui/DataTable";
 import { Panel } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
 import { StatStrip } from "../ui/StatStrip";
-import { BookPanel, Compare, MonthTable, SignalPathPanel } from "./Analytics";
+import { BookPanel, Compare, FactorPanel, MonthTable, SignalPathPanel } from "./Analytics";
 
 type Tab = "overview" | "stocks" | "trades" | "years" | "code";
 
@@ -78,6 +78,7 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
         ]}
       />
       <BookPanel summary={s} equity={equity} />
+      {s.settings?.entry.mode === "rank" && <FactorPanel runId={detail.run_id} />}
       <SignalPathPanel runId={detail.run_id} />
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Best stocks" aside={<LinkButton onClick={onAllStocks}>All {int(stocks?.length ?? 0)} stocks</LinkButton>}>

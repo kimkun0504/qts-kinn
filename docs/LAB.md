@@ -179,6 +179,12 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
     of the signal day, beside the universe's, from 20 sessions before to well past the exit,
     with a 95% band around the average excess. A line still rising at the exit says a longer
     hold had more to give; one that peaks before it says the hold is too long.
+- **How the scores sorted the stocks** (ranking mode only): each day the stocks the book could
+  have bought are split into tenths by score, and each tenth's return from the next open over
+  the hold is set against that day's average; the rank correlation of score and return (IC) is
+  taken each day, with a t-stat on days a hold apart so returns do not overlap, and by year.
+  Before costs. A ranking that works rises steadily across the tenths and keeps a positive IC in
+  most years (`factor.json`).
 - **Compare** (two finished runs or more): the summary side by side with the difference, the
   settings that differ, both profit curves, and what changed in the code.
 - **Stocks:** every stock that traded, best to worst or worst to best, with a search and a
@@ -239,6 +245,7 @@ counts are untouched) and says whether everything behaved: use it after an updat
 `library/<name>.py` (helper modules), `trash/` (deleted files, kept), `cache/` (prices between
 runs), `runs/<run_id>/` (a copy of the code, the library and the settings run, progress, the
 log, results: `summary.json`, `trades.parquet`, `by_stock.json`, `by_year.json`,
-`equity.json` (with `spy_matched` from 2026-11-19), `path.json` (from 2026-11-19)). Runs from
+`equity.json` (with `spy_matched` from 2026-11-19), `path.json` and, in ranking mode,
+`factor.json` (from 2026-11-19)). Runs from
 before 2026-11-19 have no signal path and show SPY all-in only; run them again to see both. Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
 protocol (`docs/NEW_STRATEGY.md`).

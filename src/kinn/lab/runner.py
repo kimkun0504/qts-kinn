@@ -205,6 +205,13 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
                                settings.exit.hold_days)  # fmt: skip
     if path:
         (run_dir / "path.json").write_text(json.dumps(path))
+    if settings.entry.mode == "rank":
+        progress("Measuring the ranking", 0.96)
+        factor = metrics.factor_report(entries, market, data.sessions, data.first_row,
+                                       data.last_signal_row, settings.exit.hold_days,
+                                       settings.entry.rank_order)  # fmt: skip
+        if factor:
+            (run_dir / "factor.json").write_text(json.dumps(factor))
     manifest = json.loads((run_dir / "manifest.json").read_text())
     manifest.update(
         settings=settings.to_dict(), data_build_id=data._store.build_id,

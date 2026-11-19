@@ -197,6 +197,7 @@ def test_rank_mode_and_an_exit_signal(root, fake):
     summary = store.result(run_dir, "summary")
     assert store.status(run_dir)["state"] == "complete", store.status(run_dir).get("error")
     assert summary["has_exit_signal"] and "exit signal" in summary["exits"]
+    assert store.result(run_dir, "factor") is None or store.result(run_dir, "factor")["hold"] == 10
     trades = pd.read_parquet(run_dir / "trades.parquet")
     assert trades.groupby("entry_date").size().max() == 1  # the best free stock each day
     assert summary["average_positions"] <= 10
