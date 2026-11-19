@@ -126,3 +126,7 @@ median is an imperfect common-shock adjustment. Market-cap/category and
 corporate-action snapshot caveats persist. No inferred news absence,
 analyst surprise, full depth or measured latency is available. No platform
 edit, raw write, download, rebuild or sealed access is proposed.
+
+Pre-run implementation note: inclusive floating price/return comparisons
+allow one adjacent representable value; economic thresholds are unchanged.
+The normalized count inequality uses Python integers exactly.
