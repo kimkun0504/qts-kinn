@@ -56,6 +56,17 @@ function initialTheme(): Theme {
   return "light";
 }
 
+const COMPARE_KEY = "kinn-compare";
+
+function savedCompare(): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(COMPARE_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string").slice(0, 4) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [families, setFamilies] = useState<Family[]>([]);
@@ -63,7 +74,7 @@ export default function App() {
   const [runsDir, setRunsDir] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [route, go] = useRoute();
-  const [compare, setCompare] = useState<string[]>([]);
+  const [compare, setCompare] = useState<string[]>(() => (route.page === "compare" && route.name ? route.name.split(",").slice(0, 4) : savedCompare()));
   const [kind, setKind] = useState<KindFilter>("all");
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [version, setVersion] = useState(0);
@@ -88,6 +99,19 @@ export default function App() {
       .catch(() => setError("The run store could not be read. Is the Workbench server running, and restarted since the last update?"));
   }, []);
   useEffect(load, [load]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(COMPARE_KEY, JSON.stringify(compare));
+    } catch {
+      return;
+    }
+  }, [compare]);
+  useEffect(() => {
+    if (route.page === "compare" && route.name) setCompare(route.name.split(",").slice(0, 4));
+  }, [route.page, route.name]);
+  useEffect(() => {
+    if (route.page === "compare") window.history.replaceState(null, "", href({ page: "compare", name: compare.join(",") || undefined }));
+  }, [route.page, compare]);
   useEffect(() => {
     api
       .ledgers()
@@ -251,7 +275,7 @@ export default function App() {
         ) : route.page === "runs" ? (
           <Runs runs={live} selected={route.page === "runs" ? (route.name ?? null) : null} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
         ) : route.page === "compare" ? (
-          <Compare ids={compare} runs={runs} />
+          <Compare ids={compare} runs={runs} onToggle={toggleCompare} />
         ) : route.page === "data" ? (
           <DataPage key={version} />
         ) : route.page === "parameters" ? (

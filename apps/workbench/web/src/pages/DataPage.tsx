@@ -62,7 +62,7 @@ export function DataPage() {
           <DataTable columns={tableColumns} rows={data.tables} rowKey={(t) => t.name} minWidth={760} />
         </div>
       </Card>
-      <div className="grid items-start gap-5 lg:grid-cols-2">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <Card title="Price bars" aside={`bars ${data.build.bars_id ?? ""}`}>
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
             {data.bars.map((b) => (

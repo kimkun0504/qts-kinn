@@ -21,7 +21,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Studies | every search and test, including those done by research scripts, with its trial count and verdict; a search box, outcome filters and ordering |
 | Paper trading | every paper ledger: the earnings drift's books (tonight's orders, positions, the books side by side) and the big prints and after-hours short ledgers (signals, results, the alternative exit, the benchmark or borrow, the evenings read) |
 | Runs | every run with a search box, filters (kind, period, strategy) and sortable columns; the selected run (in the address, `#/runs/<run id>`) with its tearsheet, event study, tick study or book |
-| Compare | up to four backtests overlaid, with a side-by-side table |
+| Compare | up to four backtests overlaid, with a side-by-side table, picked on the page or in the runs table; the choice is kept and in the address (`#/compare/<id>,<id>`) |
 | Parameters | a map of any result across one or two settings that differ between runs |
 | Trials | trial counts by agent, Deflated Sharpe, probability of backtest overfitting |
 | Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, and any two runs compared |

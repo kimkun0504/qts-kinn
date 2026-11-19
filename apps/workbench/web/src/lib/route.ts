@@ -18,6 +18,7 @@ export function parse(hash: string): Route {
   if (page === "lab") return { page: "lab", name: name || undefined, tab: tab || undefined };
   if (page === "paper") return { page: "paper", name: name || undefined };
   if (page === "runs") return { page: "runs", name: name || undefined };
+  if (page === "compare") return { page: "compare", name: name || undefined };
   if (page === "screener") return { page: "screener", name: name && name !== "latest" ? name : undefined, tab: tab || undefined };
   if (page === "stock") return { page: "stock", name: name ? name.toUpperCase() : undefined, tab: tab || undefined };
   return { page: page as Page };
