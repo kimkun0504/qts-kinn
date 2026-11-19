@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { movingAverage, type PriceMarker, PriceChart } from "../components/charts/PriceChart";
 import { CsvButton } from "../components/CsvButton";
 import { Financials } from "../components/Financials";
+import { RelativeChart } from "../components/RelativeChart";
 import { StocksLanding, useWatchlist } from "../components/StocksLanding";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
 import { Badge } from "../components/ui/Badge";
@@ -267,6 +268,8 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
     [averages, data],
   );
   const [sort, onSort] = useSort({ key: "entry_day", dir: "desc" });
+  const visibleDates = useMemo(() => data.date.slice(view[0], view[1] + 1), [data, view]);
+  const visibleCloses = useMemo(() => data.close.slice(view[0], view[1] + 1), [data, view]);
 
   useEffect(() => {
     rememberStock({ ticker: page.ticker ?? page.query, name: page.name, permaticker: page.permaticker });
@@ -376,6 +379,7 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
           {zoomed && <Button onClick={() => preset("all")}>Show all</Button>}
         </div>
       </Card>
+      <RelativeChart symbol={page.ticker ?? page.query} dates={visibleDates} close={visibleCloses} />
       {page.financials && <Financials data={page.financials} on={on} />}
       <Card
         title="Trades in this stock"

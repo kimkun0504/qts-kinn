@@ -49,6 +49,8 @@ class Store(Protocol):
         self, permaticker: int, *, fields: tuple[str, ...], dimension: str
     ) -> pa.Table: ...
 
+    def daily(self, start: date, end: date, *, symbols: list[str]) -> pa.Table: ...
+
 
 @dataclass
 class Index:
@@ -296,6 +298,34 @@ def financials(store: Store, perm: int, currency: str | None) -> dict:
             for r in rows[-PERIODS:]
         ]  # fmt: skip
     return {"currency": currency or "USD", **periods}
+
+
+MAX_CLOSES = 4
+
+
+def closes(store: Store, symbols: list[str]) -> dict:
+    idx = index(store)
+    found, missing = [], []
+    for symbol in [s.strip().upper() for s in symbols if s.strip()][:MAX_CLOSES]:
+        perms = resolve(store, symbol)
+        if perms:
+            company = idx.companies[perms[0]]
+            p = prices(store.panel_of(FIRST, LAST, permatickers=perms[:1], columns=COLUMNS))
+            close = [
+                None if c is None else _number(c * (f or 1.0))
+                for c, f in zip(p["close"], p["factor"], strict=True)
+            ]
+            found.append({"symbol": symbol, "name": company.get("name"), "date": p["date"],
+                          "close": close})  # fmt: skip
+            continue
+        rows = store.daily(FIRST, LAST, symbols=[symbol]).to_pylist()
+        if not rows:
+            missing.append(symbol)
+            continue
+        found.append({"symbol": symbol, "name": symbol,
+                      "date": [r["date"].isoformat() for r in rows],
+                      "close": [_number(r["close"]) for r in rows]})  # fmt: skip
+    return {"series": found, "missing": missing, "sealed_from": HOLDOUT_START.isoformat()}
 
 
 def held(idx: Index, perm: int, symbol: str, on: date) -> bool:

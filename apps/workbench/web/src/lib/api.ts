@@ -636,6 +636,12 @@ async function get<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+export interface ClosesData {
+  series: { symbol: string; name: string | null; date: string[]; close: (number | null)[] }[];
+  missing: string[];
+  sealed_from: string;
+}
+
 export interface ScreenData {
   schema: string;
   on: string;
@@ -663,5 +669,6 @@ export const api = {
   stock: (symbol: string, hint?: string) =>
     get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
+  closes: (symbols: string[]) => get<ClosesData>(`/api/closes?symbols=${encodeURIComponent(symbols.join(","))}`),
   screen: (on?: string) => get<ScreenData>(`/api/screen${on ? `?on=${encodeURIComponent(on)}` : ""}`),
 };

@@ -19,15 +19,16 @@ interface LineChartProps {
   /** Show every x label (few points) instead of one per year (dates). */
   everyLabel?: boolean;
   labelAt?: (i: number) => boolean;
+  tickText?: (i: number) => string;
+  width?: number;
   marks?: { i: number; label: string }[];
   caption?: string;
 }
 
-const W = 780;
 const BASE_PAD = { left: 74, right: 136, top: 12, bottom: 32 };
 
 /** Lines on one shared axis, with direct end labels, a legend and a hover readout. */
-export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, labelAt, marks = [], caption }: LineChartProps) {
+export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, labelAt, tickText, marks = [], caption, width: W = 780 }: LineChartProps) {
   const [hover, setHover] = useState<number | null>(null);
   const n = labels.length;
   if (n < 2) return <p className="m-0 px-4 py-6 text-ink-2">Not enough points for a chart.</p>;
@@ -43,7 +44,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
   const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
 
   const xLabels: { i: number; text: string }[] = [];
-  if (labelAt) labels.forEach((text, i) => labelAt(i) && xLabels.push({ i, text }));
+  if (labelAt) labels.forEach((text, i) => labelAt(i) && xLabels.push({ i, text: tickText ? tickText(i) : text }));
   else if (everyLabel) labels.forEach((text, i) => xLabels.push({ i, text }));
   else {
     const years = new Set(labels.map((l) => l.slice(0, 4)));

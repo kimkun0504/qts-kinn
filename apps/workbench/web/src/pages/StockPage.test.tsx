@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { StockPageData } from "../lib/api";
 import { StockPage } from "./StockPage";
@@ -91,7 +91,7 @@ describe("the stock page", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "ABCD" })).toBeTruthy());
     expect(screen.getByText("ABCD INC")).toBeTruthy();
     expect(screen.getByText("Also traded as OLDX (2010–2012)")).toBeTruthy();
-    expect(screen.getByText("+0.0%")).toBeTruthy();
+    expect(within(screen.getByLabelText("Summary")).getByText("+0.0%")).toBeTruthy();
     expect(screen.getByRole("link", { name: "mine" }).getAttribute("href")).toBe("#/lab/mine/run1");
     expect(screen.getByRole("link", { name: "earnings_drift" }).getAttribute("href")).toBe("#/strategy/earnings_drift/runs");
     expect(screen.getByText("Results")).toBeTruthy();

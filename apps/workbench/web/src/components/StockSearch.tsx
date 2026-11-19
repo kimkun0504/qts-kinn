@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api, type StockHit } from "../lib/api";
 
 const RECENT_KEY = "kinn-recent-stocks";
@@ -56,7 +56,18 @@ export function useStockSearch(query: string): StockHit[] {
   return hits;
 }
 
-export function StockSearch({ onPick, autoFocus = false, placeholder = "Ticker or company name" }: { onPick: (hit: StockHit) => void; autoFocus?: boolean; placeholder?: string }) {
+export function StockSearch({
+  onPick,
+  autoFocus = false,
+  placeholder = "Ticker or company name",
+  label = "Find a stock",
+}: {
+  onPick: (hit: StockHit) => void;
+  autoFocus?: boolean;
+  placeholder?: string;
+  label?: string;
+}) {
+  const results = useId();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
@@ -81,10 +92,10 @@ export function StockSearch({ onPick, autoFocus = false, placeholder = "Ticker o
         value={query}
         autoFocus={autoFocus}
         placeholder={placeholder}
-        aria-label="Find a stock"
+        aria-label={label}
         role="combobox"
         aria-expanded={open && hits.length > 0}
-        aria-controls="stock-search-results"
+        aria-controls={results}
         onChange={(event) => {
           setQuery(event.target.value);
           setActive(0);
@@ -107,7 +118,11 @@ export function StockSearch({ onPick, autoFocus = false, placeholder = "Ticker o
         className="h-9 w-full rounded-md border border-line bg-surface px-3 text-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none"
       />
       {open && hits.length > 0 && (
-        <ul id="stock-search-results" role="listbox" className="absolute top-10 right-0 left-0 z-20 m-0 max-h-[360px] list-none overflow-y-auto rounded-md border border-line bg-surface p-1 shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
+        <ul
+          id={results}
+          role="listbox"
+          className="absolute top-10 right-0 left-0 z-20 m-0 max-h-[360px] list-none overflow-y-auto rounded-md border border-line bg-surface p-1 shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+        >
           {hits.map((hit, i) => (
             <li key={hit.permaticker} role="option" aria-selected={i === active}>
               <button

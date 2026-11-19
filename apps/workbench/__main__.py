@@ -158,6 +158,12 @@ class Handler(SimpleHTTPRequestHandler):
             found = stocks.stock(store, self.runs_dir, self.lab_dir, path.rsplit("/", 1)[1],
                                  int(pick) if pick.isdigit() else None, on)  # fmt: skip
             return self._json(found, 200 if found else 404)
+        if path == "/api/closes":
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build to read prices from."}, 503)
+            wanted = parse_qs(urlsplit(self.path).query).get("symbols", [""])[0].split(",")
+            return self._json(stocks.closes(store, wanted))
         if path == "/api/screen":
             store = self._store()
             if store is None:

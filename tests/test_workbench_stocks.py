@@ -151,3 +151,12 @@ def test_the_financials_by_quarter_and_trailing_year(store, tmp_path):
     assert [q["revenueusd"] for q in money["trailing"]] == [4.4e8]
     empty = stocks.stock(store, tmp_path / "runs", tmp_path / "lab", "ACME")["financials"]
     assert empty["quarterly"] == [] and empty["trailing"] == []
+
+
+def test_closes_for_stocks_split_adjusted_and_for_funds_as_traded(store):
+    found = stocks.closes(store, ["splt", "SPY", "NOPE", " "])
+    by = {s["symbol"]: s for s in found["series"]}
+    assert set(by) == {"SPLT", "SPY"} and found["missing"] == ["NOPE"]
+    assert set(by["SPLT"]["close"]) == {50.0}
+    assert by["SPY"]["name"] == "SPY" and len(by["SPY"]["date"]) == len(by["SPY"]["close"]) > 100
+    assert max(by["SPY"]["date"]) < found["sealed_from"]
