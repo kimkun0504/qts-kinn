@@ -112,4 +112,20 @@ describe("the screener", () => {
     expect(screen.getByText("2 stocks on 8 Nov 2023")).toBeTruthy();
     expect(screen.getByText("Industries in Energy")).toBeTruthy();
   });
+
+  it("adds the picked stocks to the watchlist and charts them together", async () => {
+    render(<ScreenerPage onDate={() => undefined} />);
+    await waitFor(() => expect(screen.getByText("3 stocks on 8 Nov 2023")).toBeTruthy());
+    fireEvent.click(screen.getByLabelText("Pick BIG"));
+    fireEvent.click(screen.getByLabelText("Pick MID"));
+    expect(screen.getByText("BIG, MID")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add to the watchlist" }));
+    expect(JSON.parse(localStorage.getItem("kinn-watchlist") ?? "[]").map((w: { ticker: string }) => w.ticker)).toEqual(["BIG", "MID"]);
+    expect(screen.getByRole("status").textContent).toContain("2 added to the watchlist");
+    fireEvent.click(screen.getByLabelText("Pick MID"));
+    fireEvent.click(screen.getByLabelText("Pick TINY"));
+    fireEvent.click(screen.getByRole("button", { name: "Chart them together" }));
+    expect(window.location.hash).toBe("#/stock/MID/3000000000");
+    expect(JSON.parse(localStorage.getItem("kinn-compare-with") ?? "[]")).toEqual([{ symbol: "TINY", slot: 0 }]);
+  });
 });

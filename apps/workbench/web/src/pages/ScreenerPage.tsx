@@ -14,6 +14,8 @@ import { href, type Route } from "../lib/route";
 import { bounds, type Condition, decode, EMPTY, encode, FIELD, FIELDS, KINDS, matcher, median, rowsOf, type Screen, type ScreenKey, type ScreenRow, STARTS } from "../lib/screen";
 import { sortRows, useSort } from "../lib/sort";
 import { useLoad } from "../lib/useLoad";
+import { toggleWatch, watchlist } from "../lib/watchlist";
+import { compareWith } from "../components/RelativeChart";
 
 const PAGE = 100;
 
@@ -76,8 +78,16 @@ function numeric(key: ScreenKey, header?: string): Column<ScreenRow> {
   };
 }
 
-function columns(view: View, on: string): Column<ScreenRow>[] {
+function columns(view: View, on: string, picked: Set<number>, onPick: (row: ScreenRow) => void): Column<ScreenRow>[] {
   const head: Column<ScreenRow>[] = [
+    {
+      key: "pick",
+      header: "",
+      align: "left",
+      render: (r) => (
+        <input type="checkbox" aria-label={`Pick ${r.symbol}`} checked={picked.has(r.permaticker)} onClick={(event) => event.stopPropagation()} onChange={() => onPick(r)} className="cursor-pointer" />
+      ),
+    },
     {
       key: "symbol",
       header: "Symbol",
@@ -266,6 +276,29 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
   const bySector = useMemo(() => counts(matched, "sector"), [matched]);
   const byIndustry = useMemo(() => counts(matched, "industry"), [matched]);
 
+  const [picked, setPicked] = useState<Map<number, ScreenRow>>(new Map());
+  const [watched, setWatched] = useState<string | null>(null);
+  const togglePick = (row: ScreenRow) => {
+    setWatched(null);
+    setPicked((current) => {
+      const next = new Map(current);
+      if (next.has(row.permaticker)) next.delete(row.permaticker);
+      else if (next.size < 20) next.set(row.permaticker, row);
+      return next;
+    });
+  };
+  const watchPicked = () => {
+    const have = new Set(watchlist().map((w) => w.permaticker));
+    const added = [...picked.values()].filter((r) => !have.has(r.permaticker));
+    for (const r of added) toggleWatch({ ticker: r.symbol, name: r.name, permaticker: r.permaticker });
+    setWatched(`${added.length} added to the watchlist${added.length < picked.size ? `, ${picked.size - added.length} already on it` : ""}`);
+    setPicked(new Map());
+  };
+  const chartPicked = () => {
+    const [first, ...rest] = [...picked.values()];
+    compareWith(rest.map((r) => r.symbol));
+    window.location.hash = href({ page: "stock", name: first.symbol, tab: String(first.permaticker) });
+  };
   const update = (next: Partial<Screen>) => setScreen((current) => ({ ...current, ...next }));
   const setCondition = (i: number, c: Condition) =>
     update({
@@ -505,9 +538,28 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
               </div>
             }
           >
+            {picked.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-line bg-raised px-4 py-2 text-[13px]">
+                <span className="font-medium text-ink">{[...picked.values()].map((r) => r.symbol).join(", ")}</span>
+                <div className="flex-1" />
+                <Button onClick={watchPicked}>Add to the watchlist</Button>
+                <Button onClick={chartPicked} disabled={picked.size < 2} title="The first on its stock page, the rest beside it">
+                  Chart them together
+                </Button>
+                <Button onClick={() => setPicked(new Map())}>Clear</Button>
+              </div>
+            )}
+            {picked.size === 0 && watched && (
+              <div role="status" className="flex flex-wrap items-center gap-2 border-b border-line bg-raised px-4 py-2 text-[13px] text-ink">
+                {watched}.
+                <a href={href({ page: "stock" })} className="font-medium text-accent no-underline hover:underline">
+                  See the watchlist
+                </a>
+              </div>
+            )}
             <div ref={box} className="max-h-[max(420px,68vh)] overflow-y-auto">
               <DataTable
-                columns={columns(view, data.on)}
+                columns={columns(view, data.on, new Set(picked.keys()), togglePick)}
                 rows={rows}
                 rowKey={(r) => String(r.permaticker)}
                 onRowClick={(r) => {

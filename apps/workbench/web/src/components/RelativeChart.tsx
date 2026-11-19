@@ -39,6 +39,10 @@ function saved(): Compared[] {
   return [{ symbol: "SPY", slot: 0 }];
 }
 
+export function compareWith(symbols: string[]) {
+  save(symbols.slice(0, SLOTS.length).map((symbol, slot) => ({ symbol, slot })));
+}
+
 function save(list: Compared[]) {
   try {
     localStorage.setItem(KEY, JSON.stringify(list));
