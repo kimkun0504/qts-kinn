@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Page = "home" | "strategies" | "strategy" | "stock" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials";
+export type Page = "home" | "strategies" | "strategy" | "stock" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials" | "data";
 export interface Route {
   page: Page;
   /** The strategy on a strategy page; the algorithm in the Lab. */
@@ -9,7 +9,7 @@ export interface Route {
   tab?: string;
 }
 
-const PAGES: Page[] = ["home", "strategies", "strategy", "stock", "studies", "lab", "runs", "paper", "compare", "parameters", "trials"];
+const PAGES: Page[] = ["home", "strategies", "strategy", "stock", "studies", "lab", "runs", "paper", "compare", "parameters", "trials", "data"];
 
 export function parse(hash: string): Route {
   const [page, name, tab] = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);

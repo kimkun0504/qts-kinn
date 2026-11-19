@@ -8,6 +8,7 @@ import { lab, type AlgorithmRow } from "./lib/lab";
 import { useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
+import { DataPage } from "./pages/DataPage";
 import { Home } from "./pages/Home";
 import { PaperPage } from "./pages/PaperPage";
 import { Parameters } from "./pages/Parameters";
@@ -21,7 +22,7 @@ import { Trials } from "./pages/Trials";
 // The Lab carries the code editor; it loads when first opened, so the other pages stay light.
 const Lab = lazy(() => import("./pages/Lab").then((module) => ({ default: module.Lab })));
 
-const TITLES = { home: "Home", strategies: "Strategies", strategy: null, stock: null, studies: "Studies", lab: "Lab", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
+const TITLES = { home: "Home", strategies: "Strategies", strategy: null, stock: null, studies: "Studies", lab: "Lab", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting", data: "Data" };
 type Theme = "dark" | "light";
 
 // Light unless the owner picked dark. The key is new so the old app's auto-saved "dark" is ignored.
@@ -117,7 +118,7 @@ export default function App() {
   const ledgers = (board?.rows.filter((row) => row.paper).length ?? 0) + heads.length;
   const pages: [string, string][] = [
     ["home", "Home"], ["strategies", "Strategies"], ["stock", "Stocks"], ["studies", "Studies"], ["paper", "Paper trading"],
-    ["lab", "Lab"], ["runs", "Runs"], ["compare", "Compare"], ["parameters", "Parameters"], ["trials", "Trials and overfitting"],
+    ["lab", "Lab"], ["runs", "Runs"], ["compare", "Compare"], ["parameters", "Parameters"], ["trials", "Trials and overfitting"], ["data", "Data"],
   ];
   const commands: Command[] = [
     ...pages.map(([key, label]) => ({ id: `page-${key}`, group: "Pages", label, href: `#/${key}` })),
@@ -172,6 +173,8 @@ export default function App() {
         <Runs runs={live} selected={route.page === "runs" ? (route.name ?? null) : null} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
       ) : route.page === "compare" ? (
         <Compare ids={compare} runs={runs} />
+      ) : route.page === "data" ? (
+        <DataPage key={version} />
       ) : route.page === "parameters" ? (
         <Parameters runs={live} />
       ) : (

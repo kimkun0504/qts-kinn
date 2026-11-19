@@ -14,7 +14,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import yaml
 
-from apps.workbench import api, lab, ledgers, record, stocks
+from apps.workbench import api, catalog, lab, ledgers, record, stocks
 from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
@@ -135,6 +135,11 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/trades/"):
             found = record.trades(self.runs_dir, path.rsplit("/", 1)[1])
             return self._json(found, 200 if found else 404)
+        if path == "/api/data":
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build."}, 503)
+            return self._json(catalog.catalog(load_settings(), store))
         if path == "/api/stocks":
             store = self._store()
             query = parse_qs(urlsplit(self.path).query).get("q", [""])[0]

@@ -594,6 +594,18 @@ export interface StockPageData extends StockHit {
   trades: StockTrade[];
 }
 
+export interface DataCatalog {
+  schema: "data-catalog-1";
+  build: { id: string; created_at: string | null; data_version: string | null; bars_id: string | null; sharadar_snapshot: string | null; panel: { daily_rows?: number; panel_rows?: number; years?: number[]; splits?: Record<string, number> } };
+  builds: { id: string; created_at: string | null; data_version: string | null; bars_id: string | null; current: boolean }[];
+  calendar: { first: string | null; last: string | null; sessions: number };
+  companies: { total: number; delisted: number; categories: [string, number][]; sectors: [string, number][] };
+  tables: { name: string; path: string; files: number; rows: number | null; bytes: number; note: string }[];
+  bars: { name: string; path: string; files: number; years: string[] }[];
+  inputs: { name: string; built: boolean; input_id?: string; version?: string; rows?: number; first?: string; last?: string; built_at?: string; basis?: string }[];
+  seal: { holdout_start: string; reads: number; last: string | null };
+}
+
 async function get<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url} answered ${response.status}`);
@@ -613,6 +625,7 @@ export const api = {
   paper: (name: string) => get<PaperSnapshot>(`/api/strategy/${encodeURIComponent(name)}/paper`),
   trades: (runId: string) => get<{ count: number; rows: Trade[] }>(`/api/trades/${encodeURIComponent(runId)}`),
   ledgers: () => get<LedgerHead[]>("/api/ledgers"),
+  data: () => get<DataCatalog>("/api/data"),
   stocks: (query: string) => get<StockHit[]>(`/api/stocks?q=${encodeURIComponent(query)}`),
   stock: (symbol: string, hint?: string) =>
     get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
