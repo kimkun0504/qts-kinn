@@ -3,6 +3,7 @@ import { movingAverage, type PriceMarker, PriceChart } from "../components/chart
 import { CsvButton } from "../components/CsvButton";
 import { Financials } from "../components/Financials";
 import { Insiders } from "../components/Insiders";
+import { Reactions } from "../components/Reactions";
 import { RelativeChart } from "../components/RelativeChart";
 import { StocksLanding, useWatchlist } from "../components/StocksLanding";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
@@ -23,7 +24,7 @@ import { toggleWatch } from "../lib/watchlist";
 
 type Range = "3m" | "1y" | "3y" | "5y" | "all";
 type Source = "all" | StockTrade["source"];
-type Section = "financials" | "trades" | "insiders" | "filings";
+type Section = "financials" | "reactions" | "trades" | "insiders" | "filings";
 
 const RANGES: { value: Range; label: string; sessions: number }[] = [
   { value: "3m", label: "3M", sessions: 63 },
@@ -269,8 +270,10 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
     [averages, data],
   );
   const [sort, onSort] = useSort({ key: "entry_day", dir: "desc" });
+  const resultDays = useMemo(() => page.events.filter((e) => e.results).map((e) => e.date), [page]);
   const sections: TabItem<Section>[] = [
     ...(page.financials && (page.financials.quarterly.length || page.financials.trailing.length) ? [{ key: "financials" as const, label: "Financials" }] : []),
+    ...(resultDays.length ? [{ key: "reactions" as const, label: `Results reactions ${resultDays.length}` }] : []),
     { key: "trades", label: `Trades ${page.trades.length}` },
     ...(page.insiders ? [{ key: "insiders" as const, label: `Insider trades ${page.insiders.count}` }] : []),
     { key: "filings", label: `8-K filings ${page.events.length}` },
@@ -432,6 +435,17 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
       <RelativeChart symbol={page.ticker ?? page.query} dates={visibleDates} close={visibleCloses} />
       <Tabs label="Details" tabs={sections} active={section} onChange={setSection} />
       {section === "financials" && page.financials && <Financials data={page.financials} on={on} />}
+      {section === "reactions" && (
+        <Reactions
+          dates={data.date}
+          close={data.close}
+          filed={resultDays}
+          onPick={(iso) => {
+            const at = locate(data.date, iso);
+            if (at != null) around(at, at + 20, 30);
+          }}
+        />
+      )}
       {section === "trades" && (
         <Card
           title="Trades in this stock"

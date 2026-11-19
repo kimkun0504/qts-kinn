@@ -89,6 +89,7 @@ describe("the stock page", () => {
   it("shows the company, its split-adjusted facts and every trade", async () => {
     render(<StockPage symbol="ABCD" onOpen={() => {}} />);
     await waitFor(() => expect(screen.getByRole("heading", { name: "ABCD" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("tab", { name: "Trades 2" }));
     expect(screen.getByText("ABCD INC")).toBeTruthy();
     expect(screen.getByText("Also traded as OLDX (2010–2012)")).toBeTruthy();
     expect(within(screen.getByLabelText("Summary")).getByText("+0.0%")).toBeTruthy();
@@ -101,6 +102,7 @@ describe("the stock page", () => {
 
   it("filters the trades by where they came from", async () => {
     render(<StockPage symbol="ABCD" onOpen={() => {}} />);
+    fireEvent.click(await screen.findByRole("tab", { name: "Trades 2" }));
     await waitFor(() => expect(screen.getByText("All 2")).toBeTruthy());
     fireEvent.click(screen.getByText("Lab 1"));
     expect(screen.queryByRole("link", { name: "earnings_drift" })).toBeNull();

@@ -17,6 +17,18 @@ const BENCHMARKS = ["SPY", "QQQ", "IWM"];
 const SLOTS: { color: string; dash?: string }[] = [{ color: "var(--series-4)" }, { color: "var(--series-3)" }, { color: "var(--series-2)", dash: "6 4" }];
 const cache = new Map<string, Closes | null>();
 
+export async function closesOf(symbol: string): Promise<Closes | null> {
+  if (!cache.has(symbol)) {
+    try {
+      const data = await api.closes([symbol]);
+      cache.set(symbol, data.series.find((x) => x.symbol === symbol) ?? null);
+    } catch {
+      return null;
+    }
+  }
+  return cache.get(symbol) ?? null;
+}
+
 function saved(): Compared[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(KEY) ?? "null");
