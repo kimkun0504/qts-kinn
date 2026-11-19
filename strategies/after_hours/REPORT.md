@@ -221,9 +221,11 @@ index that could not be read counted as an evening with no 8-Ks, and eight eveni
 published late in its evening, so a morning run reads the evening in part (filings accepted
 before 17:30) and a later run reads the rest; an evening with no index yet is not recorded,
 and a filer that could not be read is read on the next run. An evening takes about 700 requests
-to the SEC (one per 8-K filer); the tool sends at most four a second, reads each company once a
-run, and if the SEC pauses the address anyway (it did on 2026-11-19, about 730 requests into
-a catch-up) it waits eleven minutes and carries on.
+to the SEC (one per 8-K filer); the tool sends at most four a second and reads each company
+once a run. The SEC answers HTTP 403, not 404, for the index of a day it was closed (seen for
+2026-11-11, Veterans Day, twice at the same request), so after a 403 the tool asks for a page
+that always exists: if that is answered the file is missing; if not, the address is paused and
+the tool waits eleven minutes and carries on.
 
 It reads every 8-K in the SEC's daily index for the evening (and the next day, where filings
 accepted after 17:30 are dated), keeps the results 8-Ks accepted between 16:00 and 18:30, and

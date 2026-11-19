@@ -15,9 +15,11 @@ before today) it:
 4. applies the rule of strategies/after_hours ("short mid down15 open") and records each
    signal; later runs fill in the next open and the result.
 
-It asks the SEC at most four times a second and reads each company once a run. If the SEC
-pauses the address anyway (HTTP 403 after it has answered), the run waits eleven minutes and
-carries on; a refusal of the first request, or a second one in a row, stops it with the reason.
+It asks the SEC at most four times a second and reads each company once a run. The SEC also
+answers HTTP 403 for a file it does not have (the index of a holiday), so after a 403 the tool
+asks for a page that always exists: if that is answered, the file is taken as missing; if it is
+refused too, the address is paused and the run waits eleven minutes and carries on. A refusal
+of the first requests, or twice in a row, stops it with the reason.
 A filer that could not be read is read again by the next run, and an evening whose SEC index
 is not out yet is not recorded.
 
@@ -62,6 +64,7 @@ _spec.loader.exec_module(tool)
 SEC_WWW = "www.sec.gov"
 CONTACT = re.compile(r"\S.*\s[^\s@]+@[^\s@]+\.[A-Za-z]{2,}")
 FILING_FIELDS = ("form", "items", "acceptanceDateTime", "accessionNumber")
+KNOWN_FILER = 320193
 
 
 def sec_agent() -> str:
@@ -214,16 +217,14 @@ class Sec:
         self.indexes: dict[date, list[int] | None] = {}
         self.filings: dict[int, dict] = {}
 
-    def ask(self, fetch):
+    def ask(self, fetch, probe, missing=None):
         while True:
-            wait = self.interval - (time.monotonic() - self.last)
-            if wait > 0:
-                time.sleep(wait)
-            self.last = time.monotonic()
             try:
-                answer = fetch()
+                return self.call(fetch)
             except Refused as refusal:
-                if not self.answers or self.paused:
+                if self.serving(probe):
+                    return missing
+                if self.paused or not self.answers:
                     raise SystemExit(refused(refusal, self.agent, self.answers)) from None
                 self.paused = True
                 until = datetime.now(ahp.NEW_YORK) + timedelta(seconds=self.pause)
@@ -232,19 +233,39 @@ class Sec:
                     flush=True,
                 )
                 time.sleep(self.pause)
-                continue
-            self.answers += 1
-            self.paused = False
-            return answer
+
+    def call(self, fetch):
+        wait = self.interval - (time.monotonic() - self.last)
+        if wait > 0:
+            time.sleep(wait)
+        self.last = time.monotonic()
+        answer = fetch()
+        self.answers += 1
+        self.paused = False
+        return answer
+
+    def serving(self, probe) -> bool:
+        try:
+            self.call(probe)
+        except (Refused, tool.FetchError):
+            return False
+        return True
+
+    def www_answers(self) -> None:
+        get_text(f"https://{SEC_WWW}/Archives/edgar/daily-index/", SEC_WWW, sec_headers(self.agent))
+
+    def data_answers(self) -> None:
+        submissions_of(KNOWN_FILER, self.agent)
 
     def index(self, day: date) -> list[int] | None:
         if day not in self.indexes:
-            self.indexes[day] = self.ask(lambda: index_ciks(day, self.agent))
+            self.indexes[day] = self.ask(lambda: index_ciks(day, self.agent), self.www_answers)
         return self.indexes[day]
 
     def submissions(self, cik: int) -> dict:
         if cik not in self.filings:
-            self.filings[cik] = eight_ks(self.ask(lambda: submissions_of(cik, self.agent)))
+            subs = self.ask(lambda: submissions_of(cik, self.agent), self.data_answers, {})
+            self.filings[cik] = eight_ks(subs)
         return self.filings[cik]
 
 

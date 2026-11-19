@@ -307,7 +307,7 @@ def test_a_refusal_of_the_first_request_stops_the_run(monkeypatch):
         raise tool.Refused("HTTP 403 from www.sec.gov")
 
     with pytest.raises(SystemExit, match="first request") as stop:
-        sec.ask(refuse)
+        sec.ask(refuse, refuse)
     assert "SEC_USER_AGENT" in str(stop.value) and AGENT in str(stop.value)
 
 
@@ -324,15 +324,41 @@ def test_a_pause_after_answers_is_waited_out_once(monkeypatch):
             raise answer
         return answer
 
-    assert sec.ask(fetch) == "first" and sec.ask(fetch) == "second"
-    assert slept == [660] and sec.answers == 2
-
     def refuse():
         raise tool.Refused("HTTP 403 from data.sec.gov")
 
+    assert sec.ask(fetch, refuse) == "first" and sec.ask(fetch, refuse) == "second"
+    assert slept == [660] and sec.answers == 2
     with pytest.raises(SystemExit, match="again after a pause"):
-        sec.ask(refuse)
+        sec.ask(refuse, refuse)
     assert slept == [660, 660]
+
+
+def test_a_refused_file_is_missing_when_the_sec_answers_a_page_that_always_exists(monkeypatch):
+    tool = load_tool()
+    asked = []
+
+    def urlopen(request, timeout):
+        asked.append(request.full_url)
+        if request.full_url.endswith("form.20261111.idx"):
+            raise urllib.error.HTTPError(request.full_url, 403, "Forbidden", {}, io.BytesIO())
+        if request.full_url.endswith("/daily-index/"):
+            return Answer(b"<html><title>Directory Listing</title></html>")
+        return Answer(INDEX.encode())
+
+    monkeypatch.setattr(tool.urllib.request, "urlopen", urlopen)
+    sec = tool.Sec(AGENT, interval=0)
+    assert tool.filers(date(2026, 11, 11), date(2026, 11, 19), sec) == ([], "closed")
+    assert asked[0].endswith("form.20261111.idx") and asked[1].endswith("/daily-index/")
+    assert sec.answers == 2 and not sec.paused
+
+    def get_json(url, host, headers):
+        if "CIK0000000042" in url:
+            raise tool.tool.FetchError("HTTP 403 from data.sec.gov", 403)
+        return {"tickers": ["AAPL"]}
+
+    monkeypatch.setattr(tool.tool, "get_json", get_json)
+    assert sec.submissions(42)["tickers"] == []
 
 
 def test_requests_to_the_sec_are_spaced(monkeypatch):
@@ -340,8 +366,8 @@ def test_requests_to_the_sec_are_spaced(monkeypatch):
     slept = []
     monkeypatch.setattr(tool.time, "sleep", slept.append)
     sec = tool.Sec(AGENT, interval=0.25)
-    sec.ask(lambda: 1)
-    sec.ask(lambda: 2)
+    sec.ask(lambda: 1, lambda: None)
+    sec.ask(lambda: 2, lambda: None)
     assert len(slept) == 1 and 0.2 < slept[0] <= 0.25
 
 
