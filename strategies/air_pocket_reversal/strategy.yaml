@@ -1,5 +1,5 @@
 name: air_pocket_reversal
-status: prepared
+status: parked
 engine: intraday
 universe: liquid domestic common stocks at their first relative selloff
 cost_calibration: ibkr_pro_tiered
@@ -10,12 +10,11 @@ record:
   title: Transaction-rate collapse during a relative selloff
   idea: Test whether a lower transaction rate during the decline improves a fixed reversal entry
   horizon: Two hours after first fill
-  verdict: preregistered studies pending
-  summary: >-
-    A fixed relative selloff and recovery defines the first candidate.
-    The primary requires the preceding decline's transaction rate to
-    be at most half the prior fifteen-minute rate.
+  verdict: 'park: no primary events; control cannot substitute'
+  summary: The fixed transaction-rate collapse condition produced no development events. Its
+    unfiltered control was positive but ineligible and too sparse in later development. No portfolio
+    or validation was run.
   weaknesses:
-    - Transaction rates do not establish order withdrawal, signed flow or participant identity.
-    - Complete observed histories can select a different population from halted stocks.
-    - Extensive prior family trials and known execution/cost limitations remain.
+  - Transaction rates do not establish order withdrawal, signed flow or participant identity.
+  - Complete observed histories can select a different population from halted stocks.
+  - Extensive prior family trials and known execution/cost limitations remain.
