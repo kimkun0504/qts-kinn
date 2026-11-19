@@ -26,6 +26,12 @@ describe("scoring", () => {
     expect(score("Earnings drift", "zz")).toBeNull();
   });
 
+  it("shows the watchlist with no query and the screens with one", () => {
+    const more: Command[] = [...commands, { id: "w1", group: "Watchlist", label: "AAPL" }, { id: "c1", group: "Screens", label: "Small caps" }];
+    expect(rank(more, "").map((c) => c.id)).toEqual(["p1", "p2", "w1"]);
+    expect(rank(more, "small").map((c) => c.id)).toEqual(["c1"]);
+  });
+
   it("shows pages with no query and searches every group with one", () => {
     expect(rank(commands, "").map((c) => c.id)).toEqual(["p1", "p2"]);
     expect(rank(commands, "base").map((c) => c.id)).toEqual(["r1"]);

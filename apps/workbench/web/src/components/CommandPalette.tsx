@@ -11,8 +11,9 @@ export interface Command {
   run?: () => void;
 }
 
-const GROUP_LIMIT: Record<string, number> = { Pages: 12, Strategies: 6, "Paper ledgers": 4, "Lab algorithms": 6, Runs: 6, Stocks: 8, Actions: 4 };
-const ORDER = ["Pages", "Stocks", "Strategies", "Lab algorithms", "Paper ledgers", "Runs", "Actions"];
+const GROUP_LIMIT: Record<string, number> = { Pages: 14, Watchlist: 6, Screens: 6, Strategies: 6, "Paper ledgers": 4, "Lab algorithms": 6, Runs: 6, Stocks: 8, Actions: 4 };
+const EMPTY_LIMIT: Record<string, number> = { Pages: 20, Watchlist: 6, Actions: 20 };
+const ORDER = ["Pages", "Stocks", "Watchlist", "Screens", "Strategies", "Lab algorithms", "Paper ledgers", "Runs", "Actions"];
 
 export function score(text: string, query: string): number | null {
   const t = text.toLowerCase();
@@ -34,7 +35,7 @@ export function rank(commands: Command[], query: string): Command[] {
     .sort((a, b) => a.s - b.s);
   const out: Command[] = [];
   for (const group of ORDER) {
-    const inGroup = scored.filter((x) => x.c.group === group).slice(0, q ? (GROUP_LIMIT[group] ?? 6) : group === "Pages" || group === "Actions" ? 20 : 0);
+    const inGroup = scored.filter((x) => x.c.group === group).slice(0, q ? (GROUP_LIMIT[group] ?? 6) : (EMPTY_LIMIT[group] ?? 0));
     out.push(...inGroup.map((x) => x.c));
   }
   return out;

@@ -35,7 +35,7 @@ interface Saved {
   query: string;
 }
 
-function readSaved(): Saved[] {
+export function readSaved(): Saved[] {
   try {
     const parsed = JSON.parse(localStorage.getItem(SAVED_KEY) ?? "[]");
     return Array.isArray(parsed) ? parsed.filter((s) => typeof s?.name === "string" && typeof s?.query === "string") : [];

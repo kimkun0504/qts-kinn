@@ -12,7 +12,9 @@ import { href, type Route, useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
 import { DataPage } from "./pages/DataPage";
-import { ScreenerPage, screenerRoute } from "./pages/ScreenerPage";
+import { readSaved, ScreenerPage, screenerRoute } from "./pages/ScreenerPage";
+import { encode, STARTS } from "./lib/screen";
+import { watchlist } from "./lib/watchlist";
 import { Home } from "./pages/Home";
 import { PaperPage } from "./pages/PaperPage";
 import { Parameters } from "./pages/Parameters";
@@ -230,6 +232,9 @@ export default function App() {
         keywords: `${run.config} ${run.run_id} ${run.agent}`,
         href: `#/runs/${encodeURIComponent(run.run_id)}`,
       })),
+    ...watchlist().map((w) => ({ id: `watch-${w.permaticker}`, group: "Watchlist", label: w.ticker, hint: w.name ?? "", href: `#/stock/${encodeURIComponent(w.ticker)}/${w.permaticker}` })),
+    ...readSaved().map((s) => ({ id: `screen-${s.name}`, group: "Screens", label: s.name, hint: "saved screen", href: href(screenerRoute(undefined, s.query)) })),
+    ...STARTS.map((s) => ({ id: `start-${s.name}`, group: "Screens", label: s.name, hint: "screen", href: href(screenerRoute(undefined, encode(s.screen))) })),
     { id: "action-theme", group: "Actions", label: theme === "dark" ? "Light theme" : "Dark theme", run: () => toggleTheme() },
     { id: "action-reload", group: "Actions", label: "Reload the run store", run: () => load() },
     { id: "action-shortcuts", group: "Actions", label: "Keyboard shortcuts", hint: "?", run: () => setShortcuts(true) },
