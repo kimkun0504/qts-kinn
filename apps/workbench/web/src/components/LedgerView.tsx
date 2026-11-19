@@ -4,6 +4,7 @@ import { day, int, money, num, pct } from "../lib/format";
 import { sortRows, useSort } from "../lib/sort";
 import { useLoad } from "../lib/useLoad";
 import { LineChart } from "./charts/LineChart";
+import { CsvButton } from "./CsvButton";
 import { StockLink } from "./StockLink";
 import { Badge } from "./ui/Badge";
 import { Card, Note } from "./ui/Card";
@@ -160,7 +161,35 @@ export function LedgerView({ name }: { name: string }) {
           </Note>
         </Card>
       </div>
-      <Card title="Signals" aside={<Segmented label="Which signals" options={options} value={show} onChange={setShow} />}>
+      <Card
+        title="Signals"
+        aside={
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmented label="Which signals" options={options} value={show} onChange={setShow} />
+            <CsvButton
+              filename={`${page.name}_signals.csv`}
+              rows={page.rows}
+              columns={[
+                { header: "day", value: (r) => r.day },
+                { header: "symbol", value: (r) => r.symbol },
+                { header: "market_cap", value: (r) => r.market_cap },
+                { header: "move", value: (r) => r.move },
+                { header: "entry_day", value: (r) => r.entry_day },
+                { header: "entry", value: (r) => r.entry },
+                { header: "exit_day", value: (r) => r.exit_day },
+                { header: "exit", value: (r) => r.exit },
+                { header: "gross", value: (r) => r.gross },
+                { header: "net", value: (r) => r.net },
+                { header: "alternative", value: (r) => r.alternative },
+                { header: "benchmark", value: (r) => r.benchmark },
+                { header: "status", value: (r) => r.status },
+                { header: "set_aside", value: (r) => r.set_aside },
+                { header: "borrow", value: (r) => r.borrow },
+              ]}
+            />
+          </div>
+        }
+      >
         <div className="-mx-5 overflow-x-auto">
           <DataTable columns={columns(page)} rows={sortRows(shown, sort, value)} rowKey={(r) => `${r.day}-${r.symbol}`} sort={sort} onSort={onSort} minWidth={1000} empty="No signal here yet." />
         </div>

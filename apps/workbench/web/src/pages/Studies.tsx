@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { CsvButton } from "../components/CsvButton";
 import { Card, Note } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Segmented } from "../components/ui/Segmented";
@@ -62,7 +63,26 @@ export function Studies({ onOpen }: { onOpen: (strategy: string) => void }) {
           ]}
         />
       </div>
-      <Card title={`${shown.length} of ${data.length} studies`} aside={`${int(trials)} trials in all`}>
+      <Card
+        title={`${shown.length} of ${data.length} studies`}
+        aside={
+          <span className="flex items-center gap-3">
+            {int(trials)} trials in all
+            <CsvButton
+              filename="studies.csv"
+              rows={shown}
+              columns={[
+                { header: "study", value: (s) => s.name },
+                { header: "strategy", value: (s) => s.strategy },
+                { header: "date", value: (s) => s.when },
+                { header: "trials", value: (s) => s.trials },
+                { header: "found", value: (s) => s.result },
+                { header: "outcome", value: (s) => s.verdict },
+              ]}
+            />
+          </span>
+        }
+      >
         {shown.length ? <StudyTable studies={shown} withStrategy onOpen={onOpen} /> : <p className="m-0 py-6 text-ink-2">No study matches.</p>}
         <Note>A study is one question put to the data: a search over many cells, a single test, or a measurement. Each is recorded in its strategy's folder with what it found.</Note>
       </Card>

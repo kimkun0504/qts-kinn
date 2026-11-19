@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { RunsTable, runValue } from "../components/RunsTable";
+import { CsvButton } from "../components/CsvButton";
 import { isSuccess } from "../components/Verdict";
 import { Panel } from "../components/ui/Panel";
 import { Segmented } from "../components/ui/Segmented";
@@ -108,7 +109,31 @@ export function Runs({ runs, selected, onOpen, compare, onToggleCompare, kind, o
           ]}
         />
       </div>
-      <Panel title={`${shown.length} of ${runs.length} runs`} aside={selected ? "The selected run is in the address bar, so a link opens it" : "Click a run to see its results"}>
+      <Panel
+        title={`${shown.length} of ${runs.length} runs`}
+        aside={
+          <CsvButton
+            filename="runs.csv"
+            rows={shown}
+            columns={[
+              { header: "run_id", value: (r) => r.run_id },
+              { header: "started", value: (r) => r.started_at },
+              { header: "strategy", value: (r) => r.strategy },
+              { header: "config", value: (r) => r.config },
+              { header: "kind", value: (r) => r.kind },
+              { header: "period", value: (r) => r.phase },
+              { header: "agent", value: (r) => r.agent },
+              { header: "trades", value: (r) => r.trades },
+              { header: "net_1x", value: (r) => r.net_1x },
+              { header: "net_2x", value: (r) => r.net_2x },
+              { header: "gross", value: (r) => r.gross },
+              { header: "t_2x", value: (r) => r.t_stat_2x },
+              { header: "sharpe", value: (r) => r.sharpe },
+              { header: "commit", value: (r) => r.commit },
+            ]}
+          />
+        }
+      >
         <div ref={box} className="max-h-[max(360px,50vh)] overflow-y-auto">
           <RunsTable runs={shown} onOpen={onOpen} selected={selected} compare={compare} onToggleCompare={onToggleCompare} sort={sort} onSort={onSort} />
         </div>

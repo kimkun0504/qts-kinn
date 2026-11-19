@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { type PriceMarker, PriceChart } from "../components/charts/PriceChart";
+import { CsvButton } from "../components/CsvButton";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -332,7 +333,33 @@ function Stock({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string,
           {zoomed && <Button onClick={() => preset("all")}>Show all</Button>}
         </div>
       </Card>
-      <Card title="Trades in this stock" aside={sources.length > 2 ? <Segmented label="Source" options={sources} value={source} onChange={setSource} /> : undefined}>
+      <Card
+        title="Trades in this stock"
+        aside={
+          <div className="flex flex-wrap items-center gap-2">
+            {sources.length > 2 && <Segmented label="Source" options={sources} value={source} onChange={setSource} />}
+            <CsvButton
+              filename={`${page.ticker ?? page.query}_trades.csv`}
+              rows={visible.map((v) => v.t)}
+              columns={[
+                { header: "source", value: (t) => t.source },
+                { header: "from", value: (t) => t.label },
+                { header: "detail", value: (t) => t.detail },
+                { header: "run", value: (t) => t.id },
+                { header: "symbol", value: (t) => t.symbol },
+                { header: "signal_day", value: (t) => t.signal_day },
+                { header: "entry_day", value: (t) => t.entry_day },
+                { header: "entry", value: (t) => t.entry },
+                { header: "exit_day", value: (t) => t.exit_day },
+                { header: "exit", value: (t) => t.exit },
+                { header: "return", value: (t) => t.net },
+                { header: "side", value: (t) => t.side },
+                { header: "note", value: (t) => t.note },
+              ]}
+            />
+          </div>
+        }
+      >
         <div className="-mx-5 max-h-[520px] overflow-auto">
           <DataTable
             columns={columns}
