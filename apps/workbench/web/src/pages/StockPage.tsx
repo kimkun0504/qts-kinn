@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { type PriceMarker, PriceChart } from "../components/charts/PriceChart";
+import { movingAverage, type PriceMarker, PriceChart } from "../components/charts/PriceChart";
 import { CsvButton } from "../components/CsvButton";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
 import { Badge } from "../components/ui/Badge";
@@ -237,6 +237,17 @@ function Stock({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string,
   const [source, setSource] = useState<Source>("all");
   const [selected, setSelected] = useState<string | null>(null);
   const [events, setEvents] = useState(true);
+  const [averages, setAverages] = useState(false);
+  const overlays = useMemo(
+    () =>
+      averages
+        ? [
+            { name: "50-day average", values: movingAverage(data.close, 50), color: "var(--series-4)" },
+            { name: "200-day average", values: movingAverage(data.close, 200), color: "var(--series-3)" },
+          ]
+        : [],
+    [averages, data],
+  );
   const [sort, onSort] = useSort({ key: "entry_day", dir: "desc" });
 
   useEffect(() => {
@@ -304,12 +315,26 @@ function Stock({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string,
             <Segmented label="Range" options={RANGES.map(({ value, label }) => ({ value, label }))} value={zoomed && range === "all" ? ("" as Range) : range} onChange={preset} />
             <Segmented label="Scale" options={[{ value: "linear", label: "Linear" }, { value: "log", label: "Log" }]} value={log ? "log" : "linear"} onChange={(v) => setLog(v === "log")} />
             <Segmented label="Filings" options={[{ value: "on", label: "8-K days" }, { value: "off", label: "Hide" }]} value={events ? "on" : "off"} onChange={(v) => setEvents(v === "on")} />
+            <Segmented label="Moving averages" options={[{ value: "off", label: "None" }, { value: "on", label: "50 and 200 days" }]} value={averages ? "on" : "off"} onChange={(v) => setAverages(v === "on")} />
           </div>
         }
       >
         <Readout page={page} data={data} i={hover ?? view[1]} />
+        {averages && (
+          <div className="flex gap-4 text-[12px] text-ink-3">
+            {overlays.map((o) => (
+              <span key={o.name} className="inline-flex items-center gap-1.5">
+                <svg aria-hidden="true" width="18" height="4">
+                  <line x1="0" x2="18" y1="2" y2="2" stroke={o.color} strokeWidth="2" strokeDasharray="6 3" />
+                </svg>
+                {o.name} {price(o.values[hover ?? view[1]])}
+              </span>
+            ))}
+          </div>
+        )}
         <PriceChart
           data={data}
+          overlays={overlays}
           from={view[0]}
           to={view[1]}
           log={log}

@@ -18,8 +18,35 @@ export interface PriceSeries {
   volume: (number | null)[];
 }
 
+export interface Overlay {
+  name: string;
+  values: (number | null)[];
+  color: string;
+}
+
+export function movingAverage(values: (number | null)[], length: number): (number | null)[] {
+  const out: (number | null)[] = new Array(values.length).fill(null);
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < values.length; i += 1) {
+    const v = values[i];
+    if (v != null) {
+      sum += v;
+      count += 1;
+    }
+    const drop = i - length >= 0 ? values[i - length] : null;
+    if (i - length >= 0 && drop != null) {
+      sum -= drop;
+      count -= 1;
+    }
+    if (i >= length - 1 && count === length) out[i] = sum / length;
+  }
+  return out;
+}
+
 interface PriceChartProps {
   data: PriceSeries;
+  overlays?: Overlay[];
   from: number;
   to: number;
   log: boolean;
@@ -71,7 +98,7 @@ function timeLabels(dates: string[], from: number, to: number, x: (i: number) =>
   return out;
 }
 
-export function PriceChart({ data, from, to, log, markers, results, filings, span, hover, onHover, onZoom, onReset, priceText }: PriceChartProps) {
+export function PriceChart({ data, overlays = [], from, to, log, markers, results, filings, span, hover, onHover, onZoom, onReset, priceText }: PriceChartProps) {
   const svg = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<{ start: number; end: number } | null>(null);
   const n = to - from + 1;
@@ -136,6 +163,20 @@ export function PriceChart({ data, from, to, log, markers, results, filings, spa
       bodies.push({ i, o, c, h: data.high[i] ?? Math.max(o, c), l: data.low[i] ?? Math.min(o, c) });
     }
   }
+  const overlayPaths = overlays.map((o) => {
+    let d = "";
+    let pen = false;
+    for (let i = from; i <= to; i += 1) {
+      const v = o.values[i];
+      if (v == null || (useLog && v <= 0)) {
+        pen = false;
+        continue;
+      }
+      d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`;
+      pen = true;
+    }
+    return { name: o.name, color: o.color, d };
+  });
   const area = line && !candles ? `${line}L${x(to).toFixed(1)},${PRICE_BOTTOM}L${x(from).toFixed(1)},${PRICE_BOTTOM}Z` : "";
   const labels = timeLabels(data.date, from, to, x);
   const shown = hover != null && hover >= from && hover <= to ? hover : null;
@@ -191,6 +232,9 @@ export function PriceChart({ data, from, to, log, markers, results, filings, spa
           </g>
         );
       })}
+      {overlayPaths.map((o) => (
+        <path key={o.name} d={o.d} fill="none" stroke={o.color} strokeWidth="1.4" strokeDasharray="6 3" opacity="0.9" />
+      ))}
       <path d={up} stroke="var(--gain)" strokeWidth={barWidth} opacity="0.45" />
       <path d={down} stroke="var(--loss)" strokeWidth={barWidth} opacity="0.45" />
       {filings
