@@ -18,6 +18,7 @@ const ICONS: Record<NavPage, ReactNode> = {
       <rect x="10" y="4" width="3" height="4.5" rx="0.5" />
     </>
   ),
+  screener: <path d="M2 3h12l-4.5 5.5V13l-3-1.5v-3z" />,
   studies: <path d="M6 2v4L2.5 12.5a1 1 0 0 0 .9 1.5h9.2a1 1 0 0 0 .9-1.5L10 6V2M5 2h6M4.5 10h7" />,
   paper: (
     <>
@@ -49,6 +50,7 @@ const LABELS: Record<NavPage, string> = {
   home: "Home",
   strategies: "Strategies",
   stock: "Stocks",
+  screener: "Screener",
   studies: "Studies",
   paper: "Paper trading",
   runs: "Runs",
@@ -59,7 +61,7 @@ const LABELS: Record<NavPage, string> = {
   data: "Data",
 };
 const GROUPS: NavPage[][] = [
-  ["home", "strategies", "stock", "studies", "paper"],
+  ["home", "strategies", "stock", "screener", "studies", "paper"],
   ["lab", "runs", "compare", "parameters", "trials", "data"],
 ];
 

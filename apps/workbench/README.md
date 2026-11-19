@@ -17,6 +17,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Strategies | every idea with its verdict; each opens a strategy page |
 | A strategy | Results (profit across its periods, the holdout marked, years, months, costs, weaknesses, the evidence in order), Trades, Paper book, Report (REPORT.md and HYPOTHESIS.md), Studies, Runs |
 | Stocks | any company by ticker, old ticker or name: daily prices to the seal (split-adjusted, line or candles, volume, log scale, drag to zoom), its 8-K days, and every trade a strategy run, a Lab run or a paper ledger made in it, marked on the chart |
+| Screener | every stock that traded on a session up to the seal, filtered by kind, sector, industry, exchange and any range of market value, dollar volume, price, returns (1, 3, 6 and 12 months), distance from the 52-week high, volatility, P/E, P/S, P/B, free cash flow yield, revenue, revenue growth and net income; ready starting points, screens saved by name, the screen in the address, CSV, and a breakdown by sector. Valuations use only filings made before the session |
 | Studies | every search and test, including those done by research scripts, with its trial count and verdict; a search box, outcome filters and ordering |
 | Paper trading | every paper ledger: the earnings drift's books (tonight's orders, positions, the books side by side) and the big prints and after-hours short ledgers (signals, results, the alternative exit, the benchmark or borrow, the evenings read) |
 | Runs | every run with a search box, filters (kind, period, strategy) and sortable columns; the selected run (in the address, `#/runs/<run id>`) with its tearsheet, event study, tick study or book |
@@ -60,12 +61,14 @@ worked out: [docs/LAB.md](../../docs/LAB.md).
 
 ## How it is built
 
-- `api.py`, `record.py`, `lab.py`, `ledgers.py`, `stocks.py`, `catalog.py`, `__main__.py`: a
-  small standard-library server. `api.py` reads runs; `record.py` reads the records, the
-  documents and the earnings drift's paper ledger; `ledgers.py` reads the event ledgers (big
-  prints, the after-hours short) into one shape (`paper-ledger-1`); `stocks.py` is the stock
-  page and search (prices through the sealed `DataStore`, trades from the run store, the Lab
-  and the ledgers); `catalog.py` is the Data page (file metadata and the sealed calendar only);
+- `api.py`, `record.py`, `lab.py`, `ledgers.py`, `stocks.py`, `screener.py`, `catalog.py`,
+  `__main__.py`: a small standard-library server (large answers are sent gzipped). `api.py`
+  reads runs; `record.py` reads the records, the documents and the earnings drift's paper
+  ledger; `ledgers.py` reads the event ledgers (big prints, the after-hours short) into one
+  shape (`paper-ledger-1`); `stocks.py` is the stock page and search (prices through the
+  sealed `DataStore`, trades from the run store, the Lab and the ledgers); `screener.py` is
+  the screener (one session's cross-section through the sealed `DataStore`, cached per build
+  and session); `catalog.py` is the Data page (file metadata and the sealed calendar only);
   `lab.py` is the Lab. Restart the server after changing any of them.
 - `web/`: React, TypeScript, Tailwind and Vite (decision 0013).
   - `src/index.css`: the design tokens. Light is the default theme; dark is

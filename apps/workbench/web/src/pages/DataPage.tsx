@@ -1,3 +1,4 @@
+import { Bars } from "../components/ui/Bars";
 import { Card, Note } from "../components/ui/Card";
 import { type Column, DataTable } from "../components/ui/DataTable";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -22,27 +23,6 @@ function bytes(value: number): string {
   if (value >= 1e9) return `${(value / 1e9).toFixed(1)} GB`;
   if (value >= 1e6) return `${Math.round(value / 1e6)} MB`;
   return `${Math.max(1, Math.round(value / 1e3))} KB`;
-}
-
-function Bars({ items, total }: { items: [string, number][]; total: number }) {
-  const top = Math.max(1, ...items.map(([, n]) => n));
-  return (
-    <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-      {items.map(([name, n]) => (
-        <li key={name} className="grid grid-cols-[minmax(0,14rem)_minmax(0,1fr)_4.5rem] items-center gap-3 text-sm">
-          <span className="truncate text-ink-2" title={name}>
-            {name}
-          </span>
-          <span className="h-2 rounded-sm bg-raised">
-            <span className="block h-2 rounded-sm bg-series-1" style={{ width: `${(100 * n) / top}%` }} />
-          </span>
-          <span className="text-right tabular-nums" title={`${((100 * n) / total).toFixed(1)}% of all`}>
-            {int(n)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 const tableColumns: Column<Table>[] = [

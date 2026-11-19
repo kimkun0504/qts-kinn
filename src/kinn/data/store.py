@@ -341,6 +341,33 @@ class DataStore:
         )
         return dict(zip(table["permaticker"].to_pylist(), table["symbol"].to_pylist(), strict=True))
 
+    def fundamentals_as_of(
+        self, day: date, *, fields: tuple[str, ...], dimension: str = "ART"
+    ) -> pa.Table:
+        self._check(day, day, "fundamentals")
+        unknown = set(fields) - set(SF1_FIELDS)
+        if unknown or dimension not in SF1_DIMENSIONS:
+            raise KeyError(f"unknown fundamentals: {sorted(unknown)} / {dimension}")
+        columns = ", ".join(f"f.{name}" for name in fields)
+        latest = ", ".join(f"l.{name}" for name in fields)
+        earlier = ", ".join(f"y.{name} as {name}_year_ago" for name in fields)
+        return self._query(
+            f"""with f as (
+                    select s.permaticker, f.datekey, f.calendardate, {columns}
+                    from '{self.root}/sharadar/sf1.parquet' f
+                    join '{self.root}/master/security_master.parquet' s using (ticker)
+                    where f.dimension = ? and f.datekey < ? and {self._date_guard("f.datekey")}
+                    qualify row_number() over (
+                        partition by s.permaticker, f.calendardate order by f.datekey desc) = 1),
+                latest as (
+                    select * from f qualify row_number() over (
+                        partition by permaticker order by calendardate desc) = 1)
+                select l.permaticker, l.datekey, l.calendardate, {latest}, {earlier}
+                from latest l left join f y on y.permaticker = l.permaticker
+                    and y.calendardate = l.calendardate - interval 1 year""",
+            [dimension, day],
+        )
+
     def fundamentals(
         self, end: date, *, fields: tuple[str, ...], dimension: str = "ART"
     ) -> pa.Table:

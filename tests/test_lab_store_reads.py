@@ -7,7 +7,7 @@ import pytest
 from kinn.data import seal
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
-from tests.synthetic_raw import FIRST, LAST_OPEN
+from tests.synthetic_raw import FILING_DAY, FIRST, LAST_OPEN
 
 EVERYONE = Universe(name="t", min_sessions_prior=0)
 
@@ -52,3 +52,16 @@ def test_one_companys_events_and_the_symbol_history(built):
     assert {"permaticker", "symbol", "valid_from", "valid_to"} <= set(history.column_names)
     with pytest.raises(seal.HoldoutError):
         store.events_of(FIRST, date(2023, 11, 9), permatickers=some)
+
+
+def test_fundamentals_as_of_a_day_use_filings_made_before_it(built):
+    store = DataStore(built)
+    on_filing = store.fundamentals_as_of(FILING_DAY, fields=("equityusd",)).to_pylist()
+    after = store.fundamentals_as_of(date(2023, 11, 8), fields=("equityusd",)).to_pylist()
+    assert [r["equityusd"] for r in on_filing] == [400.0]
+    assert [r["equityusd"] for r in after] == [500.0]
+    assert after[0]["calendardate"] == date(2023, 9, 30) and after[0]["equityusd_year_ago"] is None
+    with pytest.raises(seal.HoldoutError):
+        store.fundamentals_as_of(date(2023, 11, 9), fields=("equityusd",))
+    with pytest.raises(KeyError):
+        store.fundamentals_as_of(date(2023, 11, 8), fields=("price",))

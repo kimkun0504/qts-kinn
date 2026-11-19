@@ -612,6 +612,15 @@ async function get<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+export interface ScreenData {
+  schema: string;
+  on: string;
+  first: string;
+  last: string;
+  columns: string[];
+  rows: (string | number | null)[][];
+}
+
 export const api = {
   runs: () => get<RunRow[]>("/api/runs"),
   families: () => get<Family[]>("/api/families"),
@@ -630,4 +639,5 @@ export const api = {
   stock: (symbol: string, hint?: string) =>
     get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
+  screen: (on?: string) => get<ScreenData>(`/api/screen${on ? `?on=${encodeURIComponent(on)}` : ""}`),
 };

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hmac
 import json
 import secrets
@@ -14,7 +15,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import yaml
 
-from apps.workbench import api, catalog, lab, ledgers, record, stocks
+from apps.workbench import api, catalog, lab, ledgers, record, screener, stocks
 from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
@@ -157,6 +158,18 @@ class Handler(SimpleHTTPRequestHandler):
             found = stocks.stock(store, self.runs_dir, self.lab_dir, path.rsplit("/", 1)[1],
                                  int(pick) if pick.isdigit() else None, on)  # fmt: skip
             return self._json(found, 200 if found else 404)
+        if path == "/api/screen":
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build to screen."}, 503)
+            try:
+                on = date.fromisoformat(parse_qs(urlsplit(self.path).query).get("on", [""])[0])
+            except ValueError:
+                on = None
+            try:
+                return self._json(screener.screen(store, on))
+            except ValueError as error:
+                return self._json({"error": str(error)}, 404)
         if path == "/api/ledgers":
             return self._json(ledgers.ledgers(self.runs_dir))
         if path.startswith("/api/ledgers/"):
@@ -197,8 +210,14 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _json(self, payload, status=200):
         body = json.dumps(payload, default=str).encode()
+        packed = len(body) > 32_768 and "gzip" in self.headers.get("Accept-Encoding", "")
+        if packed:
+            body = gzip.compress(body, compresslevel=5)
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
+        if packed:
+            self.send_header("Content-Encoding", "gzip")
+            self.send_header("Vary", "Accept-Encoding")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
