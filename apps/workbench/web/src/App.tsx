@@ -8,7 +8,7 @@ import { EmptyState } from "./components/ui/EmptyState";
 import { api, type Board, type Family, type LedgerHead, type RunRow } from "./lib/api";
 import { shortTime } from "./lib/format";
 import { lab, type AlgorithmRow } from "./lib/lab";
-import { href, useRoute } from "./lib/route";
+import { href, type Route, useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
 import { DataPage } from "./pages/DataPage";
@@ -57,6 +57,16 @@ function initialTheme(): Theme {
 }
 
 const COMPARE_KEY = "kinn-compare";
+
+export function pageTitle(route: Route, board: Board | null): string {
+  const named = route.name ?? "";
+  if (route.page === "strategy") return board?.rows.find((row) => row.strategy === named && !row.variant)?.title ?? named;
+  if (route.page === "stock") return named || "Stocks";
+  if (route.page === "lab") return named ? `${named} in the Lab` : "Lab";
+  if (route.page === "runs" && named) return `Run ${named}`;
+  if (route.page === "paper" && named) return `${named.replace(/_/g, " ")} paper ledger`;
+  return TITLES[route.page] ?? "Kinn Research";
+}
 
 function savedCompare(): string[] {
   try {
@@ -159,6 +169,9 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+  useEffect(() => {
+    document.title = `${pageTitle(route, board)} – Kinn Research`;
+  }, [route, board]);
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
