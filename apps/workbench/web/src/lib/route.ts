@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Page = "home" | "strategies" | "strategy" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials";
+export type Page = "home" | "strategies" | "strategy" | "stock" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials";
 export interface Route {
   page: Page;
   /** The strategy on a strategy page; the algorithm in the Lab. */
@@ -9,13 +9,15 @@ export interface Route {
   tab?: string;
 }
 
-const PAGES: Page[] = ["home", "strategies", "strategy", "studies", "lab", "runs", "paper", "compare", "parameters", "trials"];
+const PAGES: Page[] = ["home", "strategies", "strategy", "stock", "studies", "lab", "runs", "paper", "compare", "parameters", "trials"];
 
 export function parse(hash: string): Route {
   const [page, name, tab] = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
   if (!PAGES.includes(page as Page)) return { page: "home" };
   if (page === "strategy") return name ? { page: "strategy", name, tab: tab || "results" } : { page: "strategies" };
   if (page === "lab") return { page: "lab", name: name || undefined, tab: tab || undefined };
+  if (page === "paper") return { page: "paper", name: name || undefined };
+  if (page === "stock") return { page: "stock", name: name ? name.toUpperCase() : undefined, tab: tab || undefined };
   return { page: page as Page };
 }
 

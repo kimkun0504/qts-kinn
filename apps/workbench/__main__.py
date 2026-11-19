@@ -13,9 +13,10 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import yaml
 
-from apps.workbench import api, lab, record
+from apps.workbench import api, lab, ledgers, record, stocks
 from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
+from kinn.data.store import DataStore
 from kinn.lab import store as lab_store
 from kinn.run import strategies_dir
 
@@ -133,9 +134,32 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/trades/"):
             found = record.trades(self.runs_dir, path.rsplit("/", 1)[1])
             return self._json(found, 200 if found else 404)
+        if path == "/api/stocks":
+            store = self._store()
+            query = parse_qs(urlsplit(self.path).query).get("q", [""])[0]
+            return self._json(stocks.search(store, query) if store else [])
+        if path.startswith("/api/stock/"):
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build to read prices from."}, 503)
+            pick = parse_qs(urlsplit(self.path).query).get("pt", [""])[0]
+            found = stocks.stock(store, self.runs_dir, self.lab_dir, path.rsplit("/", 1)[1],
+                                 int(pick) if pick.isdigit() else None)  # fmt: skip
+            return self._json(found, 200 if found else 404)
+        if path == "/api/ledgers":
+            return self._json(ledgers.ledgers(self.runs_dir))
+        if path.startswith("/api/ledgers/"):
+            found = ledgers.ledger(self.runs_dir, path.rsplit("/", 1)[1])
+            return self._json(found, 200 if found else 404)
         if path == "/api/info":
             return self._json({"runs_dir": str(self.runs_dir)})
         return super().do_GET()
+
+    def _store(self):
+        try:
+            return DataStore(load_settings())
+        except (FileNotFoundError, KeyError, OSError, ValueError):
+            return None
 
     def _paper(self, name: str):
         """The paper ledger of a strategy that names one in its record."""

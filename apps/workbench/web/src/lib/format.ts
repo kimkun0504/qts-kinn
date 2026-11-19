@@ -61,3 +61,23 @@ export interface Stat {
   low: number | null;
   high: number | null;
 }
+
+export function compact(value: number | null | undefined, prefix = ""): string {
+  if (value == null) return "–";
+  const size = Math.abs(value);
+  const [scale, unit] = size >= 1e12 ? [1e12, "T"] : size >= 1e9 ? [1e9, "B"] : size >= 1e6 ? [1e6, "M"] : size >= 1e3 ? [1e3, "K"] : [1, ""];
+  const digits = size / scale >= 100 || !unit ? 0 : 1;
+  return (value < 0 ? MINUS : "") + prefix + (size / scale).toFixed(digits) + unit;
+}
+
+export function price(value: number | null | undefined): string {
+  if (value == null) return "–";
+  return "$" + value.toFixed(Math.abs(value) < 1 ? 4 : 2);
+}
+
+export function priceTick(value: number): string {
+  if (value === 0) return "$0";
+  const size = Math.abs(value);
+  const digits = size >= 100 ? 0 : size >= 1 ? 2 : Math.min(6, 1 - Math.floor(Math.log10(size)));
+  return "$" + value.toFixed(digits);
+}

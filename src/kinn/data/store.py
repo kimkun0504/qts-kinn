@@ -152,6 +152,23 @@ class DataStore:
             [start, end],
         )
 
+    def events_of(self, start: date, end: date, *, permatickers: list[int]) -> pa.Table:
+        """Sharadar EVENTS for the given companies only (what the Workbench's stock page reads)."""
+        self._check(start, end, "events")
+        return self._query(
+            f"""select s.permaticker, e.date, e.eventcodes
+                from '{self.root}/sharadar/events.parquet' e
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where e.date between ? and ? and {self._date_guard("e.date")}
+                  and s.permaticker in (select unnest(?))
+                order by e.date, s.permaticker""",
+            [start, end, permatickers],
+        )
+
+    def symbol_history(self) -> pa.Table:
+        """Every symbol each company traded under, with the dates it held it."""
+        return self._query(f"select * from '{self.table_path('symbol_history')}'")
+
     def input_id(self, name: str) -> str:
         """The version of a versioned input this store reads."""
         if name == "form8k":  # read from the data build, so the build pins it

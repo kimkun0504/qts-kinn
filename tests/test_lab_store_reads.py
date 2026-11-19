@@ -39,3 +39,16 @@ def test_holdout_dates_are_refused(built, read):
             store.universe_members(FIRST, date(2023, 11, 9), EVERYONE)
         else:
             store.panel_of(FIRST, date(2023, 11, 9), permatickers=[1], columns="date")
+
+
+def test_one_companys_events_and_the_symbol_history(built):
+    store = DataStore(built)
+    every = store.events(FIRST, LAST_OPEN)
+    some = sorted(set(every["permaticker"].to_pylist()))[:1]
+    mine = store.events_of(FIRST, LAST_OPEN, permatickers=some)
+    assert mine.num_rows and set(mine["permaticker"].to_pylist()) == set(some)
+    assert mine.num_rows == sum(p == some[0] for p in every["permaticker"].to_pylist())
+    history = store.symbol_history()
+    assert {"permaticker", "symbol", "valid_from", "valid_to"} <= set(history.column_names)
+    with pytest.raises(seal.HoldoutError):
+        store.events_of(FIRST, date(2023, 11, 9), permatickers=some)

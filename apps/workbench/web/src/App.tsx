@@ -9,6 +9,7 @@ import { Home } from "./pages/Home";
 import { PaperPage } from "./pages/PaperPage";
 import { Parameters } from "./pages/Parameters";
 import { type KindFilter, Runs } from "./pages/Runs";
+import { StockPage } from "./pages/StockPage";
 import { Strategies } from "./pages/Strategies";
 import { StrategyPage } from "./pages/StrategyPage";
 import { Studies } from "./pages/Studies";
@@ -17,7 +18,7 @@ import { Trials } from "./pages/Trials";
 // The Lab carries the code editor; it loads when first opened, so the other pages stay light.
 const Lab = lazy(() => import("./pages/Lab").then((module) => ({ default: module.Lab })));
 
-const TITLES = { home: "Home", strategies: "Strategies", strategy: null, studies: "Studies", lab: "Lab", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
+const TITLES = { home: "Home", strategies: "Strategies", strategy: null, stock: null, studies: "Studies", lab: "Lab", runs: "Runs", paper: "Paper trading", compare: "Compare", parameters: "Parameters", trials: "Trials and overfitting" };
 type Theme = "dark" | "light";
 
 // Light unless the owner picked dark. The key is new so the old app's auto-saved "dark" is ignored.
@@ -45,6 +46,7 @@ export default function App() {
   const [kind, setKind] = useState<KindFilter>("all");
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [version, setVersion] = useState(0);
+  const [eventLedgers, setEventLedgers] = useState(0);
 
   const load = useCallback(() => {
     clearRunCache();
@@ -60,6 +62,12 @@ export default function App() {
       .catch(() => setError("The run store could not be read. Is the Workbench server running, and restarted since the last update?"));
   }, []);
   useEffect(load, [load]);
+  useEffect(() => {
+    api
+      .ledgers()
+      .then((heads) => setEventLedgers(heads.length))
+      .catch(() => setEventLedgers(0));
+  }, [version]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
@@ -83,13 +91,13 @@ export default function App() {
   const openLab = useCallback((name?: string, runId?: string) => go({ page: "lab", name, tab: runId }, { scroll: false }), [go]);
   const toggleCompare = (run: RunRow) =>
     setCompare((current) => (current.includes(run.run_id) ? current.filter((id) => id !== run.run_id) : current.length < 4 ? [...current, run.run_id] : current));
-  const ledgers = board?.rows.filter((row) => row.paper).length ?? 0;
+  const ledgers = (board?.rows.filter((row) => row.paper).length ?? 0) + eventLedgers;
 
   return (
     <AppShell
       page={route.page}
       onNavigate={(page) => go({ page })}
-      title={route.page === "lab" && route.name ? null : TITLES[route.page]}
+      title={route.page === "lab" && route.name ? null : route.page === "stock" && !route.name ? "Stocks" : TITLES[route.page]}
       counts={{
         strategies: board ? board.rows.filter((row) => !row.variant).length : undefined,
         runs: live.length || undefined,
@@ -115,10 +123,12 @@ export default function App() {
         <Strategies board={board} onOpen={openStrategy} />
       ) : route.page === "strategy" && route.name ? (
         <StrategyPage key={`${route.name}-${version}`} name={route.name} tab={route.tab ?? "results"} runs={live} onTab={(tab) => openStrategy(route.name as string, tab)} onBack={() => go({ page: "strategies" })} />
+      ) : route.page === "stock" ? (
+        <StockPage symbol={route.name} permaticker={route.tab} onOpen={(symbol, permaticker) => go({ page: "stock", name: symbol, tab: permaticker ? String(permaticker) : undefined })} />
       ) : route.page === "studies" ? (
         <Studies key={version} onOpen={openStrategy} />
       ) : route.page === "paper" ? (
-        <PaperPage key={version} board={board} />
+        <PaperPage key={version} board={board} name={route.name} onOpen={(name) => go({ page: "paper", name }, { scroll: false })} />
       ) : route.page === "runs" ? (
         <Runs runs={live} selected={selected} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
       ) : route.page === "compare" ? (
