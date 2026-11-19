@@ -25,7 +25,7 @@ record:
     - No after-hours quotes on disk, so the price a small order would get is assumed.
     - Borrow and short-sale rules after hours at a retail broker are not checked; single shorts lost 20% to 35% overnight.
   waiting:
-    - "After-hours short: say whether to follow it on paper, recording whether IBKR shows shares to borrow and at what fee on each signal night."
+    - "After-hours short (on paper since 2026-11-19): run tools/owner/paper_after_hours.py each morning after 09:35, and record what IBKR shows to borrow on each signal with --borrow."
   evidence:
     - {when: 2026-11-17, title: Long side, kind: found, text: "Up 5% to 15% after hours kept rising: +0.9% to the next open, +2.5% in 15 sessions (2010 to 2017). Five cells met the bar."}
     - {when: 2026-11-17, title: Long side tested, kind: failed, text: "None passed both. Mid to the next open worked in 14 of 15 years to 2019 and lost in 2020 to 2022."}

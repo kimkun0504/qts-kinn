@@ -1,4 +1,5 @@
 import { BoardTable } from "../components/BoardTable";
+import { LedgerTable } from "../components/LedgerTable";
 import { ProfitChart } from "../components/charts/ProfitChart";
 import { bookName, bookTotal, Orders, Positions } from "../components/PaperPanel";
 import { Card, Note, Stat } from "../components/ui/Card";
@@ -37,6 +38,7 @@ export function Home({ board, onOpen }: HomeProps) {
         </Card>
         {ledger && <PaperCard row={ledger} onOpen={onOpen} />}
       </div>
+      <LedgerTable />
       <Card title="Everything tested" id="record">
         <BoardTable board={board} onOpen={onOpen} />
         <Note>Trials are every cell or run counted against the idea's family. Results from research scripts are shown beside registered runs.</Note>
