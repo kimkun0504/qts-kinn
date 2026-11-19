@@ -23,7 +23,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Runs | every run with a search box, filters (kind, period, strategy) and sortable columns; the selected run (in the address, `#/runs/<run id>`) with its tearsheet, event study, tick study or book |
 | Compare | up to four backtests overlaid, with a side-by-side table, picked on the page or in the runs table; the choice is kept and in the address (`#/compare/<id>,<id>`) |
 | Parameters | a map of any result across one or two settings that differ between runs |
-| Trials | trial counts by agent, Deflated Sharpe, probability of backtest overfitting |
+| Trials | every family in a sortable table (trials charged, counted runs, best and deflated Sharpe, probability of backtest overfitting), one family's detail at a time, and the Lab algorithms' trial counts |
 | Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, and any two runs compared |
 | Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
 
