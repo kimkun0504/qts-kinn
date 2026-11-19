@@ -171,3 +171,8 @@ development plan passes native source/hash validation. No quote file
 is present in its requested raw directory at the latest check, so no
 real snapshot index or primary run has been produced. Owner acquisition
 remains separate. No signal, cost, risk or fill rule was changed.
+
+Acquisition update (2026-11-19): all planned files arrived; the separate
+index built as `2738076d4b`. Both frozen coverage gates failed. See
+the strategy REPORT. No primary or validation performance run was used.
+The adapter work is complete; this research definition is parked.

@@ -1,3 +1,8 @@
+Status 2026-11-19: acquisition completed and the snapshot index was built.
+Both frozen coverage gates failed. The candidate is parked before its
+primary study; no further download is requested for this experiment.
+Original instructions below remain as provenance.
+
 # Owner actions for the frozen bid-replenishment experiment
 
 The primary quote rule is committed. The completed price-only

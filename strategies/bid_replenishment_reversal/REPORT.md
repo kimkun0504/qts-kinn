@@ -1,6 +1,6 @@
 # Bid replenishment reversal
 
-## Status: primary untested; adapter implemented, quote acquisition pending
+## Verdict: park — frozen quote-coverage gate failed
 
 The price-only control establishes a sufficient candidate pool
 for the registered quote experiment: 1,933 events on 937 dates,
@@ -181,3 +181,76 @@ signal, dropping difficult events or selecting a different period.
 Verification: the full suite passed (710 tests), with Ruff lint/format
 checks and all five import contracts passing. These are software checks,
 not added research trials or performance observations.
+
+
+## Final acquisition and coverage verdict (2026-11-19)
+
+Every planned file arrived. From clean commit `65cb31c`, the authorized
+separate builder published input `2738076d4b` (`nbbo-replenishment-1`)
+against data build `447e58e098`. Every control identity and first signal
+minute is retained. The input metadata fingerprints all raw sources,
+plan/control artifacts and parser version. Pairs SHA-256:
+`8695dd2b7a90fafb682e6dbd89ad886400b42f30872c4d366a7ca38a96b0ec60`.
+GPT changed no raw file and performed no bar/panel rebuild.
+
+| Window | Parents | Valid pairs | Coverage | Frozen minimum | Decision |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Full development | 1933 | 725 | 37.51% | 95% | Fail |
+| 2013–2016 | 406 | 180 | 44.33% | 95% | Fail |
+
+| Year | Parents | Valid pairs | Coverage |
+| --- | ---: | ---: | ---: |
+| 2003 | 15 | 0 | 0.00% |
+| 2004 | 77 | 3 | 3.90% |
+| 2005 | 51 | 9 | 17.65% |
+| 2006 | 49 | 17 | 34.69% |
+| 2007 | 171 | 69 | 40.35% |
+| 2008 | 784 | 290 | 36.99% |
+| 2009 | 167 | 65 | 38.92% |
+| 2010 | 43 | 19 | 44.19% |
+| 2011 | 89 | 44 | 49.44% |
+| 2012 | 81 | 29 | 35.80% |
+| 2013 | 52 | 23 | 44.23% |
+| 2014 | 95 | 39 | 41.05% |
+| 2015 | 129 | 57 | 44.19% |
+| 2016 | 130 | 61 | 46.92% |
+
+Unavailable targets include 868 stale, 611 conflicting, 109 missing
+and 63 invalid observations. These are nonexclusive target counts,
+not disjoint event counts. Conflicting latest timestamps remain
+unavailable as registered; no sequence-field or favorable-quote
+tie-break was added. Freshness remains one second. File presence
+does not establish valid-pair coverage.
+
+The preregistered missingness diagnostic joins the saved control's
+r_120 rows to this input. These are control cohorts, not the
+replenishment primary or a newly eligible strategy. Saved event
+fees and slippage are return fractions; net subtracts them directly.
+
+| Control window / quote availability | Events | Dates | Mean net, 1× | Mean net, 2× |
+| --- | ---: | ---: | ---: | ---: |
+| Full / available | 725 | 472 | +1.05% | +0.78% |
+| Full / unavailable | 1208 | 680 | +0.52% | +0.18% |
+| 2013–2016 / available | 180 | 151 | +1.02% | +0.79% |
+| 2013–2016 / unavailable | 226 | 181 | −0.59% | −0.87% |
+
+The performance diagnostics derive solely from control run
+`20261119T043722Z_gpt_bid_replenishment_reversal_91e8fd86` and its
+saved event rows. Coverage numbers are input/acquisition metadata,
+not performance results. Availability alone selects a different
+control-return distribution, especially in later development;
+discarding unavailable parents would conceal that selection.
+
+**Park before the primary study:** both mandatory input gates fail.
+No primary returns are needed to reject eligibility. No primary
+performance run, portfolio, validation plan or validation performance
+run was made. Exact primary/control return matching is therefore
+not applicable. No timestamp policy, threshold, freshness or period
+was relaxed. The experiment used one empirical trial, the control;
+`intraday_rebound` remains at 112 counted/declared trials here.
+
+This is insufficient coverage for the frozen experiment, not proof
+that replenishment has negative expected returns. The acquired index
+remains available for audit. The signal is not rescued by changing
+its observation rules after seeing coverage. Earlier pending-status
+paragraphs describe the chronology; acquisition is now complete.

@@ -1,5 +1,5 @@
 name: bid_replenishment_reversal
-status: prepared
+status: parked
 engine: intraday
 universe: liquid domestic common stocks at a first relative selloff event
 cost_calibration: ibkr_pro_tiered
@@ -10,12 +10,10 @@ record:
   title: Bid replenishment after an early relative selloff
   idea: Test rebuilding displayed bid support at a fixed price trigger
   horizon: Two hours after first fill
-  verdict: quote data and adapter pending
-  summary: >-
-    A registered price-only control defines every quote window.
-    The primary requires a fixed transition in pre-decision
-    bid size and bid/ask size ratios.
+  verdict: 'park: frozen quote coverage failed before primary study'
+  summary: Every planned file arrived. The snapshot index failed both valid-pair coverage gates.
+    No primary performance or validation run was used.
   weaknesses:
-    - Best-quote size is transient and does not prove signed demand or executable depth.
-    - The native quote input and historical data coverage are not yet available.
-    - Execution remains the normal bar-based proxy.
+  - Best-quote size is transient and does not prove signed demand or executable depth.
+  - Valid-pair coverage is insufficient under the frozen freshness and timestamp rules.
+  - Execution remains the normal bar-based proxy.
