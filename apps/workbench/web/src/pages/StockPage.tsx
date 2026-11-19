@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { movingAverage, type PriceMarker, PriceChart } from "../components/charts/PriceChart";
 import { CsvButton } from "../components/CsvButton";
+import { Financials } from "../components/Financials";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -227,7 +228,7 @@ function Filings({ page, onPick }: { page: StockPageData; onPick: (iso: string) 
   );
 }
 
-function Stock({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string, permaticker?: number) => void }) {
+function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen: (symbol: string, permaticker?: number) => void }) {
   const data = useMemo(() => adjust(page), [page]);
   const n = data.date.length;
   const [range, setRange] = useState<Range>("all");
@@ -358,6 +359,7 @@ function Stock({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string,
           {zoomed && <Button onClick={() => preset("all")}>Show all</Button>}
         </div>
       </Card>
+      {page.financials && <Financials data={page.financials} on={on} />}
       <Card
         title="Trades in this stock"
         aside={
@@ -429,5 +431,5 @@ export function StockPage({ symbol, permaticker, onOpen }: { symbol?: string; pe
       </>
     );
   if (!data) return <p className="text-ink-2">Loading {symbol}…</p>;
-  return <Stock key={key} page={data} onOpen={onOpen} />;
+  return <Stock key={key} page={data} on={permaticker && /^\d{4}-\d{2}-\d{2}$/.test(permaticker) ? permaticker : undefined} onOpen={onOpen} />;
 }

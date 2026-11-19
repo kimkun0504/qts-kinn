@@ -592,6 +592,30 @@ export interface StockPageData extends StockHit {
   };
   events: { date: string; codes: string; results: boolean }[];
   trades: StockTrade[];
+  financials?: Financials;
+}
+
+export interface FinancialPeriod {
+  period: string;
+  filed: string | null;
+  revenueusd: number | null;
+  gp: number | null;
+  opinc: number | null;
+  netinccmnusd: number | null;
+  epsusd: number | null;
+  ncfo: number | null;
+  capex: number | null;
+  fcf: number | null;
+  cashnequsd: number | null;
+  debtusd: number | null;
+  equityusd: number | null;
+  sharesbas: number | null;
+}
+
+export interface Financials {
+  currency: string;
+  quarterly: FinancialPeriod[];
+  trailing: FinancialPeriod[];
 }
 
 export interface DataCatalog {

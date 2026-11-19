@@ -1,5 +1,6 @@
+import itertools
 import json
-from datetime import date
+from datetime import date, timedelta
 
 import numpy as np
 import pyarrow as pa
@@ -8,6 +9,8 @@ import pytest
 
 from apps.workbench import stocks
 from tests.lab_fake import FakeStore, Stock, business_days, walk
+
+BUILDS = itertools.count()
 
 
 class StockStore(FakeStore):
@@ -19,10 +22,23 @@ class StockStore(FakeStore):
             schema=pa.schema([("permaticker", pa.int64()), ("symbol", pa.string()),
                               ("valid_from", pa.date32()), ("valid_to", pa.date32())]),
         )  # fmt: skip
-        self.build_id = f"stock-{id(self)}"
+        self.build_id = f"stock-{next(BUILDS)}"
 
     def symbol_history(self) -> pa.Table:
         return self.history
+
+    def fundamentals_of(self, permaticker, *, fields, dimension) -> pa.Table:
+        rows = [
+            {"calendardate": filed - timedelta(days=35), "datekey": filed,
+             **{f: values.get(f) for f in fields}}
+            for perm, filed, values in self.fundamental_rows
+            if perm == permaticker and values.get("dimension") == dimension
+        ]  # fmt: skip
+        schema = pa.schema(
+            [("calendardate", pa.date32()), ("datekey", pa.date32())]
+            + [(f, pa.float64()) for f in fields]
+        )
+        return pa.Table.from_pylist(rows, schema=schema)
 
     def events_of(self, start, end, *, permatickers) -> pa.Table:
         return self._sql(
@@ -46,6 +62,11 @@ def store():
     return StockStore(
         stocks_,
         events=[(date(2014, 5, 1), "ABCD", "22|91"), (date(2014, 8, 1), "ABCD", "13")],
+        fundamentals=[
+            ("ABCD", date(2014, 5, 1), {"dimension": "ARQ", "revenueusd": 1e8, "epsusd": 0.25}),
+            ("ABCD", date(2014, 8, 1), {"dimension": "ARQ", "revenueusd": 1.2e8}),
+            ("ABCD", date(2014, 8, 1), {"dimension": "ART", "revenueusd": 4.4e8}),
+        ],
         history=[(1001, "ABCD", date(2013, 1, 1), date(2015, 12, 31)),
                  (1001, "OLDX", date(2010, 1, 1), date(2012, 12, 31))],
     )  # fmt: skip
@@ -118,3 +139,15 @@ def test_a_date_picks_the_company_that_held_the_symbol_then(tmp_path):
     assert then["permaticker"] == 1002 and then["others"][0]["permaticker"] == 1001
     chosen = stocks.stock(store, runs, lab, "NEWX", permaticker=1002, on=date(2015, 1, 2))
     assert chosen["ticker"] == "ZZZZ"
+
+
+def test_the_financials_by_quarter_and_trailing_year(store, tmp_path):
+    page = stocks.stock(store, tmp_path / "runs", tmp_path / "lab", "ABCD")
+    money = page["financials"]
+    assert money["currency"] == "USD"
+    assert [q["revenueusd"] for q in money["quarterly"]] == [1e8, 1.2e8]
+    first = money["quarterly"][0]
+    assert first["epsusd"] == 0.25 and first["filed"] == "2014-05-01"
+    assert [q["revenueusd"] for q in money["trailing"]] == [4.4e8]
+    empty = stocks.stock(store, tmp_path / "runs", tmp_path / "lab", "ACME")["financials"]
+    assert empty["quarterly"] == [] and empty["trailing"] == []

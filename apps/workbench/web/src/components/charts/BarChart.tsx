@@ -9,11 +9,13 @@ interface BarChartProps {
   marked?: number[];
   height?: number;
   width?: number;
+  labelEvery?: number;
+  neutral?: boolean;
 }
 
 const PAD = { left: 64, right: 16, top: 14, bottom: 30 };
 
-export function BarChart({ title, labels, values, format, marked = [], height = 220, width: W = 780 }: BarChartProps) {
+export function BarChart({ title, labels, values, format, marked = [], height = 220, width: W = 780, labelEvery = 1, neutral = false }: BarChartProps) {
   const [hover, setHover] = useState<number | null>(null);
   const finite = values.filter((v): v is number => v != null && Number.isFinite(v));
   if (!finite.length) return <p className="m-0 py-6 text-ink-2">Nothing to show.</p>;
@@ -43,9 +45,19 @@ export function BarChart({ title, labels, values, format, marked = [], height = 
           return (
             <g key={labels[i]} onMouseEnter={() => setHover(i)}>
               <rect x={PAD.left + step * i} y={PAD.top} width={step} height={height - PAD.top - PAD.bottom} fill="transparent" />
-              {v != null && <rect x={x} y={top} width={width} height={Math.max(1, bottom - top)} rx="2" fill={v >= 0 ? "var(--gain)" : "var(--loss)"} opacity={marked.length && !marked.includes(i) ? 0.55 : 1} />}
+              {v != null && (
+                <rect
+                  x={x}
+                  y={top}
+                  width={width}
+                  height={Math.max(1, bottom - top)}
+                  rx="2"
+                  fill={v < 0 ? "var(--loss)" : neutral ? "var(--series-1)" : "var(--gain)"}
+                  opacity={marked.length && !marked.includes(i) ? 0.55 : 1}
+                />
+              )}
               <text x={x + width / 2} y={height - 10} textAnchor="middle" fill={marked.includes(i) ? "var(--ink)" : "var(--ink-2)"} fontWeight={marked.includes(i) ? 600 : 400}>
-                {labels[i]}
+                {(values.length - 1 - i) % labelEvery === 0 ? labels[i] : ""}
               </text>
             </g>
           );

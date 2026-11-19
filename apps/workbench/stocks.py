@@ -24,6 +24,11 @@ FIRST = date(2000, 1, 1)
 LAST = HOLDOUT_START - timedelta(days=1)
 COLUMNS = "date, symbol, open, high, low, close, volume, prev_close, marketcap_prev, adv20_prev"
 RESULTS_CODE = "22"
+FINANCIALS = (
+    "revenueusd", "gp", "opinc", "netinccmnusd", "epsusd", "ncfo", "capex", "fcf",
+    "cashnequsd", "debtusd", "equityusd", "sharesbas",
+)  # fmt: skip
+PERIODS = 40
 MAX_TRADES = 1_000
 
 
@@ -39,6 +44,10 @@ class Store(Protocol):
     ) -> pa.Table: ...
 
     def events_of(self, start: date, end: date, *, permatickers: list[int]) -> pa.Table: ...
+
+    def fundamentals_of(
+        self, permaticker: int, *, fields: tuple[str, ...], dimension: str
+    ) -> pa.Table: ...
 
 
 @dataclass
@@ -277,6 +286,18 @@ def paper_trades(runs_dir: Path, symbols: list[str]) -> list[dict]:
     return out
 
 
+def financials(store: Store, perm: int, currency: str | None) -> dict:
+    periods = {}
+    for name, dimension in (("quarterly", "ARQ"), ("trailing", "ART")):
+        rows = store.fundamentals_of(perm, fields=FINANCIALS, dimension=dimension).to_pylist()
+        periods[name] = [
+            {"period": _iso(r["calendardate"]), "filed": _iso(r["datekey"]),
+             **{f: _number(r[f], 6) for f in FINANCIALS}}
+            for r in rows[-PERIODS:]
+        ]  # fmt: skip
+    return {"currency": currency or "USD", **periods}
+
+
 def held(idx: Index, perm: int, symbol: str, on: date) -> bool:
     return any(
         h["symbol"].upper() == symbol.upper()
@@ -319,4 +340,5 @@ def stock(store: Store, runs_dir: Path, lab_dir: Path, symbol: str,
                     "results": RESULTS_CODE in (e["eventcodes"] or "").split("|")}
                    for e in events],
         "trades": trades,
+        "financials": financials(store, chosen, company.get("currency")),
     }  # fmt: skip

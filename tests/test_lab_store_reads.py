@@ -65,3 +65,11 @@ def test_fundamentals_as_of_a_day_use_filings_made_before_it(built):
         store.fundamentals_as_of(date(2023, 11, 9), fields=("equityusd",))
     with pytest.raises(KeyError):
         store.fundamentals_as_of(date(2023, 11, 8), fields=("price",))
+
+
+def test_one_companys_fundamentals_stop_at_the_seal(built):
+    store = DataStore(built)
+    perm = next(r["permaticker"] for r in store.securities().to_pylist() if r["ticker"] == "AAA")
+    rows = store.fundamentals_of(perm, fields=("equityusd",), dimension="ART").to_pylist()
+    assert [r["equityusd"] for r in rows] == [400.0, 500.0]
+    assert store.fundamentals_of(perm, fields=("equityusd",), dimension="ARQ").num_rows == 0

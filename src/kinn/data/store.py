@@ -368,6 +368,24 @@ class DataStore:
             [dimension, day],
         )
 
+    def fundamentals_of(
+        self, permaticker: int, *, fields: tuple[str, ...], dimension: str = "ARQ"
+    ) -> pa.Table:
+        unknown = set(fields) - set(SF1_FIELDS)
+        if unknown or dimension not in SF1_DIMENSIONS:
+            raise KeyError(f"unknown fundamentals: {sorted(unknown)} / {dimension}")
+        columns = ", ".join(f"f.{name}" for name in fields)
+        return self._query(
+            f"""select f.calendardate, f.datekey, {columns}
+                from '{self.root}/sharadar/sf1.parquet' f
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where s.permaticker = ? and f.dimension = ? and {self._date_guard("f.datekey")}
+                qualify row_number() over (
+                    partition by f.calendardate order by f.datekey desc) = 1
+                order by f.calendardate""",
+            [permaticker, dimension],
+        )
+
     def fundamentals(
         self, end: date, *, fields: tuple[str, ...], dimension: str = "ART"
     ) -> pa.Table:

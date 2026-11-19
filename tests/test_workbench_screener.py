@@ -1,3 +1,4 @@
+import itertools
 import math
 from datetime import date
 
@@ -8,6 +9,8 @@ import pytest
 from apps.workbench import screener
 from tests.lab_fake import FakeStore, Stock, business_days
 
+BUILDS = itertools.count()
+
 
 class ScreenStore(FakeStore):
     def __init__(self, *args, books=(), **kwargs):
@@ -15,7 +18,7 @@ class ScreenStore(FakeStore):
         self.bars = self.__dict__.pop("panel")
         self.books = list(books)
         self.asked: list[date] = []
-        self.build_id = f"screen-{id(self)}"
+        self.build_id = f"screen-{next(BUILDS)}"
 
     def sessions(self, start, end):
         self.asked.append(end)
