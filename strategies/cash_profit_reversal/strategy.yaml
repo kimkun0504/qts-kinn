@@ -1,0 +1,22 @@
+name: cash_profit_reversal
+status: prepared
+engine: intraday
+universe: liquid domestic common stocks with a coherent fresh as-reported financial pair
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Intraday reversal with reported operating profit and cash generation
+  idea: Test positive operating-income and operating-cash-flow signs in one public ART row
+  horizon: Two hours after first fill
+  verdict: untested; native snapshot authorization pending
+  summary: >-
+    Both variants require a coherent available fresh ART pair. The primary
+    adds positive operating-income and operating-cash-flow signs.
+    No private loader, independent field carry or earnings surprise is used.
+  weaknesses:
+    - Native intraday snapshot support is pending and contract tests do not certify it.
+    - Accounting and working-capital effects can distort the economic interpretation.
+    - Availability selects a conditional population and the source uses vendor vintage semantics.
+    - Bar execution and extensive prior search remain limitations.

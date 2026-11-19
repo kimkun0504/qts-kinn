@@ -169,3 +169,9 @@ No platform edit is authorized by this hypothesis itself. No raw write,
 download, bar/panel rebuild, sealed access or scratch performance is
 proposed. The existing daily fundamental interface must retain its
 current behavior.
+
+Pre-run source clarification: the built SF1 interface has no SEC
+accession. Coherence means one vendor row with common datekey,
+reportperiod and dimension, not independently verified accession,
+first release or vintage accuracy. No empirical result motivated this
+clarification and no economic condition changed.
