@@ -15,12 +15,12 @@ import pyarrow as pa
 from apps.workbench.stocks import FIRST, LAST
 
 YEAR = 252
-RETURNS = {"ret_1m": 21, "ret_3m": 63, "ret_6m": 126, "ret_1y": YEAR}
+RETURNS = {"ret_1d": 1, "ret_1m": 21, "ret_3m": 63, "ret_6m": 126, "ret_1y": YEAR}
 FUNDAMENTALS = ("revenueusd", "netinccmnusd", "equityusd", "fcf")
 STALE_FUNDAMENTALS = timedelta(days=500)
 COLUMNS = (
     "symbol", "permaticker", "name", "sector", "industry", "category", "exchange", "close",
-    "market_cap", "adv20", "ret_1m", "ret_3m", "ret_6m", "ret_1y", "from_high", "vol_60",
+    "market_cap", "adv20", "ret_1d", "ret_1m", "ret_3m", "ret_6m", "ret_1y", "from_high", "vol_60",
     "pe", "ps", "pb", "fcf_yield", "revenue", "revenue_growth", "net_income", "filed",
 )  # fmt: skip
 CACHE = 6

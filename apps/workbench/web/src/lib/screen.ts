@@ -1,7 +1,7 @@
 import type { ScreenData } from "./api";
 
 export type ScreenKey =
-  "close" | "market_cap" | "adv20" | "ret_1m" | "ret_3m" | "ret_6m" | "ret_1y" | "from_high" | "vol_60" | "pe" | "ps" | "pb" | "fcf_yield" | "revenue" | "revenue_growth" | "net_income";
+  "close" | "market_cap" | "adv20" | "ret_1d" | "ret_1m" | "ret_3m" | "ret_6m" | "ret_1y" | "from_high" | "vol_60" | "pe" | "ps" | "pb" | "fcf_yield" | "revenue" | "revenue_growth" | "net_income";
 
 export type FieldKind = "money" | "percent" | "ratio" | "price";
 
@@ -15,6 +15,7 @@ export const FIELDS: ScreenField[] = [
   { key: "market_cap", label: "Market value", kind: "money" },
   { key: "adv20", label: "Dollar volume, 20 days", kind: "money" },
   { key: "close", label: "Price", kind: "price" },
+  { key: "ret_1d", label: "Return, 1 day", kind: "percent" },
   { key: "ret_1m", label: "Return, 1 month", kind: "percent" },
   { key: "ret_3m", label: "Return, 3 months", kind: "percent" },
   { key: "ret_6m", label: "Return, 6 months", kind: "percent" },
@@ -68,6 +69,7 @@ export interface ScreenRow {
   close: number | null;
   market_cap: number | null;
   adv20: number | null;
+  ret_1d: number | null;
   ret_1m: number | null;
   ret_3m: number | null;
   ret_6m: number | null;

@@ -98,6 +98,7 @@ function columns(view: View, on: string): Column<ScreenRow>[] {
     return [
       ...head,
       numeric("close"),
+      numeric("ret_1d", "1 day"),
       numeric("ret_1m", "1 month"),
       numeric("ret_3m", "3 months"),
       numeric("ret_6m", "6 months"),

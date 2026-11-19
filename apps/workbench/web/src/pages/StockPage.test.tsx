@@ -22,7 +22,10 @@ const stock: StockPageData = {
   delisted: true,
   location: "Texas",
   siccode: "7372",
-  symbols: [{ symbol: "OLDX", from: "2010-01-01", to: "2012-12-31" }, { symbol: "ABCD", from: "2013-01-01", to: "2014-01-30" }],
+  symbols: [
+    { symbol: "OLDX", from: "2010-01-01", to: "2012-12-31" },
+    { symbol: "ABCD", from: "2013-01-01", to: "2014-01-30" },
+  ],
   others: [],
   sealed_from: "2023-11-09",
   prices: {
@@ -39,8 +42,38 @@ const stock: StockPageData = {
   },
   events: [{ date: "2014-01-10", codes: "22|91", results: true }],
   trades: [
-    { source: "lab", id: "run1", label: "mine", detail: "taken by the book", kind: "lab", symbol: "ABCD", signal_day: "2014-01-09", entry_day: "2014-01-10", entry: 100, exit_day: "2014-01-20", exit: 52, net: 0.04, note: "hold", side: "long" },
-    { source: "run", id: "run2", label: "earnings_drift", detail: "research", kind: "swing", symbol: "ABCD", signal_day: null, entry_day: "2014-01-05", entry: 100, exit_day: null, exit: 104, net: -0.01, note: "time", side: "long" },
+    {
+      source: "lab",
+      id: "run1",
+      label: "mine",
+      detail: "taken by the book",
+      kind: "lab",
+      symbol: "ABCD",
+      signal_day: "2014-01-09",
+      entry_day: "2014-01-10",
+      entry: 100,
+      exit_day: "2014-01-20",
+      exit: 52,
+      net: 0.04,
+      note: "hold",
+      side: "long",
+    },
+    {
+      source: "run",
+      id: "run2",
+      label: "earnings_drift",
+      detail: "research",
+      kind: "swing",
+      symbol: "ABCD",
+      signal_day: null,
+      entry_day: "2014-01-05",
+      entry: 100,
+      exit_day: null,
+      exit: 104,
+      net: -0.01,
+      note: "time",
+      side: "long",
+    },
   ],
 };
 
@@ -71,5 +104,14 @@ describe("the stock page", () => {
     fireEvent.click(screen.getByText("Lab 1"));
     expect(screen.queryByRole("link", { name: "earnings_drift" })).toBeNull();
     expect(screen.getByRole("link", { name: "mine" })).toBeTruthy();
+  });
+
+  it("adds the stock to the watchlist and takes it off again", async () => {
+    render(<StockPage symbol="ABCD" onOpen={() => {}} />);
+    const add = await screen.findByRole("button", { name: "Add to the watchlist" });
+    fireEvent.click(add);
+    expect(JSON.parse(localStorage.getItem("kinn-watchlist") ?? "[]")).toEqual([{ ticker: "ABCD", name: "ABCD INC", permaticker: 1001 }]);
+    fireEvent.click(screen.getByRole("button", { name: "On the watchlist" }));
+    expect(JSON.parse(localStorage.getItem("kinn-watchlist") ?? "[]")).toEqual([]);
   });
 });

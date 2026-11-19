@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { movingAverage, type PriceMarker, PriceChart } from "../components/charts/PriceChart";
 import { CsvButton } from "../components/CsvButton";
 import { Financials } from "../components/Financials";
+import { StocksLanding, useWatchlist } from "../components/StocksLanding";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -15,6 +16,7 @@ import { compact, day, int, pct, price, priceTick } from "../lib/format";
 import { href } from "../lib/route";
 import { sortRows, useSort } from "../lib/sort";
 import { useLoad } from "../lib/useLoad";
+import { toggleWatch } from "../lib/watchlist";
 
 type Range = "3m" | "1y" | "3y" | "5y" | "all";
 type Source = "all" | StockTrade["source"];
@@ -69,20 +71,32 @@ function sourceLink(t: StockTrade): string | null {
 function Landing({ onOpen }: { onOpen: (symbol: string, permaticker?: number) => void }) {
   const recent = recentStocks();
   return (
-    <Card title="Find a stock">
-      <StockSearch autoFocus onPick={(hit) => onOpen(hit.ticker ?? "", hit.permaticker)} />
-      {recent.length > 0 && (
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 pt-1">
-          <span className="text-[13px] text-ink-3">Recently viewed</span>
-          {recent.map((r) => (
-            <a key={r.permaticker} href={href({ page: "stock", name: r.ticker, tab: String(r.permaticker) })} className="text-sm font-semibold text-ink no-underline hover:underline">
-              {r.ticker}
-            </a>
-          ))}
-        </div>
-      )}
-      <Note>Daily prices from the research data, split-adjusted, up to the seal on 9 Nov 2023. Every trade a strategy run, a Lab run or a paper ledger made in the stock is listed and marked on the chart.</Note>
-    </Card>
+    <div className="flex flex-col gap-4">
+      <Card title="Find a stock">
+        <StockSearch autoFocus onPick={(hit) => onOpen(hit.ticker ?? "", hit.permaticker)} />
+        {recent.length > 0 && (
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 pt-1">
+            <span className="text-[13px] text-ink-3">Recently viewed</span>
+            {recent.map((r) => (
+              <a key={r.permaticker} href={href({ page: "stock", name: r.ticker, tab: String(r.permaticker) })} className="text-sm font-semibold text-ink no-underline hover:underline">
+                {r.ticker}
+              </a>
+            ))}
+          </div>
+        )}
+      </Card>
+      <StocksLanding />
+    </div>
+  );
+}
+
+function WatchButton({ page }: { page: StockPageData }) {
+  const list = useWatchlist();
+  const watched = list.some((w) => w.permaticker === page.permaticker);
+  return (
+    <Button aria-pressed={watched} onClick={() => toggleWatch({ ticker: page.ticker ?? page.query, name: page.name, permaticker: page.permaticker })}>
+      {watched ? "On the watchlist" : "Add to the watchlist"}
+    </Button>
   );
 }
 
@@ -95,6 +109,9 @@ function Header({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string
           <h1 className="m-0 text-[28px] leading-tight font-semibold tracking-tight">{page.ticker}</h1>
           <span className="text-lg text-ink-2">{page.name}</span>
           {page.delisted ? <Badge tone="muted">{`Delisted ${day(page.last)}`}</Badge> : <Badge tone="ok">Listed</Badge>}
+          <span className="self-center">
+            <WatchButton page={page} />
+          </span>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-ink-2">
           {[page.exchange, page.sector, page.industry, page.category, page.location].filter(Boolean).map((part) => (
