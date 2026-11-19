@@ -1,0 +1,21 @@
+name: bid_replenishment_reversal
+status: prepared
+engine: intraday
+universe: liquid domestic common stocks at a first relative selloff event
+cost_calibration: ibkr_pro_tiered
+owner: gpt
+family: intraday_rebound
+prior_trials: 9
+record:
+  title: Bid replenishment after an early relative selloff
+  idea: Test rebuilding displayed bid support at a fixed price trigger
+  horizon: Two hours after first fill
+  verdict: quote data and adapter pending
+  summary: >-
+    A registered price-only control defines every quote window.
+    The primary requires a fixed transition in pre-decision
+    bid size and bid/ask size ratios.
+  weaknesses:
+    - Best-quote size is transient and does not prove signed demand or executable depth.
+    - The native quote input and historical data coverage are not yet available.
+    - Execution remains the normal bar-based proxy.

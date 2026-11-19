@@ -1,0 +1,16 @@
+params:
+  use_quotes: true
+risk:
+  equity: 20000
+  position_dollars: 2000
+  buying_power: 20000
+  max_positions: 10
+fills:
+  participation: 0.05
+  flatten_before_close: 0
+  no_entry_before_close: 10
+period:
+  start: 2003-09-10
+  end: 2016-12-30
+lookahead_check_rate: 1.0
+seed: 0
