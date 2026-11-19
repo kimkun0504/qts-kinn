@@ -19,11 +19,14 @@ export function filterStudies(studies: StudyRow[], search: string, outcome: Outc
   return [...found].sort(by[order]);
 }
 
+const FIRST = 25;
+
 export function Studies({ onOpen }: { onOpen: (strategy: string) => void }) {
   const { data, error } = useLoad(() => api.studies(), "studies");
   const [search, setSearch] = useState("");
   const [outcome, setOutcome] = useState<Outcome>("all");
   const [order, setOrder] = useState<Order>("newest");
+  const [all, setAll] = useState(false);
   const shown = useMemo(() => filterStudies(data ?? [], search, outcome, order), [data, search, outcome, order]);
   if (error) return <EmptyState title="The studies could not be read" />;
   if (!data) return <p className="text-ink-2">Loading the studies…</p>;
@@ -83,7 +86,12 @@ export function Studies({ onOpen }: { onOpen: (strategy: string) => void }) {
           </span>
         }
       >
-        {shown.length ? <StudyTable studies={shown} withStrategy onOpen={onOpen} /> : <p className="m-0 py-6 text-ink-2">No study matches.</p>}
+        {shown.length ? <StudyTable studies={all || shown.length <= FIRST ? shown : shown.slice(0, FIRST)} withStrategy onOpen={onOpen} /> : <p className="m-0 py-6 text-ink-2">No study matches.</p>}
+        {shown.length > FIRST && (
+          <button type="button" onClick={() => setAll(!all)} className="cursor-pointer self-start text-[13px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+            {all ? `Show the first ${FIRST}` : `Show all ${shown.length}`}
+          </button>
+        )}
         <Note>A study is one question put to the data: a search over many cells, a single test, or a measurement. Each is recorded in its strategy's folder with what it found.</Note>
       </Card>
     </>
