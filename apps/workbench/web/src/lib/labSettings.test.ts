@@ -50,3 +50,21 @@ describe("names", () => {
     expect(cleanName("--x")).toBe("x");
   });
 });
+
+
+describe("toSweep", () => {
+  it("reads values in the form's units", async () => {
+    const { toSweep } = await import("./labSettings");
+    expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 10 20" })).toEqual({ sweep: { field: "exit.hold_days", values: [5, 10, 20] }, error: null });
+    expect(toSweep({ numbers: {}, sweep_field: "exit.stop_loss", sweep_values: "none, 5, 10" }).sweep?.values).toEqual([null, 0.05, 0.1]);
+    expect(toSweep({ numbers: {} })).toEqual({ sweep: null, error: null });
+  });
+
+  it("refuses what the server would refuse", async () => {
+    const { toSweep } = await import("./labSettings");
+    expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5" }).error).toMatch(/2 to 12/);
+    expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 5" }).error).toMatch(/differ/);
+    expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 2.5" }).error).toMatch(/whole/);
+    expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 999" }).error).toMatch(/from 1 to 250/);
+  });
+});

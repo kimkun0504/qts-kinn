@@ -1,4 +1,4 @@
-import type { LabSettings, SettingsPatch } from "./lab";
+import type { LabSettings, SettingsPatch, SweepRequest } from "./lab";
 
 /** One number on the settings form: where it lives, how it is shown and how it is checked. */
 export interface NumberSpec {
@@ -36,6 +36,32 @@ export interface Draft {
   rank_order?: "highest" | "lowest";
   exclude_blank_checks?: boolean;
   numbers: Record<string, string>;
+  sweep_field?: string;
+  sweep_values?: string;
+}
+
+export const SWEEPABLE = ["exit.hold_days", "exit.stop_loss", "exit.take_profit", "book.max_positions", "entry.top_n"];
+
+export function toSweep(draft: Draft): { sweep: SweepRequest | null; error: string | null } {
+  if (!draft.sweep_field) return { sweep: null, error: null };
+  const spec = NUMBERS.find((s) => s.path === draft.sweep_field);
+  if (!spec) return { sweep: null, error: "Pick a setting to sweep." };
+  const parts = (draft.sweep_values ?? "").split(/[\s,]+/).filter(Boolean);
+  if (parts.length < 2 || parts.length > 12) return { sweep: null, error: `A sweep of ${spec.label.toLowerCase()} needs 2 to 12 values.` };
+  const values: (number | null)[] = [];
+  for (const part of parts) {
+    if (spec.optional && /^(none|off|-)$/i.test(part)) {
+      values.push(null);
+      continue;
+    }
+    const shown = Number(part);
+    if (!Number.isFinite(shown)) return { sweep: null, error: `"${part}" is not a number.` };
+    if (shown < spec.min || (spec.max != null && shown > spec.max)) return { sweep: null, error: `${spec.label} must be from ${spec.min} to ${spec.max ?? "any"}${spec.unit ? ` ${spec.unit}` : ""}.` };
+    if (spec.integer && !Number.isInteger(shown)) return { sweep: null, error: `${spec.label} takes whole numbers.` };
+    values.push(Math.round(shown * spec.scale * 1e9) / 1e9);
+  }
+  if (new Set(values.map(String)).size !== values.length) return { sweep: null, error: "Each value of a sweep must differ." };
+  return { sweep: { field: spec.path, values }, error: null };
 }
 
 export const EMPTY_DRAFT: Draft = { numbers: {} };
@@ -135,5 +161,5 @@ export function fromSettings(settings: LabSettings, against: LabSettings): Draft
 }
 
 export function changed(draft: Draft): boolean {
-  return Boolean(draft.period || draft.mode || draft.rank_order || draft.exclude_blank_checks !== undefined || Object.values(draft.numbers).some((v) => v.trim()));
+  return Boolean(draft.period || draft.mode || draft.rank_order || draft.exclude_blank_checks !== undefined || draft.sweep_field || Object.values(draft.numbers).some((v) => v.trim()));
 }

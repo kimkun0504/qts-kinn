@@ -55,6 +55,7 @@ let findings: unknown[] = [];
 beforeEach(() => {
   calls = [];
   findings = [];
+  localStorage.clear();
   vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
     if (url === "/api/lab/check") return new Response(JSON.stringify({ findings }));
@@ -97,6 +98,18 @@ describe("the Lab", () => {
     const post = calls.find((c) => c.init?.method === "POST");
     expect((post?.init?.headers as Record<string, string>)["X-Kinn-Token"]).toBe("tok");
     expect(JSON.parse(String(post?.init?.body))).toEqual({ algorithm: "two_up", code: CODE, settings: { exit: { hold_days: 5 } } });
+  });
+
+  it("sends a sweep and says how many settings it runs", async () => {
+    const onOpen = vi.fn();
+    render(<Lab name="two_up" onOpen={onOpen} />);
+    fireEvent.change(await screen.findByLabelText("Try several"), { target: { value: "exit.hold_days" } });
+    fireEvent.change(screen.getByLabelText(/Values/), { target: { value: "5, 10, 20" } });
+    expect(screen.getByText("3 settings on the same signals; each counts as a trial.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Run 3" }));
+    await waitFor(() => expect(onOpen).toHaveBeenCalledWith("two_up", RUN));
+    const post = calls.find((c) => c.init?.method === "POST" && c.url.endsWith("/runs"));
+    expect(JSON.parse(String(post?.init?.body)).sweep).toEqual({ field: "exit.hold_days", values: [5, 10, 20] });
   });
 
   it("lists the algorithms without opening one, and opens one on a click", async () => {

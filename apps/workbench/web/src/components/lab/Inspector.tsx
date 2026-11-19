@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import type { Field, LabSettings, Meta, Version } from "../../lib/lab";
-import { changed, type Draft, NUMBERS, type NumberSpec, shown } from "../../lib/labSettings";
+import { changed, type Draft, NUMBERS, type NumberSpec, shown, SWEEPABLE, toSweep } from "../../lib/labSettings";
 import { History } from "./History";
 
 interface InspectorProps {
@@ -199,7 +199,52 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
         {number("book.position_size")}
         {number("book.max_positions")}
       </Group>
+      <Sweep meta={meta} mode={mode} draft={draft} onChange={onChange} />
     </>
+  );
+}
+
+function Sweep({ meta, mode, draft, onChange }: { meta: Meta; mode: string; draft: Draft; onChange: (draft: Draft) => void }) {
+  const allowed = (meta.sweepable ?? SWEEPABLE).filter((path) => path !== "entry.top_n" || mode === "rank");
+  const spec = NUMBERS.find((s) => s.path === draft.sweep_field);
+  const { sweep, error } = toSweep(draft);
+  const unit = spec?.unit === "sessions" ? "days" : spec?.unit;
+  return (
+    <Group title="Sweep">
+      <Row label="Try several" htmlFor="lab-sweep-field">
+        <select
+          id="lab-sweep-field"
+          value={draft.sweep_field ?? ""}
+          onChange={(event) => onChange({ ...draft, sweep_field: event.target.value || undefined })}
+          className={`${control} px-2`}
+        >
+          <option value="">No sweep</option>
+          {allowed.map((path) => (
+            <option key={path} value={path}>
+              {NUMBERS.find((s) => s.path === path)?.label ?? path}
+            </option>
+          ))}
+        </select>
+      </Row>
+      {spec && (
+        <>
+          <Row label={`Values${unit ? ` (${unit})` : ""}`} htmlFor="lab-sweep-values">
+            <input
+              id="lab-sweep-values"
+              autoComplete="off"
+              spellCheck={false}
+              value={draft.sweep_values ?? ""}
+              placeholder={spec.optional ? "none, 5, 10, 20" : spec.path === "exit.hold_days" ? "5, 10, 20, 40" : "5, 10, 20"}
+              onChange={(event) => onChange({ ...draft, sweep_values: event.target.value })}
+              className={`${control} px-2.5 tabular-nums placeholder:text-ink-3`}
+            />
+          </Row>
+          <p className={`m-0 pt-1 text-[12px] ${error && draft.sweep_values ? "text-neg" : "text-ink-3"}`}>
+            {error && draft.sweep_values ? error : sweep ? `${sweep.values.length} settings on the same signals; each counts as a trial.` : "Each value counts as a trial."}
+          </p>
+        </>
+      )}
+    </Group>
   );
 }
 

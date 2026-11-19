@@ -25,7 +25,7 @@ import {
   type Status,
   type Template,
 } from "../lib/lab";
-import { base as baseSettings, changed, type Draft, EMPTY_DRAFT, fromSettings, toPatch } from "../lib/labSettings";
+import { base as baseSettings, changed, type Draft, EMPTY_DRAFT, fromSettings, toPatch, toSweep } from "../lib/labSettings";
 
 interface LabProps {
   name?: string;
@@ -373,10 +373,15 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
       setMessage(wrong.join(" "));
       return;
     }
+    const { sweep, error: sweepError } = toSweep(draft);
+    if (sweepError) {
+      setMessage(sweepError);
+      return;
+    }
     setBusy(true);
     setMessage(null);
     try {
-      const started = await lab.start(name, code, patch);
+      const started = await lab.start(name, code, patch, sweep);
       startedHere.current = started.run_id;
       setSaved(code);
       setHistoryKey((k) => k + 1);
@@ -426,13 +431,18 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
   const base = useMemo(() => baseSettings(meta.defaults, file?.settings_in_code ?? null), [meta, file]);
   const numbered: RunRow[] = useMemo(() => {
     const trial = new Map<string, number>();
+    let next = 1;
     [...runs]
       .reverse()
       .filter((r) => r.trial)
-      .forEach((r, i) => trial.set(r.run_id, i + 1));
+      .forEach((r) => {
+        trial.set(r.run_id, next);
+        next += Math.max(1, r.trials ?? 1);
+      });
     return runs.map((r) => ({ ...r, number: trial.get(r.run_id) ?? null }));
   }, [runs]);
   const share = Math.round(100 * (status?.progress ?? 0));
+  const sweepCount = toSweep(draft).sweep?.values.length ?? 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -502,7 +512,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
             </Button>
           ) : (
             <Button variant="primary" onClick={run} disabled={busy || !file} title="Run over every stock (⌘↵)" className="min-w-[84px]">
-              Run
+              {sweepCount ? `Run ${sweepCount}` : "Run"}
             </Button>
           )}
           {running && (

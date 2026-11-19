@@ -24,13 +24,15 @@ interface LineChartProps {
 }
 
 const W = 780;
-const PAD = { left: 74, right: 136, top: 12, bottom: 32 };
+const BASE_PAD = { left: 74, right: 136, top: 12, bottom: 32 };
 
 /** Lines on one shared axis, with direct end labels, a legend and a hover readout. */
 export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, labelAt, marks = [], caption }: LineChartProps) {
   const [hover, setHover] = useState<number | null>(null);
   const n = labels.length;
   if (n < 2) return <p className="m-0 px-4 py-6 text-ink-2">Not enough points for a chart.</p>;
+  const longest = Math.max(0, ...series.map((s) => `${s.short ?? s.name} ${format(s.values[n - 1])}`.length));
+  const PAD = { ...BASE_PAD, right: Math.max(BASE_PAD.right, Math.round(longest * 7.6 + 14)) };
   const all = series.flatMap((s) => s.values).concat(band ? [...band.low, ...band.high] : [], [0]);
   const low = Math.min(...all);
   const high = Math.max(...all);

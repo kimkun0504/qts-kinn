@@ -15,7 +15,7 @@ from pathlib import Path
 from kinn.lab import store
 from kinn.lab.check import check
 from kinn.lab.runner import run as run_one
-from kinn.lab.settings import SettingsError, parse
+from kinn.lab.settings import SettingsError, parse, sweep_settings
 
 SELFCHECK_PERIOD = {"period": "custom", "start": "2015-01-02", "end": "2015-12-31"}
 PEEK = '''"""A deliberate peek at the next day, to show the lookahead test works."""
@@ -55,14 +55,28 @@ def _resolve(root: Path, target: str) -> tuple[str, str]:
     return target, store.read_algorithm(root, target)
 
 
+def sweep_from(text: str | None) -> dict | None:
+    """``--sweep exit.hold_days=5,10,20`` as the page sends it; ``none`` for no stop."""
+    if not text:
+        return None
+    field, _, values = text.partition("=")
+    parsed = []
+    for value in values.split(","):
+        value = value.strip()
+        number = None if value.lower() == "none" else float(value) if "." in value else int(value)
+        parsed.append(number)
+    return {"field": field.strip(), "values": parsed}
+
+
 def run_algorithm(root: Path, target: str, settings: dict, *, time_limit: float | None,
-                  out: Callable[[str], None] = print,
-                  runner: Callable[..., None] = run_one) -> int:  # fmt: skip
+                  out: Callable[[str], None] = print, runner: Callable[..., None] = run_one,
+                  sweep: dict | None = None) -> int:  # fmt: skip
     """Run one algorithm and print what it made. 0 when the run completes."""
     try:
         name, code = _resolve(root, target)
         store.check_name(name)
         parse(settings, {})  # the settings alone; the code's SETTINGS are applied in the run
+        sweep_settings(settings, {}, sweep)
     except (store.LabError, SettingsError) as error:
         out(f"refused: {error}")
         return 2
@@ -76,7 +90,7 @@ def run_algorithm(root: Path, target: str, settings: dict, *, time_limit: float 
         out(f"refused: run {active} is still going (one run at a time)")
         return 2
     store.save_algorithm(root, name, code)
-    run_dir = store.new_run(root, name, code, settings)
+    run_dir = store.new_run(root, name, code, settings, sweep)
     (run_dir / "pid").write_text(str(os.getpid()))
     out(f"run {run_dir.name}")
     started = time.time()
@@ -101,6 +115,10 @@ def run_algorithm(root: Path, target: str, settings: dict, *, time_limit: float 
         worst = ", ".join(f"{s['ticker']} {_money(s['profit'])}" for s in stocks[-5:][::-1])
         out(f"  best:  {best}")
         out(f"  worst: {worst}")
+    for row in (store.result(run_dir, "sweep") or {}).get("rows", []):
+        out(f"  {sweep['field']} = {row['value']}: {row['trades']} trades, "
+            f"{_pct(row.get('mean_net'))} a trade, book {_money(row.get('book_profit'))}, "
+            f"Sharpe {row.get('sharpe') or 0:.2f}")  # fmt: skip
     out(f"  results in {run_dir}")
     return 0
 

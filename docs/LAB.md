@@ -223,6 +223,18 @@ longest ago; a new data build starts it afresh. Deleting the folder is always sa
 
 How long each stage of a run took is in its `summary.json` (`timings`) and its `log.txt`.
 
+## Sweeps
+
+To see how much a result depends on one setting, pick it under **Sweep** in the settings panel
+(hold, stop loss, take profit, max open positions, or stocks a day in ranking mode) and give 2 to
+12 values (`5, 10, 20, 40`; `none` for no stop or target). Run then tries each value on the
+**same signals and the same costs**, so only that setting changes, and the results show a bar
+for each value and a table of every measure; this run's own value is marked.
+
+**Each value counts as a trial** (and the run's own setting too, if it is not among them): ten
+holds tried are ten trials, and the best of them is less trustworthy than any one alone. Prefer a
+setting whose neighbours do nearly as well. From the terminal: `--sweep exit.hold_days=5,10,20`.
+
 ## The command line
 
 The same runs without the page, from the repo folder:
@@ -246,6 +258,6 @@ counts are untouched) and says whether everything behaved: use it after an updat
 runs), `runs/<run_id>/` (a copy of the code, the library and the settings run, progress, the
 log, results: `summary.json`, `trades.parquet`, `by_stock.json`, `by_year.json`,
 `equity.json` (with `spy_matched` from 2026-11-19), `path.json` and, in ranking mode,
-`factor.json` (from 2026-11-19)). Runs from
+`factor.json`, and for a sweep `sweep.json` (from 2026-11-19)). Runs from
 before 2026-11-19 have no signal path and show SPY all-in only; run them again to see both. Nothing in it is in git. Back the algorithms up, or move an idea that holds up into `strategies/` and the usual
 protocol (`docs/NEW_STRATEGY.md`).

@@ -100,7 +100,7 @@ def algorithms(root: Path) -> list[dict]:
         out.append({
             "name": path.stem, "description": describe(code),
             "updated": datetime.fromtimestamp(path.stat().st_mtime, UTC).isoformat(),
-            "runs": len(mine), "trials": sum(1 for r in mine if r.get("trial")),
+            "runs": len(mine), "trials": sum(r.get("trials", 0) for r in mine),
             "last_run": mine[0] if mine else None,
         })  # fmt: skip
     return out
@@ -249,12 +249,12 @@ def code_hash(code: str, settings: dict, library: dict[str, str] | None = None) 
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def new_run(root: Path, name: str, code: str, settings: dict) -> Path:
+def new_run(root: Path, name: str, code: str, settings: dict, sweep: dict | None = None) -> Path:
     """Create the run's folder with its request and a copy of the library as it is now; the
     worker does the rest."""
     check_name(name)
     library = library_code(root)
-    digest = code_hash(code, settings, library)
+    digest = code_hash(code, {**settings, "sweep": sweep} if sweep else settings, library)
     (root / "runs").mkdir(parents=True, exist_ok=True)
     while True:  # two runs of the same code in the same second: the second waits a second
         now = datetime.now(UTC)
@@ -271,12 +271,12 @@ def new_run(root: Path, name: str, code: str, settings: dict) -> Path:
     (package / "__init__.py").write_text('"""The owner\'s helper modules, as they were."""\n')
     for module, text in library.items():
         (package / f"{module}.py").write_text(text)
-    _write(run_dir / "request.json", {"algorithm": name, "settings": settings})
+    _write(run_dir / "request.json", {"algorithm": name, "settings": settings, "sweep": sweep})
     _write(run_dir / "manifest.json", {
         "schema": "lab-run-1", "run_id": run_id, "algorithm": name,
         "description": describe(code), "code_sha256": digest,
         "library": {m: hashlib.sha256(t.encode()).hexdigest()[:12] for m, t in library.items()},
-        "requested_settings": settings, "created_at": now.isoformat(),
+        "requested_settings": settings, "requested_sweep": sweep, "created_at": now.isoformat(),
     })  # fmt: skip
     set_status(run_dir, "queued", stage="Waiting to start", progress=0.0)
     return run_dir
@@ -364,7 +364,9 @@ def list_runs(root: Path, algorithm: str | None = None) -> list[dict]:
             "run_id": manifest["run_id"], "algorithm": manifest["algorithm"],
             "description": manifest.get("description", ""), "created_at": manifest["created_at"],
             "state": state.get("state"), "stage": state.get("stage"), "error": state.get("error"),
-            "trial": bool(state.get("signals_computed")), "period": summary.get("period_label"),
+            "trial": bool(state.get("signals_computed")),
+            "trials": int(state.get("trials") or (1 if state.get("signals_computed") else 0)),
+            "period": summary.get("period_label"),
             "headline": summary.get("headline"),
         })  # fmt: skip
     out.sort(key=lambda r: (r["created_at"], r["run_id"]), reverse=True)  # newest first
@@ -415,6 +417,7 @@ def cancel(run_dir: Path) -> dict:
 
 
 def result(run_dir: Path, name: str) -> dict | list | None:
-    if name not in ("summary", "by_year", "by_stock", "equity", "lookahead", "path", "factor"):
+    if name not in ("summary", "by_year", "by_stock", "equity", "lookahead", "path", "factor",
+                    "sweep"):  # fmt: skip
         raise LabError("Unknown result.")
     return _read(run_dir / f"{name}.json")

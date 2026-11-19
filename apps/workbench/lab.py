@@ -18,7 +18,16 @@ import duckdb
 from kinn.lab import data as lab_data
 from kinn.lab import store
 from kinn.lab.check import as_dicts, check
-from kinn.lab.settings import LAST_ENTRY, MAX_HOLD, PERIODS, Settings, SettingsError, parse
+from kinn.lab.settings import (
+    LAST_ENTRY,
+    MAX_HOLD,
+    PERIODS,
+    SWEEPABLE,
+    Settings,
+    SettingsError,
+    parse,
+    sweep_settings,
+)
 
 Response = tuple[int, object]
 _START = threading.Lock()  # one run starts at a time, even with two clicks
@@ -58,7 +67,7 @@ def meta(root: Path) -> Response:
                     for k, v in PERIODS.items()],  # fmt: skip
         "defaults": defaults, "last_entry": str(LAST_ENTRY), "max_hold": MAX_HOLD,
         "max_code": store.MAX_CODE, "active_run": store.active_run(root),
-        "folder": str(root),
+        "folder": str(root), "sweepable": list(SWEEPABLE),
     }  # fmt: skip
 
 
@@ -147,6 +156,7 @@ def delete(root: Path, name: str) -> Response:
 def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launch) -> Response:
     """Save the code, write the run folder and start the worker. 409 while another runs."""
     name, code, settings = body.get("algorithm"), body.get("code"), body.get("settings") or {}
+    sweep = body.get("sweep") or None
     if not isinstance(settings, dict):
         return _error(400, "settings must be an object")
     try:
@@ -160,6 +170,7 @@ def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launc
             first = errors[0]
             return _error(400, f"Line {first.line}: {first.message}")
         parse(settings, literal_settings(code) or {})
+        sweep_settings(settings, literal_settings(code) or {}, sweep)
         store.save_algorithm(root, name, code)  # Run keeps the code, even if it has to wait
     except (store.LabError, SettingsError) as error:
         return _error(400, str(error))
@@ -167,7 +178,7 @@ def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launc
         active = store.active_run(root)
         if active:
             return _error(409, f"Run {active} is still going. Wait for it or cancel it.")
-        run_dir = store.new_run(root, name, code, settings)
+        run_dir = store.new_run(root, name, code, settings, sweep)
         try:
             launch(run_dir)
         except OSError as error:
@@ -216,7 +227,7 @@ def run_part(root: Path, run_id: str, part: str) -> Response:
             return 200, {"log": text}
         names = {"stocks": "by_stock", "years": "by_year", "equity": "equity",
                  "lookahead": "lookahead", "summary": "summary", "path": "path",
-                 "factor": "factor"}  # fmt: skip
+                 "factor": "factor", "sweep": "sweep"}  # fmt: skip
         if part not in names:
             return _error(404, "Unknown part of a run.")
         found = store.result(run_dir, names[part])

@@ -41,9 +41,9 @@ def root(tmp_path):
     return tmp_path / "lab"
 
 
-def go(root, fake, name="two_up", code=GOOD, settings=PERIOD):
+def go(root, fake, name="two_up", code=GOOD, settings=PERIOD, sweep=None):
     store.save_algorithm(root, name, code)
-    run_dir = store.new_run(root, name, code, settings)
+    run_dir = store.new_run(root, name, code, settings, sweep)
     runner.run(run_dir, open_store=lambda: fake)
     return run_dir
 
@@ -401,3 +401,46 @@ def test_history_keeps_a_bounded_number_of_versions(root, monkeypatch):
     for k in range(6):
         store.save_algorithm(root, "many", f"v{k}\n")
     assert [v["first_line"] for v in store.history(root, "many")] == ["v4", "v3", "v2"]
+
+
+def test_a_sweep_tries_each_value_on_the_same_signals_and_counts_each_as_a_trial(root, fake):
+    code = "def signal(data):\n    return data.returns > 0.02\n"
+    run_dir = go(root, fake, code=code, sweep={"field": "exit.hold_days", "values": [3, 5, 10]})
+    state = store.status(run_dir)
+    assert state["state"] == "complete", state.get("error")
+    assert state["trials"] == 4 and state["trial_number"] == 1
+    sweep = store.result(run_dir, "sweep")
+    assert sweep["field"] == "exit.hold_days" and [r["value"] for r in sweep["rows"]] == [3, 5, 10]
+    assert all(r["trades"] for r in sweep["rows"])
+    summary = store.result(run_dir, "summary")
+    assert summary["sweep"] == {"field": "exit.hold_days", "values": 3} and summary["trials"] == 4
+    again = go(root, fake, code=code, sweep={"field": "exit.hold_days", "values": [20, 30]})
+    assert store.status(again)["trial_number"] == 5 and store.status(again)["trials"] == 2
+    assert store.algorithms(root)[0]["trials"] == 6
+
+
+@pytest.mark.parametrize(
+    "sweep",
+    [
+        {"field": "universe.min_price", "values": [1, 2]},
+        {"field": "exit.hold_days", "values": [5]},
+        {"field": "exit.hold_days", "values": [5, 5]},
+        {"field": "exit.hold_days", "values": [5, "x"]},
+        {"field": "exit.hold_days", "values": [5, 0]},
+    ],
+)
+def test_bad_sweeps_are_refused(sweep):
+    from kinn.lab.settings import SettingsError, sweep_settings
+
+    with pytest.raises(SettingsError):
+        sweep_settings({}, {}, sweep)
+
+
+def test_the_command_line_reads_a_sweep():
+    from kinn.lab.commands import sweep_from
+
+    hold = sweep_from("exit.hold_days=5, 10,20")
+    assert hold == {"field": "exit.hold_days", "values": [5, 10, 20]}
+    assert sweep_from("exit.stop_loss=none,0.05") == {"field": "exit.stop_loss",
+                                                       "values": [None, 0.05]}  # fmt: skip
+    assert sweep_from(None) is None

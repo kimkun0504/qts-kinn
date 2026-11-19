@@ -26,7 +26,7 @@ from kinn.lab import algorithm as alg
 from kinn.lab import book, metrics, store
 from kinn.lab.data import DataError, LabData
 from kinn.lab.engine import Costs, Market, simulate
-from kinn.lab.settings import PERIODS, SettingsError, parse
+from kinn.lab.settings import PERIODS, SettingsError, parse, sweep_settings
 
 COST_MODEL = "ibkr_pro_tiered"
 SUMMARY_SCHEMA = "lab-summary-1"
@@ -142,18 +142,34 @@ def run(run_dir: Path, open_store: Callable[[], DataStore] | None = None,
             del sys.modules[name]  # a later run in this process reads its own library
 
 
+SWEEP_FIELDS = ("trades", "mean_net", "mean_net_2x", "win_rate", "t_weekly", "book_profit",
+                "sharpe", "max_drawdown", "annual_return", "average_positions", "years_positive",
+                "years")  # fmt: skip
+
+
+def _setting(settings, field: str):
+    section, key = field.split(".")
+    return getattr(getattr(settings, section), key)
+
+
 def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages) -> None:
     progress("Reading your algorithm", 0.01)
     algorithm = alg.load(code)
     settings = parse(request.get("settings"), algorithm.settings)
+    sweep = request.get("sweep")
+    variants = sweep_settings(request.get("settings"), algorithm.settings, sweep)
+    longest = max([settings, *(v for _, v in variants)], key=lambda s: s.exit.hold_days)
     data_store = open_store() if open_store else DataStore(load_settings())
-    data = LabData(data_store, settings, progress, cache_dir=run_dir.parent.parent / "cache")
+    data = LabData(data_store, longest, progress, cache_dir=run_dir.parent.parent / "cache")
 
     progress("Running your algorithm", 0.36)
     entries, exits = alg.signals(algorithm, data, settings.entry.mode)
-    trial = 1 + sum(1 for r in store.list_runs(run_dir.parent.parent, request["algorithm"])
-                    if r["trial"] and r["run_id"] != run_dir.name)  # fmt: skip
-    store.set_status(run_dir, "running", signals_computed=True, trial_number=trial)
+    base_value = _setting(settings, sweep["field"]) if variants else None
+    tried = any(v == base_value for v, _ in variants)
+    trials = len(variants) + (0 if tried else 1) if variants else 1
+    earlier = store.list_runs(run_dir.parent.parent, request["algorithm"])
+    trial = 1 + sum(r["trials"] for r in earlier if r["run_id"] != run_dir.name)
+    store.set_status(run_dir, "running", signals_computed=True, trial_number=trial, trials=trials)
 
     progress("Checking your code for lookahead", 0.5)
     look = alg.lookahead(algorithm, data, settings.entry.mode, entries, exits)
@@ -167,8 +183,9 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
         universe_return=data.array("universe_return"),
         universe_intraday=data.array("universe_intraday"),
     )  # fmt: skip
+    costs = Costs(load_costs(COST_MODEL))
     trades = simulate(
-        market, entries, exits, settings, Costs(load_costs(COST_MODEL)), data.first_row,
+        market, entries, exits, settings, costs, data.first_row,
         data.last_signal_row,
         progress=lambda share: progress("Simulating trades", 0.65 + 0.2 * share),
     )  # fmt: skip
@@ -190,7 +207,9 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
         signals=int(np.count_nonzero(np.isfinite(window) if window.dtype != bool else window)),
         universe_stocks=int(len(data.columns)),
         sessions=int(data.last_signal_row - data.first_row + 2),
-        trial_number=trial, cost_model=COST_MODEL, has_exit_signal=algorithm.has_exit,
+        trial_number=trial, trials=trials,
+        sweep={"field": sweep["field"], "values": len(variants)} if variants else None,
+        cost_model=COST_MODEL, has_exit_signal=algorithm.has_exit,
         seconds=progress.seconds, timings=timings, cache=getattr(data, "cache_state", None),
     )  # fmt: skip
     capital = summary.get("capital") or settings.book.position_size
@@ -205,6 +224,21 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
                                settings.exit.hold_days)  # fmt: skip
     if path:
         (run_dir / "path.json").write_text(json.dumps(path))
+    if variants:
+        rows = []
+        for k, (value, variant) in enumerate(variants):
+            progress(f"Sweep: {sweep['field']} = {value}", 0.9 + 0.06 * k / len(variants))
+            v_trades = simulate(market, entries, exits, variant, costs, data.first_row,
+                                data.last_signal_row)  # fmt: skip
+            v_taken = book.select(v_trades, variant.book.max_positions)
+            v_daily = book.daily(v_trades, v_taken, market)
+            v_table = metrics.trades_table(v_trades, v_taken, data.sessions, list(data.columns),
+                                           static)  # fmt: skip
+            v_summary = metrics.summary(v_table, v_daily, data.sessions, data.first_row, variant,
+                                        spy, look)  # fmt: skip
+            rows.append({"value": value, **{f: v_summary.get(f) for f in SWEEP_FIELDS}})
+        store._write(run_dir / "sweep.json", {"field": sweep["field"], "base": base_value,
+                                              "rows": rows})  # fmt: skip
     if settings.entry.mode == "rank":
         progress("Measuring the ranking", 0.96)
         factor = metrics.factor_report(entries, market, data.sessions, data.first_row,

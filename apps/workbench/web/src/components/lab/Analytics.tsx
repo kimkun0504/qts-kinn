@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { diffLines, flatten, hunks } from "../../lib/diff";
 import { dollars, int, money, num, pct, plainPct } from "../../lib/format";
-import { type Equity, lab, type RunDetail, type Summary } from "../../lib/lab";
+import { type Equity, lab, type RunDetail, type Summary, type SweepRow } from "../../lib/lab";
+import { NUMBERS } from "../../lib/labSettings";
 import { useLoad } from "../../lib/useLoad";
 import { BarChart } from "../charts/BarChart";
 import { LineChart } from "../charts/LineChart";
@@ -399,6 +400,78 @@ export function FactorPanel({ runId }: { runId: string }) {
       </div>
       <PanelNote>
         Each day the stocks the book could have bought are split into tenths by score; the bold tenth is the end the book buys. A ranking that works rises steadily from one end to the other and keeps its IC above zero in most years. The IC t-stat uses days {data.hold} sessions apart so the returns do not overlap.
+      </PanelNote>
+    </Panel>
+  );
+}
+
+type SweepMetric = "mean_net" | "book_profit" | "sharpe" | "max_drawdown";
+
+const SWEEP_METRICS: { value: SweepMetric; label: string; format: (v: number) => string }[] = [
+  { value: "mean_net", label: "A trade", format: (v) => pct(v, 2) },
+  { value: "book_profit", label: "Book profit", format: (v) => money(v) },
+  { value: "sharpe", label: "Sharpe", format: (v) => num(v, 2) },
+  { value: "max_drawdown", label: "Drawdown", format: (v) => money(v) },
+];
+
+export function sweepValue(field: string, value: number | null): string {
+  const spec = NUMBERS.find((s) => s.path === field);
+  if (value == null) return "none";
+  if (!spec) return String(value);
+  const shownValue = Math.round((value / spec.scale) * 1e6) / 1e6;
+  return spec.unit === "%" ? `${shownValue}%` : spec.unit === "sessions" ? `${shownValue} days` : String(shownValue);
+}
+
+export function SweepPanel({ runId }: { runId: string }) {
+  const { data, error } = useLoad(() => lab.sweep(runId), `sweep-${runId}`);
+  const [metric, setMetric] = useState<SweepMetric>("mean_net");
+  if (error || !data) return null;
+  const spec = NUMBERS.find((s) => s.path === data.field);
+  const chosen = SWEEP_METRICS.find((m) => m.value === metric) ?? SWEEP_METRICS[0];
+  const label = (row: SweepRow) => sweepValue(data.field, row.value);
+  const base = data.rows.findIndex((r) => r.value === data.base);
+  return (
+    <Panel
+      title={`Sweep: ${spec?.label ?? data.field}`}
+      aside={<Segmented label="Measure" value={metric} onChange={setMetric} options={SWEEP_METRICS.map(({ value, label: text }) => ({ value, label: text }))} />}
+    >
+      <div className="px-1">
+        <BarChart title={`${chosen.label} by ${spec?.label ?? data.field}`} labels={data.rows.map(label)} values={data.rows.map((r) => r[metric] ?? null)} format={chosen.format} marked={base >= 0 ? [base] : []} />
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] border-collapse text-sm tabular-nums">
+          <thead>
+            <tr className="text-[13px] text-ink-2">
+              {[spec?.label ?? data.field, "Trades", "A trade", "At 2× costs", "Won", "Weekly t", "Book profit", "A year", "Sharpe", "Drawdown"].map((h, i) => (
+                <th key={h} scope="col" className={`border-t border-line px-3 py-2 font-medium ${i ? "text-right" : "text-left"}`}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.rows.map((r, i) => (
+              <tr key={label(r)} className={`border-t border-line-soft ${i === base ? "bg-raised font-semibold" : ""}`}>
+                <th scope="row" className="px-3 py-1.5 text-left font-medium">
+                  {label(r)}
+                  {i === base ? " (this run)" : ""}
+                </th>
+                <td className="px-3 py-1.5 text-right">{int(r.trades)}</td>
+                <td className={`px-3 py-1.5 text-right ${(r.mean_net ?? 0) < 0 ? "text-neg" : ""}`}>{pct(r.mean_net)}</td>
+                <td className={`px-3 py-1.5 text-right ${(r.mean_net_2x ?? 0) < 0 ? "text-neg" : ""}`}>{pct(r.mean_net_2x)}</td>
+                <td className="px-3 py-1.5 text-right">{plainPct(r.win_rate)}</td>
+                <td className="px-3 py-1.5 text-right">{num(r.t_weekly)}</td>
+                <td className={`px-3 py-1.5 text-right ${(r.book_profit ?? 0) < 0 ? "text-neg" : ""}`}>{money(r.book_profit)}</td>
+                <td className="px-3 py-1.5 text-right">{pct(r.annual_return, 1)}</td>
+                <td className="px-3 py-1.5 text-right">{num(r.sharpe)}</td>
+                <td className="px-3 py-1.5 text-right">{money(r.max_drawdown)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PanelNote>
+        Every value ran on the same signals and the same costs; only {spec?.label.toLowerCase() ?? data.field} changed. Each counts as a trial, so the best of them is less trustworthy than any one alone: prefer a setting whose neighbours do nearly as well.
       </PanelNote>
     </Panel>
   );

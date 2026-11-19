@@ -427,8 +427,12 @@ def _lab_run(args: argparse.Namespace) -> int:
         settings = commands.settings_from(args)
     except json.JSONDecodeError as error:
         raise SystemExit(f"--settings is not JSON: {error}") from error
+    try:
+        sweep = commands.sweep_from(args.sweep)
+    except ValueError as error:
+        raise SystemExit(f"--sweep wants FIELD=V1,V2,...: {error}") from error
     return commands.run_algorithm(store.lab_dir(), args.algorithm, settings,
-                                  time_limit=worker.time_limit())  # fmt: skip
+                                  time_limit=worker.time_limit(), sweep=sweep)  # fmt: skip
 
 
 def _lab_selfcheck(_args: argparse.Namespace) -> int:
@@ -578,6 +582,11 @@ def main(argv: list[str] | None = None) -> int:
     lab_run.add_argument("--start", help="first signal day of a custom period, 2015-01-02")
     lab_run.add_argument("--end", help="last entry day of a custom period")
     lab_run.add_argument("--settings", help='more settings as JSON: \'{"exit": {"hold_days": 5}}\'')
+    lab_run.add_argument(
+        "--sweep", help="try several values of one setting on the same signals: "
+        "exit.hold_days=5,10,20 (also exit.stop_loss, exit.take_profit, book.max_positions, "
+        "entry.top_n)",
+    )  # fmt: skip
     lab_run.set_defaults(func=_lab_run)
     lab_sub.add_parser(
         "selfcheck", help="run every template on 2015 in a scratch folder and report"

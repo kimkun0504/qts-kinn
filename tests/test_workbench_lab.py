@@ -334,3 +334,22 @@ def test_the_history_endpoints(root):
     assert (
         lab.route("GET", ["library", "m", "history"], {}, None, root)[1][0]["first_line"] == "x = 1"
     )
+
+
+def test_a_bad_sweep_is_refused_and_a_good_one_is_kept_with_the_run(root):
+    bad = {"field": "universe.min_price", "values": [1, 2]}
+    status, payload = lab.route(
+        "POST", ["runs"], {}, {"algorithm": "x", "code": CODE, "sweep": bad}, root,
+        launch=lambda run_dir: pytest.fail("must not start"),
+    )  # fmt: skip
+    assert status == 400 and "sweep" in payload["error"]
+    started = []
+    good = {"field": "exit.hold_days", "values": [5, 10]}
+    status, payload = lab.route(
+        "POST", ["runs"], {}, {"algorithm": "x", "code": CODE, "sweep": good}, root,
+        launch=started.append,
+    )  # fmt: skip
+    assert status == 202 and started
+    request = json.loads((started[0] / "request.json").read_text())
+    assert request["sweep"] == good
+    assert "exit.hold_days" in get(root, "meta")[1]["sweepable"]

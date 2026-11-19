@@ -12,7 +12,7 @@ import { type Column, DataTable, type Sort } from "../ui/DataTable";
 import { Panel } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
 import { StatStrip } from "../ui/StatStrip";
-import { BookPanel, Compare, FactorPanel, MonthTable, SignalPathPanel } from "./Analytics";
+import { BookPanel, Compare, FactorPanel, MonthTable, SignalPathPanel, SweepPanel } from "./Analytics";
 
 type Tab = "overview" | "stocks" | "trades" | "years" | "code";
 
@@ -78,6 +78,7 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
         ]}
       />
       <BookPanel summary={s} equity={equity} />
+      {s.sweep && <SweepPanel runId={detail.run_id} />}
       {s.settings?.entry.mode === "rank" && <FactorPanel runId={detail.run_id} />}
       <SignalPathPanel runId={detail.run_id} />
       <div className="grid gap-5 lg:grid-cols-2">
@@ -368,7 +369,9 @@ export function when(iso: string): string {
 }
 
 function runLabel(run: RunRow): string {
-  return [run.number ? `Trial ${run.number}` : "Not a trial", when(run.created_at), run.period].filter(Boolean).join(", ");
+  const count = Math.max(1, run.trials ?? 1);
+  const trial = run.number ? (count > 1 ? `Trials ${run.number}–${run.number + count - 1}` : `Trial ${run.number}`) : "Not a trial";
+  return [trial, when(run.created_at), run.period].filter(Boolean).join(", ");
 }
 
 /** The line of an error that says what went wrong (a traceback ends with it). */
@@ -378,7 +381,7 @@ function lastLine(text: string): string {
 }
 
 const runColumns: Column<RunRow>[] = [
-  { key: "trial", header: "Trial", align: "left", render: (r) => (r.number ? String(r.number) : "–") },
+  { key: "trial", header: "Trial", align: "left", render: (r) => (r.number ? ((r.trials ?? 1) > 1 ? `${r.number}–${r.number + (r.trials ?? 1) - 1}` : String(r.number)) : "–") },
   { key: "created", header: "Started", align: "left", muted: true, render: (r) => when(r.created_at) },
   { key: "period", header: "Period", align: "left", muted: true, render: (r) => r.period ?? "–" },
   { key: "state", header: "State", align: "left", render: (r) => <Badge tone={STATE_TONE[r.state]}>{STATE_LABEL[r.state]}</Badge> },

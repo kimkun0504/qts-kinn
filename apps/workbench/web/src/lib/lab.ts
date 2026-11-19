@@ -49,6 +49,34 @@ export interface Meta {
   max_code: number;
   active_run: string | null;
   folder: string;
+  sweepable?: string[];
+}
+
+export interface SweepRequest {
+  field: string;
+  values: (number | null)[];
+}
+
+export interface SweepRow {
+  value: number | null;
+  trades: number;
+  mean_net: number | null;
+  mean_net_2x: number | null;
+  win_rate: number | null;
+  t_weekly: number | null;
+  book_profit: number | null;
+  sharpe: number | null;
+  max_drawdown: number | null;
+  annual_return: number | null;
+  average_positions: number | null;
+  years_positive: number | null;
+  years: number | null;
+}
+
+export interface SweepResult {
+  field: string;
+  base: number | null;
+  rows: SweepRow[];
 }
 
 export interface Template {
@@ -68,6 +96,7 @@ export interface RunListRow {
   stage: string | null;
   error: string | null;
   trial: boolean;
+  trials?: number;
   period: string | null;
   headline: string | null;
 }
@@ -148,6 +177,8 @@ export interface Summary {
   universe_stocks?: number;
   sessions?: number;
   trial_number?: number;
+  trials?: number;
+  sweep?: { field: string; values: number } | null;
   cost_model?: string;
   has_exit_signal?: boolean;
   seconds?: number;
@@ -342,8 +373,9 @@ export const lab = {
   algorithm: (name: string) => read<AlgorithmFile>(`/algorithms/${id(name)}`),
   save: (name: string, code: string) => write<{ name: string; description: string }>("PUT", `/algorithms/${id(name)}`, { code }),
   remove: (name: string) => write<{ deleted: string }>("DELETE", `/algorithms/${id(name)}`),
-  start: (algorithm: string, code: string, settings: SettingsPatch) =>
-    write<{ run_id: string; status: Status }>("POST", "/runs", { algorithm, code, settings }),
+  start: (algorithm: string, code: string, settings: SettingsPatch, sweep?: SweepRequest | null) =>
+    write<{ run_id: string; status: Status }>("POST", "/runs", sweep ? { algorithm, code, settings, sweep } : { algorithm, code, settings }),
+  sweep: (runId: string) => read<SweepResult>(`/runs/${id(runId)}/sweep`),
   cancel: (runId: string) => write<Status>("POST", `/runs/${id(runId)}/cancel`),
   runs: (algorithm?: string) => read<RunListRow[]>(`/runs${algorithm ? `?algorithm=${id(algorithm)}` : ""}`),
   run: (runId: string) => read<RunDetail>(`/runs/${id(runId)}`),

@@ -183,3 +183,32 @@ def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
     if settings.window()[1] >= HOLDOUT_START:  # cannot happen; the seal is checked anyway
         raise SettingsError("The period reaches into the holdout.")
     return settings
+
+
+SWEEPABLE = ("exit.hold_days", "exit.stop_loss", "exit.take_profit", "book.max_positions",
+             "entry.top_n")  # fmt: skip
+MAX_SWEEP = 12
+
+
+def sweep_settings(raw: dict | None, defaults: dict | None,
+                   sweep: dict | None) -> list[tuple[float | None, Settings]]:  # fmt: skip
+    """Each value of a sweep as the settings a run of it would use, checked the same way."""
+    if not sweep:
+        return []
+    if not isinstance(sweep, dict) or sweep.get("field") not in SWEEPABLE:
+        raise SettingsError(f"a sweep varies one of: {', '.join(SWEEPABLE)}")
+    values = sweep.get("values")
+    if not isinstance(values, list) or not 2 <= len(values) <= MAX_SWEEP:
+        raise SettingsError(f"a sweep tries 2 to {MAX_SWEEP} values")
+    if any(v is not None and not isinstance(v, int | float) for v in values) or any(
+        isinstance(v, bool) for v in values
+    ):
+        raise SettingsError("a sweep's values must be numbers (or null for no stop or target)")
+    if len({repr(v) for v in values}) != len(values):
+        raise SettingsError("a sweep's values must all differ")
+    section, key = sweep["field"].split(".")
+    out = []
+    for value in values:
+        patch = {**(raw or {}), section: {**((raw or {}).get(section) or {}), key: value}}
+        out.append((value, parse(patch, defaults)))
+    return out
