@@ -1,11 +1,11 @@
-"""Synthetic quote contract and price-control checks; no real quote loader exists yet."""
+"""Frozen signal on the native quote types and DayView prefix replay."""
 
-from dataclasses import dataclass, replace
-from types import SimpleNamespace
+from dataclasses import replace
 
 import pytest
 
 from kinn import run as runner
+from kinn.core.types import BookPair, QuoteSnapshot
 from kinn.data.quotes import minute_ns
 from kinn.engine.intraday.strategy import check_no_lookahead, day_signals, input_sessions
 from kinn.features.base import LookaheadError
@@ -15,14 +15,12 @@ NAME = "bid_replenishment_reversal"
 
 
 def quote(timestamp, *, bid=199.5, ask=200.5, bid_size=100, ask_size=100):
-    return SimpleNamespace(
-        sip_timestamp=timestamp, bid_price=bid, ask_price=ask, bid_size=bid_size, ask_size=ask_size
-    )
+    return QuoteSnapshot(timestamp, bid, ask, bid_size, ask_size)
 
 
 def pair(minute=600, *, status="available", symbol="ABC", company=100):
     end = minute_ns(DAY, minute + 1)
-    return SimpleNamespace(
+    return BookPair(
         day=DAY,
         symbol=symbol,
         permaticker=company,
@@ -33,21 +31,8 @@ def pair(minute=600, *, status="available", symbol="ABC", company=100):
     )
 
 
-@dataclass(frozen=True)
-class BookView:
-    """Proposed prefix behavior only; this is a synthetic contract fixture."""
-
-    base: object
-    book_pairs: dict
-
-    def __getattr__(self, name):
-        return getattr(self.base, name)
-
-    def upto(self, cut):
-        return BookView(
-            self.base.upto(cut),
-            {s: tuple(p for p in rows if p.minute <= cut) for s, rows in self.book_pairs.items()},
-        )
+def book_view(base, pairs):
+    return replace(base, book_pairs=pairs)
 
 
 def test_exact_size_and_spread_boundaries_and_unit_invariance():
@@ -66,17 +51,17 @@ def test_exact_size_and_spread_boundaries_and_unit_invariance():
 def test_replenishment_requires_every_registered_component(failure):
     p = pair()
     if failure == "initial":
-        p.early.bid_size = 101
+        p = replace(p, early=replace(p.early, bid_size=101))
     elif failure == "growth":
-        p.early.bid_size = p.early.ask_size = 151
+        p = replace(p, early=replace(p.early, bid_size=151, ask_size=151))
     elif failure == "price":
-        p.late.bid_price = 199.49
+        p = replace(p, late=replace(p.late, bid_price=199.49))
     elif failure == "locked":
-        p.late.ask_price = p.late.bid_price
+        p = replace(p, late=replace(p.late, ask_price=p.late.bid_price))
     elif failure == "size":
-        p.late.ask_size = 0
+        p = replace(p, late=replace(p.late, ask_size=0))
     else:
-        p.late.bid_size = 300.5
+        p = replace(p, late=replace(p.late, bid_size=300.5))
     strategy = runner.load_strategy(NAME, {})
     assert not strategy.signals.__func__.__globals__["replenishes"](p.early, p.late)
 
@@ -85,12 +70,12 @@ def test_freshness_at_nanosecond_boundary_and_postdecision_rejection():
     strategy = runner.load_strategy(NAME, {})
     fn = strategy.signals.__func__.__globals__["valid_pair"]
     p = pair()
-    p.late.sip_timestamp -= 1_000_000_000
+    p = replace(p, late=replace(p.late, sip_timestamp=p.late.sip_timestamp - 1_000_000_000))
     assert fn(p, DAY, "ABC", 100, 600)
-    p.late.sip_timestamp -= 1
+    p = replace(p, late=replace(p.late, sip_timestamp=p.late.sip_timestamp - 1))
     assert not fn(p, DAY, "ABC", 100, 600)
     p = pair()
-    p.late.sip_timestamp += 2
+    p = replace(p, late=replace(p.late, sip_timestamp=p.late.sip_timestamp + 2))
     assert not fn(p, DAY, "ABC", 100, 600)
 
 
@@ -102,17 +87,17 @@ def test_control_is_available_before_quote_adapter_and_has_fixed_broader_trigger
     assert not day_signals(runner.load_strategy("filing_aware_dislocation", {}), data)
 
 
-def test_primary_subset_and_full_prefixes_using_synthetic_contract():
+def test_primary_subset_and_full_prefixes_using_native_types():
     primary = runner.load_strategy(NAME, {})
     control = runner.load_strategy(NAME, {"use_quotes": False})
-    data = BookView(session(), {"ABC": (pair(),)})
+    data = book_view(session(), {"ABC": (pair(),)})
     assert day_signals(primary, data) == day_signals(control, data) == EXPECTED
     check_no_lookahead(primary, data, EXPECTED, list(range(580, 724)))
-    bad = BookView(session(), {"ABC": (pair(status="stale"),)})
+    bad = book_view(session(), {"ABC": (pair(status="stale"),)})
     assert not day_signals(primary, bad)
     with pytest.raises(ValueError, match="exact first parent"):
-        day_signals(primary, BookView(session(), {}))
-    with pytest.raises(RuntimeError, match="native nbbo_replenishment"):
+        day_signals(primary, book_view(session(), {}))
+    with pytest.raises(ValueError, match="exact first parent"):
         day_signals(primary, session())
 
 
@@ -128,7 +113,7 @@ def test_failed_first_quote_event_cannot_be_rescued_by_later_quotes():
     data = replace(data, symbols=members)
     quotes = {"ABC": (pair(status="stale"), pair(620))}
     assert day_signals(runner.load_strategy(NAME, {"use_quotes": False}), data) == EXPECTED
-    assert not day_signals(runner.load_strategy(NAME, {}), BookView(data, quotes))
+    assert not day_signals(runner.load_strategy(NAME, {}), book_view(data, quotes))
 
 
 def test_checker_catches_a_deliberate_future_pair_lookup():
@@ -139,7 +124,7 @@ def test_checker_catches_a_deliberate_future_pair_lookup():
             found = super().signals(view, features)
             return [] if len(view.book_pairs["ABC"]) > 1 else found
 
-    data = BookView(session(), {"ABC": (pair(), pair(900))})
+    data = book_view(session(), {"ABC": (pair(), pair(900))})
     strategy = Cheater(True)
     with pytest.raises(LookaheadError):
         check_no_lookahead(strategy, data, day_signals(strategy, data), [600])
@@ -147,8 +132,7 @@ def test_checker_catches_a_deliberate_future_pair_lookup():
 
 def test_no_undeclared_native_input_bypass_and_configs_only_choose_declared_cases():
     primary = runner.load_strategy(NAME, {})
-    with pytest.raises(ValueError, match="unknown inputs"):
-        input_sessions(primary, "nbbo_replenishment")
+    assert input_sessions(primary, "nbbo_replenishment") == 1
     _, dev = runner.load_config(NAME, "development")
     _, control = runner.load_config(NAME, "development_control")
     assert control == {**dev, "params": {"use_quotes": False}}

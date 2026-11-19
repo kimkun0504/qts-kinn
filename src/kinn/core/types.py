@@ -94,6 +94,33 @@ class TimedReport:
 
 
 @dataclass(frozen=True, slots=True)
+class QuoteSnapshot:
+    """One pre-decision SIP observation; sizes remain in the vendor's common units."""
+
+    sip_timestamp: int
+    bid_price: float
+    ask_price: float
+    bid_size: int
+    ask_size: int
+
+
+@dataclass(frozen=True, slots=True)
+class BookPair:
+    """Two targets for one registered first price event, known at its bar close.
+
+    Unavailable observations retain the parent row and an explicit status.
+    """
+
+    day: date
+    symbol: str
+    permaticker: int
+    minute: int
+    status: str
+    early: QuoteSnapshot | None
+    late: QuoteSnapshot | None
+
+
+@dataclass(frozen=True, slots=True)
 class CurrentReport:
     """A company's 8-K filings of one filing date, as the items they reported.
 

@@ -161,3 +161,13 @@ elapsed time or the active research goal.
 Owner decision: "Authorize adapter; I'll run the download."
 The owner explicitly supplied that answer in chat. The scope
 above is authorized; GPT still performs no raw acquisition.
+
+
+Implementation (2026-11-19): the authorized adapter, separate immutable
+builder, native prefix view, source/coverage manifests, index pinning
+and frozen-source planning are implemented. Full verification: 710
+tests, lint/format and five import contracts passed. The existing
+development plan passes native source/hash validation. No quote file
+is present in its requested raw directory at the latest check, so no
+real snapshot index or primary run has been produced. Owner acquisition
+remains separate. No signal, cost, risk or fill rule was changed.

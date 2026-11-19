@@ -11,4 +11,4 @@ No bulk copying. Ideas and lessons (as opposed to code) are recorded in `docs/re
 
 | Date | What was taken | From (repo, path, commit) | What changed | Why it is trustworthy | Agent |
 |---|---|---|---|---|---|
-| | *(nothing yet)* | | | | |
+| 2026-11-19 | Complete price-candidate quote planning | Kinn `research/gpt/plan_bid_quote_windows.py`, `e08de30` / `9d6b83c` | Rewritten as native pure window construction, strict source validation and runner-level price-only enumeration. No sandbox import; no forward outcomes. | Native source/hash, immutable-plan, exact-time/DST, replay, post-decision perturbation and runner pinning tests; full platform checks recorded with the adapter. | gpt |

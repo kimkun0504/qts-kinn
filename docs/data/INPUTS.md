@@ -160,3 +160,90 @@ SEC acceptance establishes public-by timing for the filing, not
 the first release of a press announcement. No analyst consensus,
 text sentiment, trading halt status, quoted depth or execution
 latency is supplied by this input.
+
+
+## `nbbo_replenishment`: two pre-decision quote snapshots
+
+This owner-authorized input is specific to the frozen
+`bid_replenishment_reversal` price population. It is a signal input,
+not a quote fill model. The owner alone downloads the planned raw
+windows with the existing owner helper. GPT never invokes that helper,
+reads keys or writes raw files.
+
+After acquisition, build only the separate index:
+
+```sh
+KINN_AGENT=gpt UV_NO_ENV_FILE=1 uv run --no-env-file --locked kinn inputs build nbbo_replenishment --plan <processed-quotes_sample-plan-directory>
+```
+
+`kinn inputs show nbbo_replenishment` gives its immutable id, source
+hashes and valid-pair coverage overall, in 2013–2016, in 2022–2023 and
+by year. Missing files refuse the entire build before publication.
+Empty, stale, conflicting or invalid observations preserve the parent
+with an explicit status. Coverage denominators include all parents.
+The builder does not apply the strategy's size-ratio/spread signal.
+
+The development plan must match every first event of the finished,
+clean, registered price-control study, including identity, decision
+minute and pre-open fields. Source manifest/events and windows hashes
+are checked. Only saved candidate feature columns are read, never
+forward returns or future entry prices. The downloader's `entry_price`
+compatibility field contains prior close. Its value is not a fill.
+Dates, windows, schema, target offsets and current data build must match.
+Unknown parent identity or changed first-event time fails explicitly.
+
+Declare `inputs = {"nbbo_replenishment": {"sessions": 1}}`.
+This means the current session only. `view.book_pairs[symbol]` holds
+immutable `BookPair(day, symbol, permaticker, minute, status, early,
+late)` values. Available early/late fields are immutable
+`QuoteSnapshot(sip_timestamp, bid_price, ask_price, bid_size, ask_size)`.
+Unavailable snapshots are None. `DayView.upto(cut)` hides pairs whose
+signal minute exceeds cut. The native loader requires the indexed
+company and traded symbol to match the session universe. All ordinary
+peers remain in that universe regardless of their quote eligibility.
+
+If T is the completed signal bar's end, targets are T−5 seconds and
+T−1 nanosecond. Latest SIP timestamp at or before each target is
+selected **before** validity checks. An invalid latest quote never
+revives an older quote. Identical feature duplicates collapse;
+conflicting latest-timestamp feature ties are unavailable. Age must
+be at most one second relative to its target, bid/ask finite and
+positive, ask strictly above bid, and displayed sizes positive integers.
+Sizes retain common vendor units; no absolute share depth is inferred.
+Post-decision quote fields are not inspected for feature selection or
+exposed, including the two post-decision raw seconds reserved for a
+future separately registered execution audit.
+
+The immutable index fingerprints parser version `nbbo-replenishment-1`,
+source plan/control/candidate content, original strategy commit, build
+and raw quote contents. A second source hash pass prevents publication
+from files changed during parsing. The derived file also has a content
+hash checked when opened. Each run records source, coverage and index
+id; configuration hashes, resume, sweeps and spawned workers pin it.
+New runs require strategy source identical to the registered control's
+source. Workers also verify the strategy hash recorded at run creation.
+Changing CURRENT cannot change a paused run. A period outside the
+indexed candidate source range fails; absence of an index is never
+observed absence of an event. This input has no unseal path.
+
+Only after development qualifies, a future acquisition plan can use:
+
+```sh
+KINN_AGENT=gpt UV_NO_ENV_FILE=1 uv run --no-env-file --locked kinn inputs plan nbbo_replenishment --reference-run <original-development-control-id> --start <first-session> --end <last-session> --plan <new-processed-quotes_sample-directory>
+```
+
+The high-level runner checks clean/frozen source, enumerates identical
+price-only triggers and replays their prefixes. It writes only candidate
+features and acquisition windows, without calling the simulator or
+forward study measurements. It does not create a performance result;
+the preregistered validation still gets one performance run. The data
+layer imports neither strategies nor research. No real validation plan
+was generated during adapter implementation.
+
+Synthetic native tests cover source/hash and all-parent checks, exact
+nanosecond/DST boundaries, invalid latest quotes, ties, staleness,
+empty versus missing files, post-decision perturbation, seal and window
+rejection, identity conflicts, native replay with an intentional canary,
+immutable plans, and index/strategy pinning through resume and workers.
+These establish software contracts, not quote completeness, execution
+latency or live profitability. Minute-bar execution and costs are unchanged.

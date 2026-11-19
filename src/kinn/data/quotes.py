@@ -13,6 +13,7 @@ from __future__ import annotations
 import csv
 import gzip
 import json
+import math
 import random
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
@@ -22,6 +23,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pyarrow.parquet as pq
 
+from kinn.core.types import QuoteSnapshot
 from kinn.data import seal
 
 NEW_YORK = ZoneInfo("America/New_York")
@@ -30,6 +32,113 @@ PERIODS = (("2003–2016", 2003, 2016), ("2017–2023", 2017, 2023))
 MINUTES_AFTER_ENTRY = 10
 WINDOW_FIELDS = ["day", "symbol", "signal_minute", "entry_minute", "entry_price", "adv20_prev",
                  "start_ns", "entry_ns", "end_ns", "bucket", "period"]  # fmt: skip
+
+NBBO_VERSION = "nbbo-replenishment-1"
+NBBO_PLAN_VERSION = "bid-quote-plan-1"
+NBBO_FIELDS = (*WINDOW_FIELDS, "permaticker", "early_target_ns", "late_target_ns", "decision_ns")
+NBBO_CANDIDATE_COLUMNS = (
+    "day",
+    "symbol",
+    "permaticker",
+    "signal_minute",
+    "prev_close",
+    "adv20_prev",
+)
+
+
+def replenishment_pair(records: list[dict], decision_ns: int):
+    """Select latest BEFORE validation. Future feature values are never inspected.
+
+    The builder separately validates source timestamps, dates and acquisition bounds.
+    A bad latest quote cannot revive an earlier quote; conflicting feature ties fail.
+    """
+    fields = ("bid_price", "ask_price", "bid_size", "ask_size")
+
+    def at(target):
+        eligible = [q for q in records if q["sip_timestamp"] <= target]
+        if not eligible:
+            return "missing", None
+        timestamp = max(q["sip_timestamp"] for q in eligible)
+        latest = [q for q in eligible if q["sip_timestamp"] == timestamp]
+        values = {
+            json.dumps([q.get(f) for f in fields], separators=(",", ":"), sort_keys=True)
+            for q in latest
+        }
+        if len(values) != 1:
+            return "conflict", None
+        if target - timestamp > 1_000_000_000:
+            return "stale", None
+        bid, ask, bsize, asize = (latest[0].get(f) for f in fields)
+        prices = (bid, ask)
+        sizes = (bsize, asize)
+
+        def numeric(x):
+            try:
+                return type(x) in (int, float) and math.isfinite(x)
+            except OverflowError:
+                return False
+
+        if (
+            not all(numeric(x) and x > 0 for x in (*prices, *sizes))
+            or ask <= bid
+            or not all(x == int(x) and x <= 2**63 - 1 for x in sizes)
+        ):
+            return "invalid", None
+        return "available", QuoteSnapshot(timestamp, float(bid), float(ask), int(bsize), int(asize))
+
+    early_status, early = at(decision_ns - 5_000_000_000)
+    late_status, late = at(decision_ns - 1)
+    status = (
+        ";".join(
+            f"{name}_{value}"
+            for name, value in (("early", early_status), ("late", late_status))
+            if value != "available"
+        )
+        or "available"
+    )
+    return status, early, late
+
+
+def replenishment_windows(candidates: list[dict]) -> list[dict]:
+    """All price candidates, in identity order. No outcome or availability columns."""
+    rows, seen = [], set()
+    for candidate in candidates:
+        day, symbol = candidate["day"], candidate["symbol"]
+        seal.check_range(day, day, source=NBBO_PLAN_VERSION)
+        if not symbol or any(x in symbol for x in ("/", "\\", "\x00")):
+            raise ValueError("unsafe or missing symbol")
+        if (day, symbol) in seen:
+            raise ValueError("only one first price event per symbol/date is allowed")
+        seen.add((day, symbol))
+        minute, company = candidate["signal_minute"], candidate["permaticker"]
+        if (
+            type(minute) is not int
+            or not 590 <= minute <= 885
+            or type(company) is not int
+            or company <= 0
+        ):
+            raise ValueError("invalid registered price-event identity/time")
+        end = minute_ns(day, minute + 1)
+        rows.append(
+            {
+                "day": day.isoformat(),
+                "symbol": symbol,
+                "permaticker": company,
+                "signal_minute": minute,
+                "entry_minute": minute + 1,
+                "entry_price": candidate["prev_close"],
+                "adv20_prev": candidate["adv20_prev"],
+                "start_ns": end - 10_000_000_000,
+                "entry_ns": end,
+                "end_ns": end + 2_000_000_000,
+                "early_target_ns": end - 5_000_000_000,
+                "late_target_ns": end - 1,
+                "decision_ns": end,
+                "bucket": "registered price candidates",
+                "period": "2003–2016" if day.year <= 2016 else "2017–2023",
+            }
+        )
+    return sorted(rows, key=lambda r: (r["day"], r["symbol"]))
 
 
 def minute_ns(day: date, minute_et: int) -> int:

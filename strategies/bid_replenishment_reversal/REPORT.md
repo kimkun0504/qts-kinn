@@ -1,6 +1,6 @@
 # Bid replenishment reversal
 
-## Status: primary untested; quote acquisition and adapter pending
+## Status: primary untested; adapter implemented, quote acquisition pending
 
 The price-only control establishes a sufficient candidate pool
 for the registered quote experiment: 1,933 events on 937 dates,
@@ -111,7 +111,10 @@ a prior-close placeholder, not an execution assumption.
 The owner action and exact existing download command are in
 `OWNER_ACTIONS.md`. The scoped native input/index request is
 `docs/requests/2026-11-18-nbbo-replenishment-input.md`.
-The primary requires that adapter and the historical windows.
+The owner authorized the adapter and separate index in chat. The
+native adapter is now implemented; the historical windows are still
+required. The latest file-presence check found none in the requested
+raw plan directory. No primary result exists yet.
 GPT has not downloaded, written, moved or copied raw data.
 
 ## Tests, provenance and limits
@@ -122,8 +125,14 @@ They cover quote-size/spread boundaries and unit invariance,
 one-second freshness, future-quote rejection, causal prefixes,
 failed-first-event handling, an intentional future-pair canary,
 all-event enumeration, omitted outcomes, DST, raw-output refusal
-and immutable CSV checks. Quote tests currently use a clearly
-labeled contract fixture. They do not certify a native loader.
+and immutable CSV checks. Strategy replay now uses native immutable
+QuoteSnapshot/BookPair values and DayView, replacing the proposed
+contract fixture. Native synthetic builder/store/runner tests also
+check source hashes, every-parent retention, missing versus empty files,
+invalid latest observations, conflicting ties, no post-decision feature
+use, identity/time errors, native future canaries, immutable planning,
+and pinned resume/spawn behavior. Software tests do not establish
+actual quote availability, executable depth or latency.
 
 All empirical performance diagnostics above derive from the
 completed control's manifest and r_120 event rows. The plan
@@ -144,3 +153,31 @@ exposure remain part of the research history. No new quotes
 can erase the broader adaptive search or restore pristine
 validation. The primary is untested until the owner dependency
 is resolved.
+
+
+## Authorized adapter implementation (2026-11-19)
+
+The scoped native input `nbbo_replenishment` / `nbbo-replenishment-1`
+now has typed views, a separate immutable snapshot builder, source and
+raw content fingerprints, per-period/year coverage, strict date/window
+checks and pinned runner manifests. All parent candidates survive even
+when snapshots are unavailable. The complete development source plan
+passed native identity/time/hash validation; no raw quote price was read
+in that check. A missing file refuses publication of the index.
+
+The source strategy file is unchanged from the preregistered control
+commit. New runs enforce that equality, and workers enforce the
+run-created strategy hash. A high-level price-only planning path is
+implemented for a potential later validation acquisition; it computes
+no forward measurements or P&L. It has been tested only on synthetic
+fixtures. No real validation planning or performance run was performed.
+
+No additional empirical trial was used for implementing/testing the
+adapter. The one control run and its trial accounting remain as above.
+The primary waits for owner acquisition before its one registered
+study. A coverage failure will not be repaired by changing the frozen
+signal, dropping difficult events or selecting a different period.
+
+Verification: the full suite passed (710 tests), with Ruff lint/format
+checks and all five import contracts passing. These are software checks,
+not added research trials or performance observations.

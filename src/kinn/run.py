@@ -8,6 +8,7 @@ stops (time budget, crash) continues with ``--resume <run_id>``. Sessions are in
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 import importlib.util
 import json
 import multiprocessing
@@ -25,7 +26,7 @@ import yaml
 from kinn.core.settings import HOLDOUT_START, Settings, load_settings
 from kinn.core.types import Trade
 from kinn.costs import model as cost_model
-from kinn.data import holdout
+from kinn.data import holdout, inputs, seal
 from kinn.data.inputs import info as input_info
 from kinn.data.store import DataStore
 from kinn.engine.intraday.data import load_day
@@ -39,6 +40,7 @@ from kinn.engine.intraday.strategy import (
     form4_sessions,
     form8k_sessions,
     form8k_timed_sessions,
+    nbbo_replenishment_sessions,
 )
 from kinn.registry import runs as registry
 from kinn.reporting import metrics as metrics_module
@@ -80,6 +82,68 @@ def load_config(name: str, config: str) -> tuple[dict, dict]:
     return meta, cfg
 
 
+def check_nbbo_price_definition(source: dict, *, repo: Path = REPO_ROOT) -> str:
+    """A quote acquisition population is valid only for the frozen price kernel."""
+    commit = source["source_git"]["commit"]
+    path = "strategies/bid_replenishment_reversal/strategy.py"
+    original = registry._git(repo, "show", f"{commit}:{path}")
+    current = (strategies_dir() / "bid_replenishment_reversal/strategy.py").read_text().strip()
+    if not original or current != original:
+        raise ValueError("NBBO price definition changed from the registered control commit")
+    return hashlib.sha256(current.encode()).hexdigest()
+
+
+def prepare_nbbo_plan(
+    source_run: str,
+    start: date,
+    end: date,
+    output: Path,
+    *,
+    settings: Settings | None = None,
+    repo: Path = REPO_ROOT,
+) -> Path:
+    """Enumerate frozen price triggers for acquisition, without forward measurements.
+
+    Only use for validation after the preregistered development gates pass. It is a data
+    acquisition step; the one validation performance trial remains a separate kinn run.
+    """
+    settings = settings or load_settings()
+    seal.check_range(start, end, source="NBBO price-only planning")
+    if not source_run or any(x in source_run for x in ("/", "\\", "..")):
+        raise ValueError("invalid NBBO reference run")
+    manifest = json.loads((settings.runs_dir / source_run / "manifest.json").read_text())
+    check_nbbo_price_definition({"source_git": manifest["git"]}, repo=repo)
+    registry.check_clean(registry.git_state(repo), scratch=False)
+    strategy = load_strategy("bid_replenishment_reversal", {"use_quotes": False})
+    if getattr(strategy, "inputs", {}):
+        raise ValueError("price-only planning must not read quote inputs")
+    store = DataStore(settings, build_id=manifest["data_build_id"])
+    candidates = []
+    for day in store.sessions(start, end):
+        view = load_day(store, day, strategy.universe).view
+        signals = day_signals(strategy, view)
+        check_no_lookahead(strategy, view, signals, sorted({s.minute for s in signals}))
+        for signal in signals:
+            bars = view.symbols[signal.symbol]
+            candidates.append(
+                {
+                    "day": day,
+                    "symbol": signal.symbol,
+                    "permaticker": int(bars.permaticker),
+                    "signal_minute": signal.minute,
+                    "prev_close": bars.prior["prev_close"],
+                    "adv20_prev": bars.prior["adv20_prev"],
+                }
+            )
+    return inputs.write_nbbo_price_plan(
+        settings,
+        source_run,
+        candidates,
+        {"start": start.isoformat(), "end": end.isoformat()},
+        output,
+    )
+
+
 def _trades_table(trades: list[Trade]) -> pa.Table:
     return pa.table({f: [getattr(t, f) for t in trades] for f in TRADE_FIELDS})
 
@@ -118,6 +182,10 @@ def run_month_multi(job: dict) -> str:
             "trades": [], "events": [], "unresolved": [], "counts": dict.fromkeys(COUNT_KEYS, 0),
         })  # fmt: skip
     first = runs[0]["strategy"]
+    if any(nbbo_replenishment_sessions(r["strategy"]) for r in runs):
+        source = (strategies_dir() / job["strategy"] / "strategy.py").read_text().strip()
+        if hashlib.sha256(source.encode()).hexdigest() != job.get("nbbo_price_definition_sha256"):
+            raise ValueError("NBBO price definition changed after run creation")
     if any(r["strategy"].universe.where() != first.universe.where() for r in runs):
         raise ValueError("configs run together must share one universe")
     share_features = all(
@@ -126,11 +194,13 @@ def run_month_multi(job: dict) -> str:
     insider_sessions = max(form4_sessions(r["strategy"]) for r in runs)
     report_sessions = max(form8k_sessions(r["strategy"]) for r in runs)
     timed_sessions = max(form8k_timed_sessions(r["strategy"]) for r in runs)
+    nbbo_sessions = max(nbbo_replenishment_sessions(r["strategy"]) for r in runs)
     for day in (date.fromisoformat(d) for d in job["sessions"]):
         data = load_day(
             store, day, first.universe,
             form4_sessions=insider_sessions, form8k_sessions=report_sessions,
             form8k_timed_sessions=timed_sessions,
+            nbbo_replenishment_sessions=nbbo_sessions,
         )  # fmt: skip
         shared = compute_features(first, data.view) if share_features and len(runs) > 1 else None
         for r in runs:
@@ -292,6 +362,10 @@ def start_run(
                 "last_accepted_day",
             )
         }
+    if nbbo_replenishment_sessions(declared):
+        found = store.check_nbbo_coverage(start, end)
+        definition_hash = check_nbbo_price_definition(found, repo=repo)
+        used["nbbo_replenishment"] = {**found, "price_definition_sha256": definition_hash}
     short = registry.config_hash(
         {
             "meta": meta,
@@ -367,6 +441,9 @@ def continue_run(
         "parts": str(parts),
         "unseal": bool(manifest.get("unsealed", False)),
         "inputs": {k: v["input_id"] for k, v in manifest.get("inputs", {}).items()},
+        "nbbo_price_definition_sha256": manifest.get("inputs", {})
+        .get("nbbo_replenishment", {})
+        .get("price_definition_sha256"),
     }
     deadline = time.time() + budget_seconds
     jobs = [{**base, "month": m, "sessions": months[m], "deadline": deadline} for m in pending]
@@ -455,6 +532,9 @@ def continue_sweep(
                 "build_id": head["data_build_id"], "strategy": head["strategy"],
                 "cost_calibration": head["cost_calibration"], "month": month,
                 "inputs": {k: v["input_id"] for k, v in head.get("inputs", {}).items()},
+                "nbbo_price_definition_sha256": head.get("inputs", {}).get(
+                    "nbbo_replenishment", {}
+                ).get("price_definition_sha256"),
                 "sessions": sessions, "runs": todo, "deadline": deadline,
             })  # fmt: skip
     if workers <= 1:

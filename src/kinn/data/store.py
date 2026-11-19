@@ -37,6 +37,7 @@ class DataStore:
         # not pinned is read at its current version.
         self._settings = settings
         self._inputs = dict(inputs or {})
+        self._nbbo_meta: dict[str, dict] = {}
         # ``unseal=True`` opens the owner's unsealed build (kinn.data.holdout). It needs the
         # owner's token even to open, and every read of a holdout date is logged.
         if unseal:
@@ -257,6 +258,63 @@ class DataStore:
                  and usable_minute <= ? and form = '8-K'
                order by accepted, accession, permaticker""",
             [str(path), day, HOLDOUT_START, HOLDOUT_START, asof_minute],
+        )
+
+    def nbbo_replenishment_info(self) -> dict:
+        """The immutable source/coverage of the pinned first-event snapshot index."""
+        input_id = self.input_id("nbbo_replenishment")
+        if input_id not in self._nbbo_meta:
+            meta = inputs_module.info(self._settings, "nbbo_replenishment", input_id)
+            path = (
+                inputs_module.root(self._settings, "nbbo_replenishment")
+                / input_id
+                / "pairs.parquet"
+            )
+            if (
+                meta.get("version") != inputs_module.quotes.NBBO_VERSION
+                or meta.get("data_build_id") != self.build_id
+                or meta.get("input_id") != input_id
+                or not meta.get("rows")
+                or inputs_module._content_hash(path) != meta.get("pairs_sha256")
+            ):
+                raise inputs_module.InputError(
+                    "NBBO input version/build/hash mismatch or empty input"
+                )
+            self._nbbo_meta[input_id] = meta
+        return self._nbbo_meta[input_id]
+
+    def check_nbbo_coverage(self, start: date, end: date) -> dict:
+        # This scoped input has no unseal path, including in an owner's unsealed store.
+        seal.check_range(start, end, source="nbbo_replenishment")
+        meta = self.nbbo_replenishment_info()
+        if start < date.fromisoformat(meta["coverage_start"]) or end > date.fromisoformat(
+            meta["coverage_end"]
+        ):
+            raise inputs_module.InputError(
+                f"NBBO input {meta['input_id']} indexes price candidates in "
+                f"{meta['coverage_start']}..{meta['coverage_end']}, not {start}..{end}; "
+                "prepare a complete price-only acquisition plan for that period"
+            )
+        return meta
+
+    def nbbo_replenishment(
+        self, day: date, *, sessions: int = 1, asof_minute: int = 1439
+    ) -> pa.Table:
+        """All indexed parents for this session, available only at their decision bar close."""
+        if type(sessions) is not int or sessions != 1:
+            raise ValueError("nbbo_replenishment supports only sessions=1 (current session)")
+        if type(asof_minute) is not int or not -1 <= asof_minute <= 1439:
+            raise ValueError("asof_minute must be a completed-bar label in [-1, 1439]")
+        meta = self.check_nbbo_coverage(day, day)
+        path = (
+            inputs_module.root(self._settings, "nbbo_replenishment")
+            / meta["input_id"]
+            / "pairs.parquet"
+        )
+        return self._query(
+            """select * from read_parquet(?) where day = ? and day < ? and minute <= ?
+               order by symbol, minute""",
+            [str(path), day, HOLDOUT_START, asof_minute],
         )
 
     def minute(

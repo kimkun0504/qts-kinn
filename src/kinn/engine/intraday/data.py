@@ -9,8 +9,17 @@ from datetime import date
 
 import numpy as np
 
-from kinn.core.types import RTH_CLOSE, RTH_OPEN, CurrentReport, Disclosure, TimedReport
+from kinn.core.types import (
+    RTH_CLOSE,
+    RTH_OPEN,
+    BookPair,
+    CurrentReport,
+    Disclosure,
+    QuoteSnapshot,
+    TimedReport,
+)
 from kinn.data.inputs import EARNINGS_CODE, FORM8K_ITEMS, item
+from kinn.data.quotes import minute_ns
 from kinn.data.store import DataStore
 from kinn.data.universe import Universe
 
@@ -76,6 +85,8 @@ class DayView:
     reports: Mapping[str, tuple[CurrentReport, ...]] = field(default_factory=dict)
     timed_reports: Mapping[str, tuple[TimedReport, ...]] = field(default_factory=dict)
 
+    book_pairs: Mapping[str, tuple[BookPair, ...]] = field(default_factory=dict)
+
     def upto(self, last_minute: int) -> DayView:
         return DayView(
             self.day,
@@ -87,6 +98,10 @@ class DayView:
             {
                 symbol: tuple(r for r in rows if r.usable_minute <= last_minute)
                 for symbol, rows in self.timed_reports.items()
+            },
+            {
+                symbol: tuple(p for p in rows if p.minute <= last_minute)
+                for symbol, rows in self.book_pairs.items()
             },
         )
 
@@ -193,6 +208,35 @@ def load_timed_reports(
     return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
 
 
+def load_book_pairs(store: DataStore, day: date, members: Mapping[str, Mapping]):
+    """Never drop an unknown parent or silently reassign its session symbol."""
+    found: dict[str, list[BookPair]] = {}
+    for row in store.nbbo_replenishment(day).to_pylist():
+        symbol = row["symbol"]
+        matching = [
+            s for s, member in members.items() if member["permaticker"] == row["permaticker"]
+        ]
+        if matching != [symbol] or row["day"] != day or symbol in found:
+            raise ValueError("NBBO parent identity/date conflicts with session universe")
+        decision_ns = minute_ns(day, row["minute"] + 1)
+        for label, target in (("early", decision_ns - 5_000_000_000), ("late", decision_ns - 1)):
+            quote = row[label]
+            if quote is not None and not 0 <= target - quote["sip_timestamp"] <= 1_000_000_000:
+                raise ValueError("NBBO snapshot outside its pre-decision target")
+        found[symbol] = [
+            BookPair(
+                day,
+                symbol,
+                int(row["permaticker"]),
+                row["minute"],
+                row["status"],
+                QuoteSnapshot(**row["early"]) if row["early"] else None,
+                QuoteSnapshot(**row["late"]) if row["late"] else None,
+            )
+        ]
+    return {symbol: tuple(rows) for symbol, rows in sorted(found.items())}
+
+
 def load_day(
     store: DataStore,
     day: date,
@@ -201,6 +245,7 @@ def load_day(
     form4_sessions: int = 0,
     form8k_sessions: int = 0,
     form8k_timed_sessions: int = 0,
+    nbbo_replenishment_sessions: int = 0,
 ) -> DayData:
     """Load the universe's members for ``day`` with their minute bars, and, when asked for,
     that many sessions of insider disclosures (``form4_sessions``) and of 8-K filings
@@ -256,7 +301,17 @@ def load_day(
     if form8k_timed_sessions not in (0, 1):
         raise ValueError("form8k_timed supports only the current session")
     timed = load_timed_reports(store, day, members) if form8k_timed_sessions else {}
+    if nbbo_replenishment_sessions not in (0, 1):
+        raise ValueError("nbbo_replenishment supports only the current session")
+    pairs = load_book_pairs(store, day, members) if nbbo_replenishment_sessions else {}
     view = DayView(
-        day, RTH_OPEN, int(close_minute), dict(sorted(symbols.items())), disclosures, reports, timed
+        day,
+        RTH_OPEN,
+        int(close_minute),
+        dict(sorted(symbols.items())),
+        disclosures,
+        reports,
+        timed,
+        pairs,
     )
     return DayData(view, {s: r["close"] for s, r in members.items() if r["close"] is not None})

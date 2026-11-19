@@ -38,11 +38,11 @@ def input_sessions(strategy: Strategy, name: str) -> int:
     unknown = set(wanted) - set(INPUT_NAMES)
     if unknown:
         raise ValueError(f"unknown inputs {sorted(unknown)}; there are {list(INPUT_NAMES)}")
-    if name == "form8k_timed" and name in wanted:
+    if name in ("form8k_timed", "nbbo_replenishment") and name in wanted:
         options = wanted[name] or {}
         value = options.get("sessions", 1)
         if set(options) - {"sessions"} or type(value) is not int or value != 1:
-            raise ValueError("form8k_timed supports only sessions=1 (current session)")
+            raise ValueError(f"{name} supports only sessions=1 (current session)")
     return int((wanted[name] or {}).get("sessions", 1)) if name in wanted else 0
 
 
@@ -59,6 +59,11 @@ def form8k_sessions(strategy: Strategy) -> int:
 def form8k_timed_sessions(strategy: Strategy) -> int:
     """Current-session original 8-K timestamps, with per-minute availability."""
     return input_sessions(strategy, "form8k_timed")
+
+
+def nbbo_replenishment_sessions(strategy: Strategy) -> int:
+    """Current-session snapshot pairs for the complete registered price population."""
+    return input_sessions(strategy, "nbbo_replenishment")
 
 
 def compute_features(strategy: Strategy, view: DayView) -> dict[str, dict[str, Any]]:

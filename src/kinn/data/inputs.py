@@ -18,15 +18,18 @@ pinned to, under the same next-session rule.
 
 from __future__ import annotations
 
+import csv
+import dataclasses
 import gzip
 import hashlib
+import io
 import json
 import os
 import re
 import tempfile
 import zipfile
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -36,6 +39,7 @@ import pyarrow.csv as pacsv
 import pyarrow.parquet as pq
 
 from kinn.core.settings import HOLDOUT_START, Settings
+from kinn.data import quotes, seal
 from kinn.data.raw import sharadar_zip
 
 FORM4_VERSION = "form4-1"
@@ -63,7 +67,7 @@ FORM8K_ITEMS = frozenset(
      57, 58, 61, 62, 63, 64, 65, 71, 81, 91)
 )  # fmt: skip
 EARNINGS_CODE = 22  # item 2.02, results of operations and financial condition
-NAMES = ("form4", "form8k", "form8k_timed")
+NAMES = ("form4", "form8k", "form8k_timed", "nbbo_replenishment")
 CURRENT_NAME = "CURRENT"
 _TABLES = ("SUBMISSION", "REPORTINGOWNER", "NONDERIV_TRANS")
 _READ = "read_csv('{}/{}.tsv', delim='\t', header=true, all_varchar=true, quote='')"
@@ -432,3 +436,357 @@ def info(settings: Settings, name: str, input_id: str | None = None) -> dict:
     if not path.exists():
         raise InputError(f"{name} input {input_id} is not on disk under {path.parent}")
     return json.loads(path.read_text())
+
+
+NBBO_SNAPSHOT = pa.struct(
+    [
+        ("sip_timestamp", pa.int64()),
+        ("bid_price", pa.float64()),
+        ("ask_price", pa.float64()),
+        ("bid_size", pa.int64()),
+        ("ask_size", pa.int64()),
+    ]
+)
+NBBO_SCHEMA = pa.schema(
+    [
+        ("day", pa.date32()),
+        ("symbol", pa.string()),
+        ("permaticker", pa.int64()),
+        ("minute", pa.int16()),
+        ("status", pa.string()),
+        ("early", NBBO_SNAPSHOT),
+        ("late", NBBO_SNAPSHOT),
+    ]
+)
+
+
+def validate_nbbo_plan(settings: Settings, plan: Path) -> tuple[dict, list[dict], Path]:
+    """Authenticate a complete price population before reading any raw quote values.
+
+    The data layer reads saved identities/times and pre-open fields, never forward outcomes.
+    A future price-only plan can reference the same original development control.
+    """
+    plan = Path(plan).expanduser().resolve()
+    if plan.name in ("windows.csv", "plan.json"):
+        plan = plan.parent
+    base = (settings.data_dir / "quotes_sample").resolve()
+    if plan.parent != base or "sealed" in plan.parts:
+        raise InputError("NBBO plan must be one directory under processed quotes_sample")
+    meta = json.loads((plan / "plan.json").read_text())
+    if meta.get("schema") != quotes.NBBO_PLAN_VERSION or meta.get("raw_plan_name") != plan.name:
+        raise InputError("unknown NBBO plan schema or conflicting raw plan name")
+    return _validate_nbbo_sources(settings, meta, plan)
+
+
+def _validate_nbbo_sources(settings: Settings, meta: dict, plan: Path):
+    """Validate staged or published content without publishing a partial plan."""
+    source_run = meta.get("source_run", "")
+    if not source_run or any(x in source_run for x in ("/", "\\", "..")):
+        raise InputError("invalid NBBO source run")
+    source = settings.runs_dir / source_run
+    manifest_path, events_path = source / "manifest.json", source / "events.parquet"
+    if (
+        _content_hash(manifest_path) != meta.get("source_manifest_sha256")
+        or _content_hash(events_path) != meta.get("source_events_sha256")
+        or _content_hash(plan / "windows.csv") != meta.get("windows_sha256")
+    ):
+        raise InputError("NBBO source manifest/events or window hash changed")
+    manifest = json.loads(manifest_path.read_text())
+    development = {"start": "2003-09-10", "end": "2016-12-30"}
+    if not (
+        manifest.get("run_id") == source_run
+        and manifest.get("strategy") == "bid_replenishment_reversal"
+        and manifest.get("kind") == "event_study"
+        and manifest.get("config") == "development_control"
+        and manifest.get("status") == "complete"
+        and manifest.get("scratch") is False
+        and manifest.get("git", {}).get("dirty") is False
+        and re.fullmatch(r"[0-9a-f]{40}", manifest["git"].get("commit", ""))
+        and manifest.get("resolved_config", {}).get("params") == {"use_quotes": False}
+        and manifest.get("period") == development
+        and meta.get("data_build_id") == manifest.get("data_build_id")
+        and meta.get("source_git") == manifest.get("git")
+    ):
+        raise InputError("NBBO requires the clean, completed registered development control")
+    source_kind = meta.get("source_kind", "event_study")
+    if source_kind == "event_study":
+        candidates_path = events_path
+        if meta.get("period") != development:
+            raise InputError("NBBO control plan period changed")
+    elif source_kind == "price_plan":
+        candidates_path = plan / "candidates.parquet"
+        if _content_hash(candidates_path) != meta.get("candidates_sha256"):
+            raise InputError("NBBO price-only candidate hash changed")
+        if pq.read_schema(candidates_path).names != list(quotes.NBBO_CANDIDATE_COLUMNS):
+            raise InputError("price-only plan must contain only candidate features")
+    else:
+        raise InputError("unknown NBBO candidate source kind")
+    start, end = (date.fromisoformat(meta["period"][key]) for key in ("start", "end"))
+    seal.check_range(start, end, source="NBBO candidate plan")
+    # Guard dates before loading any other source columns, including for malformed sources.
+    days = pq.read_table(candidates_path, columns=["day"])["day"].to_pylist()
+    if not all(start <= d <= end for d in days):
+        raise InputError("NBBO candidate date outside the registered source period")
+    candidates = pq.read_table(
+        candidates_path, columns=list(quotes.NBBO_CANDIDATE_COLUMNS)
+    ).to_pylist()
+    expected = quotes.replenishment_windows(candidates)
+    with (plan / "windows.csv").open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != list(quotes.NBBO_FIELDS):
+            raise InputError("NBBO window fields changed")
+        windows = list(reader)
+    # String comparison preserves exact nanoseconds and checks every parent field.
+    normalized = [
+        {k: "" if r[k] is None else str(r[k]) for k in quotes.NBBO_FIELDS} for r in expected
+    ]
+    if (
+        windows != normalized
+        or len(windows) != meta.get("events")
+        or len(windows) != meta.get("windows")
+    ):
+        raise InputError("NBBO windows must equal every first parent candidate exactly")
+    if not windows:
+        raise InputError("NBBO plan has no price candidates")
+    for key, value in (
+        ("early_offset_ns", -5_000_000_000),
+        ("late_offset_ns", -1),
+        ("max_age_ns", 1_000_000_000),
+        ("window_start_offset_ns", -10_000_000_000),
+        ("window_end_offset_ns", 2_000_000_000),
+    ):
+        if meta.get(key) != value:
+            raise InputError("NBBO target/window definition changed")
+    return meta, expected, plan
+
+
+def _nbbo_records(path: Path, window: dict) -> list[dict]:
+    """Read exactly one pre-seal acquisition window; malformed provenance aborts."""
+    records = []
+    day = date.fromisoformat(window["day"])
+    with gzip.open(path, "rt") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except (ValueError, TypeError) as error:
+                raise InputError(f"malformed quote JSON in {path.name}") from error
+            timestamp = row.get("sip_timestamp") if isinstance(row, dict) else None
+            if type(timestamp) is not int or not 0 < timestamp <= 2**63 - 1:
+                raise InputError(f"invalid SIP nanosecond timestamp in {path.name}")
+            quote_day = (
+                datetime.fromtimestamp(timestamp // 1_000_000_000, UTC).astimezone(NEW_YORK).date()
+            )
+            seal.check_range(quote_day, quote_day, source="NBBO quote timestamp")
+            if quote_day != day or not window["start_ns"] <= timestamp < window["end_ns"]:
+                raise InputError(f"quote date/window mismatch in {path.name}")
+            if row.get("ticker", window["symbol"]) != window["symbol"]:
+                raise InputError(f"quote symbol mismatch in {path.name}")
+            records.append(row)
+    return records
+
+
+def _nbbo_coverage(rows: list[dict]) -> dict:
+    def summarize(selected):
+        count = len(selected)
+        valid = sum(r["status"] == "available" for r in selected)
+        return {
+            "parents": count,
+            "valid_pairs": valid,
+            "valid_pair_fraction": valid / count if count else None,
+            "statuses": dict(sorted(Counter(r["status"] for r in selected).items())),
+        }
+
+    return {
+        "all": summarize(rows),
+        "2013_2016": summarize([r for r in rows if 2013 <= r["day"].year <= 2016]),
+        "2022_2023": summarize([r for r in rows if 2022 <= r["day"].year <= 2023]),
+        "by_year": {
+            str(y): summarize([r for r in rows if r["day"].year == y])
+            for y in sorted({r["day"].year for r in rows})
+        },
+    }
+
+
+def build_nbbo_replenishment(settings: Settings, plan: Path) -> str:
+    """Build only this separate immutable input. Never acquires or modifies raw files."""
+    meta, windows, plan = validate_nbbo_plan(settings, plan)
+    build_id = (settings.data_dir / "builds" / CURRENT_NAME).read_text().strip()
+    if meta["data_build_id"] != build_id:
+        raise InputError("NBBO source data build differs from the current data build")
+    raw_root = (settings.raw_dir / "massive/quotes_sample" / meta["raw_plan_name"]).resolve()
+    if not raw_root.is_relative_to(settings.raw_dir.resolve()) or "sealed" in raw_root.parts:
+        raise InputError("unsafe NBBO raw source path")
+    files = [
+        quotes.sample_file(raw_root, "quotes", date.fromisoformat(w["day"]), w["symbol"])
+        for w in windows
+    ]
+    if any(
+        "sealed" in p.resolve().parts or not p.resolve().is_relative_to(raw_root) for p in files
+    ):
+        raise InputError("unsafe NBBO raw quote file")
+    missing = [p for p in files if not p.is_file()]
+    if missing:
+        raise InputError(
+            f"NBBO acquisition incomplete: {len(missing)} of {len(files)} quote files missing; "
+            "owner must run the download in strategies/bid_replenishment_reversal/OWNER_ACTIONS.md"
+        )
+    raw_hashes = {p.name: _content_hash(p) for p in files}
+    identity = {
+        "version": quotes.NBBO_VERSION,
+        "data_build_id": build_id,
+        "source_plan_sha256": _content_hash(plan / "plan.json"),
+        "source_manifest_sha256": meta["source_manifest_sha256"],
+        "source_events_sha256": meta["source_events_sha256"],
+        "windows_sha256": meta["windows_sha256"],
+        "source_git": meta["source_git"],
+        "source_run": meta["source_run"],
+        "source_kind": meta.get("source_kind", "event_study"),
+        "candidates_sha256": meta.get("candidates_sha256"),
+        "raw_files_sha256": raw_hashes,
+    }
+    fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    input_id = fingerprint[:10]
+    base = root(settings, "nbbo_replenishment")
+    out = base / input_id
+    if not out.exists():
+        rows = []
+        for window, path in zip(windows, files, strict=True):
+            status, early, late = quotes.replenishment_pair(
+                _nbbo_records(path, window), window["decision_ns"]
+            )
+            rows.append(
+                {
+                    "day": date.fromisoformat(window["day"]),
+                    "symbol": window["symbol"],
+                    "permaticker": window["permaticker"],
+                    "minute": window["signal_minute"],
+                    "status": status,
+                    "early": dataclasses.asdict(early) if early else None,
+                    "late": dataclasses.asdict(late) if late else None,
+                }
+            )
+        # A concurrently completed/replaced download cannot create mixed provenance.
+        if raw_hashes != {p.name: _content_hash(p) for p in files}:
+            raise InputError("NBBO raw sources changed while building; no input published")
+        validate_nbbo_plan(settings, plan)
+        if _content_hash(plan / "plan.json") != identity["source_plan_sha256"]:
+            raise InputError("NBBO plan changed while building; no input published")
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix=".building-", dir=base) as temporary:
+            staging = Path(temporary) / "publish"
+            staging.mkdir()
+            pq.write_table(
+                pa.Table.from_pylist(rows, schema=NBBO_SCHEMA), staging / "pairs.parquet"
+            )
+            output = {
+                **identity,
+                "input": "nbbo_replenishment",
+                "input_id": input_id,
+                "fingerprint": fingerprint,
+                "rows": len(rows),
+                "coverage_start": meta["period"]["start"],
+                "coverage_end": meta["period"]["end"],
+                "coverage_basis": (
+                    "all registered first price candidates, including unavailable quotes"
+                ),
+                "coverage": _nbbo_coverage(rows),
+                "plan_directory": str(plan),
+                "pairs_sha256": _content_hash(staging / "pairs.parquet"),
+                "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
+            }
+            (staging / "input.json").write_text(json.dumps(output, indent=2) + "\n")
+            os.replace(staging, out)
+    existing = info(settings, "nbbo_replenishment", input_id)
+    if existing.get("fingerprint") != fingerprint or _content_hash(
+        out / "pairs.parquet"
+    ) != existing.get("pairs_sha256"):
+        raise InputError("immutable NBBO input was changed or is incomplete")
+    with tempfile.NamedTemporaryFile(
+        mode="w", dir=base, prefix=".CURRENT-", delete=False
+    ) as handle:
+        handle.write(input_id + "\n")
+    os.replace(handle.name, base / CURRENT_NAME)
+    return input_id
+
+
+def write_nbbo_price_plan(
+    settings: Settings, source_run: str, candidates: list[dict], period: dict, output: Path
+) -> Path:
+    """Publish price-only acquisition metadata; the runner supplies frozen strategy triggers.
+
+    This is not a backtest and contains no entries, exits, returns or P&L.
+    """
+    output = output.expanduser().resolve()
+    if output.parent != (settings.data_dir / "quotes_sample").resolve() or "sealed" in output.parts:
+        raise InputError("NBBO plan must be one directory under processed quotes_sample")
+    if not source_run or any(x in source_run for x in ("/", "\\", "..")):
+        raise InputError("invalid NBBO source run")
+    source = settings.runs_dir / source_run
+    manifest = json.loads((source / "manifest.json").read_text())
+    start, end = (date.fromisoformat(period[key]) for key in ("start", "end"))
+    seal.check_range(start, end, source="NBBO price-only planning")
+    if not all(start <= r["day"] <= end for r in candidates):
+        raise InputError("price-only candidate outside the requested period")
+    windows = quotes.replenishment_windows(candidates)
+    stream = io.StringIO(newline="")
+    writer = csv.DictWriter(stream, fieldnames=quotes.NBBO_FIELDS)
+    writer.writeheader()
+    writer.writerows(windows)
+    payload = stream.getvalue().encode()
+    schema = pa.schema(
+        [
+            ("day", pa.date32()),
+            ("symbol", pa.string()),
+            ("permaticker", pa.int64()),
+            ("signal_minute", pa.int64()),
+            ("prev_close", pa.float64()),
+            ("adv20_prev", pa.float64()),
+        ]
+    )
+    # Serialize once so candidate content and its hash are stable and cannot include outcomes.
+    table = pa.Table.from_pylist(
+        sorted(candidates, key=lambda r: (r["day"], r["symbol"])), schema=schema
+    )
+    sink = pa.BufferOutputStream()
+    pq.write_table(table, sink)
+    candidate_payload = sink.getvalue().to_pybytes()
+    meta = {
+        "schema": quotes.NBBO_PLAN_VERSION,
+        "source_kind": "price_plan",
+        "source_run": source_run,
+        "source_manifest_sha256": _content_hash(source / "manifest.json"),
+        "source_events_sha256": _content_hash(source / "events.parquet"),
+        "source_git": manifest["git"],
+        "data_build_id": manifest["data_build_id"],
+        "period": period,
+        "events": len(windows),
+        "windows": len(windows),
+        "sampling": "all frozen price triggers, no availability/return filter",
+        "early_offset_ns": -5_000_000_000,
+        "late_offset_ns": -1,
+        "max_age_ns": 1_000_000_000,
+        "window_start_offset_ns": -10_000_000_000,
+        "window_end_offset_ns": 2_000_000_000,
+        "entry_price_field": "prior close compatibility placeholder; not a fill assumption",
+        "postdecision_quotes": "never features; reserved for a future registered execution audit",
+        "raw_plan_name": output.name,
+        "windows_sha256": hashlib.sha256(payload).hexdigest(),
+        "candidates_sha256": hashlib.sha256(candidate_payload).hexdigest(),
+    }
+    if output.exists():
+        validate_nbbo_plan(settings, output)
+        if json.loads((output / "plan.json").read_text()) != meta:
+            raise InputError("refusing to overwrite a different published NBBO plan")
+        return output
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".plan-", dir=output.parent) as temporary:
+        staging = Path(temporary) / output.name
+        staging.mkdir()
+        (staging / "candidates.parquet").write_bytes(candidate_payload)
+        (staging / "windows.csv").write_bytes(payload)
+        (staging / "plan.json").write_text(json.dumps(meta, indent=2) + "\n")
+        _validate_nbbo_sources(settings, meta, staging)
+        os.replace(staging, output)
+    return output

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from datetime import date
 from importlib.metadata import version
 from pathlib import Path
 
@@ -111,6 +112,20 @@ def _inputs(args: argparse.Namespace) -> int:
 
     settings = load_settings()
     try:
+        if args.action == "plan":
+            from kinn.run import prepare_nbbo_plan
+
+            if args.name != "nbbo_replenishment" or not all(
+                (args.plan, args.reference_run, args.start, args.end)
+            ):
+                raise inputs.InputError(
+                    "NBBO plan requires --plan, --reference-run, --start and --end"
+                )
+            output = prepare_nbbo_plan(
+                args.reference_run, args.start, args.end, Path(args.plan), settings=settings
+            )
+            print(output / "windows.csv")
+            return 0
         if args.name == "form8k":
             from kinn.data.store import DataStore
 
@@ -118,7 +133,12 @@ def _inputs(args: argparse.Namespace) -> int:
                 print("form8k is read from the data build; there is nothing to build")
             print(json.dumps(DataStore(settings).form8k_info(), indent=2))
             return 0
-        if args.action == "build":
+        if args.action == "build" and args.name == "nbbo_replenishment":
+            if not args.plan:
+                raise inputs.InputError("nbbo_replenishment build requires --plan <plan directory>")
+            input_id = inputs.build_nbbo_replenishment(settings, Path(args.plan))
+            print(f"{args.name} input {input_id}: built and current")
+        elif args.action == "build":
             builder = (
                 inputs.build_form8k_timed if args.name == "form8k_timed" else inputs.build_form4
             )
@@ -443,8 +463,12 @@ def main(argv: list[str] | None = None) -> int:
     extra = sub.add_parser(
         "inputs", help="versioned inputs: kinn inputs build form4, kinn inputs show form8k"
     )
-    extra.add_argument("action", choices=("build", "show"))
-    extra.add_argument("name", choices=("form4", "form8k", "form8k_timed"))
+    extra.add_argument("action", choices=("build", "show", "plan"))
+    extra.add_argument("name", choices=("form4", "form8k", "form8k_timed", "nbbo_replenishment"))
+    extra.add_argument("--plan", help="complete immutable NBBO acquisition plan directory")
+    extra.add_argument("--reference-run", help="frozen development price-control run")
+    extra.add_argument("--start", type=date.fromisoformat)
+    extra.add_argument("--end", type=date.fromisoformat)
     extra.set_defaults(func=_inputs)
     swing = sub.add_parser(
         "swing", help="run a daily event rule as a book: kinn swing <strategy> --config <name>"
