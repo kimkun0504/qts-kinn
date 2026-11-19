@@ -4,8 +4,11 @@ Prepared for an owner decision. Strategy and exact signal:
 `strategies/bid_replenishment_reversal/HYPOTHESIS.md`.
 Price-control source:
 `20261119T043722Z_gpt_bid_replenishment_reversal_91e8fd86`.
-The source must finish and pass the necessary sample counts
-before the acquisition plan or this request is activated.
+The source completed with 1,933 events on 937 dates, including
+406 events in 2013–2016, passing the necessary acquisition
+sample counts. The primary remains untested. The frozen
+all-event plan and exact owner command are ready in
+strategies/bid_replenishment_reversal/OWNER_ACTIONS.md.
 
 ## Question being tested
 
