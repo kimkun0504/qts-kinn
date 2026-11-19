@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import http.client
 import json
 import os
@@ -353,3 +354,20 @@ def test_a_bad_sweep_is_refused_and_a_good_one_is_kept_with_the_run(root):
     request = json.loads((started[0] / "request.json").read_text())
     assert request["sweep"] == good
     assert "exit.hold_days" in get(root, "meta")[1]["sweepable"]
+
+
+def test_a_large_answer_is_gzipped_only_for_a_client_that_asks(server):
+    big = CODE + "\n#" + "x" * 40_000 + "\n"
+    origin = f"http://localhost:{server.port}"
+    headers = {"X-Kinn-Token": "t0ken", "Origin": origin}
+    assert call(server, "PUT", "/api/lab/algorithms/big", {"code": big}, headers=headers)[0] == 200
+    answers = {}
+    for encoding in ("gzip", "identity"):
+        con = http.client.HTTPConnection("127.0.0.1", server.port, timeout=10)
+        con.request("GET", "/api/lab/algorithms/big", headers={"Accept-Encoding": encoding})
+        response = con.getresponse()
+        answers[encoding] = (response.getheader("Content-Encoding"), response.read())
+        con.close()
+    assert answers["gzip"][0] == "gzip" and answers["identity"][0] is None
+    assert gzip.decompress(answers["gzip"][1]) == answers["identity"][1]
+    assert json.loads(answers["identity"][1])["code"] == big
