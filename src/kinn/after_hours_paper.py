@@ -184,16 +184,61 @@ def settle_held(entry: float, price: float, adv: float) -> dict:
 
 
 def new_state() -> dict:
-    return {"strategy": "after_hours_short", "evenings": [], "signals": [], "seen": []}
+    return {
+        "strategy": "after_hours_short",
+        "evenings": [],
+        "filers": {},
+        "partial": {},
+        "signals": [],
+        "seen": [],
+    }
 
 
-def record(state: dict, day: date, signals: list[dict], seen: list[dict]) -> None:
-    """Add one evening (its signals and every results 8-K looked at); replaces the evening if
-    it was recorded before."""
+def record(
+    state: dict,
+    day: date,
+    signals: list[dict],
+    seen: list[dict],
+    *,
+    filers: int,
+    read: list[int] | tuple = (),
+    complete: bool = True,
+) -> None:
+    """Add what was read of one evening: its signals and every results 8-K looked at, each filer
+    once. Until ``complete``, the evening keeps the filers read so far and is read again."""
     key = day.isoformat()
-    state["signals"] = [s for s in state["signals"] if s["day"] != key] + signals
-    state["seen"] = [s for s in state["seen"] if s["day"] != key] + seen
+    state["signals"] += unrecorded(state["signals"], signals)
+    state["seen"] += unrecorded(state["seen"], seen)
     state["evenings"] = sorted(set(state["evenings"]) | {key})
+    state.setdefault("filers", {})[key] = filers
+    partial = state.setdefault("partial", {})
+    if complete:
+        partial.pop(key, None)
+    else:
+        partial[key] = sorted(set(partial.get(key, [])) | set(read))
+
+
+def row_key(row: dict) -> tuple:
+    return row["day"], row.get("cik", row.get("symbol"))
+
+
+def unrecorded(rows: list[dict], new: list[dict]) -> list[dict]:
+    have = {row_key(row) for row in rows}
+    out = []
+    for row in new:
+        if row_key(row) not in have:
+            have.add(row_key(row))
+            out.append(row)
+    return out
+
+
+def needs_reading(state: dict, day: date) -> bool:
+    key = day.isoformat()
+    return key not in state.get("filers", {}) or key in state.get("partial", {})
+
+
+def read_so_far(state: dict, day: date) -> list[int]:
+    return state.get("partial", {}).get(day.isoformat(), [])
 
 
 def pending(state: dict) -> list[dict]:
@@ -204,13 +249,15 @@ def pending(state: dict) -> list[dict]:
 def report(state: dict) -> str:
     """The ledger as a page."""
     done = [s for s in state["signals"] if s.get("net") is not None]
+    partial = sorted(state.get("partial") or {})
+    still = f" ({', '.join(partial)} read in part so far)" if partial else ""
     lines = [
         "# Paper ledger: the after-hours short",
         "",
         "A company of $300M to $2B down 15% or more half an hour after an after-close results",
         "8-K; sold short at the low of the next minute, bought back at the next open. Paper only.",
         "",
-        f"Evenings recorded: {len(state['evenings'])}. "
+        f"Evenings recorded: {len(state['evenings'])}{still}. "
         f"Results 8-Ks looked at: {len(state['seen'])}. "
         f"Signals: {len(state['signals'])} ({len(done)} closed, "
         f"{len(state['signals']) - len(done)} waiting).",

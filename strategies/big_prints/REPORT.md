@@ -125,7 +125,7 @@ keeps building past 20 sessions (about +2% by 40). Trials: 5 (family total 22).
 The ledger is ready; it sends no order and needs no borrow:
 
 ```
-export SEC_USER_AGENT="Your Name your@email"
+export SEC_USER_AGENT="Your Name you@example.com"
 uv run python tools/owner/paper_big_prints.py --since 2026-10-20   # first run: four weeks back
 uv run python tools/owner/paper_big_prints.py                      # then each evening after 16:30
 uv run python tools/owner/paper_big_prints.py --since 2026-10-20 --redo   # read recorded evenings again

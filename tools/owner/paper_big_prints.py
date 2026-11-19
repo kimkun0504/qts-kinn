@@ -16,7 +16,7 @@ finished one) it:
    next open, sold at the close 20 sessions after the signal (and, beside it, 40), with IWM
    over the same days.
 
-    export SEC_USER_AGENT="Your Name your@email"     # the SEC asks who is calling
+    export SEC_USER_AGENT="Your Name you@example.com"     # the SEC asks who is calling
     uv run python tools/owner/paper_big_prints.py                      # the latest session
     uv run python tools/owner/paper_big_prints.py --day 2026-11-17     # a given session
     uv run python tools/owner/paper_big_prints.py --since 2026-10-20   # every session since
@@ -173,7 +173,9 @@ def main() -> None:
 
 
 def raise_agent() -> str:
-    raise SystemExit('Set SEC_USER_AGENT first, e.g. export SEC_USER_AGENT="Your Name your@email"')
+    raise SystemExit(
+        'Set SEC_USER_AGENT first, e.g. export SEC_USER_AGENT="Your Name you@example.com"'
+    )
 
 
 if __name__ == "__main__":

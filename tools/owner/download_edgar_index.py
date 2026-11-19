@@ -4,7 +4,7 @@ CIK, date, file name).
 Run it yourself on the Mac. It writes to the raw data folder, which agents must not touch
 (AGENTS.md). The files are free and need no key; the SEC asks who is calling:
 
-    export SEC_USER_AGENT="Your Name your@email"
+    export SEC_USER_AGENT="Your Name you@example.com"
     uv run python tools/owner/download_edgar_index.py
 
 One file a quarter from 2005 Q1 lands in $KINN_RAW_DIR/sec/index/. It stops at 2023 Q3: the
@@ -60,7 +60,7 @@ def fetch(url: str, agent: str) -> bytes:
 def main() -> None:
     agent = os.environ.get("SEC_USER_AGENT", "").strip()
     if "@" not in agent:
-        raise SystemExit('set SEC_USER_AGENT="Your Name your@email" (the SEC requires it)')
+        raise SystemExit('set SEC_USER_AGENT="Your Name you@example.com" (the SEC requires it)')
     out = load_settings().raw_dir / "sec" / "index"
     try:
         out.mkdir(parents=True, exist_ok=True)
