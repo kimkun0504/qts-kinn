@@ -15,9 +15,11 @@ before today) it:
 4. applies the rule of strategies/after_hours ("short mid down15 open") and records each
    signal; later runs fill in the next open and the result.
 
+It asks the SEC at most four times a second and reads each company once a run. If the SEC
+pauses the address anyway (HTTP 403 after it has answered), the run waits eleven minutes and
+carries on; a refusal of the first request, or a second one in a row, stops it with the reason.
 A filer that could not be read is read again by the next run, and an evening whose SEC index
-is not out yet is not recorded. If the SEC refuses a request (HTTP 403) the run stops and
-says why.
+is not out yet is not recorded.
 
     export SEC_USER_AGENT="Your Name you@example.com"  # your name and a real email address
     uv run python tools/owner/paper_after_hours.py                     # the last evening
@@ -34,7 +36,6 @@ store, in `paper/after_hours/`; nothing is written to the raw or processed data.
 from __future__ import annotations
 
 import argparse
-import functools
 import gzip
 import importlib.util
 import os
@@ -60,6 +61,7 @@ _spec.loader.exec_module(tool)
 
 SEC_WWW = "www.sec.gov"
 CONTACT = re.compile(r"\S.*\s[^\s@]+@[^\s@]+\.[A-Za-z]{2,}")
+FILING_FIELDS = ("form", "items", "acceptanceDateTime", "accessionNumber")
 
 
 def sec_agent() -> str:
@@ -77,13 +79,30 @@ def sec_headers(agent: str) -> dict:
     return {"User-Agent": agent, "Accept-Encoding": "gzip, deflate", "Host": SEC_WWW}
 
 
-def refused(host: str, agent: str) -> str:
+class Refused(Exception):
+    pass
+
+
+def refused(refusal: Refused, agent: str, answers: int) -> str:
+    if not answers:
+        return (
+            f"The SEC refused the first request ({refusal}).\n"
+            f"SEC_USER_AGENT is {agent!r}; it must be your name and a real email address."
+        )
     return (
-        f"The SEC refused the request (HTTP 403 from {host}). It refuses a User-Agent without\n"
-        f"your name and a real email (SEC_USER_AGENT is {agent!r}), and every request from an\n"
-        "address for about ten minutes after more than ten a second. Evenings already read are\n"
-        "kept; fix SEC_USER_AGENT, or wait ten minutes, and run this again."
+        f"The SEC refused requests from this address again after a pause ({refusal}).\n"
+        f"It had answered {answers} requests. Evenings already read are kept; run this again "
+        "later."
     )
+
+
+def reason(error: urllib.error.HTTPError) -> str:
+    try:
+        page = decoded(error.read(), error.headers.get("Content-Encoding"))
+    except Exception:
+        return ""
+    title = re.search(r"<title>(.*?)</title>", page, re.IGNORECASE | re.DOTALL)
+    return " ".join(title.group(1).split())[:120] if title else ""
 
 
 def decoded(body: bytes, encoding: str | None) -> str:
@@ -99,7 +118,7 @@ def decoded(body: bytes, encoding: str | None) -> str:
 
 def get_text(url: str, host: str, headers: dict) -> str | None:
     """A text answer from ``host`` only, or None when there is no such page (HTTP 404). A refusal
-    (HTTP 403) stops the run; other failures are retried as the earnings tool's requests are."""
+    (HTTP 403) raises Refused; other failures are retried as the earnings tool's requests are."""
     parts = urllib.parse.urlsplit(url)
     if parts.scheme != "https" or parts.hostname != host or parts.port not in (None, 443):
         raise SystemExit("refusing to call an unexpected host")
@@ -112,7 +131,8 @@ def get_text(url: str, host: str, headers: dict) -> str | None:
             if error.code == 404:
                 return None
             if error.code == 403:
-                raise SystemExit(refused(host, headers.get("User-Agent", ""))) from None
+                said = reason(error)
+                raise Refused(f"HTTP 403 from {host}" + (f": {said}" if said else "")) from None
             if error.code not in (429, 500, 502, 503, 504) or attempt == 5:
                 raise tool.FetchError(f"HTTP {error.code} from {host}", error.code) from None
             time.sleep(2**attempt)
@@ -144,7 +164,6 @@ def next_weekday(day: date) -> date:
     return day
 
 
-@functools.cache
 def index_ciks(day: date, agent: str) -> list[int] | None:
     """8-K filers in the SEC's daily form index for ``day``; None when the SEC has no index for
     it (it was closed that day, or the index is not published yet)."""
@@ -158,11 +177,82 @@ def index_ciks(day: date, agent: str) -> list[int] | None:
     return ahp.daily_index_8k(text)
 
 
-def filers(day: date, today: date, agent: str) -> tuple[list[int], str] | None:
-    own = index_ciks(day, agent)
+def submissions_of(cik: int, agent: str) -> dict:
+    try:
+        return tool.get_json(
+            f"https://{tool.SEC}/submissions/CIK{cik:010d}.json", tool.SEC, {"User-Agent": agent}
+        )
+    except tool.FetchError as error:
+        if error.status == 403:
+            raise Refused(f"HTTP 403 from {tool.SEC}") from None
+        raise
+
+
+def eight_ks(subs: dict) -> dict:
+    recent = (subs.get("filings") or {}).get("recent") or {}
+    columns = {name: recent.get(name) or [] for name in FILING_FIELDS}
+    keep = [i for i, form in enumerate(columns["form"]) if form == "8-K"]
+    return {
+        "tickers": subs.get("tickers") or [],
+        "filings": {
+            "recent": {
+                name: [values[i] if i < len(values) else None for i in keep]
+                for name, values in columns.items()
+            }
+        },
+    }
+
+
+class Sec:
+    def __init__(self, agent: str, interval: float = 0.25, pause: float = 660.0) -> None:
+        self.agent = agent
+        self.interval = interval
+        self.pause = pause
+        self.answers = 0
+        self.paused = False
+        self.last = 0.0
+        self.indexes: dict[date, list[int] | None] = {}
+        self.filings: dict[int, dict] = {}
+
+    def ask(self, fetch):
+        while True:
+            wait = self.interval - (time.monotonic() - self.last)
+            if wait > 0:
+                time.sleep(wait)
+            self.last = time.monotonic()
+            try:
+                answer = fetch()
+            except Refused as refusal:
+                if not self.answers or self.paused:
+                    raise SystemExit(refused(refusal, self.agent, self.answers)) from None
+                self.paused = True
+                until = datetime.now(ahp.NEW_YORK) + timedelta(seconds=self.pause)
+                print(
+                    f"  the SEC paused this address ({refusal}); waiting until {until:%H:%M}",
+                    flush=True,
+                )
+                time.sleep(self.pause)
+                continue
+            self.answers += 1
+            self.paused = False
+            return answer
+
+    def index(self, day: date) -> list[int] | None:
+        if day not in self.indexes:
+            self.indexes[day] = self.ask(lambda: index_ciks(day, self.agent))
+        return self.indexes[day]
+
+    def submissions(self, cik: int) -> dict:
+        if cik not in self.filings:
+            self.filings[cik] = eight_ks(self.ask(lambda: submissions_of(cik, self.agent)))
+        return self.filings[cik]
+
+
+def filers(day: date, today: date, sec: Sec) -> tuple[list[int], str] | None:
+    own = sec.index(day)
     later, more = next_weekday(day), None
     while more is None and later <= today:
-        more = index_ciks(later, agent)
+        more = sec.index(later)
         later = next_weekday(later)
     if own is None:
         return None if more is None else ([], "closed")
@@ -235,22 +325,14 @@ def common_stock(tickers: list[str], day: date, key: str) -> tuple[str, dict]:
 
 
 def evening(
-    day: date, ciks: list[int], key: str, agent: str
+    day: date, ciks: list[int], key: str, sec: Sec
 ) -> tuple[list[dict], list[dict], list[int]]:
     signals, seen, done = [], [], []
     for cik in ciks:
         try:
-            subs = tool.get_json(
-                f"https://{tool.SEC}/submissions/CIK{cik:010d}.json",
-                tool.SEC,
-                {"User-Agent": agent},
-            )
-        except tool.FetchError as error:
-            if error.status == 403:
-                raise SystemExit(refused(tool.SEC, agent)) from None
+            subs = sec.submissions(cik)
+        except tool.FetchError:
             continue
-        finally:
-            time.sleep(0.12)
         filings = ahp.results_filings(subs, day)
         tickers = subs.get("tickers") or []
         if not filings or not tickers:
@@ -313,8 +395,8 @@ def evening(
     return signals, seen, done
 
 
-def read_evening(state: dict, day: date, today: date, key: str, agent: str, fresh: bool) -> None:
-    found = filers(day, today, agent)
+def read_evening(state: dict, day: date, today: date, key: str, sec: Sec, fresh: bool) -> None:
+    found = filers(day, today, sec)
     if found is None:
         print(f"{day}: the SEC's index for this day is not out yet; run again later", flush=True)
         return
@@ -326,7 +408,7 @@ def read_evening(state: dict, day: date, today: date, key: str, agent: str, fres
     already = set() if fresh else set(ahp.read_so_far(state, day))
     todo = [cik for cik in ciks if cik not in already]
     print(f"{day}: {len(ciks)} 8-K filers in the SEC's index; reading {len(todo)}", flush=True)
-    signals, seen, done = evening(day, todo, key, agent)
+    signals, seen, done = evening(day, todo, key, sec)
     missed = len(todo) - len(done)
     complete = status == "complete" and not missed
     ahp.record(state, day, signals, seen, filers=len(ciks), read=done, complete=complete)
@@ -352,7 +434,7 @@ def main() -> None:
             raise SystemExit(f"no signal for {symbol} in the ledger")
         hits[-1]["borrow"] = text.strip()
     if not args.borrow or args.day:
-        agent = sec_agent()
+        sec = Sec(sec_agent())
         key = tool.api_key()
         now = datetime.now(ZoneInfo("America/New_York"))
         last = date.fromisoformat(args.day) if args.day else last_evening(now)
@@ -365,7 +447,10 @@ def main() -> None:
                 day += timedelta(days=1)
         for day in days:
             if args.redo or ahp.needs_reading(state, day):
-                read_evening(state, day, now.date(), key, agent, fresh=args.redo)
+                try:
+                    read_evening(state, day, now.date(), key, sec, fresh=args.redo)
+                except tool.FetchError as error:
+                    print(f"{day}: stopped ({error}); the next run reads it again", flush=True)
                 ahp.save(folder, state)
         for s in state["signals"]:
             if s.get("net") is not None and s.get("net_1530") is not None:

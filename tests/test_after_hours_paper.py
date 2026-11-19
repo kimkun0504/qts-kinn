@@ -1,5 +1,6 @@
 import gzip
 import importlib.util
+import io
 import random
 import urllib.error
 import zlib
@@ -236,7 +237,7 @@ def test_tool_finds_a_signal_from_fetched_answers(monkeypatch):
         return {"results": {"type": "CS", "market_cap": 8e8}}
 
     monkeypatch.setattr(tool.tool, "massive", massive)
-    signals, seen, done = tool.evening(day, [42], "key", AGENT)
+    signals, seen, done = tool.evening(day, [42], "key", tool.Sec(AGENT, interval=0))
     assert [s["symbol"] for s in signals] == ["ABCD"] and seen[0]["why"] == "signal"
     assert done == [42]
     assert abs(signals[0]["reaction"] + 0.21) < 1e-9 and signals[0]["entry"] == 15.6
@@ -286,16 +287,97 @@ def test_answers_are_unzipped_whatever_the_encoding():
     assert tool.decoded(raw, "deflate") == "8-K"
 
 
-def test_a_refusal_stops_the_run_and_says_why(monkeypatch):
+def test_a_refusal_carries_the_secs_reason(monkeypatch):
     tool = load_tool()
+    page = b"<html><head><title>SEC.gov | Request Rate Threshold Exceeded</title></head></html>"
 
     def refuse(request, timeout):
-        raise urllib.error.HTTPError(request.full_url, 403, "Forbidden", {}, None)
+        raise urllib.error.HTTPError(request.full_url, 403, "Forbidden", {}, io.BytesIO(page))
 
     monkeypatch.setattr(tool.urllib.request, "urlopen", refuse)
-    with pytest.raises(SystemExit, match="HTTP 403 from www.sec.gov") as stop:
+    with pytest.raises(tool.Refused, match="HTTP 403 from www.sec.gov: SEC.gov . Request Rate"):
         tool.index_ciks(date(2026, 11, 17), AGENT)
+
+
+def test_a_refusal_of_the_first_request_stops_the_run(monkeypatch):
+    tool = load_tool()
+    sec = tool.Sec(AGENT, interval=0)
+
+    def refuse():
+        raise tool.Refused("HTTP 403 from www.sec.gov")
+
+    with pytest.raises(SystemExit, match="first request") as stop:
+        sec.ask(refuse)
     assert "SEC_USER_AGENT" in str(stop.value) and AGENT in str(stop.value)
+
+
+def test_a_pause_after_answers_is_waited_out_once(monkeypatch):
+    tool = load_tool()
+    slept = []
+    monkeypatch.setattr(tool.time, "sleep", slept.append)
+    sec = tool.Sec(AGENT, interval=0, pause=660)
+    answers = iter(["first", tool.Refused("HTTP 403 from data.sec.gov"), "second"])
+
+    def fetch():
+        answer = next(answers)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    assert sec.ask(fetch) == "first" and sec.ask(fetch) == "second"
+    assert slept == [660] and sec.answers == 2
+
+    def refuse():
+        raise tool.Refused("HTTP 403 from data.sec.gov")
+
+    with pytest.raises(SystemExit, match="again after a pause"):
+        sec.ask(refuse)
+    assert slept == [660, 660]
+
+
+def test_requests_to_the_sec_are_spaced(monkeypatch):
+    tool = load_tool()
+    slept = []
+    monkeypatch.setattr(tool.time, "sleep", slept.append)
+    sec = tool.Sec(AGENT, interval=0.25)
+    sec.ask(lambda: 1)
+    sec.ask(lambda: 2)
+    assert len(slept) == 1 and 0.2 < slept[0] <= 0.25
+
+
+def test_each_company_is_read_once_a_run_and_kept_small(monkeypatch):
+    tool = load_tool()
+    asked = []
+    full = {
+        "tickers": ["ABCD"],
+        "name": "ABCD INC",
+        "filings": {
+            "recent": {
+                "form": ["10-Q", "8-K", "4"],
+                "items": ["", "2.02,9.01", ""],
+                "acceptanceDateTime": [
+                    "2026-11-17T20:00:00.000Z",
+                    "2026-11-17T21:05:00.000Z",
+                    "2026-11-17T22:00:00.000Z",
+                ],
+                "accessionNumber": ["a", "b", "c"],
+                "primaryDocument": ["x", "y", "z"],
+            }
+        },
+    }
+
+    def get_json(url, host, headers):
+        asked.append(url)
+        return full
+
+    monkeypatch.setattr(tool.tool, "get_json", get_json)
+    sec = tool.Sec(AGENT, interval=0)
+    kept = sec.submissions(42)
+    assert sec.submissions(42) is kept and len(asked) == 1
+    assert kept["filings"]["recent"]["form"] == ["8-K"] and "name" not in kept
+    assert ahp.results_filings(kept, date(2026, 11, 17)) == ahp.results_filings(
+        full, date(2026, 11, 17)
+    )
 
 
 def test_a_missing_index_is_none_and_a_page_without_filings_is_an_error(monkeypatch):
@@ -325,10 +407,11 @@ def test_an_evening_reads_its_own_index_and_the_next_one_out(monkeypatch):
     tool = load_tool()
     out = {date(2026, 11, 10): [1, 2], date(2026, 11, 12): [2, 3], date(2026, 11, 17): [5]}
     monkeypatch.setattr(tool, "index_ciks", lambda d, agent: out.get(d))
-    assert tool.filers(date(2026, 11, 10), date(2026, 11, 19), AGENT) == ([1, 2, 3], "complete")
-    assert tool.filers(date(2026, 11, 11), date(2026, 11, 19), AGENT) == ([], "closed")
-    assert tool.filers(date(2026, 11, 17), date(2026, 11, 18), AGENT) == ([5], "partial")
-    assert tool.filers(date(2026, 11, 18), date(2026, 11, 18), AGENT) is None
+    sec = tool.Sec(AGENT, interval=0)
+    assert tool.filers(date(2026, 11, 10), date(2026, 11, 19), sec) == ([1, 2, 3], "complete")
+    assert tool.filers(date(2026, 11, 11), date(2026, 11, 19), sec) == ([], "closed")
+    assert tool.filers(date(2026, 11, 17), date(2026, 11, 18), sec) == ([5], "partial")
+    assert tool.filers(date(2026, 11, 18), date(2026, 11, 18), sec) is None
 
 
 @pytest.mark.parametrize(
@@ -359,15 +442,15 @@ def test_a_filer_that_could_not_be_read_is_read_on_the_next_run(monkeypatch):
 
     monkeypatch.setattr(tool.tool, "get_json", get_json)
     state = ahp.new_state()
-    tool.read_evening(state, day, today, "key", AGENT, fresh=False)
+    tool.read_evening(state, day, today, "key", tool.Sec(AGENT, interval=0), fresh=False)
     assert ahp.needs_reading(state, day) and state["partial"] == {"2026-11-17": [1, 3]}
     failing.clear()
     asked.clear()
-    tool.read_evening(state, day, today, "key", AGENT, fresh=False)
+    tool.read_evening(state, day, today, "key", tool.Sec(AGENT, interval=0), fresh=False)
     assert asked == [2] and not ahp.needs_reading(state, day)
     assert state["filers"] == {"2026-11-17": 3}
     asked.clear()
-    tool.read_evening(state, day, today, "key", AGENT, fresh=True)
+    tool.read_evening(state, day, today, "key", tool.Sec(AGENT, interval=0), fresh=True)
     assert asked == [1, 2, 3]
 
 
@@ -379,18 +462,19 @@ def test_a_refused_filer_stops_the_run(monkeypatch):
         raise tool.tool.FetchError("HTTP 403 from data.sec.gov", 403)
 
     monkeypatch.setattr(tool.tool, "get_json", get_json)
-    with pytest.raises(SystemExit, match="HTTP 403 from data.sec.gov"):
-        tool.evening(date(2026, 11, 17), [9], "key", AGENT)
+    with pytest.raises(SystemExit, match="first request .HTTP 403 from data.sec.gov"):
+        tool.evening(date(2026, 11, 17), [9], "key", tool.Sec(AGENT, interval=0))
 
 
 def test_an_evening_without_an_index_is_not_recorded_and_a_closed_day_is(monkeypatch):
     tool = load_tool()
     state = ahp.new_state()
     monkeypatch.setattr(tool, "filers", lambda d, t, agent: None)
-    tool.read_evening(state, date(2026, 11, 18), date(2026, 11, 18), "key", AGENT, fresh=False)
+    sec = tool.Sec(AGENT, interval=0)
+    tool.read_evening(state, date(2026, 11, 18), date(2026, 11, 18), "key", sec, fresh=False)
     assert state["evenings"] == [] and ahp.needs_reading(state, date(2026, 11, 18))
     monkeypatch.setattr(tool, "filers", lambda d, t, agent: ([], "closed"))
-    tool.read_evening(state, date(2026, 11, 11), date(2026, 11, 19), "key", AGENT, fresh=False)
+    tool.read_evening(state, date(2026, 11, 11), date(2026, 11, 19), "key", sec, fresh=False)
     assert state["evenings"] == ["2026-11-11"] and not ahp.needs_reading(state, date(2026, 11, 11))
 
 
@@ -414,4 +498,8 @@ def test_massive_failures_leave_the_filer_to_be_read_again(monkeypatch):
         raise tool.tool.FetchError("HTTP 502 from api.massive.com", 502)
 
     monkeypatch.setattr(tool.tool, "massive", massive)
-    assert tool.evening(date(2026, 11, 17), [42], "key", AGENT) == ([], [], [])
+    assert tool.evening(date(2026, 11, 17), [42], "key", tool.Sec(AGENT, interval=0)) == (
+        [],
+        [],
+        [],
+    )
