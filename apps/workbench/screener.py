@@ -12,7 +12,7 @@ from typing import Protocol
 import duckdb
 import pyarrow as pa
 
-from apps.workbench.stocks import FIRST, LAST
+from apps.workbench.stocks import FIRST, LAST, reports_in_dollars
 
 YEAR = 252
 RETURNS = {"ret_1d": 1, "ret_1m": 21, "ret_3m": 63, "ret_6m": 126, "ret_1y": YEAR}
@@ -125,7 +125,8 @@ def _rows(store: Store, day: date, window: list[date]) -> list[list]:
         m = measured.get(perm, {})
         book = books.get(perm, {})
         cap = _market_value(row)
-        fcf = book.get("fcf") if company.get("currency") in (None, "USD") else None
+        category = row["category"] or company.get("category")
+        fcf = book.get("fcf") if reports_in_dollars(category) else None
         revenue, income = book.get("revenueusd"), book.get("netinccmnusd")
         growth = _ratio(revenue, book.get("revenueusd_year_ago"))
         values = {
@@ -134,7 +135,7 @@ def _rows(store: Store, day: date, window: list[date]) -> list[list]:
             "name": company.get("name"),
             "sector": company.get("sector"),
             "industry": company.get("industry"),
-            "category": row["category"] or company.get("category"),
+            "category": category,
             "exchange": row["exchange"] or company.get("exchange"),
             "close": _number(row["close"]),
             "market_cap": _number(cap),

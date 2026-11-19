@@ -33,10 +33,7 @@ class ScreenStore(FakeStore):
         )
 
     def securities(self):
-        currency = pa.array(
-            ["CAD" if t == "LOUD" else "USD" for t in self.master["ticker"].to_pylist()]
-        )
-        return self.master.append_column("currency", currency)
+        return self.master
 
     def fundamentals_as_of(self, day, *, fields):
         self.asked.append(day)
@@ -68,7 +65,7 @@ def store():
             Stock("GROW", 10.0 * 1.001 ** np.arange(n), market_cap=5e9),
             Stock("SPLT", np.where(np.arange(n) < split, 100.0, 50.0), split={split: 2.0}),
             Stock("GONE", stopped),
-            Stock("LOUD", np.full(n, 8.0), market_cap=2e8),
+            Stock("LOUD", np.full(n, 8.0), market_cap=2e8, category="ADR Common Stock"),
         ],
         books=[
             ("GROW", date(2015, 11, 2), date(2015, 9, 30),

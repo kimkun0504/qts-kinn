@@ -57,4 +57,12 @@ describe("financials", () => {
     expect(late?.className).toContain("text-ink-2");
     expect(early?.className).not.toContain("text-ink-2");
   });
+
+  it("leaves out the margins of a foreign filer, whose profit lines are in its own currency", () => {
+    render(<Financials data={{ ...data, currency: "local" }} />);
+    const table = within(screen.getByRole("table"));
+    expect(table.queryAllByText("40.0%")).toHaveLength(0);
+    expect(table.getByText("9.1%")).toBeTruthy();
+    expect(screen.getByText(/A foreign filer/)).toBeTruthy();
+  });
 });

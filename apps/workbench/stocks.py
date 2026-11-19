@@ -291,7 +291,11 @@ def paper_trades(runs_dir: Path, symbols: list[str]) -> list[dict]:
     return out
 
 
-def financials(store: Store, perm: int, currency: str | None) -> dict:
+def reports_in_dollars(category: str | None) -> bool:
+    return not category or category.startswith("Domestic")
+
+
+def financials(store: Store, perm: int, category: str | None) -> dict:
     periods = {}
     for name, dimension in (("quarterly", "ARQ"), ("trailing", "ART")):
         rows = store.fundamentals_of(perm, fields=FINANCIALS, dimension=dimension).to_pylist()
@@ -300,7 +304,7 @@ def financials(store: Store, perm: int, currency: str | None) -> dict:
              **{f: _number(r[f], 6) for f in FINANCIALS}}
             for r in rows[-PERIODS:]
         ]  # fmt: skip
-    return {"currency": currency or "USD", **periods}
+    return {"currency": "USD" if reports_in_dollars(category) else "local", **periods}
 
 
 MAX_CLOSES = 4
@@ -407,6 +411,6 @@ def stock(store: Store, runs_dir: Path, lab_dir: Path, symbol: str,
                     "results": RESULTS_CODE in (e["eventcodes"] or "").split("|")}
                    for e in events],
         "trades": trades,
-        "financials": financials(store, chosen, company.get("currency")),
+        "financials": financials(store, chosen, company.get("category")),
         "insiders": insiders(store, symbols, spans),
     }  # fmt: skip

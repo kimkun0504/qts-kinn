@@ -189,3 +189,10 @@ def test_insider_buys_and_sells_under_each_symbol_the_company_held(store, tmp_pa
         ("2014-03-03", "buy", "CFO"),
     ]
     assert found["rows"][1]["traded_from"] == "2014-02-27" and found["rows"][1]["amount"] == 40000.0
+
+
+def test_a_foreign_filers_local_currency_lines_are_marked():
+    assert stocks.reports_in_dollars("Domestic Common Stock Primary Class")
+    assert stocks.reports_in_dollars(None)
+    assert not stocks.reports_in_dollars("ADR Common Stock")
+    assert not stocks.reports_in_dollars("Canadian Common Stock")
