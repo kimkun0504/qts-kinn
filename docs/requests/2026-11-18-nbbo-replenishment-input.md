@@ -158,4 +158,6 @@ which reads credentials and writes raw data. GPT will neither
 execute it nor access its key. No approval is inferred from
 elapsed time or the active research goal.
 
-Owner decision: pending.
+Owner decision: "Authorize adapter; I'll run the download."
+The owner explicitly supplied that answer in chat. The scope
+above is authorized; GPT still performs no raw acquisition.
