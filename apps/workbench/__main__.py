@@ -20,7 +20,12 @@ from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
 from kinn.lab import store as lab_store
-from kinn.run import strategies_dir
+from kinn.run import REPO_ROOT, strategies_dir
+
+GUIDES = {
+    "lab": REPO_ROOT / "docs" / "LAB.md",
+    "workbench": REPO_ROOT / "apps" / "workbench" / "README.md",
+}
 
 STATIC = Path(__file__).parent / "web" / "dist"
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
@@ -158,6 +163,11 @@ class Handler(SimpleHTTPRequestHandler):
             found = stocks.stock(store, self.runs_dir, self.lab_dir, path.rsplit("/", 1)[1],
                                  int(pick) if pick.isdigit() else None, on)  # fmt: skip
             return self._json(found, 200 if found else 404)
+        if path.startswith("/api/guide/"):
+            found = GUIDES.get(path.rsplit("/", 1)[1])
+            if found is None or not found.exists():
+                return self._json({"error": "No such guide."}, 404)
+            return self._json({"name": found.name, "text": found.read_text()})
         if path == "/api/closes":
             store = self._store()
             if store is None:

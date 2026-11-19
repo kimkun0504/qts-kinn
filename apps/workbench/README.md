@@ -25,9 +25,11 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Parameters | a map of any result across one or two settings that differ between runs |
 | Trials | every family in a sortable table (trials charged, counted runs, best and deflated Sharpe, probability of backtest overfitting), one family's detail at a time, and the Lab algorithms' trial counts |
 | Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, and any two runs compared |
+| Guide | this README and the Lab's guide (`docs/LAB.md`) with their sections beside them, and the keyboard shortcuts |
 | Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
 
-Search everything (pages, strategies, paper ledgers, Lab algorithms, runs, stocks) with the box
+Search everything (pages, stocks, the watchlist, screens, strategies, paper ledgers, Lab
+algorithms, runs) with the box
 in the top bar, Cmd+K or `/`. `?` lists the keyboard shortcuts; G then a letter jumps to a page
 (G S stocks, G F screener, G L Lab, G R runs). A Lab run going shows in the top bar from any
 page, and a note appears when it ends. A page that fails shows its error in place of the page.

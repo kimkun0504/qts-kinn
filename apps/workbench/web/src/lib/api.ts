@@ -701,6 +701,7 @@ export const api = {
     get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
   closes: (symbols: string[]) => get<ClosesData>(`/api/closes?symbols=${encodeURIComponent(symbols.join(","))}`),
+  guide: (name: string) => get<{ name: string; text: string }>(`/api/guide/${encodeURIComponent(name)}`),
   screenAhead: (on: string) => get<ScreenAhead>(`/api/screen/ahead?on=${encodeURIComponent(on)}`),
   screen: (on?: string) => get<ScreenData>(`/api/screen${on ? `?on=${encodeURIComponent(on)}` : ""}`),
 };

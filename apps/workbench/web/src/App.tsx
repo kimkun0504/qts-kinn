@@ -12,6 +12,7 @@ import { href, type Route, useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
 import { DataPage } from "./pages/DataPage";
+import { GuidePage } from "./pages/GuidePage";
 import { readSaved, ScreenerPage, screenerRoute } from "./pages/ScreenerPage";
 import { encode, STARTS } from "./lib/screen";
 import { watchlist } from "./lib/watchlist";
@@ -42,6 +43,7 @@ const TITLES = {
   parameters: "Parameters",
   trials: "Trials and overfitting",
   data: "Data",
+  guide: "Guide",
 };
 type Theme = "dark" | "light";
 
@@ -204,6 +206,7 @@ export default function App() {
     ["parameters", "Parameters"],
     ["trials", "Trials and overfitting"],
     ["data", "Data"],
+    ["guide", "Guide"],
   ];
   const commands: Command[] = [
     ...pages.map(([key, label]) => ({ id: `page-${key}`, group: "Pages", label, href: `#/${key}` })),
@@ -294,6 +297,8 @@ export default function App() {
           <Runs runs={live} selected={route.page === "runs" ? (route.name ?? null) : null} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
         ) : route.page === "compare" ? (
           <Compare ids={compare} runs={runs} onToggle={toggleCompare} />
+        ) : route.page === "guide" ? (
+          <GuidePage guide={route.name} onGuide={(name) => go({ page: "guide", name })} />
         ) : route.page === "data" ? (
           <DataPage key={version} />
         ) : route.page === "parameters" ? (

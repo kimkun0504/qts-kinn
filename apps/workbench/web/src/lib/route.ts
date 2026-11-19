@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Page = "home" | "strategies" | "strategy" | "stock" | "screener" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials" | "data";
+export type Page = "home" | "strategies" | "strategy" | "stock" | "screener" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials" | "data" | "guide";
 export interface Route {
   page: Page;
   /** The strategy on a strategy page; the algorithm in the Lab. */
@@ -9,7 +9,7 @@ export interface Route {
   tab?: string;
 }
 
-const PAGES: Page[] = ["home", "strategies", "strategy", "stock", "screener", "studies", "lab", "runs", "paper", "compare", "parameters", "trials", "data"];
+const PAGES: Page[] = ["home", "strategies", "strategy", "stock", "screener", "studies", "lab", "runs", "paper", "compare", "parameters", "trials", "data", "guide"];
 
 export function parse(hash: string): Route {
   const [page, name, tab] = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
@@ -19,6 +19,7 @@ export function parse(hash: string): Route {
   if (page === "paper") return { page: "paper", name: name || undefined };
   if (page === "runs") return { page: "runs", name: name || undefined };
   if (page === "compare") return { page: "compare", name: name || undefined };
+  if (page === "guide") return { page: "guide", name: name || undefined };
   if (page === "screener") return { page: "screener", name: name && name !== "latest" ? name : undefined, tab: tab || undefined };
   if (page === "stock") return { page: "stock", name: name ? name.toUpperCase() : undefined, tab: tab || undefined };
   return { page: page as Page };

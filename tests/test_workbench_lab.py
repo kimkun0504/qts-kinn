@@ -387,3 +387,11 @@ def test_a_large_answer_is_gzipped_only_for_a_client_that_asks(server):
     assert answers["gzip"][0] == "gzip" and answers["identity"][0] is None
     assert gzip.decompress(answers["gzip"][1]) == answers["identity"][1]
     assert json.loads(answers["identity"][1])["code"] == big
+
+
+def test_the_guides_are_served_read_only(server):
+    status, guide = call(server, "GET", "/api/guide/lab")
+    assert status == 200 and guide["name"] == "LAB.md" and guide["text"].startswith("# ")
+    assert call(server, "GET", "/api/guide/workbench")[1]["name"] == "README.md"
+    assert call(server, "GET", "/api/guide/secrets")[0] == 404
+    assert call(server, "GET", "/api/guide/..%2F..%2F.env")[0] == 404
