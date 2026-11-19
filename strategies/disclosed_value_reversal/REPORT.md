@@ -41,7 +41,7 @@ research. This is not an independent first look.
 
 Every primary event exactly matches a control event on company/date,
 signal minute, entry minute, shares, price, fees, slippage and r_120.
-All 72 rows matched before judging returns. The pre-open filing
+The completed-run audit matched all 72 rows before the final gate assessment. The pre-open filing
 selector leaves all otherwise eligible peers in the price reference
 and cannot select a more favorable later signal.
 
