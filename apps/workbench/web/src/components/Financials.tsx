@@ -64,6 +64,7 @@ export function Financials({ data, on }: { data: FinancialsData; on?: string | n
   const line = LINES.find((l) => l.key === chosen) ?? LINES[0];
   const local = data.currency !== "USD";
   const valueOf = (l: Line, i: number) => (local && l.local && l.key.endsWith("margin") ? null : l.value(rows, i));
+  const show = (l: Line, v: number | null) => (local && l.local && l.format === money ? compact(v) : l.format(v));
   const shown = rows.map((_, i) => i).slice(-COLUMNS);
   const charted = rows.map((_, i) => i).slice(-CHART);
   const later = (i: number) => Boolean(on && rows[i].filed && rows[i].filed! >= on);
@@ -74,7 +75,7 @@ export function Financials({ data, on }: { data: FinancialsData; on?: string | n
       header: periodLabel(rows[i].period, basis),
       signed: true,
       muted: later(i),
-      render: (l: Line) => l.format(valueOf(l, i)),
+      render: (l: Line) => show(l, valueOf(l, i)),
     })),
   ];
   return (
@@ -116,7 +117,7 @@ export function Financials({ data, on }: { data: FinancialsData; on?: string | n
             title={`${line.label} by ${basis === "quarterly" ? "quarter" : "trailing year"}`}
             labels={charted.map((i) => periodLabel(rows[i].period, basis, true))}
             values={charted.map((i) => valueOf(line, i))}
-            format={(v) => line.format(v)}
+            format={(v) => show(line, v)}
             height={200}
             width={1000}
             labelEvery={charted.length > 16 ? 2 : 1}
@@ -126,7 +127,7 @@ export function Financials({ data, on }: { data: FinancialsData; on?: string | n
           </div>
           <Note>
             Each period as filed, the latest filing for it before the seal; the last one was filed {day(rows[rows.length - 1].filed)}. Click a line to chart it.
-            {local && " A foreign filer: gross profit, operating income and the cash flows are in the currency it reports in, the rest in US dollars, so its margins are left out."}
+            {local && " A foreign filer: gross profit, operating income and the cash flows are in the currency it reports in (shown without $), the rest in US dollars, so its margins are left out."}
             {on && " Periods filed on or after the day you came from are greyed."}
           </Note>
         </>
