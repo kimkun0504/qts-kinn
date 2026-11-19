@@ -17,7 +17,7 @@ import { Segmented } from "../components/ui/Segmented";
 import { type TabItem, Tabs } from "../components/ui/Tabs";
 import { StatStrip } from "../components/ui/StatStrip";
 import { api, type StockPageData, type StockTrade } from "../lib/api";
-import { compact, day, int, pct, price, priceTick } from "../lib/format";
+import { compact, day, num, pct, price, priceTick } from "../lib/format";
 import { href } from "../lib/route";
 import { sortRows, useSort } from "../lib/sort";
 import { useLoad } from "../lib/useLoad";
@@ -168,6 +168,14 @@ function Readout({ page, data, i }: { page: StockPageData; data: Adjusted; i: nu
   );
 }
 
+function earnings(page: StockPageData): { label: string; value: string; note?: string } {
+  const year = page.financials?.trailing.at(-1);
+  const cap = page.prices.market_cap.at(-1);
+  if (!year || year.netinccmnusd == null) return { label: "Price to earnings", value: "–", note: "no trailing-year filing" };
+  const pe = cap != null && year.netinccmnusd > 0 ? cap / year.netinccmnusd : null;
+  return { label: "Price to earnings", value: pe == null ? "loss" : num(pe, 1), note: `net income ${compact(year.netinccmnusd, "$")}, year to ${day(year.period, true)} ’${year.period.slice(2, 4)}` };
+}
+
 function Facts({ page, data }: { page: StockPageData; data: Adjusted }) {
   const last = data.date.length - 1;
   const year = Math.max(0, last - 251);
@@ -175,8 +183,6 @@ function Facts({ page, data }: { page: StockPageData; data: Adjusted }) {
   const highs = data.high.slice(year).filter((v): v is number => v != null);
   const now = data.close[last];
   const then = data.close[year];
-  const counts = { run: 0, lab: 0, paper: 0 };
-  page.trades.forEach((t) => (counts[t.source] += 1));
   return (
     <StatStrip
       items={[
@@ -185,7 +191,7 @@ function Facts({ page, data }: { page: StockPageData; data: Adjusted }) {
         { label: "Dollar volume", value: compact(page.prices.adv20[last], "$"), note: "median of 20 sessions" },
         { label: "One year", value: now != null && then ? pct(now / then - 1, 1) : "–", note: "split-adjusted" },
         { label: "52-week range", value: lows.length ? `${priceTick(Math.min(...lows))}–${priceTick(Math.max(...highs))}` : "–", note: "split-adjusted" },
-        { label: "Trades recorded", value: int(page.trades.length), note: `${counts.run} runs, ${counts.lab} Lab, ${counts.paper} paper` },
+        earnings(page),
       ]}
     />
   );
