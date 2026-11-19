@@ -100,6 +100,8 @@ def test_all_events_outcomes_ignored_dst_and_immutable_plan(tmp_path):
 
     assert datetime.fromtimestamp(int(rows[0]["entry_ns"]) / 1e9, tz=UTC).hour == 15
     assert datetime.fromtimestamp(int(rows[1]["entry_ns"]) / 1e9, tz=UTC).hour == 14
+    path.write_bytes(path.read_bytes() + b"tamper")
+    assert invoke(env).returncode != 0
 
 
 def test_raw_output_and_scratch_sources_are_refused(tmp_path):

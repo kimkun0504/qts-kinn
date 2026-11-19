@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import io
 import json
 from datetime import date
 from pathlib import Path
@@ -87,6 +88,11 @@ def prepare(settings, source_run, output=None):
             }
         )
     rows.sort(key=lambda r: (r["day"], r["symbol"]))
+    stream = io.StringIO(newline="")
+    writer = csv.DictWriter(stream, fieldnames=FIELDS)
+    writer.writeheader()
+    writer.writerows(rows)
+    payload = stream.getvalue().encode()
     out = (
         Path(output)
         if output
@@ -118,16 +124,19 @@ def prepare(settings, source_run, output=None):
         "entry_price_field": "prior close compatibility placeholder; not a fill assumption",
         "postdecision_quotes": "never features; reserved for a future registered execution audit",
         "raw_plan_name": out.name,
+        "windows_sha256": hashlib.sha256(payload).hexdigest(),
     }
     if out.exists():
-        if not (out / "plan.json").exists() or json.loads((out / "plan.json").read_text()) != meta:
+        if (
+            not (out / "plan.json").exists()
+            or json.loads((out / "plan.json").read_text()) != meta
+            or not (out / "windows.csv").is_file()
+            or digest(out / "windows.csv") != meta["windows_sha256"]
+        ):
             raise ValueError("refusing to overwrite a different published plan")
         return out
     out.mkdir(parents=True)
-    with (out / "windows.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=FIELDS)
-        writer.writeheader()
-        writer.writerows(rows)
+    (out / "windows.csv").write_bytes(payload)
     (out / "plan.json").write_text(json.dumps(meta, indent=2) + "\n")
     return out
 
