@@ -128,4 +128,34 @@ describe("the screener", () => {
     expect(window.location.hash).toBe("#/stock/MID/3000000000");
     expect(JSON.parse(localStorage.getItem("kinn-compare-with") ?? "[]")).toEqual([{ symbol: "TINY", slot: 0 }]);
   });
+
+  it("shows what came next for a screen on a past day", async () => {
+    const past = { ...data, on: "2022-11-08" };
+    const ahead = {
+      schema: "screen-ahead-1",
+      on: "2022-11-08",
+      through: "2023-11-08",
+      known: { next_1m: true, next_3m: true, next_6m: true, next_1y: false },
+      spy: { next_1m: 0.03, next_3m: 0.05, next_6m: 0.07 },
+      columns: ["permaticker", "next_1m", "next_3m", "next_6m", "next_1y", "stopped"],
+      rows: [
+        [5e10, 0.1, 0.2, 0.3, null, null],
+        [3e9, -0.1, -0.2, -0.3, null, "2023-03-01"],
+        [2e8, 0, 0.01, 0.02, null, null],
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => new Response(JSON.stringify(url.startsWith("/api/screen/ahead") ? ahead : past))),
+    );
+    render(<ScreenerPage on="2022-11-08" onDate={() => undefined} />);
+    fireEvent.click(await screen.findByRole("button", { name: "What came next" }));
+    expect(await screen.findByText("Median of the stocks that pass")).toBeTruthy();
+    expect(screen.queryByText("Next year")).toBeNull();
+    expect(screen.getAllByText("+20.0%").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 Mar 2023")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add a filter" }));
+    fireEvent.change(screen.getByLabelText("Market value, at least"), { target: { value: "1B" } });
+    expect(screen.getAllByText("+0.0%").length).toBeGreaterThanOrEqual(3);
+  });
 });

@@ -38,6 +38,8 @@ class Store(Protocol):
 
     def fundamentals_as_of(self, day: date, *, fields: tuple[str, ...]) -> pa.Table: ...
 
+    def daily(self, start: date, end: date, *, symbols: list[str]) -> pa.Table: ...
+
 
 def session_on(store: Store, on: date) -> tuple[date, list[date]]:
     asked = min(max(on, FIRST), LAST)
@@ -172,3 +174,70 @@ def screen(store: Store, on: date | None = None) -> dict:
     else:
         _screens.move_to_end(key)
     return _screens[key]
+
+
+FORWARD = {"next_1m": 21, "next_3m": 63, "next_6m": 126, "next_1y": YEAR}
+FORWARD_SQL = ", ".join(
+    f"exp(sum(lr) filter (where k between 1 and {n})) - 1 as {name}" for name, n in FORWARD.items()
+)
+AHEAD = f"""
+with r as (
+    select w.permaticker, c.k,
+           case when w.prev_close > 0 and w.close > 0
+                     and w.close / w.prev_close between 0.02 and 50
+                then ln(w.close / w.prev_close) else 0 end as lr
+    from w join cal c using (date))
+select permaticker, {FORWARD_SQL}, max(k) as last_k
+from r group by permaticker having min(k) = 0
+"""
+_ahead: OrderedDict[tuple[str, date], dict] = OrderedDict()
+
+
+def _spy(store: Store, days: list[date]) -> dict:
+    try:
+        rows = store.daily(days[0], days[-1], symbols=["SPY"]).to_pylist()
+    except (KeyError, ValueError, duckdb.Error):
+        return {}
+    close = {r["date"]: r["close"] for r in rows}
+    start = close.get(days[0])
+    return {
+        name: _number(close[days[n]] / start - 1)
+        for name, n in FORWARD.items()
+        if start and n < len(days) and close.get(days[n])
+    }
+
+
+def ahead(store: Store, on: date) -> dict:
+    day, _ = session_on(store, on)
+    key = (store.build_id, day)
+    if key in _ahead:
+        _ahead.move_to_end(key)
+        return _ahead[key]
+    days = store.sessions(day, min(LAST, day + timedelta(days=400)))[: YEAR + 1]
+    bars = store.panel(day, days[-1], columns="date, permaticker, close, prev_close")
+    cal = pa.table({"date": pa.array(days, pa.date32()), "k": list(range(len(days)))})
+    con = duckdb.connect()
+    try:
+        con.register("w", bars)
+        con.register("cal", cal)
+        rows = con.sql(AHEAD).to_arrow_table().to_pylist()
+    finally:
+        con.close()
+    known = {name: n < len(days) for name, n in FORWARD.items()}
+    _ahead[key] = {
+        "schema": "screen-ahead-1",
+        "on": day.isoformat(),
+        "through": days[-1].isoformat(),
+        "known": known,
+        "spy": _spy(store, days),
+        "columns": ["permaticker", *FORWARD, "stopped"],
+        "rows": [
+            [r["permaticker"],
+             *[_number(r[name]) if known[name] else None for name in FORWARD],
+             days[r["last_k"]].isoformat() if r["last_k"] < len(days) - 1 else None]
+            for r in rows
+        ],
+    }  # fmt: skip
+    while len(_ahead) > CACHE:
+        _ahead.popitem(last=False)
+    return _ahead[key]

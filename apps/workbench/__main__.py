@@ -164,6 +164,15 @@ class Handler(SimpleHTTPRequestHandler):
                 return self._json({"error": "No data build to read prices from."}, 503)
             wanted = parse_qs(urlsplit(self.path).query).get("symbols", [""])[0].split(",")
             return self._json(stocks.closes(store, wanted))
+        if path == "/api/screen/ahead":
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build to screen."}, 503)
+            try:
+                on = date.fromisoformat(parse_qs(urlsplit(self.path).query).get("on", [""])[0])
+                return self._json(screener.ahead(store, on))
+            except ValueError as error:
+                return self._json({"error": str(error)}, 400)
         if path == "/api/screen":
             store = self._store()
             if store is None:

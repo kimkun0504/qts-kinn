@@ -663,6 +663,16 @@ export interface ClosesData {
   sealed_from: string;
 }
 
+export interface ScreenAhead {
+  schema: string;
+  on: string;
+  through: string;
+  known: Record<string, boolean>;
+  spy: Record<string, number>;
+  columns: string[];
+  rows: (string | number | null)[][];
+}
+
 export interface ScreenData {
   schema: string;
   on: string;
@@ -691,5 +701,6 @@ export const api = {
     get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
   closes: (symbols: string[]) => get<ClosesData>(`/api/closes?symbols=${encodeURIComponent(symbols.join(","))}`),
+  screenAhead: (on: string) => get<ScreenAhead>(`/api/screen/ahead?on=${encodeURIComponent(on)}`),
   screen: (on?: string) => get<ScreenData>(`/api/screen${on ? `?on=${encodeURIComponent(on)}` : ""}`),
 };

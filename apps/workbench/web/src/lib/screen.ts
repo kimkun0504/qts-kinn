@@ -84,7 +84,19 @@ export interface ScreenRow {
   revenue_growth: number | null;
   net_income: number | null;
   filed: string | null;
+  next_1m?: number | null;
+  next_3m?: number | null;
+  next_6m?: number | null;
+  next_1y?: number | null;
+  stopped?: string | null;
 }
+
+export const NEXT: { key: "next_1m" | "next_3m" | "next_6m" | "next_1y"; label: string }[] = [
+  { key: "next_1m", label: "Next month" },
+  { key: "next_3m", label: "Next 3 months" },
+  { key: "next_6m", label: "Next 6 months" },
+  { key: "next_1y", label: "Next year" },
+];
 
 export function rowsOf(data: ScreenData): ScreenRow[] {
   return data.rows.map((values) => Object.fromEntries(data.columns.map((name, i) => [name, values[i]])) as unknown as ScreenRow);

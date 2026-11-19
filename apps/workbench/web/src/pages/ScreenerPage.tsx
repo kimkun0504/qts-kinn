@@ -8,10 +8,10 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Panel } from "../components/ui/Panel";
 import { Segmented } from "../components/ui/Segmented";
 import { StatStrip } from "../components/ui/StatStrip";
-import { api } from "../lib/api";
+import { api, type ScreenAhead } from "../lib/api";
 import { compact, day, int, num, pct, plainPct, price } from "../lib/format";
 import { href, type Route } from "../lib/route";
-import { bounds, type Condition, decode, EMPTY, encode, FIELD, FIELDS, KINDS, matcher, median, rowsOf, type Screen, type ScreenKey, type ScreenRow, STARTS } from "../lib/screen";
+import { bounds, type Condition, decode, EMPTY, encode, FIELD, FIELDS, KINDS, matcher, median, NEXT, rowsOf, type Screen, type ScreenKey, type ScreenRow, STARTS } from "../lib/screen";
 import { sortRows, useSort } from "../lib/sort";
 import { useLoad } from "../lib/useLoad";
 import { toggleWatch, watchlist } from "../lib/watchlist";
@@ -28,7 +28,7 @@ export function screenerRoute(on: string | undefined, query: string): Route {
 }
 const SAVED_KEY = "kinn-screens";
 
-type View = "overview" | "performance" | "valuation";
+type View = "overview" | "performance" | "valuation" | "next";
 
 interface Saved {
   name: string;
@@ -78,7 +78,7 @@ function numeric(key: ScreenKey, header?: string): Column<ScreenRow> {
   };
 }
 
-function columns(view: View, on: string, picked: Set<number>, onPick: (row: ScreenRow) => void): Column<ScreenRow>[] {
+function columns(view: View, on: string, picked: Set<number>, onPick: (row: ScreenRow) => void, known: Record<string, boolean> = {}): Column<ScreenRow>[] {
   const head: Column<ScreenRow>[] = [
     {
       key: "pick",
@@ -115,6 +115,14 @@ function columns(view: View, on: string, picked: Set<number>, onPick: (row: Scre
       numeric("ret_1y", "1 year"),
       numeric("from_high", "From 52-week high"),
       numeric("vol_60", "Volatility, 60 days"),
+    ];
+  if (view === "next")
+    return [
+      ...head,
+      numeric("market_cap"),
+      numeric("ret_1y", "Year before"),
+      ...NEXT.filter((n) => known[n.key]).map((n) => ({ key: n.key, header: n.label, sortable: true, signed: true, strong: n.key === "next_3m", render: (r: ScreenRow) => pct(r[n.key], 1) })),
+      { key: "stopped", header: "Stopped trading", sortable: true, muted: true, render: (r: ScreenRow) => (r.stopped ? day(r.stopped) : "") },
     ];
   if (view === "valuation")
     return [
@@ -241,6 +249,34 @@ function ConditionRow({ condition, onChange, onRemove }: { condition: Condition;
   );
 }
 
+function AheadSummary({ ahead, passing, every }: { ahead: ScreenAhead; passing: ScreenRow[]; every: ScreenRow[] }) {
+  const rows = NEXT.filter((n) => ahead.known[n.key]).map((n) => ({
+    key: n.key,
+    label: n.label,
+    passing: median(passing.map((r) => r[n.key] ?? null)),
+    every: median(every.map((r) => r[n.key] ?? null)),
+    spy: ahead.spy[n.key] ?? null,
+  }));
+  return (
+    <div className="border-b border-line">
+      <DataTable
+        rows={rows}
+        rowKey={(r) => r.key}
+        columns={[
+          { key: "label", header: `From the close of ${day(ahead.on)}`, align: "left", strong: true, render: (r) => r.label },
+          { key: "passing", header: "Median of the stocks that pass", signed: true, strong: true, render: (r) => pct(r.passing, 1) },
+          { key: "every", header: "Median of every stock that traded", signed: true, render: (r) => pct(r.every, 1) },
+          { key: "spy", header: "SPY", signed: true, render: (r) => pct(r.spy, 1) },
+        ]}
+      />
+      <p className="m-0 px-4 py-2.5 text-[13px] text-ink-3">
+        Price change from the close of the screen's day, split-adjusted, without dividends, up to {day(ahead.through)}; a stock that stopped trading counts to its last close. Looking at what came next
+        is research on the same years the strategies are tested on.
+      </p>
+    </div>
+  );
+}
+
 interface ScreenerPageProps {
   on?: string;
   query?: string;
@@ -267,11 +303,22 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
     if (box.current) box.current.scrollTop = 0;
   }, [page, encoded, sort]);
 
+  const canLookAhead = Boolean(data && data.on < data.last);
+  const activeView: View = view === "next" && !canLookAhead ? "overview" : view;
+  const { data: ahead } = useLoad(() => (activeView === "next" && data ? api.screenAhead(data.on) : Promise.resolve(null)), activeView === "next" && data ? `ahead-${data.on}` : "none");
+  const withAhead = useMemo(() => {
+    if (!ahead) return all;
+    const found = new Map(ahead.rows.map((r) => [r[0] as number, r]));
+    return all.map((row) => {
+      const values = found.get(row.permaticker);
+      return values ? { ...row, ...Object.fromEntries(ahead.columns.map((name, i) => [name, values[i]])), permaticker: row.permaticker } : row;
+    });
+  }, [all, ahead]);
   const kindRows = useMemo(() => all.filter(matcher({ ...EMPTY, kind: screen.kind })), [all, screen.kind]);
   const sectors = useMemo(() => counts(kindRows, "sector"), [kindRows]);
   const industries = useMemo(() => counts(screen.sector ? kindRows.filter((r) => r.sector === screen.sector) : kindRows, "industry"), [kindRows, screen.sector]);
   const exchanges = useMemo(() => counts(kindRows, "exchange"), [kindRows]);
-  const matched = useMemo(() => all.filter(matcher(screen)), [all, screen]);
+  const matched = useMemo(() => withAhead.filter(matcher(screen)), [withAhead, screen]);
   const shown = useMemo(() => sortRows(matched, sort, (row, key) => row[key as keyof ScreenRow]), [matched, sort]);
   const bySector = useMemo(() => counts(matched, "sector"), [matched]);
   const byIndustry = useMemo(() => counts(matched, "industry"), [matched]);
@@ -510,12 +557,13 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
               <div className="flex flex-wrap items-center gap-2">
                 <Segmented
                   label="Columns"
-                  value={view}
+                  value={activeView}
                   onChange={setView}
                   options={[
                     { value: "overview", label: "Overview" },
                     { value: "performance", label: "Performance" },
                     { value: "valuation", label: "Valuation" },
+                    ...(canLookAhead ? [{ value: "next" as const, label: "What came next" }] : []),
                   ]}
                 />
                 <CsvButton
@@ -538,6 +586,8 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
               </div>
             }
           >
+            {activeView === "next" &&
+              (ahead ? <AheadSummary ahead={ahead} passing={matched} every={withAhead} /> : <p className="m-0 border-b border-line px-4 py-3 text-[13px] text-ink-2">Reading what came next…</p>)}
             {picked.size > 0 && (
               <div className="flex flex-wrap items-center gap-2 border-b border-line bg-raised px-4 py-2 text-[13px]">
                 <span className="font-medium text-ink">{[...picked.values()].map((r) => r.symbol).join(", ")}</span>
@@ -559,7 +609,7 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
             )}
             <div ref={box} className="max-h-[max(420px,68vh)] overflow-y-auto">
               <DataTable
-                columns={columns(view, data.on, new Set(picked.keys()), togglePick)}
+                columns={columns(activeView, data.on, new Set(picked.keys()), togglePick, ahead?.known)}
                 rows={rows}
                 rowKey={(r) => String(r.permaticker)}
                 onRowClick={(r) => {

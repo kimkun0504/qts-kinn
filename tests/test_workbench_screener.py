@@ -35,6 +35,13 @@ class ScreenStore(FakeStore):
     def securities(self):
         return self.master
 
+    def daily(self, start, end, *, symbols):
+        return self._sql(
+            "select * from s where date between ? and ? and symbol in (select unnest(?))",
+            [start, end, symbols],
+            s=self.spy,
+        )
+
     def fundamentals_as_of(self, day, *, fields):
         self.asked.append(day)
         perm = {s.ticker: p for p, s in enumerate(self.stocks, start=1001)}
@@ -129,3 +136,17 @@ def test_never_reads_past_the_seal_and_reuses_a_screen(store):
     assert screener.screen(store, date(2016, 1, 3)) is first
     with pytest.raises(ValueError):
         screener.screen(store, date(1999, 1, 1))
+
+
+def test_what_came_next_for_each_stock_and_spy(store):
+    first = date(2015, 6, 1)
+    page = screener.ahead(store, first)
+    found = {r[0]: dict(zip(page["columns"], r, strict=True)) for r in page["rows"]}
+    assert page["on"] == "2015-06-01" and page["known"]["next_3m"] and not page["known"]["next_1y"]
+    assert math.isclose(found[1001]["next_1m"], 1.001**21 - 1, rel_tol=1e-4)
+    assert found[1001]["next_1y"] is None and found[1001]["stopped"] is None
+    assert found[1002]["next_6m"] == 0.0
+    assert found[1003]["stopped"] is not None and found[1003]["stopped"] < "2015-12-31"
+    assert set(page["spy"]) == {"next_1m", "next_3m", "next_6m"}
+    assert max(store.asked) <= screener.LAST
+    assert screener.ahead(store, first) is page
