@@ -247,6 +247,24 @@ class DataStore:
             [first, day],
         )
 
+    def form4_of(
+        self, symbols: list[str], *, codes: tuple[str, ...] = ("P", "S")
+    ) -> tuple[pa.Table, dict]:
+        input_id = self.input_id("form4")
+        meta = inputs_module.info(self._settings, "form4", input_id)
+        path = inputs_module.root(self._settings, "form4") / input_id / "transactions.parquet"
+        table = self._query(
+            f"""select filed, symbol, transaction_code, acquired, shares, amount, first_traded,
+                       last_traded, owner_name, officer, director, ten_percent_owner, title,
+                       accession
+                from '{path}'
+                where symbol in (select unnest(?)) and transaction_code in (select unnest(?))
+                  and {self._date_guard("filed")}
+                order by filed, accession""",
+            [symbols, list(codes)],
+        )
+        return table, meta
+
     def minute(
         self, day: date, *, symbols: list[str] | None = None, columns: str = "*"
     ) -> pa.Table:

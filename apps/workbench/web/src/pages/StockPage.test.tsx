@@ -94,6 +94,7 @@ describe("the stock page", () => {
     expect(within(screen.getByLabelText("Summary")).getByText("+0.0%")).toBeTruthy();
     expect(screen.getByRole("link", { name: "mine" }).getAttribute("href")).toBe("#/lab/mine/run1");
     expect(screen.getByRole("link", { name: "earnings_drift" }).getAttribute("href")).toBe("#/strategy/earnings_drift/runs");
+    fireEvent.click(screen.getByRole("tab", { name: "8-K filings 1" }));
     expect(screen.getByText("Results")).toBeTruthy();
     expect(JSON.parse(localStorage.getItem("kinn-recent-stocks") ?? "[]")[0].ticker).toBe("ABCD");
   });

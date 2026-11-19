@@ -40,6 +40,24 @@ class StockStore(FakeStore):
         )
         return pa.Table.from_pylist(rows, schema=schema)
 
+    def form4_of(self, symbols):
+        rows = [
+            {"filed": date(2014, 3, 3), "symbol": "ABCD", "transaction_code": "P", "acquired": "A",
+             "shares": 1000.0, "amount": 40000.0, "first_traded": date(2014, 2, 27),
+             "last_traded": date(2014, 2, 28), "owner_name": "Doe Jane", "officer": True,
+             "director": False, "ten_percent_owner": False, "title": "CFO", "accession": "a1"},
+            {"filed": date(2011, 6, 1), "symbol": "OLDX", "transaction_code": "S", "acquired": "D",
+             "shares": 50.0, "amount": 500.0, "first_traded": None, "last_traded": None,
+             "owner_name": "Roe Rick", "officer": False, "director": True,
+             "ten_percent_owner": True, "title": None, "accession": "a2"},
+            {"filed": date(2016, 6, 1), "symbol": "OLDX", "transaction_code": "S", "acquired": "D",
+             "shares": 50.0, "amount": 500.0, "first_traded": None, "last_traded": None,
+             "owner_name": "Someone Else", "officer": False, "director": True,
+             "ten_percent_owner": False, "title": None, "accession": "a3"},
+        ]  # fmt: skip
+        kept = sorted((r for r in rows if r["symbol"] in symbols), key=lambda r: r["filed"])
+        return pa.Table.from_pylist(kept), {"first_filed": "2006-01-03", "last_filed": "2023-09-29"}
+
     def events_of(self, start, end, *, permatickers) -> pa.Table:
         return self._sql(
             "select * from e where date between ? and ? and permaticker in (select unnest(?)) "
@@ -160,3 +178,14 @@ def test_closes_for_stocks_split_adjusted_and_for_funds_as_traded(store):
     assert set(by["SPLT"]["close"]) == {50.0}
     assert by["SPY"]["name"] == "SPY" and len(by["SPY"]["date"]) == len(by["SPY"]["close"]) > 100
     assert max(by["SPY"]["date"]) < found["sealed_from"]
+
+
+def test_insider_buys_and_sells_under_each_symbol_the_company_held(store, tmp_path):
+    page = stocks.stock(store, tmp_path / "runs", tmp_path / "lab", "ABCD")
+    found = page["insiders"]
+    assert found["last"] == "2023-09-29" and found["count"] == 2
+    assert [(r["filed"], r["side"], r["role"]) for r in found["rows"]] == [
+        ("2011-06-01", "sell", "Director, 10% owner"),
+        ("2014-03-03", "buy", "CFO"),
+    ]
+    assert found["rows"][1]["traded_from"] == "2014-02-27" and found["rows"][1]["amount"] == 40000.0

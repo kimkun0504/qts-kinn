@@ -18,6 +18,7 @@ import pyarrow as pa
 from apps.workbench import ledgers
 from kinn import swing_paper
 from kinn.core.settings import HOLDOUT_START
+from kinn.data.inputs import InputError
 from kinn.registry import runs as registry
 
 FIRST = date(2000, 1, 1)
@@ -50,6 +51,8 @@ class Store(Protocol):
     ) -> pa.Table: ...
 
     def daily(self, start: date, end: date, *, symbols: list[str]) -> pa.Table: ...
+
+    def form4_of(self, symbols: list[str]) -> tuple[pa.Table, dict]: ...
 
 
 @dataclass
@@ -301,6 +304,40 @@ def financials(store: Store, perm: int, currency: str | None) -> dict:
 
 
 MAX_CLOSES = 4
+MAX_INSIDERS = 600
+
+
+def _role(row: dict) -> str:
+    if row.get("officer") and row.get("title"):
+        return row["title"]
+    parts = [
+        name
+        for name, held in (("Officer", row.get("officer")), ("Director", row.get("director")),
+                           ("10% owner", row.get("ten_percent_owner")))
+        if held
+    ]  # fmt: skip
+    return ", ".join(parts)
+
+
+def insiders(store: Store, symbols: list[str], spans: list[tuple[str, date, date]]) -> dict | None:
+    try:
+        table, meta = store.form4_of(symbols)
+    except (InputError, OSError, KeyError, duckdb.Error):
+        return None
+    rows = []
+    for r in table.to_pylist():
+        filed = _day(r["filed"])
+        if spans and not any(s == r["symbol"] and lo <= filed <= hi for s, lo, hi in spans):
+            continue
+        rows.append({
+            "filed": _iso(filed), "symbol": r["symbol"],
+            "side": "buy" if r["transaction_code"] == "P" else "sell",
+            "shares": _number(r["shares"], 0), "amount": _number(r["amount"], 0),
+            "traded_from": _iso(r["first_traded"]), "traded_to": _iso(r["last_traded"]),
+            "insider": r["owner_name"], "role": _role(r), "accession": r["accession"],
+        })  # fmt: skip
+    return {"first": meta.get("first_filed"), "last": meta.get("last_filed"),
+            "count": len(rows), "rows": rows[-MAX_INSIDERS:]}  # fmt: skip
 
 
 def closes(store: Store, symbols: list[str]) -> dict:
@@ -371,4 +408,5 @@ def stock(store: Store, runs_dir: Path, lab_dir: Path, symbol: str,
                    for e in events],
         "trades": trades,
         "financials": financials(store, chosen, company.get("currency")),
+        "insiders": insiders(store, symbols, spans),
     }  # fmt: skip

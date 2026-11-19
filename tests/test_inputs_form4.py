@@ -192,3 +192,15 @@ def test_a_run_records_the_input_version_and_keeps_reading_it(world, tmp_path, m
     assert runner.continue_run(run_dir, settings=settings)
     metrics = json.loads((run_dir / "metrics.json").read_text())
     assert metrics["counts"]["signals"] == 1  # A1 on 3 October; D1 would have been a second
+
+
+def test_one_companys_open_market_trades(world):
+    settings, one, two = world
+    inputs.build_form4(settings)
+    table, meta = DataStore(settings).form4_of([one])
+    assert meta["last_filed"] == "2023-10-07"
+    assert sorted((r["accession"], r["transaction_code"]) for r in table.to_pylist()) == [
+        ("A1", "P"),
+        ("A1", "S"),
+    ]
+    assert DataStore(settings).form4_of([two])[0].num_rows == 1

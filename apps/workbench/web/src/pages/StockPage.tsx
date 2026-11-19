@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { movingAverage, type PriceMarker, PriceChart } from "../components/charts/PriceChart";
 import { CsvButton } from "../components/CsvButton";
 import { Financials } from "../components/Financials";
+import { Insiders } from "../components/Insiders";
 import { RelativeChart } from "../components/RelativeChart";
 import { StocksLanding, useWatchlist } from "../components/StocksLanding";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
@@ -11,6 +12,7 @@ import { Card, Note } from "../components/ui/Card";
 import { type Column, DataTable } from "../components/ui/DataTable";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Segmented } from "../components/ui/Segmented";
+import { type TabItem, Tabs } from "../components/ui/Tabs";
 import { StatStrip } from "../components/ui/StatStrip";
 import { api, type StockPageData, type StockTrade } from "../lib/api";
 import { compact, day, int, pct, price, priceTick } from "../lib/format";
@@ -21,6 +23,7 @@ import { toggleWatch } from "../lib/watchlist";
 
 type Range = "3m" | "1y" | "3y" | "5y" | "all";
 type Source = "all" | StockTrade["source"];
+type Section = "financials" | "trades" | "insiders" | "filings";
 
 const RANGES: { value: Range; label: string; sessions: number }[] = [
   { value: "3m", label: "3M", sessions: 63 },
@@ -118,13 +121,13 @@ function Header({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string
           {[page.exchange, page.sector, page.industry, page.category, page.location].filter(Boolean).map((part) => (
             <span key={part}>{part}</span>
           ))}
-          {page.prices.date.length > 0 && <span>Daily prices {day(page.prices.date[0])} to {day(page.prices.date[page.prices.date.length - 1])}</span>}
+          {page.prices.date.length > 0 && (
+            <span>
+              Daily prices {day(page.prices.date[0])} to {day(page.prices.date[page.prices.date.length - 1])}
+            </span>
+          )}
         </div>
-        {traded.length > 0 && (
-          <div className="text-[13px] text-ink-3">
-            Also traded as {traded.map((s) => `${s.symbol} (${s.from?.slice(0, 4) ?? ""}–${s.to?.slice(0, 4) ?? ""})`).join(", ")}
-          </div>
-        )}
+        {traded.length > 0 && <div className="text-[13px] text-ink-3">Also traded as {traded.map((s) => `${s.symbol} (${s.from?.slice(0, 4) ?? ""}–${s.to?.slice(0, 4) ?? ""})`).join(", ")}</div>}
         {page.others.length > 0 && (
           <div className="flex flex-wrap gap-x-3 text-[13px] text-ink-3">
             <span>{page.query} was also used by</span>
@@ -238,9 +241,7 @@ function Filings({ page, onPick }: { page: StockPageData; onPick: (iso: string) 
         <Note>
           {events.length} filings, {results} with results (item 2.02). Click a date to see it on the chart.
         </Note>
-        {events.length > 12 && (
-          <Button onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${events.length}`}</Button>
-        )}
+        {events.length > 12 && <Button onClick={() => setAll(!all)}>{all ? "Show fewer" : `Show all ${events.length}`}</Button>}
       </div>
     </>
   );
@@ -268,6 +269,13 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
     [averages, data],
   );
   const [sort, onSort] = useSort({ key: "entry_day", dir: "desc" });
+  const sections: TabItem<Section>[] = [
+    ...(page.financials && (page.financials.quarterly.length || page.financials.trailing.length) ? [{ key: "financials" as const, label: "Financials" }] : []),
+    { key: "trades", label: `Trades ${page.trades.length}` },
+    ...(page.insiders ? [{ key: "insiders" as const, label: `Insider trades ${page.insiders.count}` }] : []),
+    { key: "filings", label: `8-K filings ${page.events.length}` },
+  ];
+  const [section, setSection] = useState<Section>(sections[0].key);
   const visibleDates = useMemo(() => data.date.slice(view[0], view[1] + 1), [data, view]);
   const visibleCloses = useMemo(() => data.close.slice(view[0], view[1] + 1), [data, view]);
 
@@ -277,8 +285,22 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
 
   const keyed = useMemo(() => page.trades.map((t, i) => ({ t, key: tradeKey(t, i) })), [page]);
   const visible = keyed.filter(({ t }) => source === "all" || t.source === source);
-  const resultsAt = useMemo(() => page.events.filter((e) => e.results).map((e) => locate(data.date, e.date)).filter((i): i is number => i != null), [page, data]);
-  const filingsAt = useMemo(() => page.events.filter((e) => !e.results).map((e) => locate(data.date, e.date)).filter((i): i is number => i != null), [page, data]);
+  const resultsAt = useMemo(
+    () =>
+      page.events
+        .filter((e) => e.results)
+        .map((e) => locate(data.date, e.date))
+        .filter((i): i is number => i != null),
+    [page, data],
+  );
+  const filingsAt = useMemo(
+    () =>
+      page.events
+        .filter((e) => !e.results)
+        .map((e) => locate(data.date, e.date))
+        .filter((i): i is number => i != null),
+    [page, data],
+  );
 
   const markers: PriceMarker[] = [];
   let span: [number, number] | null = null;
@@ -302,6 +324,8 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
   const around = (a: number, b: number, pad = 40) => {
     setRange("all");
     setView([Math.max(0, a - pad), Math.min(n - 1, b + pad)]);
+    const chart = document.getElementById("price-chart");
+    if (chart && chart.getBoundingClientRect().top < 0) chart.scrollIntoView?.({ behavior: "smooth", block: "start" });
   };
   const zoomed = view[0] !== 0 || view[1] !== n - 1;
   const counts = { run: 0, lab: 0, paper: 0 };
@@ -330,13 +354,38 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
       <Header page={page} onOpen={onOpen} />
       <Facts page={page} data={data} />
       <Card
+        id="price-chart"
         title="Daily prices"
         aside={
           <div className="flex flex-wrap items-center gap-2">
             <Segmented label="Range" options={RANGES.map(({ value, label }) => ({ value, label }))} value={zoomed && range === "all" ? ("" as Range) : range} onChange={preset} />
-            <Segmented label="Scale" options={[{ value: "linear", label: "Linear" }, { value: "log", label: "Log" }]} value={log ? "log" : "linear"} onChange={(v) => setLog(v === "log")} />
-            <Segmented label="Filings" options={[{ value: "on", label: "8-K days" }, { value: "off", label: "Hide" }]} value={events ? "on" : "off"} onChange={(v) => setEvents(v === "on")} />
-            <Segmented label="Moving averages" options={[{ value: "off", label: "None" }, { value: "on", label: "50 and 200 days" }]} value={averages ? "on" : "off"} onChange={(v) => setAverages(v === "on")} />
+            <Segmented
+              label="Scale"
+              options={[
+                { value: "linear", label: "Linear" },
+                { value: "log", label: "Log" },
+              ]}
+              value={log ? "log" : "linear"}
+              onChange={(v) => setLog(v === "log")}
+            />
+            <Segmented
+              label="Filings"
+              options={[
+                { value: "on", label: "8-K days" },
+                { value: "off", label: "Hide" },
+              ]}
+              value={events ? "on" : "off"}
+              onChange={(v) => setEvents(v === "on")}
+            />
+            <Segmented
+              label="Moving averages"
+              options={[
+                { value: "off", label: "None" },
+                { value: "on", label: "50 and 200 days" },
+              ]}
+              value={averages ? "on" : "off"}
+              onChange={(v) => setAverages(v === "on")}
+            />
           </div>
         }
       >
@@ -374,68 +423,84 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
         />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Note>
-            Split-adjusted to the last close; prices end {day(data.date[n - 1])} (the holdout from {day(page.sealed_from)} is sealed). Drag across the chart to zoom, double-click to see it all. Triangles mark entries and exits, green for a gain and red for a loss; diamonds mark results 8-Ks.
+            Split-adjusted to the last close; prices end {day(data.date[n - 1])} (the holdout from {day(page.sealed_from)} is sealed). Drag across the chart to zoom, double-click to see it all.
+            Triangles mark entries and exits, green for a gain and red for a loss; diamonds mark results 8-Ks.
           </Note>
           {zoomed && <Button onClick={() => preset("all")}>Show all</Button>}
         </div>
       </Card>
       <RelativeChart symbol={page.ticker ?? page.query} dates={visibleDates} close={visibleCloses} />
-      {page.financials && <Financials data={page.financials} on={on} />}
-      <Card
-        title="Trades in this stock"
-        aside={
-          <div className="flex flex-wrap items-center gap-2">
-            {sources.length > 2 && <Segmented label="Source" options={sources} value={source} onChange={setSource} />}
-            <CsvButton
-              filename={`${page.ticker ?? page.query}_trades.csv`}
-              rows={visible.map((v) => v.t)}
-              columns={[
-                { header: "source", value: (t) => t.source },
-                { header: "from", value: (t) => t.label },
-                { header: "detail", value: (t) => t.detail },
-                { header: "run", value: (t) => t.id },
-                { header: "symbol", value: (t) => t.symbol },
-                { header: "signal_day", value: (t) => t.signal_day },
-                { header: "entry_day", value: (t) => t.entry_day },
-                { header: "entry", value: (t) => t.entry },
-                { header: "exit_day", value: (t) => t.exit_day },
-                { header: "exit", value: (t) => t.exit },
-                { header: "return", value: (t) => t.net },
-                { header: "side", value: (t) => t.side },
-                { header: "note", value: (t) => t.note },
-              ]}
+      <Tabs label="Details" tabs={sections} active={section} onChange={setSection} />
+      {section === "financials" && page.financials && <Financials data={page.financials} on={on} />}
+      {section === "trades" && (
+        <Card
+          title="Trades in this stock"
+          aside={
+            <div className="flex flex-wrap items-center gap-2">
+              {sources.length > 2 && <Segmented label="Source" options={sources} value={source} onChange={setSource} />}
+              <CsvButton
+                filename={`${page.ticker ?? page.query}_trades.csv`}
+                rows={visible.map((v) => v.t)}
+                columns={[
+                  { header: "source", value: (t) => t.source },
+                  { header: "from", value: (t) => t.label },
+                  { header: "detail", value: (t) => t.detail },
+                  { header: "run", value: (t) => t.id },
+                  { header: "symbol", value: (t) => t.symbol },
+                  { header: "signal_day", value: (t) => t.signal_day },
+                  { header: "entry_day", value: (t) => t.entry_day },
+                  { header: "entry", value: (t) => t.entry },
+                  { header: "exit_day", value: (t) => t.exit_day },
+                  { header: "exit", value: (t) => t.exit },
+                  { header: "return", value: (t) => t.net },
+                  { header: "side", value: (t) => t.side },
+                  { header: "note", value: (t) => t.note },
+                ]}
+              />
+            </div>
+          }
+        >
+          <div className="-mx-5 max-h-[520px] overflow-auto">
+            <DataTable
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => row.key}
+              selectedKey={selected}
+              onRowClick={(row) => {
+                setSelected(row.key === selected ? null : row.key);
+                const at = locate(data.date, row.t.entry_day ?? row.t.signal_day);
+                if (at != null && row.key !== selected) around(at, locate(data.date, row.t.exit_day ?? row.t.entry_day) ?? at);
+              }}
+              sort={sort}
+              onSort={onSort}
+              minWidth={1050}
+              empty="No strategy run, Lab run or paper ledger has traded this stock."
             />
           </div>
-        }
-      >
-        <div className="-mx-5 max-h-[520px] overflow-auto">
-          <DataTable
-            columns={columns}
-            rows={rows}
-            rowKey={(row) => row.key}
-            selectedKey={selected}
-            onRowClick={(row) => {
-              setSelected(row.key === selected ? null : row.key);
-              const at = locate(data.date, row.t.entry_day ?? row.t.signal_day);
-              if (at != null && row.key !== selected) around(at, locate(data.date, row.t.exit_day ?? row.t.entry_day) ?? at);
-            }}
-            sort={sort}
-            onSort={onSort}
-            minWidth={1050}
-            empty="No strategy run, Lab run or paper ledger has traded this stock."
-          />
-        </div>
-        {page.trades.some((t) => t.source === "run") && <Note>Strategy-run returns are after costs, on the trade's own money. Click a trade to see it on the chart.</Note>}
-      </Card>
-      <Card title="8-K filings">
-        <Filings
-          page={page}
+          {page.trades.some((t) => t.source === "run") && <Note>Strategy-run returns are after costs, on the trade's own money. Click a trade to see it on the chart.</Note>}
+        </Card>
+      )}
+      {section === "insiders" && page.insiders && (
+        <Insiders
+          data={page.insiders}
+          on={on}
           onPick={(iso) => {
             const at = locate(data.date, iso);
-            if (at != null) around(at, at, 30);
+            if (at != null) around(at, at, 60);
           }}
         />
-      </Card>
+      )}
+      {section === "filings" && (
+        <Card title="8-K filings">
+          <Filings
+            page={page}
+            onPick={(iso) => {
+              const at = locate(data.date, iso);
+              if (at != null) around(at, at, 30);
+            }}
+          />
+        </Card>
+      )}
     </>
   );
 }

@@ -593,6 +593,27 @@ export interface StockPageData extends StockHit {
   events: { date: string; codes: string; results: boolean }[];
   trades: StockTrade[];
   financials?: Financials;
+  insiders?: Insiders | null;
+}
+
+export interface InsiderTrade {
+  filed: string;
+  symbol: string;
+  side: "buy" | "sell";
+  shares: number | null;
+  amount: number | null;
+  traded_from: string | null;
+  traded_to: string | null;
+  insider: string | null;
+  role: string;
+  accession: string;
+}
+
+export interface Insiders {
+  first: string | null;
+  last: string | null;
+  count: number;
+  rows: InsiderTrade[];
 }
 
 export interface FinancialPeriod {
