@@ -8,10 +8,13 @@ type Filter = "all" | Group;
 const WHO: Record<string, string> = { claude: "Claude", gpt: "Astra", human: "Owner" };
 
 /** Everything tested, one row an idea, filtered by where it stands. Rows open the strategy. */
-export function BoardTable({ board, onOpen }: { board: Board; onOpen: (strategy: string) => void }) {
+export function BoardTable({ board, onOpen, limit }: { board: Board; onOpen: (strategy: string) => void; limit?: number }) {
   const [filter, setFilter] = useState<Filter>("all");
   const [others, setOthers] = useState(false);
-  const rows = board.rows.filter((row) => filter === "all" || row.group === filter);
+  const [all, setAll] = useState(false);
+  const matching = board.rows.filter((row) => filter === "all" || row.group === filter);
+  const cut = limit != null && !all && matching.length > limit;
+  const rows = cut ? matching.slice(0, limit) : matching;
   const chips: { value: Filter; label: string }[] = [
     { value: "all", label: `All ${board.rows.length}` },
     { value: "works", label: `Works ${board.counts.works}` },
@@ -51,7 +54,7 @@ export function BoardTable({ board, onOpen }: { board: Board; onOpen: (strategy:
             {rows.map((row) => (
               <Row key={`${row.strategy}:${row.idea}`} row={row} onOpen={onOpen} />
             ))}
-            {(filter === "all" || filter === "closed") && astra.length > 0 && (
+            {!cut && (filter === "all" || filter === "closed") && astra.length > 0 && (
               <tr>
                 <td className="border-b border-line-soft px-3 py-3 align-top">
                   <button type="button" aria-expanded={others} onClick={() => setOthers(!others)} className="cursor-pointer text-left font-semibold text-ink hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
@@ -82,6 +85,11 @@ export function BoardTable({ board, onOpen }: { board: Board; onOpen: (strategy:
           </tbody>
         </table>
       </div>
+      {limit != null && matching.length > limit && (
+        <button type="button" onClick={() => setAll(!all)} className="cursor-pointer self-start text-[13px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+          {all ? `Show the first ${limit}` : `Show all ${matching.length}`}
+        </button>
+      )}
     </div>
   );
 }

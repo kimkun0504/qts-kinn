@@ -77,6 +77,15 @@ describe("verdicts in the Workbench", () => {
     expect(opened).toEqual(["rebound_limit"]);
   });
 
+  it("shows the first rows on Home and the rest on request", () => {
+    render(<BoardTable board={board} onOpen={() => {}} limit={2} />);
+    expect(screen.queryByText("Intraday rebound")).toBeNull();
+    expect(screen.queryByText("12 intraday ideas")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Show all 3" }));
+    expect(screen.getByText("Intraday rebound")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Show the first 2" })).toBeTruthy();
+  });
+
   it("draws a fill check with its bars and its groups", () => {
     const group = {
       orders: 3001, covered: 2998, coverage: 0.999, confirmed: 1, confirmed_after_5s: 0.995, in_full_size: 0.984, through_volume_multiple_median: 142, bid_fell_below_limit: 1,

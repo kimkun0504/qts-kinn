@@ -13,7 +13,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 
 | Page | Shows |
 |---|---|
-| Home | what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, and every idea tested with its verdict |
+| Home | what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, the leads on paper, the latest Lab runs, and the first ideas tested with their verdicts (all of them on request) |
 | Strategies | every idea with its verdict; each opens a strategy page |
 | A strategy | Results (profit across its periods, the holdout marked, years, months, costs, weaknesses, the evidence in order), Trades, Paper book, Report (REPORT.md and HYPOTHESIS.md), Studies, Runs |
 | Stocks | a watchlist with each stock's last session (day, month, year, distance from the high, market value, P/E), the largest rises and falls among US stocks above $2B that day, and each sector's median month; any company by ticker, old ticker or name: daily prices to the seal (split-adjusted, line or candles, volume, log scale, drag to zoom, 50- and 200-day averages), its 8-K days, its change beside SPY, QQQ, IWM or other stocks over the chart's range, and, in tabs, its financials by quarter and trailing year (as filed before the seal, any line charted), how it moved on each results 8-K and the 20 sessions after (beside SPY), its industry's largest companies side by side with the industry's medians, every trade a strategy run, a Lab run or a paper ledger made in it (marked on the chart), its insiders' open-market purchases and sales from Form 4, and its 8-K filings |
