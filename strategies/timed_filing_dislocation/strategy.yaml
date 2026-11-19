@@ -1,5 +1,5 @@
 name: timed_filing_dislocation
-status: study
+status: parked
 engine: intraday
 universe: liquid domestic common stocks with no already-usable typed filing
 cost_calibration: ibkr_pro_tiered
@@ -10,7 +10,9 @@ record:
   title: Relative dislocation with a timely filing exclusion
   idea: Remove known-information events from the existing size-peer reversal
   horizon: Two hours after first fill
-  verdict: untested
+  verdict: parked
+  label: Timed exclusion did not improve the saved baseline
+  result: 233 events averaged +3.64% net and +3.17% at doubled slippage; both comparisons failed
   summary: >-
     Preserve the existing price rule and prior-date filing screen,
     then exclude only current filings usable by its first event minute.
