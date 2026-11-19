@@ -49,6 +49,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/earnings_trade_size_shift` | gpt | 2026-11-18 | typed earnings and expanding trade size; count view authorized and tested |
 | `strategies/fragmented_selloff_exhaustion` | gpt | 2026-11-18 | smaller-print selloff exhaustion with a frozen unfiltered control |
 | `strategies/quiet_size_breakout` | gpt | 2026-11-18 | larger-print narrow-range breakout at one fixed clock time |
+| `strategies/air_pocket_reversal` | gpt | 2026-11-19 | frozen transaction-rate collapse ablation, one active research candidate |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `strategies/bid_replenishment_reversal` | gpt | 2026-11-18 | frozen bid-size transition; parked: acquired index failed frozen coverage gates before primary study |
 | `strategies/timed_filing_dislocation` | gpt | 2026-11-18 | as-of-time original 8-K exclusion on the existing date-filtered size-peer reversal |
