@@ -609,6 +609,7 @@ export interface StockPageData extends StockHit {
     factor: (number | null)[];
     volume: (number | null)[];
     market_cap: (number | null)[];
+    market_value?: (number | null)[];
     adv20: (number | null)[];
     symbol: string[];
   };

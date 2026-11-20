@@ -5,7 +5,7 @@ import { fitted, useWidth } from "../../lib/useWidth";
 export interface Series {
   name: string;
   short?: string;
-  values: number[];
+  values: (number | null)[];
   color: string;
   dash?: string;
 }
@@ -35,8 +35,12 @@ export function LineChart({ title, labels, series, format, band, height: designe
   const { width: W, height } = fitted(measured, reference, designed);
   const n = labels.length;
   if (n < 2) return <p className="m-0 px-4 py-6 text-ink-2">Not enough points for a chart.</p>;
-  const longest = Math.max(0, ...series.map((s) => `${s.short ?? s.name} ${format(s.values[n - 1])}`.length));
-  const all = series.flatMap((s) => s.values).concat(band ? [...band.low, ...band.high] : [], [0]);
+  const show = (v: number | null | undefined) => (v == null ? "–" : format(v));
+  const longest = Math.max(0, ...series.map((s) => `${s.short ?? s.name} ${show(s.values[n - 1])}`.length));
+  const all = series
+    .flatMap((s) => s.values)
+    .filter((v): v is number => v != null && Number.isFinite(v))
+    .concat(band ? [...band.low, ...band.high] : [], [0]);
   const low = Math.min(...all);
   const high = Math.max(...all);
   const ticks = niceTicks(low, high);
@@ -46,7 +50,11 @@ export function LineChart({ title, labels, series, format, band, height: designe
   const span = high - low || 1;
   const x = (i: number) => PAD.left + ((W - PAD.left - PAD.right) * i) / (n - 1);
   const y = (v: number) => PAD.top + (height - PAD.top - PAD.bottom) * (1 - (v - low) / span);
-  const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const path = (values: (number | null)[]) =>
+    values
+      .map((v, i) => (v == null || !Number.isFinite(v) ? "" : `${i && values[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`))
+      .filter(Boolean)
+      .join(" ");
 
   const xLabels: { i: number; text: string }[] = [];
   if (labelAt) labels.forEach((text, i) => labelAt(i) && xLabels.push({ i, text: tickText ? tickText(i) : text }));
@@ -75,7 +83,8 @@ export function LineChart({ title, labels, series, format, band, height: designe
   }
 
   const ends = (compact ? [] : series)
-    .map((s) => ({ y: y(s.values[n - 1]), text: `${s.short ?? s.name} ${format(s.values[n - 1])}` }))
+    .filter((s) => s.values[n - 1] != null)
+    .map((s) => ({ y: y(s.values[n - 1] as number), text: `${s.short ?? s.name} ${format(s.values[n - 1] as number)}` }))
     .sort((a, b) => a.y - b.y);
   let previous = -99;
   for (const end of ends) {
@@ -122,13 +131,7 @@ export function LineChart({ title, labels, series, format, band, height: designe
               {text}
             </text>
           ))}
-          {band && (
-            <polygon
-              points={[...band.high.map((v, i) => `${x(i)},${y(v)}`), ...band.low.map((v, i) => `${x(i)},${y(v)}`).reverse()].join(" ")}
-              fill={band.color}
-              opacity="0.16"
-            />
-          )}
+          {band && <polygon points={[...band.high.map((v, i) => `${x(i)},${y(v)}`), ...band.low.map((v, i) => `${x(i)},${y(v)}`).reverse()].join(" ")} fill={band.color} opacity="0.16" />}
           {series.map((s) => (
             <path key={s.name} d={path(s.values)} fill="none" stroke={s.color} strokeWidth="2" strokeDasharray={s.dash} strokeLinecap="round" />
           ))}
@@ -152,7 +155,7 @@ export function LineChart({ title, labels, series, format, band, height: designe
             <div className="font-semibold">{labels[hover]}</div>
             {series.map((s) => (
               <div key={s.name}>
-                {s.name}: {format(s.values[hover])}
+                {s.name}: {show(s.values[hover])}
               </div>
             ))}
             {band && (

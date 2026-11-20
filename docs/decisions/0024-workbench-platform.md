@@ -99,3 +99,7 @@ applies the holdout date guard and is tested against the synthetic build.
     cover the correlation of weekly profit and each one's and the sum's net profit, Sharpe and
     worst drawdown, at each run's own size. It reads the runs' `equity.parquet` (or a book's
     `daily.parquet`) only.
+14. **A stock's valuation through time** (the Valuation tab): each session's market value at the
+    close (the screener's figure) over the latest trailing year filed before that session, so
+    the history uses only what was known on each day, beside its median and middle half. A
+    period older than about 16 months, a loss or negative equity leaves a gap.

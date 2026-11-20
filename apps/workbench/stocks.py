@@ -161,6 +161,17 @@ def _number(value, digits: int = 4):
     return round(float(value), digits)
 
 
+def market_value(row: dict) -> float | None:
+    """The market value at the session's close: the vendor's figure at the previous close,
+    moved by the day's change (a split-sized change is taken as a split and left out)."""
+    cap, close, prev = row.get("marketcap_prev"), row.get("close"), row.get("prev_close")
+    if cap is None:
+        return None
+    if close and prev and close > 0 and prev > 0 and 0.02 < close / prev < 50:
+        return cap * close / prev
+    return cap
+
+
 def prices(table: pa.Table) -> dict:
     rows = table.to_pylist()
     factors = [1.0] * len(rows)
@@ -177,6 +188,7 @@ def prices(table: pa.Table) -> dict:
         "factor": [_number(f, 6) for f in factors],
         "volume": [_number(r["volume"], 0) for r in rows],
         "market_cap": [_number(r["marketcap_prev"], 0) for r in rows],
+        "market_value": [_number(market_value(r), 0) for r in rows],
         "adv20": [_number(r["adv20_prev"], 0) for r in rows],
         "symbol": [r["symbol"] for r in rows],
     }

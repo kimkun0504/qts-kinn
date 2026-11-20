@@ -14,7 +14,7 @@ from typing import Protocol
 import duckdb
 import pyarrow as pa
 
-from apps.workbench.stocks import FIRST, LAST, reports_in_dollars
+from apps.workbench.stocks import FIRST, LAST, market_value, reports_in_dollars
 
 YEAR = 252
 RETURNS = {"ret_1d": 1, "ret_1m": 21, "ret_3m": 63, "ret_6m": 126, "ret_1y": YEAR}
@@ -126,15 +126,6 @@ def _ratio(top, bottom):
     return top / bottom
 
 
-def _market_value(row: dict) -> float | None:
-    cap, close, prev = row.get("marketcap_prev"), row.get("close"), row.get("prev_close")
-    if cap is None:
-        return None
-    if close and prev and close > 0 and prev > 0 and 0.02 < close / prev < 50:
-        return cap * close / prev
-    return cap
-
-
 def _rows(store: Store, day: date, window: list[date]) -> list[list]:
     today = store.panel(
         day, day,
@@ -164,7 +155,7 @@ def _rows(store: Store, day: date, window: list[date]) -> list[list]:
         company = companies.get(perm, {})
         m = measured.get(perm, {})
         book = books.get(perm, {})
-        cap = _market_value(row)
+        cap = market_value(row)
         category = row["category"] or company.get("category")
         fcf = book.get("fcf") if reports_in_dollars(category) else None
         revenue, income = book.get("revenueusd"), book.get("netinccmnusd")

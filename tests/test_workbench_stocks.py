@@ -196,3 +196,10 @@ def test_a_foreign_filers_local_currency_lines_are_marked():
     assert stocks.reports_in_dollars(None)
     assert not stocks.reports_in_dollars("ADR Common Stock")
     assert not stocks.reports_in_dollars("Canadian Common Stock")
+
+
+def test_market_value_moves_the_previous_figure_by_the_day_and_not_by_a_split():
+    market_value = stocks.market_value
+    assert market_value({"marketcap_prev": 1000.0, "close": 11.0, "prev_close": 10.0}) == 1100.0
+    assert market_value({"marketcap_prev": 1000.0, "close": 0.1, "prev_close": 10.0}) == 1000.0
+    assert market_value({"marketcap_prev": None, "close": 11.0, "prev_close": 10.0}) is None

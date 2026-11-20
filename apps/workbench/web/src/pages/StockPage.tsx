@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { movingAverage, type PriceMarker, PriceChart } from "../components/charts/PriceChart";
 import { CsvButton } from "../components/CsvButton";
 import { Financials } from "../components/Financials";
+import { Valuation } from "../components/Valuation";
 import { Insiders } from "../components/Insiders";
 import { Peers } from "../components/Peers";
 import { Reactions } from "../components/Reactions";
@@ -26,7 +27,7 @@ import { toggleWatch } from "../lib/watchlist";
 
 type Range = "3m" | "1y" | "3y" | "5y" | "all";
 type Source = "all" | StockTrade["source"];
-type Section = "financials" | "reactions" | "peers" | "risk" | "trades" | "insiders" | "filings";
+type Section = "financials" | "valuation" | "reactions" | "peers" | "risk" | "trades" | "insiders" | "filings";
 
 const RANGES: { value: Range; label: string; sessions: number }[] = [
   { value: "3m", label: "3M", sessions: 63 },
@@ -285,6 +286,7 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
   const resultDays = useMemo(() => page.events.filter((e) => e.results).map((e) => e.date), [page]);
   const sections: TabItem<Section>[] = [
     ...(page.financials && (page.financials.quarterly.length || page.financials.trailing.length) ? [{ key: "financials" as const, label: "Financials" }] : []),
+    ...(page.financials?.trailing.length && page.prices.market_value ? [{ key: "valuation" as const, label: "Valuation" }] : []),
     ...(resultDays.length ? [{ key: "reactions" as const, label: `Results reactions ${resultDays.length}` }] : []),
     ...(page.industry ? [{ key: "peers" as const, label: "Peers" }] : []),
     { key: "risk", label: "Risk and seasons" },
@@ -450,6 +452,7 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
       <RelativeChart symbol={page.ticker ?? page.query} dates={visibleDates} close={visibleCloses} />
       <Tabs label="Details" tabs={sections} active={section} onChange={setSection} />
       {section === "financials" && page.financials && <Financials data={page.financials} on={on} />}
+      {section === "valuation" && page.financials && <Valuation prices={page.prices} financials={page.financials} on={on} />}
       {section === "reactions" && (
         <Reactions
           dates={data.date}
