@@ -23,6 +23,7 @@ export interface LabSettings {
     min_price: number;
     min_dollar_volume: number;
     exclude_blank_checks: boolean;
+    tickers?: string[];
   };
   entry: { mode: "signal" | "rank"; top_n: number; rank_order: "highest" | "lowest" };
   exit: { hold_days: number; stop_loss: number | null; take_profit: number | null };
@@ -176,6 +177,7 @@ export interface Summary {
   settings?: LabSettings;
   signals?: number;
   universe_stocks?: number;
+  tickers_not_found?: string[];
   sessions?: number;
   trial_number?: number;
   trials?: number;
@@ -402,8 +404,7 @@ export const lab = {
   saveModule: (name: string, code: string) => write<{ name: string; description: string }>("PUT", `/library/${id(name)}`, { code }),
   removeModule: (name: string) => write<{ deleted: string }>("DELETE", `/library/${id(name)}`),
   history: (kind: "algorithms" | "library", name: string) => read<Version[]>(`/${kind}/${id(name)}/history`),
-  version: (kind: "algorithms" | "library", name: string, version: string) =>
-    read<{ version: string; code: string }>(`/${kind}/${id(name)}/history/${id(version)}`),
+  version: (kind: "algorithms" | "library", name: string, version: string) => read<{ version: string; code: string }>(`/${kind}/${id(name)}/history/${id(version)}`),
 };
 
 /** A helper module's name: importable, so letters, digits and _ only. */

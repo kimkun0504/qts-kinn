@@ -35,6 +35,7 @@ export interface Draft {
   mode?: "signal" | "rank";
   rank_order?: "highest" | "lowest";
   exclude_blank_checks?: boolean;
+  tickers?: string;
   numbers: Record<string, string>;
   sweep_field?: string;
   sweep_values?: string;
@@ -65,6 +66,16 @@ export function toSweep(draft: Draft): { sweep: SweepRequest | null; error: stri
 }
 
 export const EMPTY_DRAFT: Draft = { numbers: {} };
+
+export function readTickers(text: string): { tickers: string[]; bad: string[] } {
+  const words = text
+    .toUpperCase()
+    .split(/[\s,;]+/)
+    .filter(Boolean);
+  if (words.length === 1 && /^(ALL|EVERY)$/.test(words[0])) return { tickers: [], bad: [] };
+  const valid = (w: string) => /^[A-Z][A-Z0-9.-]{0,9}$/.test(w);
+  return { tickers: [...new Set(words.filter(valid))].sort(), bad: words.filter((w) => !valid(w)) };
+}
 
 type Section = "universe" | "entry" | "exit" | "book";
 
@@ -114,6 +125,11 @@ export function toPatch(draft: Draft): { patch: SettingsPatch; errors: string[] 
   if (draft.mode) put("entry", "mode", draft.mode);
   if (draft.rank_order) put("entry", "rank_order", draft.rank_order);
   if (draft.exclude_blank_checks !== undefined) put("universe", "exclude_blank_checks", draft.exclude_blank_checks);
+  if (draft.tickers !== undefined && draft.tickers.trim()) {
+    const { tickers, bad } = readTickers(draft.tickers);
+    if (bad.length) errors.push(`Only these stocks: not a ticker: ${bad.slice(0, 5).join(", ")}.`);
+    else put("universe", "tickers", tickers);
+  }
   for (const spec of NUMBERS) {
     const text = (draft.numbers[spec.path] ?? "").trim().replace(/,/g, "");
     if (!text) continue;
@@ -152,6 +168,8 @@ export function fromSettings(settings: LabSettings, against: LabSettings): Draft
   if (settings.entry.mode !== against.entry.mode) draft.mode = settings.entry.mode;
   if (settings.entry.rank_order !== against.entry.rank_order) draft.rank_order = settings.entry.rank_order;
   if (settings.universe.exclude_blank_checks !== against.universe.exclude_blank_checks) draft.exclude_blank_checks = settings.universe.exclude_blank_checks;
+  const named = (settings.universe.tickers ?? []).join(", ");
+  if (named !== (against.universe.tickers ?? []).join(", ")) draft.tickers = named || "all";
   for (const spec of NUMBERS) {
     const value = get(settings, spec.path);
     if (value === get(against, spec.path)) continue;
@@ -161,5 +179,7 @@ export function fromSettings(settings: LabSettings, against: LabSettings): Draft
 }
 
 export function changed(draft: Draft): boolean {
-  return Boolean(draft.period || draft.mode || draft.rank_order || draft.exclude_blank_checks !== undefined || draft.sweep_field || Object.values(draft.numbers).some((v) => v.trim()));
+  return Boolean(
+    draft.period || draft.mode || draft.rank_order || draft.exclude_blank_checks !== undefined || draft.tickers?.trim() || draft.sweep_field || Object.values(draft.numbers).some((v) => v.trim()),
+  );
 }

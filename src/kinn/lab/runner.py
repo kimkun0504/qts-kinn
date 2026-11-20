@@ -206,6 +206,7 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
         schema=SUMMARY_SCHEMA, period_label=_period_label(settings), settings=settings.to_dict(),
         signals=int(np.count_nonzero(np.isfinite(window) if window.dtype != bool else window)),
         universe_stocks=int(len(data.columns)),
+        tickers_not_found=getattr(data, "not_found", []),
         sessions=int(data.last_signal_row - data.first_row + 2),
         trial_number=trial, trials=trials,
         sweep={"field": sweep["field"], "values": len(variants)} if variants else None,

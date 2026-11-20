@@ -95,6 +95,14 @@ order of their company id. A stock is `eligible` on a morning when the universe'
 on the previous close and it traded within the last 10 calendar days (one back from a longer
 halt waits a session).
 
+**Named stocks.** `"universe": {"tickers": ["AAPL", "MSFT"]}` (or *Only these stocks* in the
+settings panel, which can fill it from the watchlist) keeps only the companies whose ticker is
+one of those, up to 1,000. The other filters still apply, so a named stock below the minimum
+price is not eligible on those days. Each name is matched against a company's latest ticker,
+the one the Stocks pages show, so a company that traded under another symbol in the period is
+found by its latest one. Comparisons against "the universe" then compare against the named
+stocks.
+
 ## The rules every algorithm is held to
 
 - **Entry:** the open of the session after the signal, if the stock is in the universe that

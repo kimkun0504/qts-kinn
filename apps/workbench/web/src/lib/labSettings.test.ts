@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cleanName, type LabSettings } from "./lab";
-import { base, fromSettings, NUMBERS, shown, toPatch } from "./labSettings";
+import { base, changed, fromSettings, NUMBERS, readTickers, shown, toPatch } from "./labSettings";
 
 const DEFAULTS: LabSettings = {
   period: "search",
@@ -51,7 +51,6 @@ describe("names", () => {
   });
 });
 
-
 describe("toSweep", () => {
   it("reads values in the form's units", async () => {
     const { toSweep } = await import("./labSettings");
@@ -66,5 +65,28 @@ describe("toSweep", () => {
     expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 5" }).error).toMatch(/differ/);
     expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 2.5" }).error).toMatch(/whole/);
     expect(toSweep({ numbers: {}, sweep_field: "exit.hold_days", sweep_values: "5, 999" }).error).toMatch(/from 1 to 250/);
+  });
+});
+
+describe("named stocks", () => {
+  it("reads tickers however they are typed", () => {
+    expect(readTickers("aapl, msft;nvda  brk.b aapl")).toEqual({ tickers: ["AAPL", "BRK.B", "MSFT", "NVDA"], bad: [] });
+    expect(readTickers("all")).toEqual({ tickers: [], bad: [] });
+    expect(readTickers("AAPL 1X $T").bad).toEqual(["1X", "$T"]);
+  });
+
+  it("sends the list, clears it with all, and refuses a bad ticker", () => {
+    expect(toPatch({ numbers: {}, tickers: "nvda aapl" }).patch).toEqual({ universe: { tickers: ["AAPL", "NVDA"] } });
+    expect(toPatch({ numbers: {}, tickers: "all" }).patch).toEqual({ universe: { tickers: [] } });
+    expect(toPatch({ numbers: {}, tickers: "AAPL, 9Z" }).errors).toEqual(["Only these stocks: not a ticker: 9Z."]);
+    expect(changed({ numbers: {}, tickers: "AAPL" })).toBe(true);
+    expect(changed({ numbers: {}, tickers: "  " })).toBe(false);
+  });
+
+  it("brings a past run's stocks back", () => {
+    const run = { ...DEFAULTS, universe: { ...DEFAULTS.universe, tickers: ["AAPL", "MSFT"] } };
+    expect(fromSettings(run, DEFAULTS).tickers).toBe("AAPL, MSFT");
+    expect(fromSettings(DEFAULTS, run).tickers).toBe("all");
+    expect(fromSettings(run, run).tickers).toBeUndefined();
   });
 });

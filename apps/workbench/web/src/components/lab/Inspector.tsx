@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import type { Field, LabSettings, Meta, Version } from "../../lib/lab";
 import { changed, type Draft, NUMBERS, type NumberSpec, shown, SWEEPABLE, toSweep } from "../../lib/labSettings";
+import { watchlist } from "../../lib/watchlist";
 import { History } from "./History";
 
 interface InspectorProps {
@@ -19,8 +20,8 @@ interface InspectorProps {
 const control = "h-8 w-full rounded-md border border-line bg-surface text-sm text-ink focus-visible:outline-2 focus-visible:outline-accent";
 // Money reads as $50 M: a "$" before the number, the scale after it.
 const UNITS: Record<string, { before?: string; after?: string }> = {
-  "$M": { before: "$", after: "M" },
-  "$K": { before: "$", after: "K" },
+  $M: { before: "$", after: "M" },
+  $K: { before: "$", after: "K" },
   $: { before: "$" },
   "%": { after: "%" },
   sessions: { after: "days" },
@@ -101,6 +102,7 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
   const mode = draft.mode ?? base.entry.mode;
   const order = draft.rank_order ?? base.entry.rank_order;
   const exclude = draft.exclude_blank_checks ?? base.universe.exclude_blank_checks;
+  const watched = watchlist().map((w) => w.ticker);
   const spec = (path: string) => NUMBERS.find((s) => s.path === path) as NumberSpec;
   const number = (path: string) => <NumberRow key={path} spec={spec(path)} base={base} draft={draft} onChange={onChange} />;
   const date = (key: "start" | "end", label: string) => (
@@ -160,6 +162,29 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
             }}
           />
         </Row>
+        <div className="flex flex-col gap-1.5 py-1.5">
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="lab-tickers" className="text-[13px] text-ink-2">
+              Only these stocks
+            </label>
+            {watched.length > 0 && (
+              <button
+                type="button"
+                onClick={() => onChange({ ...draft, tickers: watched.join(", ") })}
+                className="cursor-pointer text-[12px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                Use the watchlist ({watched.length})
+              </button>
+            )}
+          </div>
+          <input
+            id="lab-tickers"
+            value={draft.tickers ?? ""}
+            placeholder={base.universe.tickers?.length ? base.universe.tickers.join(", ") : "Every stock in the universe"}
+            onChange={(event) => onChange({ ...draft, tickers: event.target.value.trim() ? event.target.value : undefined })}
+            className={`${control} px-2 placeholder:text-ink-3`}
+          />
+        </div>
       </Group>
       <Group title="Entry">
         <Row label="Buy">
@@ -212,12 +237,7 @@ function Sweep({ meta, mode, draft, onChange }: { meta: Meta; mode: string; draf
   return (
     <Group title="Sweep">
       <Row label="Try several" htmlFor="lab-sweep-field">
-        <select
-          id="lab-sweep-field"
-          value={draft.sweep_field ?? ""}
-          onChange={(event) => onChange({ ...draft, sweep_field: event.target.value || undefined })}
-          className={`${control} px-2`}
-        >
+        <select id="lab-sweep-field" value={draft.sweep_field ?? ""} onChange={(event) => onChange({ ...draft, sweep_field: event.target.value || undefined })} className={`${control} px-2`}>
           <option value="">No sweep</option>
           {allowed.map((path) => (
             <option key={path} value={path}>
@@ -325,10 +345,18 @@ function Fields({ meta }: { meta: Meta }) {
                 <div className="flex flex-col gap-2 px-4 pb-3">
                   <code className="block overflow-x-auto rounded-md bg-raised px-2.5 py-2 font-mono text-[12px] whitespace-pre text-ink">{sample}</code>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => copy(`data.${f.name}`)} className="h-7 cursor-pointer rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-ink hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
+                    <button
+                      type="button"
+                      onClick={() => copy(`data.${f.name}`)}
+                      className="h-7 cursor-pointer rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-ink hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent"
+                    >
                       Copy data.{f.name}
                     </button>
-                    <button type="button" onClick={() => copy(sample)} className="h-7 cursor-pointer rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-ink hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
+                    <button
+                      type="button"
+                      onClick={() => copy(sample)}
+                      className="h-7 cursor-pointer rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-ink hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent"
+                    >
                       Copy the example
                     </button>
                   </div>
@@ -369,7 +397,11 @@ export function Inspector({ meta, base, draft, onChange, name, historyKey, onRes
         ))}
         <div className="flex-1" />
         {tab === "settings" && changed(draft) && (
-          <button type="button" onClick={() => onChange({ numbers: {} })} className="cursor-pointer pb-2.5 text-[13px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+          <button
+            type="button"
+            onClick={() => onChange({ numbers: {} })}
+            className="cursor-pointer pb-2.5 text-[13px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+          >
             Reset
           </button>
         )}

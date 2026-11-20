@@ -174,6 +174,21 @@ def test_a_universe_with_no_stocks_fails_plainly(root, fake):
     assert store.status(run_dir)["error"].startswith("No stock is in this universe")
 
 
+def test_a_universe_of_named_tickers_trades_only_them(root, fake):
+    run_dir = go(root, fake, settings={**PERIOD, "universe": {"tickers": "upp, dwn, zzzz"}})
+    state = store.status(run_dir)
+    assert state["state"] == "complete", state.get("error")
+    summary = store.result(run_dir, "summary")
+    assert summary["settings"]["universe"]["tickers"] == ["DWN", "UPP", "ZZZZ"]
+    assert summary["tickers_not_found"] == ["ZZZZ"]
+    traded = set(pd.read_parquet(run_dir / "trades.parquet")["ticker"])
+    assert traded and traded <= {"UPP", "DWN"}
+    missing = go(root, fake, settings={**PERIOD, "universe": {"tickers": ["ZZZZ"]}})
+    assert store.status(missing)["error"].startswith("None of these tickers is in the universe")
+    bad = go(root, fake, settings={**PERIOD, "universe": {"tickers": ["no way"]}})
+    assert "universe.tickers" in store.status(bad)["error"]
+
+
 def test_a_peek_is_flagged_but_the_run_completes(root, fake):
     # Entry is the next open (the fake's open is its close); exit the 20th close after.
     code = (

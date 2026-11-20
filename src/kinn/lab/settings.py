@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import date
 
@@ -32,6 +33,7 @@ class Universe:
     min_price: float = 2.0
     min_dollar_volume: float = 250_000.0
     exclude_blank_checks: bool = False
+    tickers: tuple[str, ...] = ()
 
 
 @dataclass
@@ -120,6 +122,26 @@ def _day(value, name: str) -> date:
         raise SettingsError(f"{name} must be a date like 2015-06-30") from None
 
 
+TICKER = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
+MAX_TICKERS = 1_000
+
+
+def _tickers(raw: object) -> tuple[str, ...]:
+    if raw is None or raw == "":
+        return ()
+    if isinstance(raw, str):
+        raw = re.split(r"[\s,;]+", raw)
+    if not isinstance(raw, list | tuple) or not all(isinstance(t, str) for t in raw):
+        raise SettingsError("universe.tickers must be a list of tickers")
+    found = sorted({t.strip().upper() for t in raw if t.strip()})
+    bad = [t for t in found if not TICKER.match(t)]
+    if bad:
+        raise SettingsError(f"universe.tickers: not a ticker: {', '.join(bad[:5])}")
+    if len(found) > MAX_TICKERS:
+        raise SettingsError(f"universe.tickers: at most {MAX_TICKERS:,} tickers")
+    return tuple(found)
+
+
 def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
     """Settings from the page (``raw``) over the algorithm's ``SETTINGS`` (``defaults``) over
     the Lab's defaults. Raises :class:`SettingsError` with the field's name."""
@@ -156,6 +178,7 @@ def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
         min_price=_number(u, "universe", "min_price", low=0),
         min_dollar_volume=_number(u, "universe", "min_dollar_volume", low=0),
         exclude_blank_checks=u.get("exclude_blank_checks", False),
+        tickers=_tickers(u.get("tickers")),
     )
     if not isinstance(universe.exclude_blank_checks, bool):
         raise SettingsError("universe.exclude_blank_checks must be true or false")

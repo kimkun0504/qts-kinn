@@ -155,6 +155,7 @@ class LabData:
         self._arrays: dict[str, np.ndarray] = {}
         self._frames: dict[str, pd.DataFrame | pd.Series] = {}  # one shared object per field
         self._rows: int | None = None  # set on a cut-off view
+        self.not_found: list[str] = []
         first, last_entry = settings.window()
         span = int(settings.exit.hold_days * 1.6) + 20
         self.load_start = max(first - timedelta(days=WARM_UP_DAYS), FIRST_DAY)
@@ -192,8 +193,18 @@ class LabData:
         if self._settings.universe.exclude_blank_checks:
             members = [p for p in members
                        if (info.get(p, {}).get("siccode") or "") != BLANK_CHECK_SIC]  # fmt: skip
+        named = set(self._settings.universe.tickers)
+        if named:
+            members = [p for p in members if (info.get(p, {}).get("ticker") or "") in named]
+            found = {info[p]["ticker"] for p in members}
+            self.not_found = sorted(named - found)
         if not members:
-            raise DataError("No stock is in this universe in this period. Loosen the universe.")
+            raise DataError(
+                "None of these tickers is in the universe in this period. Check the tickers, "
+                "or loosen the universe's other filters."
+                if named
+                else "No stock is in this universe in this period. Loosen the universe."
+            )
         self.permatickers = np.array(sorted(members), dtype=np.int64)
         self._check_memory()
         tickers = [str((info.get(int(p)) or {}).get("ticker") or p) for p in self.permatickers]

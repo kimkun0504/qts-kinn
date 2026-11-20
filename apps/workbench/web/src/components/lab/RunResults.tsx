@@ -19,7 +19,6 @@ type Tab = "overview" | "stocks" | "trades" | "years" | "code";
 
 const field = "min-h-8 rounded-md border border-line bg-surface px-2.5 text-sm text-ink placeholder:text-ink-3 focus-visible:outline-2 focus-visible:outline-accent";
 
-
 const stockColumns: Column<StockRow>[] = [
   { key: "ticker", header: "Stock", align: "left", sortable: true, render: (r) => <StockLink symbol={r.ticker} on={r.last_entry} /> },
   { key: "name", header: "Company", align: "left", muted: true, max: 220, sortable: true, render: (r) => r.name ?? "–" },
@@ -64,7 +63,10 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
   const { data: equity } = useLoad(() => lab.equity(detail.run_id), `equity-${detail.run_id}`);
   if (!s.trades) return <Panel padded>The algorithm made no trades in this period with these settings.</Panel>;
   const best = (stocks ?? []).slice(0, 8);
-  const worst = (stocks ?? []).slice(-8).reverse().filter((row) => !best.includes(row));
+  const worst = (stocks ?? [])
+    .slice(-8)
+    .reverse()
+    .filter((row) => !best.includes(row));
   const small: Column<StockRow>[] = [stockColumns[0], stockColumns[3], stockColumns[4], stockColumns[5], stockColumns[7]];
   const exits = Object.entries(s.exits ?? {}).sort((a, b) => b[1] - a[1]);
   return (
@@ -123,6 +125,7 @@ function Facts({ detail }: { detail: RunDetail }) {
     ["Period", s.period_label ?? "–"],
     ["First entry to last exit", `${day(s.first_entry)} to ${day(s.last_exit)}`],
     ["Stocks in the universe", int(s.universe_stocks)],
+    ...(s.tickers_not_found?.length ? [["Named but not in it", s.tickers_not_found.join(", ")] as [string, string]] : []),
     [s.settings?.entry.mode === "rank" ? "Scores given" : "Signals", int(s.signals)],
     ["Trial", s.trial_number ? `#${s.trial_number} for this algorithm` : "–"],
     ["Costs", `${s.cost_model ?? "–"}; 2× doubles the slippage`],
@@ -163,19 +166,14 @@ function Stocks({ stocks, onStock }: { stocks: StockRow[]; onStock: (ticker: str
   const sectors = useMemo(() => [...new Set(stocks.map((s) => s.sector).filter(Boolean))].sort() as string[], [stocks]);
   const rows = useMemo(() => {
     const words = search.trim().toLowerCase();
-    const found = stocks.filter(
-      (s) => (!sector || s.sector === sector) && (!words || s.ticker.toLowerCase().includes(words) || (s.name ?? "").toLowerCase().includes(words)),
-    );
+    const found = stocks.filter((s) => (!sector || s.sector === sector) && (!words || s.ticker.toLowerCase().includes(words) || (s.name ?? "").toLowerCase().includes(words)));
     const sign = sort.dir === "asc" ? 1 : -1;
     return [...found].sort((a, b) => sign * compare(a[sort.key as keyof StockRow], b[sort.key as keyof StockRow]));
   }, [stocks, search, sector, sort]);
   const winners = stocks.filter((s) => s.profit > 0).length;
   const onSort = (key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "desc" ? "asc" : "desc" }));
   return (
-    <Panel
-      title="Every stock it traded"
-      aside={`${int(winners)} made money, ${int(stocks.length - winners)} lost; profit is every trade at the position size`}
-    >
+    <Panel title="Every stock it traded" aside={`${int(winners)} made money, ${int(stocks.length - winners)} lost; profit is every trade at the position size`}>
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
         <input type="search" aria-label="Find a stock" placeholder="Find a stock or company" value={search} onChange={(e) => setSearch(e.target.value)} className={`${field} w-64`} />
         <select aria-label="Sector" value={sector} onChange={(e) => setSector(e.target.value)} className={field}>
@@ -195,7 +193,16 @@ function Stocks({ stocks, onStock }: { stocks: StockRow[]; onStock: (ticker: str
         />
         <span className="text-[13px] text-ink-3">{int(rows.length)} shown</span>
       </div>
-      <DataTable columns={stockColumns} rows={rows.slice(0, shown)} rowKey={(r) => r.ticker} onRowClick={(r) => onStock(r.ticker)} sort={sort} onSort={onSort} minWidth={1100} empty="No stock matches." />
+      <DataTable
+        columns={stockColumns}
+        rows={rows.slice(0, shown)}
+        rowKey={(r) => r.ticker}
+        onRowClick={(r) => onStock(r.ticker)}
+        sort={sort}
+        onSort={onSort}
+        minWidth={1100}
+        empty="No stock matches."
+      />
       {rows.length > shown && (
         <div className="flex justify-center p-3">
           <Button onClick={() => setShown((n) => n + PAGE)}>Show {int(Math.min(PAGE, rows.length - shown))} more</Button>
@@ -230,7 +237,14 @@ function Trades({ runId, ticker, onTicker }: { runId: string; ticker: string; on
   };
   const total = page?.total ?? 0;
   return (
-    <Panel title={ticker ? `Trades in ${ticker}` : "Every trade"} aside={<a href={lab.csvUrl(runId)} className="font-medium text-accent hover:underline" download>Download all as CSV</a>}>
+    <Panel
+      title={ticker ? `Trades in ${ticker}` : "Every trade"}
+      aside={
+        <a href={lab.csvUrl(runId)} className="font-medium text-accent hover:underline" download>
+          Download all as CSV
+        </a>
+      }
+    >
       <form
         className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3"
         onSubmit={(event) => {
@@ -270,7 +284,15 @@ function Trades({ runId, ticker, onTicker }: { runId: string; ticker: string; on
           {error}
         </p>
       ) : (
-        <DataTable columns={tradeColumns} rows={page?.rows ?? []} rowKey={(r) => `${r.ticker}-${r.entry_date}`} sort={sort} onSort={onSort} minWidth={1250} empty={page ? "No trades match." : "Loading…"} />
+        <DataTable
+          columns={tradeColumns}
+          rows={page?.rows ?? []}
+          rowKey={(r) => `${r.ticker}-${r.entry_date}`}
+          sort={sort}
+          onSort={onSort}
+          minWidth={1250}
+          empty={page ? "No trades match." : "Loading…"}
+        />
       )}
       {total > limit && (
         <div className="flex items-center justify-end gap-3 px-4 py-3 text-[13px] text-ink-2">
@@ -377,7 +399,10 @@ function runLabel(run: RunRow): string {
 
 /** The line of an error that says what went wrong (a traceback ends with it). */
 function lastLine(text: string): string {
-  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   return lines[lines.length - 1] ?? text;
 }
 
@@ -473,7 +498,12 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
         </div>
         <div className="flex-1" />
         {runs.length > 1 && (
-          <select aria-label="Run shown" value={selected ?? ""} onChange={(e) => onSelect(e.target.value)} className="mb-2 h-8 max-w-[340px] rounded-md border border-line bg-surface px-2 text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent">
+          <select
+            aria-label="Run shown"
+            value={selected ?? ""}
+            onChange={(e) => onSelect(e.target.value)}
+            className="mb-2 h-8 max-w-[340px] rounded-md border border-line bg-surface px-2 text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent"
+          >
             {runs.map((r) => (
               <option key={r.run_id} value={r.run_id}>
                 {runLabel(r)}
@@ -524,7 +554,11 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
       ) : active === "overview" ? (
         <Overview detail={complete} stocks={stocks} onStock={openStock} onAllStocks={() => setTab("stocks")} />
       ) : active === "stocks" ? (
-        stocks ? <Stocks stocks={stocks} onStock={openStock} /> : <p className="text-ink-2">Loading…</p>
+        stocks ? (
+          <Stocks stocks={stocks} onStock={openStock} />
+        ) : (
+          <p className="text-ink-2">Loading…</p>
+        )
       ) : active === "trades" ? (
         <Trades runId={complete.run_id} ticker={ticker} onTicker={setTicker} />
       ) : (
