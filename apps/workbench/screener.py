@@ -5,7 +5,9 @@ sealed DataStore's panel and fundamentals only from filings made before the sess
 from __future__ import annotations
 
 import math
+import threading
 from collections import OrderedDict
+from collections.abc import Callable
 from datetime import date, timedelta
 from typing import Protocol
 
@@ -24,7 +26,33 @@ COLUMNS = (
     "pe", "ps", "pb", "fcf_yield", "revenue", "revenue_growth", "net_income", "filed",
 )  # fmt: skip
 CACHE = 6
-_screens: OrderedDict[tuple[str, date], dict] = OrderedDict()
+
+
+class Recent:
+    def __init__(self, size: int):
+        self._items: OrderedDict[tuple[str, date], dict] = OrderedDict()
+        self._size = size
+        self._lock = threading.Lock()
+
+    def get(self, key: tuple[str, date], make: Callable[[], dict]) -> dict:
+        with self._lock:
+            if key in self._items:
+                self._items.move_to_end(key)
+                return self._items[key]
+        value = make()
+        with self._lock:
+            self._items[key] = value
+            self._items.move_to_end(key)
+            while len(self._items) > self._size:
+                self._items.popitem(last=False)
+        return value
+
+    def clear(self) -> None:
+        with self._lock:
+            self._items.clear()
+
+
+_screens = Recent(CACHE)
 
 
 class Store(Protocol):
@@ -169,21 +197,17 @@ def _rows(store: Store, day: date, window: list[date]) -> list[list]:
 
 def screen(store: Store, on: date | None = None) -> dict:
     day, window = session_on(store, on or LAST)
-    key = (store.build_id, day)
-    if key not in _screens:
-        _screens[key] = {
+    return _screens.get(
+        (store.build_id, day),
+        lambda: {
             "schema": "screen-1",
             "on": day.isoformat(),
             "first": first_session(store).isoformat(),
             "last": LAST.isoformat(),
             "columns": list(COLUMNS),
             "rows": _rows(store, day, window),
-        }
-        while len(_screens) > CACHE:
-            _screens.popitem(last=False)
-    else:
-        _screens.move_to_end(key)
-    return _screens[key]
+        },
+    )
 
 
 FORWARD = {"next_1m": 21, "next_3m": 63, "next_6m": 126, "next_1y": YEAR}
@@ -200,7 +224,7 @@ with r as (
 select permaticker, {FORWARD_SQL}, max(k) as last_k
 from r group by permaticker having min(k) = 0
 """
-_ahead: OrderedDict[tuple[str, date], dict] = OrderedDict()
+_ahead = Recent(CACHE)
 
 
 def _spy(store: Store, days: list[date]) -> dict:
@@ -219,10 +243,10 @@ def _spy(store: Store, days: list[date]) -> dict:
 
 def ahead(store: Store, on: date) -> dict:
     day, _ = session_on(store, on)
-    key = (store.build_id, day)
-    if key in _ahead:
-        _ahead.move_to_end(key)
-        return _ahead[key]
+    return _ahead.get((store.build_id, day), lambda: _what_came_next(store, day))
+
+
+def _what_came_next(store: Store, day: date) -> dict:
     days = store.sessions(day, min(LAST, day + timedelta(days=400)))[: YEAR + 1]
     bars = store.panel(day, days[-1], columns="date, permaticker, close, prev_close")
     cal = pa.table({"date": pa.array(days, pa.date32()), "k": list(range(len(days)))})
@@ -234,7 +258,7 @@ def ahead(store: Store, on: date) -> dict:
     finally:
         con.close()
     known = {name: n < len(days) for name, n in FORWARD.items()}
-    _ahead[key] = {
+    return {
         "schema": "screen-ahead-1",
         "on": day.isoformat(),
         "through": days[-1].isoformat(),
@@ -248,6 +272,3 @@ def ahead(store: Store, on: date) -> dict:
             for r in rows
         ],
     }  # fmt: skip
-    while len(_ahead) > CACHE:
-        _ahead.popitem(last=False)
-    return _ahead[key]

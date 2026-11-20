@@ -150,3 +150,29 @@ def test_what_came_next_for_each_stock_and_spy(store):
     assert set(page["spy"]) == {"next_1m", "next_3m", "next_6m"}
     assert max(store.asked) <= screener.LAST
     assert screener.ahead(store, first) is page
+
+
+def test_the_cache_is_shared_safely_between_requests_and_keeps_the_latest(store):
+    import threading
+
+    made = []
+    recent = screener.Recent(2)
+    gate = threading.Barrier(4)
+
+    def make():
+        made.append(1)
+        return {"n": len(made)}
+
+    def ask():
+        gate.wait()
+        recent.get(("b", date(2015, 1, 2)), make)
+
+    threads = [threading.Thread(target=ask) for _ in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert recent.get(("b", date(2015, 1, 2)), make) == {"n": len(made)}
+    for d in (date(2015, 1, 5), date(2015, 1, 6)):
+        recent.get(("b", d), make)
+    assert ("b", date(2015, 1, 2)) not in recent._items
