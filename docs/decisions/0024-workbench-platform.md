@@ -93,7 +93,8 @@ applies the holdout date guard and is tested against the synthetic build.
     each session it is open (1% a year by default, the figure decision 0016 assumes for the
     daily engine) and the costs of a sale to open and a purchase to close. Hard-to-borrow fees,
     locates, recalls and the short-sale price test are not modelled; the guide says so and the
-    fee can be swept.
+    fee can be swept. In ranking mode `side: both` buys one end and shorts the other, with the
+    position cap on each side and SPY matched at the net exposure.
 13. **Compare measures runs together** (`api.compare`): each picked backtest's daily net profit
     on one calendar (zero outside its period), their sum, and over the sessions all of them
     cover the correlation of weekly profit and each one's and the sum's net profit, Sharpe and

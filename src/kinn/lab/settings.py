@@ -41,7 +41,7 @@ class Entry:
     mode: str = "signal"  # "signal": every True; "rank": the top N scores each day
     top_n: int = 10
     rank_order: str = "highest"  # "highest" or "lowest" scores first
-    side: str = "long"  # "long" buys; "short" sells short and buys back
+    side: str = "long"
 
 
 @dataclass
@@ -54,8 +54,8 @@ class Exit:
 @dataclass
 class Book:
     position_size: float = 2_000.0
-    max_positions: int = 20  # 0: no limit
-    borrow_rate: float = 0.01  # a year, on a short's value, for each session it is open
+    max_positions: int = 20  # 0: no limit; with both sides, on each side
+    borrow_rate: float = 0.01
 
 
 @dataclass
@@ -190,8 +190,10 @@ def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
         raise SettingsError("entry.mode must be 'signal' or 'rank'")
     if e.get("rank_order", "highest") not in ("highest", "lowest"):
         raise SettingsError("entry.rank_order must be 'highest' or 'lowest'")
-    if e.get("side", "long") not in ("long", "short"):
-        raise SettingsError("entry.side must be 'long' or 'short'")
+    if e.get("side", "long") not in ("long", "short", "both"):
+        raise SettingsError("entry.side must be 'long', 'short' or 'both'")
+    if e.get("side") == "both" and e.get("mode") != "rank":
+        raise SettingsError("entry.side 'both' needs entry.mode 'rank': it shorts the other end")
     entry = Entry(
         mode=e["mode"],
         top_n=_number(e, "entry", "top_n", low=1, high=500, integer=True),

@@ -12,15 +12,16 @@ from kinn.lab.engine import Market, Trade
 def select(trades: list[Trade], cap: int) -> np.ndarray:
     """Which trades the book takes. Trades come ordered by entry day, then priority (the score
     in ranking mode, the signal day's dollar volume otherwise). A position occupies its slot
-    from its entry session through its exit session."""
+    from its entry session through its exit session. Longs and shorts have a cap each."""
     taken = np.zeros(len(trades), dtype=bool)
-    open_until: list[int] = []
+    open_until: dict[bool, list[int]] = {False: [], True: []}
     for i, trade in enumerate(trades):
-        while open_until and open_until[0] < trade.entry_row:
-            heapq.heappop(open_until)
-        if cap and len(open_until) >= cap:
+        side = open_until[trade.short]
+        while side and side[0] < trade.entry_row:
+            heapq.heappop(side)
+        if cap and len(side) >= cap:
             continue
-        heapq.heappush(open_until, trade.exit_row)
+        heapq.heappush(side, trade.exit_row)
         taken[i] = True
     return taken
 
@@ -30,11 +31,14 @@ def daily(trades: list[Trade], taken: np.ndarray, market: Market) -> dict[str, n
     rows = len(market.close)
     pnl = np.zeros(rows)
     positions = np.zeros(rows, dtype=np.int32)
+    shorts = np.zeros(rows, dtype=np.int32)
     for trade, keep in zip(trades, taken, strict=True):
         if not keep:
             continue
         e, x, n = trade.entry_row, trade.exit_row, trade.stock
         positions[e : x + 1] += 1
+        if trade.short:
+            shorts[e : x + 1] += 1
         entry = float(market.adjusted(market.open, e, n))
         final = trade.value * (1 + trade.gross)
         if x == e:
@@ -54,4 +58,4 @@ def daily(trades: list[Trade], taken: np.ndarray, market: Market) -> dict[str, n
         if len(value) > 1:
             pnl[e + 1 : x] += np.diff(value)
         pnl[x] += final - value[-1] - trade.cost_exit
-    return {"pnl": pnl, "positions": positions}
+    return {"pnl": pnl, "positions": positions, "shorts": shorts}

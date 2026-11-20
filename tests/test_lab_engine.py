@@ -10,7 +10,7 @@ import pytest
 from kinn.costs.model import load as load_costs
 from kinn.lab import book
 from kinn.lab.engine import REASONS, Costs, Market, simulate
-from kinn.lab.settings import parse
+from kinn.lab.settings import SettingsError, parse
 
 ROWS = 40
 
@@ -304,6 +304,42 @@ def test_the_book_marks_a_short_and_adds_up_to_its_trades():
     assert daily["pnl"].sum() == pytest.approx(expected, rel=1e-6)
     first = trades[0]
     assert first.stock == 0 and daily["pnl"][first.entry_row + 1] > 0
+
+
+def test_both_sides_buy_one_end_and_short_the_other_with_a_cap_each():
+    scores = np.full((ROWS, 6), np.nan)
+    scores[5] = [6.0, 5.0, 4.0, 3.0, 2.0, 1.0]
+    m = market(flat(stocks=6))
+    trades = run(m, scores, mode="rank", top_n=2, hold_days=3, side="both")
+    assert [(t.stock, t.short) for t in trades] == [(0, False), (1, False), (5, True), (4, True)]
+    assert trades[2].priority > trades[3].priority
+    lowest = run(m, scores, mode="rank", top_n=1, hold_days=3, side="both", rank_order="lowest")
+    assert [(t.stock, t.short) for t in lowest] == [(5, False), (0, True)]
+    few = np.full((ROWS, 3), np.nan)
+    few[5] = [3.0, 2.0, 1.0]
+    trades = run(market(flat(stocks=3)), few, mode="rank", top_n=2, hold_days=3, side="both")
+    assert [(t.stock, t.short) for t in trades] == [(0, False), (1, False), (2, True)]
+    assert book.select(trades, cap=1).tolist() == [True, False, True]
+
+
+def test_both_sides_need_ranking():
+    with pytest.raises(SettingsError, match="needs entry.mode 'rank'"):
+        parse({"entry": {"side": "both"}})
+
+
+def test_the_signal_path_is_as_held():
+    from kinn.lab import metrics
+
+    close = np.linspace(20, 10, ROWS).astype(np.float32)
+    m = market(close)
+    (short,) = run(m, signal_at(5), hold_days=5, side="short")
+    (long,) = run(m, signal_at(5), hold_days=5)
+    as_short = metrics.signal_path([short], m.adj_close, m.universe_cum, 5)
+    as_long = metrics.signal_path([long], m.adj_close, m.universe_cum, 5)
+    at = as_short["horizons"].index(5)
+    assert as_short["stock"][at] > 0 and as_short["stock"][at] == pytest.approx(
+        -as_long["stock"][at]
+    )
 
 
 def test_the_factor_report_sorts_returns_by_score():

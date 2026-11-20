@@ -32,7 +32,7 @@ from kinn.lab.settings import (
 Response = tuple[int, object]
 _START = threading.Lock()  # one run starts at a time, even with two clicks
 SORTABLE = ("entry_date", "exit_date", "signal_date", "ticker", "net", "gross", "net_2x",
-            "profit", "over", "sessions", "value", "reason")  # fmt: skip
+            "profit", "over", "sessions", "value", "reason", "side")  # fmt: skip
 MAX_PAGE = 500
 
 

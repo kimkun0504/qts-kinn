@@ -36,7 +36,7 @@ def test_a_custom_period_ends_by_the_last_entry_day():
         ({"book": {"position_size": True}}, "book.position_size must be a number"),
         ({"entry": {"mode": "both"}}, "entry.mode must be"),
         ({"entry": {"rank_order": "middle"}}, "entry.rank_order must be"),
-        ({"entry": {"side": "both"}}, "entry.side must be 'long' or 'short'"),
+        ({"entry": {"side": "all"}}, "entry.side must be 'long', 'short' or 'both'"),
         ({"book": {"borrow_rate": 2}}, "book.borrow_rate must be between 0 and 1"),
         ({"universe": {"tickers": ["no way"]}}, "universe.tickers: not a ticker"),
         ({"universe": {"max_market_cap": 10e6}}, "max_market_cap must be above"),

@@ -21,7 +21,8 @@ export function filled(values: (number | null | undefined)[]): number[] {
 export function BookPanel({ summary, equity }: { summary: Summary; equity: Equity | null }) {
   const [view, setView] = useState<BookView>("profit");
   const size = summary.settings?.book.position_size;
-  const short = summary.settings?.entry.side === "short";
+  const side = summary.settings?.entry.side ?? "long";
+  const short = side === "short";
   const aside = (
     <Segmented
       label="Book view"
@@ -56,7 +57,7 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
             ...(matched
               ? [
                   {
-                    name: short ? "SPY sold short with the money the book had at stake" : "SPY on the money the book had invested",
+                    name: side === "both" ? "SPY at the book's net exposure" : short ? "SPY sold short with the money the book had at stake" : "SPY on the money the book had invested",
                     short: short ? "SPY short" : "SPY matched",
                     values: filled(matched),
                     color: "var(--series-4)",
@@ -78,14 +79,28 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
         />
       )}
       {view === "positions" && (
-        <LineChart title="Open positions" labels={equity.dates} series={[{ name: "Open positions", short: "Positions", values: equity.positions, color: "var(--series-1)" }]} format={(v) => int(v)} />
+        <LineChart
+          title="Open positions"
+          labels={equity.dates}
+          series={
+            side === "both" && equity.shorts
+              ? [
+                  { name: "Long", short: "Long", values: equity.positions.map((p, i) => p - (equity.shorts?.[i] ?? 0)), color: "var(--series-1)" },
+                  { name: "Short", short: "Short", values: equity.shorts, color: "var(--series-2)", dash: "5 4" },
+                ]
+              : [{ name: "Open positions", short: "Positions", values: equity.positions, color: "var(--series-1)" }]
+          }
+          format={(v) => int(v)}
+        />
       )}
       <PanelNote>
         {view === "profit" &&
           (matched
-            ? short
-              ? `The book was short ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line sells that much SPY short on the same days, so it is the fair comparison; the dashed line holds SPY with all the capital.`
-              : `SPY on the same capital is fully invested every day; the book held ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line puts that money in SPY on the same days, so it is the fair comparison.`
+            ? side === "both"
+              ? `Longs and shorts together: the dotted line holds SPY at the book's net exposure each day (long value less short value), so it shows how much of the profit the market's direction explains; the dashed line holds SPY with all the capital.`
+              : short
+                ? `The book was short ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line sells that much SPY short on the same days, so it is the fair comparison; the dashed line holds SPY with all the capital.`
+                : `SPY on the same capital is fully invested every day; the book held ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line puts that money in SPY on the same days, so it is the fair comparison.`
             : "SPY is shown fully invested on the same capital. Run again to see it at the book's own exposure.")}
         {view === "drawdown" && `Worst ${money(summary.max_drawdown)} (${pct(summary.max_drawdown_pct ?? null, 1)} of the capital), measured on each session's close.`}
         {view === "positions" && `${num(summary.average_positions ?? null, 1)} open on average, at most ${int(Math.max(0, ...equity.positions))}.`}
@@ -212,7 +227,7 @@ export function SignalPathPanel({ runId, short = false }: { runId: string; short
         height={280}
       />
       <PanelNote>
-        {short ? "These are the stocks' own moves: a short gains as the lines fall. " : ""}
+        {short ? "Moves are as held: a short's line rises when its price falls. " : ""}
         {int(data.trades)} trades{data.trades < data.of ? ` of ${int(data.of)}` : ""}, split-adjusted, measured in sessions from the close of the signal day, so the next open is not yet paid. Over the
         universe at the exit: {pct(at(data.excess, data.hold), 2)}; ten sessions later {pct(at(data.excess, data.hold + 10), 2)}. The band is 95% around the average. A line still rising at the exit
         says a longer hold had more to give; a line that peaks before it says the hold is too long.

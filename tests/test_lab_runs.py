@@ -231,6 +231,26 @@ def test_rank_mode_and_an_exit_signal(root, fake):
     assert summary["average_positions"] <= 10
 
 
+def test_both_sides_buy_one_end_and_short_the_other(root, fake):
+    code = (
+        'SETTINGS = {"entry": {"mode": "rank", "top_n": 1, "side": "both"}, '
+        '"exit": {"hold_days": 5}, "book": {"max_positions": 3}}\n'
+        "def signal(data):\n    return data.returns.rolling(20).sum()\n"
+    )
+    run_dir = go(root, fake, code=code)
+    assert store.status(run_dir)["state"] == "complete", store.status(run_dir).get("error")
+    trades = pd.read_parquet(run_dir / "trades.parquet")
+    assert set(trades["side"]) == {"long", "short"}
+    summary = store.result(run_dir, "summary")
+    assert summary["capital"] == 2 * 3 * summary["settings"]["book"]["position_size"]
+    assert "long and short trades" in summary["headline"]
+    equity = store.result(run_dir, "equity")
+    assert (
+        max(equity["shorts"]) <= 3
+        and max(p - s for p, s in zip(equity["positions"], equity["shorts"], strict=True)) <= 3
+    )
+
+
 @pytest.mark.parametrize("template", [t["name"] for t in store.templates()])
 def test_every_template_runs(root, fake, template):
     code = next(t["code"] for t in store.templates() if t["name"] == template)

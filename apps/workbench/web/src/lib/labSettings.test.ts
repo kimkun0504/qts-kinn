@@ -96,6 +96,7 @@ describe("shorts", () => {
     expect(toPatch({ side: "short", numbers: { "book.borrow_rate": "5" } }).patch).toEqual({ entry: { side: "short" }, book: { borrow_rate: 0.05 } });
     expect(toPatch({ numbers: { "book.borrow_rate": "120" } }).errors).toEqual(["Borrow fee a year: from 0 to 100."]);
     expect(changed({ side: "short", numbers: {} })).toBe(true);
+    expect(toPatch({ mode: "rank", side: "both", numbers: {} }).patch).toEqual({ entry: { mode: "rank", side: "both" } });
   });
 
   it("brings a past short back and treats an old run as long", () => {

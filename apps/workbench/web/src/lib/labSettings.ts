@@ -35,7 +35,7 @@ export interface Draft {
   end?: string;
   mode?: "signal" | "rank";
   rank_order?: "highest" | "lowest";
-  side?: "long" | "short";
+  side?: "long" | "short" | "both";
   exclude_blank_checks?: boolean;
   tickers?: string;
   numbers: Record<string, string>;

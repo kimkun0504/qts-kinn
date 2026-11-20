@@ -54,7 +54,7 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 /** Two choices filling the control width. */
 function Pair<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: [T, string][]; onChange: (value: T) => void }) {
   return (
-    <div role="group" aria-label={label} className="grid h-8 grid-cols-2 gap-0.5 rounded-md border border-line bg-surface p-0.5">
+    <div role="group" aria-label={label} className="grid h-8 gap-0.5 rounded-md border border-line bg-surface p-0.5" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map(([key, text]) => (
         <button
           key={key}
@@ -188,17 +188,6 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
         </div>
       </Group>
       <Group title="Entry">
-        <Row label="Side">
-          <Pair
-            label="Side"
-            value={side}
-            options={[
-              ["long", "Long"],
-              ["short", "Short"],
-            ]}
-            onChange={(value) => onChange({ ...draft, side: value === (base.entry.side ?? "long") ? undefined : value })}
-          />
-        </Row>
         <Row label="Enter on">
           <Pair
             label="Entry mode"
@@ -207,7 +196,17 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
               ["signal", "Signals"],
               ["rank", "Top scores"],
             ]}
-            onChange={(value) => onChange({ ...draft, mode: value === base.entry.mode ? undefined : value })}
+            onChange={(value) =>
+              onChange({ ...draft, mode: value === base.entry.mode ? undefined : value, side: value === "signal" && side === "both" ? (base.entry.side === "both" ? "long" : undefined) : draft.side })
+            }
+          />
+        </Row>
+        <Row label="Side">
+          <Pair
+            label="Side"
+            value={side}
+            options={[["long", "Long"], ["short", "Short"], ...(mode === "rank" ? [["both", "Both"] as ["both", string]] : [])]}
+            onChange={(value) => onChange({ ...draft, side: value === (base.entry.side ?? "long") ? undefined : value })}
           />
         </Row>
         {mode === "rank" && (
@@ -235,7 +234,7 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
       <Group title="Book">
         {number("book.position_size")}
         {number("book.max_positions")}
-        {side === "short" && number("book.borrow_rate")}
+        {side !== "long" && number("book.borrow_rate")}
       </Group>
       <Sweep meta={meta} mode={mode} side={side} draft={draft} onChange={onChange} />
     </>
@@ -243,7 +242,7 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
 }
 
 function Sweep({ meta, mode, side, draft, onChange }: { meta: Meta; mode: string; side: string; draft: Draft; onChange: (draft: Draft) => void }) {
-  const allowed = (meta.sweepable ?? SWEEPABLE).filter((path) => (path !== "entry.top_n" || mode === "rank") && (path !== "book.borrow_rate" || side === "short"));
+  const allowed = (meta.sweepable ?? SWEEPABLE).filter((path) => (path !== "entry.top_n" || mode === "rank") && (path !== "book.borrow_rate" || side !== "long"));
   const spec = NUMBERS.find((s) => s.path === draft.sweep_field);
   const { sweep, error } = toSweep(draft);
   const unit = spec?.unit === "sessions" ? "days" : spec?.unit;

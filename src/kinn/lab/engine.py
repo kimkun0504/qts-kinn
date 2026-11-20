@@ -13,6 +13,8 @@
 - A short sells at the open and buys back by the same rules mirrored: the stop is above the
   entry and the target below, and both touched in a day counts as the stop. It pays the borrow
   fee for each session it is open and gains what the price loses.
+- Both sides (ranking mode): each day the best-ranked free stocks are bought and as many of the
+  other end sold short.
 """
 
 from __future__ import annotations
@@ -88,7 +90,7 @@ class Trade:
     benchmark: float  # the universe's equal-weight return over the same sessions, as held
     priority: float
     short: bool = False
-    borrow: float = 0.0  # dollars, part of cost_exit
+    borrow: float = 0.0
 
 
 def _first_exit(m: Market, n: int, e: int, hold: int, stop: float | None, target: float | None,
@@ -212,6 +214,7 @@ def simulate(m: Market, entries: np.ndarray, exits: np.ndarray | None, settings:
     hold, stop, target = settings.exit.hold_days, settings.exit.stop_loss, settings.exit.take_profit
     size = settings.book.position_size
     short, borrow = settings.entry.side == "short", settings.book.borrow_rate
+    both = settings.entry.side == "both"
     rows, stocks = entries.shape
     last = min(last_signal_row, rows - 2)
     trades: list[Trade] = []
@@ -227,10 +230,15 @@ def simulate(m: Market, entries: np.ndarray, exits: np.ndarray | None, settings:
             candidates = np.flatnonzero(ok)
             if not candidates.size:
                 continue
-            order = np.argsort(sign * score[candidates], kind="stable")[:top]
-            for n in candidates[order]:
-                trade = _trade(m, costs, int(n), t, hold, stop, target, exits, size,
-                               float(score[n]) * -sign, short, borrow)  # fmt: skip
+            ranked = candidates[np.argsort(sign * score[candidates], kind="stable")]
+            picks = [(n, short) for n in ranked[:top]]
+            if both:
+                tail = ranked[max(top, len(ranked) - top) :][::-1]
+                picks += [(n, True) for n in tail]
+            for n, is_short in picks:
+                edge = float(score[n]) * (sign if is_short and both else -sign)
+                trade = _trade(m, costs, int(n), t, hold, stop, target, exits, size, edge,
+                               is_short, borrow)  # fmt: skip
                 busy[n] = trade.exit_row
                 trades.append(trade)
         return trades

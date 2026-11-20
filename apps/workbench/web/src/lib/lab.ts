@@ -25,7 +25,7 @@ export interface LabSettings {
     exclude_blank_checks: boolean;
     tickers?: string[];
   };
-  entry: { mode: "signal" | "rank"; top_n: number; rank_order: "highest" | "lowest"; side?: "long" | "short" };
+  entry: { mode: "signal" | "rank"; top_n: number; rank_order: "highest" | "lowest"; side?: "long" | "short" | "both" };
   exit: { hold_days: number; stop_loss: number | null; take_profit: number | null };
   book: { position_size: number; max_positions: number; borrow_rate?: number };
 }
@@ -236,6 +236,7 @@ export interface Equity {
   spy: (number | null)[];
   spy_matched?: (number | null)[] | null;
   positions: number[];
+  shorts?: number[];
   capital: number;
 }
 
@@ -281,6 +282,7 @@ export interface TradeRow {
   benchmark: number;
   over: number;
   taken: boolean;
+  side?: "long" | "short";
 }
 
 /** A problem the Lab's code check found (it reads the code, never runs it). */

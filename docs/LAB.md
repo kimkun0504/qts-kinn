@@ -130,6 +130,11 @@ such a run *Hand-picked stocks*: it describes those stocks and is no evidence fo
   could be borrowed at that fee and ignores the short-sale price test and recalls: in small
   companies the fee is often far higher and some cannot be borrowed at all, so sweep
   `book.borrow_rate` before trusting a short.
+- **Both sides** (*Side: Both*, ranking mode only): each day the Lab buys the N best-ranked free
+  stocks and sells short N from the other end. *Max open positions* then applies to each side,
+  the capital is both sides' slots, and the book's SPY line holds SPY at the net exposure (long
+  value less short value). The trades table gains a side column, and the path after the signal
+  is drawn as held, so a short's line rises when its price falls.
 
 ## Checks while you type
 

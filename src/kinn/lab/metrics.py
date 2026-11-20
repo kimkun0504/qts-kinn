@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import warnings
 from collections import defaultdict
 
 import numpy as np
@@ -57,6 +58,7 @@ def trades_table(trades: list[Trade], taken: np.ndarray, dates: np.ndarray, tick
         "profit": get("value") * get("net"),
         "benchmark": get("benchmark"), "over": get("net") - get("benchmark"),
         "taken": taken, "priority": get("priority"),
+        "side": np.where(get("short"), "short", "long"),
     })  # fmt: skip
 
 
@@ -78,7 +80,8 @@ def summary(table: pd.DataFrame, book: dict, dates: np.ndarray, first_row: int, 
     peak = np.maximum.accumulate(np.concatenate([[0.0], cum]))[1:]
     drawdown = cum - peak
     cap = settings.book.max_positions
-    capital = settings.book.position_size * (cap or max(int(book["positions"].max()), 1))
+    sides = 2 if settings.entry.side == "both" else 1
+    capital = settings.book.position_size * (cap * sides or max(int(book["positions"].max()), 1))
     active = np.flatnonzero(book["positions"] > 0)
     span_rows = (active[-1] - first_row + 1) if active.size else 1
     years_span = max(span_rows / 252, 1 / 252)
@@ -114,7 +117,8 @@ def summary(table: pd.DataFrame, book: dict, dates: np.ndarray, first_row: int, 
     counts, _ = np.histogram(np.clip(net, -0.5 + 1e-9, 0.5 - 1e-9), bins=edges)
     out["histogram"] = {"edges": edges.tolist(), "counts": counts.tolist()}
     sign = "+" if out["mean_net"] >= 0 else ""
-    kind = "short trades" if settings.entry.side == "short" else "trades"
+    kind = {"short": "short trades", "both": "long and short trades"}.get(settings.entry.side,
+                                                                          "trades")  # fmt: skip
     out["headline"] = f"{n:,} {kind}, {sign}{100 * out['mean_net']:.2f}% a trade after costs"
     return out
 
@@ -173,7 +177,8 @@ def signal_path(trades: list[Trade], adj_close: np.ndarray, universe_cum: np.nda
                 limit: int = 20_000) -> dict | None:  # fmt: skip
     """The average split-adjusted move of the traded stocks from their signal day's close, from
     ``before`` sessions before it to ``after`` sessions after, beside the universe's over the same
-    days: how the edge builds and fades around the signal, past the exit too."""
+    days: how the edge builds and fades around the signal, past the exit too. Moves are as
+    held: a short's line rises when its price falls."""
     if not trades:
         return None
     before, after = 20, int(min(120, max(40, 3 * hold)))
@@ -183,6 +188,7 @@ def signal_path(trades: list[Trade], adj_close: np.ndarray, universe_cum: np.nda
         picked = [trades[i] for i in sorted(keep)]
     rows = np.array([t.signal_row for t in picked])
     cols = np.array([t.stock for t in picked])
+    held = np.array([-1.0 if t.short else 1.0 for t in picked])
     horizons = np.arange(-before, after + 1)
     sessions = adj_close.shape[0]
     stock = np.full((len(picked), len(horizons)), np.nan)
@@ -194,11 +200,12 @@ def signal_path(trades: list[Trade], adj_close: np.ndarray, universe_cum: np.nda
         price = np.full(len(picked), np.nan)
         price[ok] = adj_close[at[ok], cols[ok]]
         with np.errstate(divide="ignore", invalid="ignore"):
-            stock[:, k] = price / base - 1
-        market[ok, k] = np.expm1(universe_cum[at[ok]] - universe_cum[rows[ok]])
+            stock[:, k] = held * (price / base - 1)
+        market[ok, k] = held[ok] * np.expm1(universe_cum[at[ok]] - universe_cum[rows[ok]])
     excess = stock - market
     count = np.sum(np.isfinite(excess), axis=0)
-    with np.errstate(invalid="ignore", divide="ignore"):
+    with np.errstate(invalid="ignore", divide="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
         mean_stock = np.nanmean(np.where(np.isfinite(excess), stock, np.nan), axis=0)
         mean_market = np.nanmean(np.where(np.isfinite(excess), market, np.nan), axis=0)
         mean_excess = np.nanmean(excess, axis=0)
@@ -279,8 +286,10 @@ def factor_report(scores: np.ndarray, market, dates: np.ndarray, first_row: int,
 
 
 def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capital: float,
-           position_size: float | None = None, short: bool = False) -> dict:  # fmt: skip
+           position_size: float | None = None) -> dict:  # fmt: skip
+    """The book's profit beside SPY on all the capital and SPY at the book's net exposure."""
     pnl, positions = book["pnl"], book["positions"]
+    shorts = book.get("shorts", np.zeros_like(positions))
     active = np.flatnonzero(positions > 0)
     last = int(active[-1]) if active.size else first_row
     span = slice(first_row, last + 1)
@@ -290,8 +299,9 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
     spy_line = (spy[span] / base - 1) * capital if np.isfinite(base) else np.full(len(cum), np.nan)
     with np.errstate(divide="ignore", invalid="ignore"):
         spy_day = np.nan_to_num(spy[span][1:] / spy[span][:-1] - 1, nan=0.0, posinf=0.0, neginf=0.0)
-    invested = np.minimum(positions[span][1:] * (position_size or 0.0), capital)
-    matched = np.concatenate([[0.0], np.cumsum(spy_day * invested * (-1 if short else 1))])
+    net = (positions - 2 * shorts)[span][1:] * (position_size or 0.0)
+    invested = np.clip(net, -capital, capital)
+    matched = np.concatenate([[0.0], np.cumsum(spy_day * invested)])
     step = max(1, len(cum) // 1200)  # at most about 1,200 points for the chart
     pick = np.arange(0, len(cum), step)
     if len(cum) and pick[-1] != len(cum) - 1:
@@ -301,6 +311,7 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
         "dates": [str(d)[:10] for d in dates[span][pick]],
         "profit": clean(cum[pick]), "drawdown": clean((cum - peak)[pick]),
         "spy": clean(spy_line[pick]), "positions": positions[span][pick].tolist(),
+        "shorts": shorts[span][pick].tolist(),
         "spy_matched": clean(matched[pick]) if position_size else None,
         "capital": capital,
     }  # fmt: skip
