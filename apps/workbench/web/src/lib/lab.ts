@@ -243,6 +243,23 @@ export interface Equity {
   capital: number;
 }
 
+export interface LuckDraws {
+  mean: number;
+  low: number;
+  high: number;
+  beaten: number;
+}
+
+export interface Luck {
+  trades: number;
+  of?: number;
+  hold: number;
+  draws: number;
+  mean: number;
+  same_days: LuckDraws | null;
+  other_days: LuckDraws | null;
+}
+
 export interface FactorReport {
   buckets: { bucket: number; excess: number | null; mean: number | null; days: number }[];
   spread: number | null;
@@ -401,6 +418,7 @@ export const lab = {
   code: (runId: string) => read<{ code: string }>(`/runs/${id(runId)}/code`),
   path: (runId: string) => read<SignalPath>(`/runs/${id(runId)}/path`),
   factor: (runId: string) => read<FactorReport>(`/runs/${id(runId)}/factor`),
+  luck: (runId: string) => read<Luck>(`/runs/${id(runId)}/luck`),
   log: (runId: string) => read<{ log: string }>(`/runs/${id(runId)}/log`),
   trades: (runId: string, query: { ticker?: string; book?: string; sort?: string; order?: string; offset?: number; limit?: number }) => {
     const params = new URLSearchParams();

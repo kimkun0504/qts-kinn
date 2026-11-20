@@ -379,3 +379,25 @@ def test_beta_and_correlation_to_spy():
     beta, correlation = metrics._against(book, spy, 1, 199)
     assert beta == pytest.approx(0.5) and correlation == pytest.approx(1.0)
     assert metrics._against(book[:10], spy, 1, 10) == (None, None)
+
+
+def test_trades_that_catch_a_jump_beat_random_stocks_and_random_days():
+    from kinn.lab import metrics
+
+    stocks = 12
+    close = flat(stocks=stocks)
+    entries = np.zeros((ROWS, stocks), bool)
+    for k in range(stocks):
+        close[7 + 2 * k :, k] = 11.0
+        entries[5 + 2 * k, k] = True
+    m = market(close)
+    trades = run(m, entries, hold_days=3)
+    checked = metrics.luck(trades, m, 0, ROWS - 2, 3, draws=200)
+    assert checked["trades"] == stocks and checked["mean"] == pytest.approx(0.1, rel=1e-5)
+    assert checked["same_days"]["beaten"] == 1.0 and checked["other_days"]["beaten"] == 1.0
+    assert checked["same_days"]["mean"] < 0.02
+    shorts = run(m, entries, hold_days=3, side="short")
+    assert metrics.luck(shorts, m, 0, ROWS - 2, 3, draws=50)["mean"] == pytest.approx(
+        -0.1, rel=1e-5
+    )
+    assert metrics.luck(trades[:5], m, 0, ROWS - 2, 3) is None

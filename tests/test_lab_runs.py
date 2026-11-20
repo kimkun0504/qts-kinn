@@ -135,6 +135,8 @@ def test_a_run_writes_its_results(root, fake):
     assert len(equity["dates"]) == len(equity["spy"]) == len(equity["spy_matched"])
     assert equity["spy_matched"][0] == 0.0
     assert len(equity["rolling_sharpe"]) == len(equity["dates"])
+    luck = store.result(run_dir, "luck")
+    assert luck is None or 0 <= luck["same_days"]["beaten"] <= 1
     assert equity["rolling_sharpe"][0] is None
     summary = store.result(run_dir, "summary")
     assert summary["beta_spy"] is None or -5 < summary["beta_spy"] < 5

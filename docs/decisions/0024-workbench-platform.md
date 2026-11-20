@@ -108,3 +108,7 @@ applies the holdout date guard and is tested against the synthetic build.
     round trip for a price, position, liquidity, side and fill (auction or marketable), leg by
     leg as the Lab's simulator charges it (a test holds the two together), by position size and
     by share price; a stock's last close and 20-day dollar volume before the seal fill it in.
+16. **Lab results a skeptic would ask for:** a rolling one-year Sharpe, beta and correlation to
+    SPY, profit by sector, and the trades against random picks (random stocks on the same days,
+    the same stocks on random days; 500 draws, all held the same simple way) so a run shows
+    whether it beats chance at picking stocks, moments, or neither. A Lab run prints as a report.

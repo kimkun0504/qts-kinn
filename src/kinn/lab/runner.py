@@ -240,6 +240,11 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
             rows.append({"value": value, **{f: v_summary.get(f) for f in SWEEP_FIELDS}})
         store._write(run_dir / "sweep.json", {"field": sweep["field"], "base": base_value,
                                               "rows": rows})  # fmt: skip
+    progress("Setting the trades against random picks", 0.95)
+    checked = metrics.luck(trades, market, data.first_row, data.last_signal_row,
+                           settings.exit.hold_days)  # fmt: skip
+    if checked:
+        (run_dir / "luck.json").write_text(json.dumps(checked))
     if settings.entry.mode == "rank":
         progress("Measuring the ranking", 0.96)
         factor = metrics.factor_report(entries, market, data.sessions, data.first_row,

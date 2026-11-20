@@ -264,6 +264,59 @@ export function SectorPanel({ rows, onSector }: { rows: SectorRow[]; onSector?: 
   );
 }
 
+export function luckVerdict(beaten: number): string {
+  if (beaten >= 0.975) return "better than almost every draw";
+  if (beaten >= 0.9) return "better than most draws";
+  if (beaten > 0.1) return "within what chance gives";
+  return "worse than most draws";
+}
+
+export function LuckPanel({ runId }: { runId: string }) {
+  const { data } = useLoad(() => lab.luck(runId), `luck-${runId}`);
+  if (!data) return null;
+  const rows = [
+    { key: "same", label: "Random stocks the book could have bought, same days", draws: data.same_days },
+    { key: "other", label: "The same stocks on random days of the period", draws: data.other_days },
+  ].filter((r) => r.draws);
+  return (
+    <Panel title="Against random picks" aside={`${int(data.draws)} draws, each trade held ${data.hold} sessions`}>
+      <div className="overflow-x-auto px-4 py-3">
+        <table className="w-full min-w-[640px] border-collapse text-[13px] tabular-nums">
+          <thead>
+            <tr className="text-ink-2">
+              <th className="pb-1.5 text-left font-medium">Picks</th>
+              <th className="pb-1.5 pl-3 text-right font-medium">Their average</th>
+              <th className="pb-1.5 pl-3 text-right font-medium">95% of draws</th>
+              <th className="pb-1.5 pl-3 text-right font-medium">This run</th>
+              <th className="pb-1.5 pl-3 text-left font-medium">The run is</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key} className="border-t border-line-soft">
+                <td className="py-2 pr-3 text-ink">{r.label}</td>
+                <td className={`py-2 pl-3 text-right ${r.draws!.mean < 0 ? "text-neg" : ""}`}>{pct(r.draws!.mean)}</td>
+                <td className="py-2 pl-3 text-right text-ink-2">
+                  {pct(r.draws!.low)} to {pct(r.draws!.high)}
+                </td>
+                <td className={`py-2 pl-3 text-right font-semibold ${data.mean < 0 ? "text-neg" : ""}`}>{pct(data.mean)}</td>
+                <td className="py-2 pl-3">
+                  {luckVerdict(r.draws!.beaten)} ({plainPct(r.draws!.beaten)})
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PanelNote>
+        Every trade and every random pick is held the same way: from the next open to the close {data.hold} sessions later, before costs, without stops, targets or exit signals
+        {data.of && data.of > data.trades ? `, on ${int(data.trades)} of the ${int(data.of)} trades picked at random` : ""}. Beating random stocks on the same days says the rule picks stocks; beating
+        the same stocks on other days says it picks moments.
+      </PanelNote>
+    </Panel>
+  );
+}
+
 export function SignalPathPanel({ runId, short = false }: { runId: string; short?: boolean }) {
   const { data, error } = useLoad(() => lab.path(runId), `path-${runId}`);
   const [around, setAround] = useState(false);

@@ -200,6 +200,12 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
     *SPY matched* puts in SPY only the money the book had invested that day (open positions
     times the position size), so it is the fair comparison: a book that is a fifth invested
     should be judged against a fifth of SPY's moves on the same days.
+  - **Against random picks** holds every trade the same simple way (next open to the close of
+    the hold-th session, before costs, no stops or exit signals) and sets the average against
+    500 draws of random stocks the book could have bought on the same days, and of the same
+    stocks on random days of the period (`luck.json`). Beating the first says the rule picks
+    stocks; beating the second says it picks moments. A run of thousands of trades uses 5,000
+    of them, picked at random.
   - **After the signal** is the average split-adjusted move of the traded stocks from the close
     of the signal day, beside the universe's, from 20 sessions before to well past the exit,
     with a 95% band around the average excess. A line still rising at the exit says a longer

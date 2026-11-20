@@ -244,6 +244,86 @@ def _ranks(values: np.ndarray) -> np.ndarray:
     return ranks
 
 
+LUCK_DRAWS = 500
+
+
+def _held(market, entry_rows: np.ndarray, cols: np.ndarray, hold: int) -> np.ndarray:
+    """Split-adjusted return from the open of each entry row to the close ``hold`` sessions on."""
+    exit_rows = np.minimum(entry_rows + hold - 1, len(market.close) - 1)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        factor = market.adj_close[entry_rows, cols] / market.close[entry_rows, cols]
+        start = market.open[entry_rows, cols] * factor
+        return market.adj_close[exit_rows, cols].astype(np.float64) / start - 1
+
+
+def luck(trades: list[Trade], market, first_row: int, last_signal_row: int, hold: int,
+         draws: int = LUCK_DRAWS, seed: int = 0, limit: int = 5_000) -> dict | None:  # fmt: skip
+    """The run's trades against random picks, all held the same way (from the entry open to
+    the close of the hold-th session, before costs, no stops or exit signals): random stocks
+    the book could have bought on the same days, and the same stocks on random days of the
+    period. A short counts the fall."""
+    if len(trades) < 10:
+        return None
+    rng = np.random.default_rng(seed)
+    rows = len(market.close)
+    of = len(trades)
+    if of > limit:
+        trades = [trades[i] for i in sorted(rng.choice(of, size=limit, replace=False))]
+    entry = np.array([t.entry_row for t in trades])
+    stock = np.array([t.stock for t in trades])
+    sign = np.array([-1.0 if t.short else 1.0 for t in trades])
+    actual = sign * _held(market, entry, stock, hold)
+    keep = np.isfinite(actual)
+    entry, stock, sign, actual = entry[keep], stock[keep], sign[keep], actual[keep]
+    if len(actual) < 10:
+        return None
+    exits = np.minimum(entry + hold - 1, rows - 1)
+
+    same_days = np.full((draws, len(entry)), np.nan)
+    for e in np.unique(entry):
+        mine = np.flatnonzero(entry == e)
+        x = min(e + hold - 1, rows - 1)
+        pool = np.flatnonzero(market.enterable(e) & np.isfinite(market.adj_close[x]))
+        if not pool.size:
+            continue
+        picks = pool[rng.integers(0, pool.size, size=(draws, mine.size))]
+        rows_e = np.full(picks.shape, e)
+        same_days[:, mine] = sign[mine] * _held(market, rows_e.ravel(), picks.ravel(),
+                                                hold).reshape(picks.shape)  # fmt: skip
+
+    lo, hi = first_row + 1, min(last_signal_row + 1, rows - 1)
+    other_days = np.full((draws, len(entry)), np.nan)
+    for n in np.unique(stock):
+        mine = np.flatnonzero(stock == n)
+        span = np.arange(lo, hi + 1)
+        later = np.minimum(span + hold - 1, rows - 1)
+        with np.errstate(invalid="ignore"):
+            ok = market.eligible[span, n] & (market.open[span, n] > 0)
+            ok &= (market.close[span, n] > 0) & np.isfinite(market.adj_close[later, n])
+        pool = span[ok]
+        if not pool.size:
+            continue
+        days = pool[rng.integers(0, pool.size, size=(draws, mine.size))]
+        other_days[:, mine] = sign[mine] * _held(market, days.ravel(), np.full(days.size, n),
+                                                 hold).reshape(days.shape)  # fmt: skip
+    mean = float(actual.mean())
+
+    def compare(sample: np.ndarray) -> dict | None:
+        with np.errstate(invalid="ignore"), warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            means = np.nanmean(sample, axis=1)
+        means = means[np.isfinite(means)]
+        if not means.size:
+            return None
+        return {"mean": float(means.mean()), "low": float(np.percentile(means, 2.5)),
+                "high": float(np.percentile(means, 97.5)),
+                "beaten": float((means < mean).mean())}  # fmt: skip
+
+    return {"trades": int(len(actual)), "of": of, "hold": hold, "draws": draws, "mean": mean,
+            "same_days": compare(same_days), "other_days": compare(other_days),
+            "exits_beyond": int((exits >= rows - 1).sum())}  # fmt: skip
+
+
 def factor_report(scores: np.ndarray, market, dates: np.ndarray, first_row: int,
                   last_signal_row: int, hold: int, order: str, buckets: int = 10,
                   minimum: int = 30) -> dict | None:  # fmt: skip

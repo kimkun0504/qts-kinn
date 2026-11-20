@@ -504,6 +504,6 @@ def cancel(run_dir: Path) -> dict:
 
 def result(run_dir: Path, name: str) -> dict | list | None:
     if name not in ("summary", "by_year", "by_stock", "equity", "lookahead", "path", "factor",
-                    "sweep"):  # fmt: skip
+                    "sweep", "luck"):  # fmt: skip
         raise LabError("Unknown result.")
     return _read(run_dir / f"{name}.json")
