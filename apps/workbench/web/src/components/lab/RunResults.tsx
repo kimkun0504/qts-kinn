@@ -13,6 +13,7 @@ import { Panel } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
 import { StatStrip } from "../ui/StatStrip";
 import { BookPanel, bySector, Compare, FactorPanel, LuckPanel, MonthTable, SectorPanel, SignalPathPanel, SweepPanel } from "./Analytics";
+import { concentration } from "../../lib/years";
 import { RunNote } from "./RunNote";
 
 type Tab = "overview" | "stocks" | "trades" | "years" | "code";
@@ -340,6 +341,9 @@ function Years({ runId }: { runId: string }) {
     <div className="flex flex-col gap-5">
       <Panel title="Book profit by year" padded>
         <YearBars years={bars} highlight="all" />
+        {concentration(data.map((y) => ({ year: String(y.year), net_1x: y.book_profit }))) && (
+          <p className="m-0 pt-3 text-[13px] text-ink-3">{concentration(data.map((y) => ({ year: String(y.year), net_1x: y.book_profit })))}</p>
+        )}
       </Panel>
       <Panel title="Each year">
         <DataTable columns={yearColumns} rows={data} rowKey={(r) => String(r.year)} />

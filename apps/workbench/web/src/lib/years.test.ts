@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { concentration } from "./RunDetail";
+import { concentration } from "./years";
 
 describe("a backtest's years", () => {
   it("names a year that carries the result", () => {

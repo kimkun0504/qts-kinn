@@ -10,18 +10,9 @@ import type { BookMetrics, Manifest, Metrics, Phase, RunDetail as Detail, Study,
 import { DASHES, SERIES } from "../lib/colors";
 import { int, interval, money, num, pct, plainPct } from "../lib/format";
 import { useRun } from "../lib/useRun";
+import { concentration } from "../lib/years";
 import { BookView } from "./BookView";
 import { FillCheckView } from "./FillCheckView";
-
-export function concentration(years: { year: string; net_1x: number }[]): string | null {
-  const total = years.reduce((a, y) => a + y.net_1x, 0);
-  if (years.length < 3 || total <= 0) return null;
-  const best = years.reduce((a, y) => (y.net_1x > a.net_1x ? y : a), years[0]);
-  const share = best.net_1x / total;
-  if (share < 0.4) return null;
-  const without = total - best.net_1x;
-  return `${best.year} made ${Math.round(100 * share)}% of the net profit; without it the other years made ${money(without)}. A result that rests on one year is weaker than its total suggests.`;
-}
 
 export function RunDetail({ runId }: { runId: string | null }) {
   const { detail, error } = useRun(runId);
