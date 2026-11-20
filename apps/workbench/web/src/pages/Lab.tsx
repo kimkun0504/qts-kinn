@@ -623,7 +623,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
             type="button"
             onClick={tidy}
             disabled={!file}
-            title="Lay out the code the standard way"
+            title="Lay out the code the standard way (⇧⌥F)"
             className="cursor-pointer px-1 text-[13px] font-medium text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default disabled:opacity-50"
           >
             Format
@@ -644,7 +644,18 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
         <div className="grid lg:h-[min(64vh,680px)] lg:grid-cols-[minmax(0,1fr)_336px]">
           <div className="h-[460px] min-w-0 lg:h-full">
             {file ? (
-              <CodeEditor ref={editor} value={code} onChange={setCode} onSave={save} onRun={() => run()} fields={meta.fields} label={`${name}.py`} check={checkCode} onFindings={setFindings} />
+              <CodeEditor
+                ref={editor}
+                value={code}
+                onChange={setCode}
+                onSave={save}
+                onRun={() => run()}
+                onFormat={tidy}
+                fields={meta.fields}
+                label={`${name}.py`}
+                check={checkCode}
+                onFindings={setFindings}
+              />
             ) : (
               <p className="m-0 px-4 py-6 text-ink-2">Opening {name}…</p>
             )}

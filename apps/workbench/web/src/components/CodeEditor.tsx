@@ -23,6 +23,7 @@ interface CodeEditorProps {
   onChange?: (value: string) => void;
   onSave?: () => void;
   onRun?: () => void;
+  onFormat?: () => void;
   fields?: Field[];
   readOnly?: boolean;
   label: string;
@@ -99,13 +100,13 @@ function toDiagnostics(view: EditorView, findings: Finding[]): Diagnostic[] {
 
 /** The Python editor of the Lab (CodeMirror 6). Cmd/Ctrl+S saves, Cmd/Ctrl+Enter runs. */
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor(
-  { value, onChange, onSave, onRun, fields = [], readOnly = false, label, minHeight = 200, check, onFindings },
+  { value, onChange, onSave, onRun, onFormat, fields = [], readOnly = false, label, minHeight = 200, check, onFindings },
   ref,
 ) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const handlers = useRef({ onChange, onSave, onRun, check, onFindings });
-  handlers.current = { onChange, onSave, onRun, check, onFindings };
+  const handlers = useRef({ onChange, onSave, onRun, onFormat, check, onFindings });
+  handlers.current = { onChange, onSave, onRun, onFormat, check, onFindings };
   const completions = useRef(new Compartment());
   const editable = useRef(new Compartment());
 
@@ -121,6 +122,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
         keymap.of([
           { key: "Mod-s", preventDefault: true, run: () => (handlers.current.onSave?.(), true) },
           { key: "Mod-Enter", preventDefault: true, run: () => (handlers.current.onRun?.(), true) },
+          { key: "Shift-Alt-f", preventDefault: true, run: () => (handlers.current.onFormat?.(), true) },
           indentWithTab,
         ]),
         theme,

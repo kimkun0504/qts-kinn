@@ -23,6 +23,9 @@ const KEYS: [string[], string][] = [
   [["Esc"], "Close a dialog"],
   [["↑", "↓"], "Move between the rows of a table"],
   [["Enter"], "Open the row"],
+  [["⌘", "↵"], "Run the algorithm (Lab)"],
+  [["⌘", "S"], "Save the code (Lab)"],
+  [["⇧", "⌥", "F"], "Format the code (Lab)"],
 ];
 
 function Keys({ keys }: { keys: string[] }) {
