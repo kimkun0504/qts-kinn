@@ -350,9 +350,11 @@ export interface TradePage {
 
 export class LabError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  detail: Record<string, unknown>;
+  constructor(message: string, status: number, detail: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
+    this.detail = detail;
   }
 }
 
@@ -369,7 +371,7 @@ async function answer<T>(response: Response): Promise<T> {
   }
   if (!response.ok) {
     const message = body && typeof body === "object" && "error" in body ? String((body as { error: unknown }).error) : `The Workbench answered ${response.status}.`;
-    throw new LabError(message, response.status);
+    throw new LabError(message, response.status, body && typeof body === "object" ? (body as Record<string, unknown>) : {});
   }
   return body as T;
 }
@@ -409,8 +411,8 @@ export const lab = {
   algorithm: (name: string) => read<AlgorithmFile>(`/algorithms/${id(name)}`),
   save: (name: string, code: string) => write<{ name: string; description: string }>("PUT", `/algorithms/${id(name)}`, { code }),
   remove: (name: string) => write<{ deleted: string }>("DELETE", `/algorithms/${id(name)}`),
-  start: (algorithm: string, code: string, settings: SettingsPatch, sweep?: SweepRequest | null) =>
-    write<{ run_id: string; status: Status }>("POST", "/runs", sweep ? { algorithm, code, settings, sweep } : { algorithm, code, settings }),
+  start: (algorithm: string, code: string, settings: SettingsPatch, sweep?: SweepRequest | null, again = false) =>
+    write<{ run_id: string; status: Status }>("POST", "/runs", { algorithm, code, settings, ...(sweep ? { sweep } : {}), ...(again ? { again } : {}) }),
   sweep: (runId: string) => read<SweepResult>(`/runs/${id(runId)}/sweep`),
   cancel: (runId: string) => write<Status>("POST", `/runs/${id(runId)}/cancel`),
   saveNote: (runId: string, note: string) => write<{ run_id: string; note: string }>("PUT", `/runs/${id(runId)}/note`, { note }),

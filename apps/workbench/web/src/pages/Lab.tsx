@@ -312,6 +312,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
   const [busy, setBusy] = useState(false);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [ranBefore, setRanBefore] = useState<{ runId: string; text: string } | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
   const editor = useRef<CodeEditorHandle>(null);
   const results = useRef<HTMLDivElement>(null);
@@ -428,41 +429,47 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
   const errors = findings.filter((f) => f.severity === "error");
   const warnings = findings.filter((f) => f.severity === "warning");
 
-  const run = useCallback(async () => {
-    if (busy) return;
-    const blocking = findings.find((f) => f.severity === "error");
-    if (blocking) {
-      setMessage(`Fix line ${blocking.line} first: ${blocking.message}`);
-      editor.current?.reveal(blocking.line, blocking.column);
-      return;
-    }
-    const { patch, errors: wrong } = toPatch(draft);
-    if (wrong.length) {
-      setMessage(wrong.join(" "));
-      return;
-    }
-    const { sweep, error: sweepError } = toSweep(draft);
-    if (sweepError) {
-      setMessage(sweepError);
-      return;
-    }
-    setBusy(true);
-    setMessage(null);
-    try {
-      const started = await lab.start(name, code, patch, sweep);
-      startedHere.current = started.run_id;
-      setSaved(code);
-      setHistoryKey((k) => k + 1);
-      setStatus(started.status);
-      await refreshRuns();
-      onChanged();
-      onOpen(name, started.run_id);
-    } catch (e) {
-      setMessage((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }, [busy, findings, draft, name, code, refreshRuns, onChanged, onOpen]);
+  const run = useCallback(
+    async (again = false) => {
+      if (busy) return;
+      const blocking = findings.find((f) => f.severity === "error");
+      if (blocking) {
+        setMessage(`Fix line ${blocking.line} first: ${blocking.message}`);
+        editor.current?.reveal(blocking.line, blocking.column);
+        return;
+      }
+      const { patch, errors: wrong } = toPatch(draft);
+      if (wrong.length) {
+        setMessage(wrong.join(" "));
+        return;
+      }
+      const { sweep, error: sweepError } = toSweep(draft);
+      if (sweepError) {
+        setMessage(sweepError);
+        return;
+      }
+      setBusy(true);
+      setMessage(null);
+      setRanBefore(null);
+      try {
+        const started = await lab.start(name, code, patch, sweep, again);
+        startedHere.current = started.run_id;
+        setSaved(code);
+        setHistoryKey((k) => k + 1);
+        setStatus(started.status);
+        await refreshRuns();
+        onChanged();
+        onOpen(name, started.run_id);
+      } catch (e) {
+        const before = e instanceof LabError && typeof e.detail.ran_before === "string" ? e.detail.ran_before : null;
+        if (before) setRanBefore({ runId: before, text: (e as Error).message });
+        else setMessage((e as Error).message);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, findings, draft, name, code, refreshRuns, onChanged, onOpen],
+  );
 
   const checkCode = useCallback(
     (text: string) =>
@@ -536,6 +543,25 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
 
       {message && <Message text={message} onClose={() => setMessage(null)} />}
       {note && <Message tone="note" text={note} onClose={() => setNote(null)} />}
+      {ranBefore && (
+        <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-warn bg-surface px-4 py-3 text-sm">
+          <span className="min-w-0 flex-1">{ranBefore.text}</span>
+          <Button
+            onClick={() => {
+              onOpen(name, ranBefore.runId);
+              setRanBefore(null);
+            }}
+          >
+            Open that run
+          </Button>
+          <Button variant="primary" onClick={() => run(true)}>
+            Run again
+          </Button>
+          <button type="button" aria-label="Dismiss" onClick={() => setRanBefore(null)} className="cursor-pointer text-ink-3 hover:text-ink">
+            ×
+          </button>
+        </div>
+      )}
 
       <section aria-label="Workspace" data-print="hide" className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="relative flex min-h-12 flex-wrap items-center gap-3 border-b border-line px-4 py-2">
@@ -606,7 +632,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
             Save
           </Button>
           {running && <Button onClick={cancel}>Cancel</Button>}
-          <Button variant="primary" onClick={run} disabled={busy || !file} title={running ? "Queue another run (⌘↵)" : "Run over every stock (⌘↵)"} className="min-w-[84px]">
+          <Button variant="primary" onClick={() => run()} disabled={busy || !file} title={running ? "Queue another run (⌘↵)" : "Run over every stock (⌘↵)"} className="min-w-[84px]">
             {sweepCount ? `Run ${sweepCount}` : "Run"}
           </Button>
           {running && !waiting && (
@@ -618,7 +644,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
         <div className="grid lg:h-[min(64vh,680px)] lg:grid-cols-[minmax(0,1fr)_336px]">
           <div className="h-[460px] min-w-0 lg:h-full">
             {file ? (
-              <CodeEditor ref={editor} value={code} onChange={setCode} onSave={save} onRun={run} fields={meta.fields} label={`${name}.py`} check={checkCode} onFindings={setFindings} />
+              <CodeEditor ref={editor} value={code} onChange={setCode} onSave={save} onRun={() => run()} fields={meta.fields} label={`${name}.py`} check={checkCode} onFindings={setFindings} />
             ) : (
               <p className="m-0 px-4 py-6 text-ink-2">Opening {name}…</p>
             )}

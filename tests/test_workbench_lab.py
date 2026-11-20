@@ -190,6 +190,15 @@ def test_a_run_another_workbench_claimed_is_not_started_again(root):
     assert store.dispatch(root, _never) is None
 
 
+def test_the_same_finished_run_is_run_again_only_when_asked(root):
+    first = _post(root, launch=lambda run_dir: None)[1]["run_id"]
+    store.set_status(store.run_dir_of(root, first), "complete")
+    status, payload = _post(root)
+    assert status == 409 and payload["ran_before"] == first and "adds a trial" in payload["error"]
+    again = {"algorithm": "x", "code": CODE, "again": True}
+    assert lab.route("POST", ["runs"], {}, again, root, launch=lambda run_dir: None)[0] == 202
+
+
 def test_a_waiting_run_can_be_cancelled_and_is_skipped(root):
     busy = _busy(root)
     waiting = _post(root)[1]["run_id"]

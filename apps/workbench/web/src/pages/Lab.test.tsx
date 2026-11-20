@@ -151,6 +151,28 @@ describe("the Lab", () => {
     expect(JSON.parse(String(post?.init?.body))).toEqual({ algorithm: "two_up", code: CODE, settings: { exit: { hold_days: 5 } } });
   });
 
+  it("asks before running the same code and settings again, and runs on a yes", async () => {
+    const onOpen = vi.fn();
+    const fetched = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const inner = fetched.getMockImplementation()!;
+    fetched.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (init?.method === "POST" && url === "/api/lab/runs" && !JSON.parse(String(init.body)).again) {
+        calls.push({ url, init });
+        return new Response(JSON.stringify({ error: "This code with these settings has run before, with the same result. Running it again adds a trial.", ran_before: RUN }), { status: 409 });
+      }
+      return inner(url, init);
+    });
+    render(<Lab name="two_up" onOpen={onOpen} />);
+    await screen.findByRole("heading", { name: "two_up" });
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
+    expect(await screen.findByText(/has run before/)).toBeTruthy();
+    expect(onOpen).not.toHaveBeenCalledWith("two_up", RUN);
+    fireEvent.click(screen.getByRole("button", { name: "Run again" }));
+    await waitFor(() => expect(onOpen).toHaveBeenCalledWith("two_up", RUN));
+    const posts = calls.filter((c) => c.init?.method === "POST" && c.url === "/api/lab/runs");
+    expect(JSON.parse(String(posts.at(-1)?.init?.body)).again).toBe(true);
+  });
+
   it("sends a sweep and says how many settings it runs", async () => {
     const onOpen = vi.fn();
     render(<Lab name="two_up" onOpen={onOpen} />);

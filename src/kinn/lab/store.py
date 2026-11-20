@@ -257,6 +257,16 @@ def run_hash(root: Path, code: str, settings: dict, sweep: dict | None = None) -
     return code_hash(code, {**settings, "sweep": sweep} if sweep else settings, library_code(root))
 
 
+def finished_twin(root: Path, name: str, digest: str) -> dict | None:
+    """The latest finished run of the same code and settings, if any."""
+    for run in list_runs(root, name):
+        if run["state"] == "complete":
+            manifest = _read(run_dir_of(root, run["run_id"]) / "manifest.json") or {}
+            if manifest.get("code_sha256") == digest:
+                return run
+    return None
+
+
 def live_twin(root: Path, name: str, digest: str) -> str | None:
     """A run of the same code and settings that is still going or waiting."""
     for run in list_runs(root, name):

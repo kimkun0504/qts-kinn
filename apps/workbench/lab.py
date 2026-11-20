@@ -213,9 +213,17 @@ def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launc
     except (store.LabError, SettingsError) as error:
         return _error(400, str(error))
     with _START:
-        twin = store.live_twin(root, name, store.run_hash(root, code, settings, sweep))
+        digest = store.run_hash(root, code, settings, sweep)
+        twin = store.live_twin(root, name, digest)
         if twin:
             return _error(409, f"The same code with the same settings is already in run {twin}.")
+        done = None if body.get("again") else store.finished_twin(root, name, digest)
+        if done:
+            return 409, {
+                "error": "This code with these settings has run before, with the same result. "
+                         "Running it again adds a trial.",
+                "ran_before": done["run_id"],
+            }  # fmt: skip
         if len(store.waiting_runs(root)) >= store.MAX_WAITING:
             return _error(409, f"{store.MAX_WAITING} runs are waiting already. Let some finish "
                                "or cancel some first.")  # fmt: skip
