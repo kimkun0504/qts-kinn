@@ -2,8 +2,9 @@ const MINUS = "−";
 
 export function pct(value: number | null | undefined, digits = 2): string {
   if (value == null) return "–";
-  const text = Math.abs(100 * value).toFixed(digits);
-  return (value >= 0 || Number(text) === 0 ? "+" : MINUS) + text + "%";
+  const size = Math.abs(100 * value);
+  const text = size >= 1000 ? Math.round(size).toLocaleString("en-US") : size.toFixed(digits);
+  return (value >= 0 || Number(text.replace(/,/g, "")) === 0 ? "+" : MINUS) + text + "%";
 }
 
 export function plainPct(value: number | null | undefined, digits = 0): string {
