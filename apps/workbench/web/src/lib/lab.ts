@@ -171,6 +171,8 @@ export interface Summary {
   annual_return?: number;
   max_drawdown_pct?: number;
   sharpe?: number | null;
+  beta_spy?: number | null;
+  correlation_spy?: number | null;
   average_positions?: number;
   spy_return?: number | null;
   first_entry?: string;
@@ -237,6 +239,7 @@ export interface Equity {
   spy_matched?: (number | null)[] | null;
   positions: number[];
   shorts?: number[];
+  rolling_sharpe?: (number | null)[];
   capital: number;
 }
 

@@ -12,6 +12,7 @@ import pandas as pd
 from kinn.lab.engine import REASONS, Trade
 
 EPOCH = np.datetime64("2003-12-29")  # a Monday: weeks are counted from it
+ROLLING = 252
 
 
 def _t(values: np.ndarray, groups: np.ndarray) -> float | None:
@@ -62,6 +63,21 @@ def trades_table(trades: list[Trade], taken: np.ndarray, dates: np.ndarray, tick
     })  # fmt: skip
 
 
+def _against(daily_ret: np.ndarray, spy: np.ndarray, first_row: int,
+             span_rows: int) -> tuple[float | None, float | None]:  # fmt: skip
+    """The book's beta to SPY and the correlation of their daily returns."""
+    prices = spy[max(first_row - 1, 0) : first_row + span_rows].astype(np.float64)
+    if first_row == 0:
+        prices = np.concatenate([[np.nan], prices])
+    with np.errstate(divide="ignore", invalid="ignore"):
+        market = prices[1:] / prices[:-1] - 1
+    ok = np.isfinite(market) & np.isfinite(daily_ret)
+    if ok.sum() < 20 or np.std(market[ok]) == 0 or np.std(daily_ret[ok]) == 0:
+        return None, None
+    cov = np.cov(daily_ret[ok], market[ok])
+    return float(cov[0, 1] / cov[1, 1]), float(np.corrcoef(daily_ret[ok], market[ok])[0, 1])
+
+
 def summary(table: pd.DataFrame, book: dict, dates: np.ndarray, first_row: int, settings,
             spy: np.ndarray, lookahead: dict) -> dict:  # fmt: skip
     n = len(table)
@@ -87,6 +103,7 @@ def summary(table: pd.DataFrame, book: dict, dates: np.ndarray, first_row: int, 
     years_span = max(span_rows / 252, 1 / 252)
     daily_ret = pnl[first_row : first_row + span_rows] / capital
     sharpe = (daily_ret.mean() / daily_ret.std() * math.sqrt(252)) if daily_ret.std() > 0 else None
+    beta, correlation = _against(daily_ret, spy, first_row, span_rows)
     spy_first = spy[first_row] if first_row < len(spy) else np.nan
     spy_last_row = min(first_row + span_rows - 1, len(spy) - 1)
     reasons = table["reason"].value_counts().to_dict()
@@ -107,6 +124,7 @@ def summary(table: pd.DataFrame, book: dict, dates: np.ndarray, first_row: int, 
         "max_drawdown": float(drawdown.min()), "capital": float(capital),
         "annual_return": float(cum[-1] / capital / years_span),
         "max_drawdown_pct": float(drawdown.min() / capital), "sharpe": sharpe,
+        "beta_spy": beta, "correlation_spy": correlation,
         "average_positions": float(book["positions"][first_row : first_row + span_rows].mean()),
         "spy_return": float(spy[spy_last_row] / spy_first - 1) if np.isfinite(spy_first) else None,
         "first_entry": str(entry_days.min()), "last_exit": str(table["exit_date"].max())[:10],
@@ -295,6 +313,8 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
     span = slice(first_row, last + 1)
     cum = np.cumsum(pnl)[span]
     peak = np.maximum.accumulate(np.concatenate([[0.0], cum]))[1:]
+    window = pd.Series(pnl[span]).rolling(ROLLING, min_periods=ROLLING)
+    rolling = (window.mean() / window.std() * math.sqrt(252)).to_numpy()
     base = spy[first_row] if first_row < len(spy) else np.nan
     spy_line = (spy[span] / base - 1) * capital if np.isfinite(base) else np.full(len(cum), np.nan)
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -312,6 +332,7 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
         "profit": clean(cum[pick]), "drawdown": clean((cum - peak)[pick]),
         "spy": clean(spy_line[pick]), "positions": positions[span][pick].tolist(),
         "shorts": shorts[span][pick].tolist(),
+        "rolling_sharpe": clean(rolling[pick]),
         "spy_matched": clean(matched[pick]) if position_size else None,
         "capital": capital,
     }  # fmt: skip

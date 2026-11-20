@@ -5,11 +5,12 @@ import { type Equity, lab, type RunDetail, type Summary, type SweepRow } from ".
 import { NUMBERS } from "../../lib/labSettings";
 import { useLoad } from "../../lib/useLoad";
 import { BarChart } from "../charts/BarChart";
+import { DivergingBars } from "../charts/DivergingBars";
 import { LineChart } from "../charts/LineChart";
 import { Panel, PanelNote } from "../ui/Panel";
 import { Segmented } from "../ui/Segmented";
 
-type BookView = "profit" | "drawdown" | "positions";
+type BookView = "profit" | "drawdown" | "sharpe" | "positions";
 
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -31,6 +32,7 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
       options={[
         { value: "profit", label: "Profit" },
         { value: "drawdown", label: "Drawdown" },
+        { value: "sharpe", label: "Rolling Sharpe" },
         { value: "positions", label: "Positions" },
       ]}
     />
@@ -70,6 +72,17 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
           format={(v) => money(v)}
         />
       )}
+      {view === "sharpe" &&
+        (equity.rolling_sharpe && equity.rolling_sharpe.some((v) => v != null) ? (
+          <LineChart
+            title="Sharpe over the year before each session"
+            labels={equity.dates}
+            series={[{ name: "Sharpe over the past year", short: "Sharpe", values: equity.rolling_sharpe, color: "var(--series-1)" }]}
+            format={(v) => num(v, 2)}
+          />
+        ) : (
+          <p className="m-0 px-4 py-6 text-ink-2">{equity.rolling_sharpe ? "The book has less than a year of sessions." : "Run again to see the rolling Sharpe."}</p>
+        ))}
       {view === "drawdown" && (
         <LineChart
           title="How far the book was below its best"
@@ -102,6 +115,8 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
                 ? `The book was short ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line sells that much SPY short on the same days, so it is the fair comparison; the dashed line holds SPY with all the capital.`
                 : `SPY on the same capital is fully invested every day; the book held ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line puts that money in SPY on the same days, so it is the fair comparison.`
             : "SPY is shown fully invested on the same capital. Run again to see it at the book's own exposure.")}
+        {view === "profit" && summary.beta_spy != null && ` Beta to SPY ${num(summary.beta_spy, 2)}, correlation ${num(summary.correlation_spy ?? null, 2)} (daily, over the book's sessions).`}
+        {view === "sharpe" && `The annualised Sharpe of the book's daily profit over the 252 sessions before each one; ${num(summary.sharpe ?? null, 2)} over the whole period.`}
         {view === "drawdown" && `Worst ${money(summary.max_drawdown)} (${pct(summary.max_drawdown_pct ?? null, 1)} of the capital), measured on each session's close.`}
         {view === "positions" && `${num(summary.average_positions ?? null, 1)} open on average, at most ${int(Math.max(0, ...equity.positions))}.`}
       </PanelNote>
@@ -183,6 +198,68 @@ export function MonthTable({ equity }: { equity: Equity }) {
           ))}
         </tbody>
       </table>
+    </Panel>
+  );
+}
+
+export interface SectorRow {
+  sector: string;
+  trades: number;
+  stocks: number;
+  wins: number;
+  net: number;
+  profit: number;
+}
+
+export function bySector(stocks: { sector: string | null; trades: number; wins: number; total_net: number; profit: number }[]): SectorRow[] {
+  const groups = new Map<string, SectorRow>();
+  for (const s of stocks) {
+    const name = s.sector || "Unknown";
+    const row = groups.get(name) ?? { sector: name, trades: 0, stocks: 0, wins: 0, net: 0, profit: 0 };
+    row.trades += s.trades;
+    row.stocks += 1;
+    row.wins += s.wins;
+    row.net += s.total_net;
+    row.profit += s.profit;
+    groups.set(name, row);
+  }
+  return [...groups.values()].sort((a, b) => b.profit - a.profit);
+}
+
+export function SectorPanel({ rows, onSector }: { rows: SectorRow[]; onSector?: (sector: string) => void }) {
+  if (rows.length < 2) return null;
+  const trades = rows.reduce((a, r) => a + r.trades, 0);
+  const top = rows.reduce((a, r) => (r.trades > a.trades ? r : a), rows[0]);
+  return (
+    <Panel title="By sector" aside="every trade, at the position size">
+      <div className="grid gap-x-8 gap-y-3 px-4 py-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <DivergingBars items={rows.map((r) => ({ label: r.sector, value: r.profit, note: `${int(r.trades)} trades` }))} format={(v) => money(v)} onPick={onSector} />
+        <table className="w-full border-collapse text-[13px] tabular-nums">
+          <thead>
+            <tr className="text-ink-2">
+              <th className="pb-1.5 text-left font-medium">Sector</th>
+              <th className="pb-1.5 text-right font-medium">Trades</th>
+              <th className="pb-1.5 text-right font-medium">Share</th>
+              <th className="pb-1.5 text-right font-medium">Won</th>
+              <th className="pb-1.5 text-right font-medium">A trade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.sector} className="border-t border-line-soft">
+                <td className="max-w-[180px] truncate py-1 pr-2 text-ink">{r.sector}</td>
+                <td className="py-1 text-right">{int(r.trades)}</td>
+                <td className="py-1 text-right text-ink-2">{r.trades / Math.max(trades, 1) < 0.005 ? "<1%" : plainPct(r.trades / Math.max(trades, 1))}</td>
+                <td className="py-1 text-right">{plainPct(r.wins / Math.max(r.trades, 1))}</td>
+                <td className={`py-1 text-right ${r.net < 0 ? "text-neg" : ""}`}>{pct(r.net / Math.max(r.trades, 1))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PanelNote>
+        {top.sector} had the most trades ({plainPct(top.trades / Math.max(trades, 1))} of them). A result that comes mostly from one sector may be a bet on that sector rather than on the rule.
+      </PanelNote>
     </Panel>
   );
 }

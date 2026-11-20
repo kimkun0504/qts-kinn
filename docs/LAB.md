@@ -191,9 +191,11 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
 - **Summary:** trades, the average and median trade after costs, the share that made money,
   the weekly t (the average of each week's trades over its spread; over 3 is the research's
   bar), years positive, the book's profit, worst drawdown and return on the money tied up.
-- **Overview:** the summary; the book with a switch between its profit, its drawdown and its
-  open positions; the best and worst stocks; profit by month; the spread of trade returns and
-  how trades ended.
+- **Overview:** the summary; the book with a switch between its profit, its drawdown, its
+  Sharpe over the year before each session and its open positions; profit and trades by sector;
+  the best and worst stocks; profit by month; the spread of trade returns and how trades ended.
+  The profit view also gives the book's beta to SPY and the correlation of their daily returns
+  (`beta_spy`, `correlation_spy` in `summary.json`).
   - The profit view shows SPY two ways. *SPY all-in* puts the whole capital in SPY every day.
     *SPY matched* puts in SPY only the money the book had invested that day (open positions
     times the position size), so it is the fair comparison: a book that is a fifth invested

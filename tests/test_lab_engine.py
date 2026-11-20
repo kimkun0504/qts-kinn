@@ -367,3 +367,15 @@ def test_the_factor_report_sorts_returns_by_score():
     few = scores.copy()
     few[:, 5:] = np.nan
     assert metrics.factor_report(few, market, dates, 0, rows - 1, hold, "highest") is None
+
+
+def test_beta_and_correlation_to_spy():
+    from kinn.lab import metrics
+
+    rng = np.random.default_rng(1)
+    market_ret = rng.normal(0, 0.01, 200)
+    spy = 100 * np.cumprod(1 + market_ret)
+    book = 0.5 * market_ret[1:]
+    beta, correlation = metrics._against(book, spy, 1, 199)
+    assert beta == pytest.approx(0.5) and correlation == pytest.approx(1.0)
+    assert metrics._against(book[:10], spy, 1, 10) == (None, None)

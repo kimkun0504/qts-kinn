@@ -134,6 +134,11 @@ def test_a_run_writes_its_results(root, fake):
     assert equity["profit"][-1] == pytest.approx(summary["book_profit"], abs=0.01)
     assert len(equity["dates"]) == len(equity["spy"]) == len(equity["spy_matched"])
     assert equity["spy_matched"][0] == 0.0
+    assert len(equity["rolling_sharpe"]) == len(equity["dates"])
+    assert equity["rolling_sharpe"][0] is None
+    summary = store.result(run_dir, "summary")
+    assert summary["beta_spy"] is None or -5 < summary["beta_spy"] < 5
+    assert summary["correlation_spy"] is None or -1 <= summary["correlation_spy"] <= 1
     path = store.result(run_dir, "path")
     assert path["horizons"][0] == -20 and path["horizons"][-1] >= 40 and path["hold"] == 5
     zero = path["horizons"].index(0)
