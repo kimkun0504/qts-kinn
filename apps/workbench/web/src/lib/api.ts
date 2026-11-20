@@ -261,6 +261,28 @@ export interface RunDetail {
   histogram?: { counts: number[]; edges: number[] };
 }
 
+export interface CompareStats {
+  total: number;
+  sharpe: number | null;
+  worst_drawdown: number;
+}
+
+export interface CompareData {
+  runs: { run_id: string; start: string; end: string }[];
+  dates: string[];
+  curves: number[][];
+  together: number[] | null;
+  overlap: {
+    start: string;
+    end: string;
+    sessions: number;
+    weeks: number;
+    correlation: (number | null)[][];
+    alone: CompareStats[];
+    together: CompareStats;
+  } | null;
+}
+
 export interface Overfitting {
   backtests: number;
   best_run: string;
@@ -641,7 +663,14 @@ export interface Financials {
 
 export interface DataCatalog {
   schema: "data-catalog-1";
-  build: { id: string; created_at: string | null; data_version: string | null; bars_id: string | null; sharadar_snapshot: string | null; panel: { daily_rows?: number; panel_rows?: number; years?: number[]; splits?: Record<string, number> } };
+  build: {
+    id: string;
+    created_at: string | null;
+    data_version: string | null;
+    bars_id: string | null;
+    sharadar_snapshot: string | null;
+    panel: { daily_rows?: number; panel_rows?: number; years?: number[]; splits?: Record<string, number> };
+  };
   builds: { id: string; created_at: string | null; data_version: string | null; bars_id: string | null; current: boolean }[];
   calendar: { first: string | null; last: string | null; sessions: number };
   companies: { total: number; delisted: number; categories: [string, number][]; sectors: [string, number][] };
@@ -711,6 +740,7 @@ export const api = {
   strategies: () => get<StrategyInfo[]>("/api/strategies"),
   info: () => get<{ runs_dir: string }>("/api/info"),
   run: (id: string) => get<RunDetail>(`/api/runs/${encodeURIComponent(id)}`),
+  compare: (ids: string[]) => get<CompareData>(`/api/compare?ids=${encodeURIComponent(ids.join(","))}`),
   board: () => get<Board>("/api/board"),
   studies: () => get<StudyRow[]>("/api/studies"),
   strategy: (name: string) => get<StrategyPageData>(`/api/strategy/${encodeURIComponent(name)}`),
@@ -720,8 +750,7 @@ export const api = {
   ledgers: () => get<LedgerHead[]>("/api/ledgers"),
   data: () => get<DataCatalog>("/api/data"),
   stocks: (query: string) => get<StockHit[]>(`/api/stocks?q=${encodeURIComponent(query)}`),
-  stock: (symbol: string, hint?: string) =>
-    get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
+  stock: (symbol: string, hint?: string) => get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
   closes: (symbols: string[]) => get<ClosesData>(`/api/closes?symbols=${encodeURIComponent(symbols.join(","))}`),
   markets: () => get<MarketsData>("/api/markets"),

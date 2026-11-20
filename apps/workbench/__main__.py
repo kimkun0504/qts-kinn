@@ -126,6 +126,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/runs/"):
             detail = api.run_detail(self.runs_dir, path.rsplit("/", 1)[1])
             return self._json(detail, 200 if detail else 404)
+        if path == "/api/compare":
+            wanted = parse_qs(urlsplit(self.path).query).get("ids", [""])[0].split(",")
+            return self._json(api.compare(self.runs_dir, wanted))
         if path == "/api/board":
             return self._json(record.board(self.runs_dir, strategies_dir()))
         if path == "/api/studies":

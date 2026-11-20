@@ -255,6 +255,66 @@ def _daily_net(run_dir: Path) -> tuple[list, np.ndarray] | None:
     return None
 
 
+MAX_COMPARED = 4
+WEEK = 5  # sessions
+
+
+def _stats(pnl: np.ndarray) -> dict:
+    cum = np.cumsum(pnl)
+    peak = np.maximum.accumulate(np.concatenate([[0.0], cum]))[1:]
+    spread = float(np.std(pnl, ddof=1)) if len(pnl) > 1 else 0.0
+    return {
+        "total": float(cum[-1]) if len(cum) else 0.0,
+        "sharpe": float(np.mean(pnl) / spread * np.sqrt(252)) if spread > 0 else None,
+        "worst_drawdown": float((cum - peak).min()) if len(cum) else 0.0,
+    }
+
+
+def compare(runs_dir: Path, ids: list[str]) -> dict:
+    """Backtests side by side on one calendar: each run's cumulative net profit over every
+    session any of them covers, how their weekly profit moves together over the sessions all
+    of them cover, and what they make together at their own sizes."""
+    found: list[tuple[str, dict[str, float]]] = []
+    for run_id in ids[:MAX_COMPARED]:
+        run_dir = runs_dir / run_id
+        if not run_id or run_dir.resolve().parent != runs_dir.resolve():
+            continue
+        daily = _daily_net(run_dir)
+        if daily:
+            dates, net = daily
+            found.append((run_id, {str(d)[:10]: float(v) for d, v in zip(dates, net, strict=True)}))
+    if not found:
+        return {"runs": [], "dates": [], "curves": [], "together": None, "overlap": None}
+    dates = sorted(set().union(*(set(by) for _, by in found)))
+    pnl = np.array([[by.get(d, 0.0) for d in dates] for _, by in found])
+    index = _thin(len(dates))
+    curves = np.cumsum(pnl, axis=1)
+    out: dict = {
+        "runs": [{"run_id": run_id, "start": min(by), "end": max(by)} for run_id, by in found],
+        "dates": [dates[i] for i in index],
+        "curves": [[round(float(v), 2) for v in curve[index]] for curve in curves],
+        "together": [round(float(v), 2) for v in curves.sum(axis=0)[index]],
+        "overlap": None,
+    }
+    start, end = max(r["start"] for r in out["runs"]), min(r["end"] for r in out["runs"])
+    shared = [i for i, d in enumerate(dates) if start <= d <= end]
+    if len(found) < 2 or len(shared) < 2 * WEEK:
+        return out
+    common = pnl[:, shared]
+    weeks = len(shared) // WEEK
+    weekly = common[:, len(shared) - weeks * WEEK :].reshape(len(found), weeks, WEEK).sum(axis=2)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        matrix = np.corrcoef(weekly)
+    out["overlap"] = {
+        "start": start, "end": end, "sessions": len(shared), "weeks": weeks,
+        "correlation": [[None if not np.isfinite(v) else round(float(v), 3) for v in row]
+                        for row in np.atleast_2d(matrix)],
+        "alone": [_stats(row) for row in common],
+        "together": _stats(common.sum(axis=0)),
+    }  # fmt: skip
+    return out
+
+
 def families(runs_dir: Path) -> list[dict]:
     """Trial counts per family, and what they do to the best result."""
     manifests = registry.read_manifests(runs_dir)

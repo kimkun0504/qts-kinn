@@ -4,10 +4,11 @@ import { RunsTable, runValue } from "../components/RunsTable";
 import { DataTable } from "../components/ui/DataTable";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Panel, PanelNote } from "../components/ui/Panel";
-import type { Metrics, RunDetail, RunRow } from "../lib/api";
+import { api, type CompareData, type Metrics, type RunDetail, type RunRow } from "../lib/api";
 import { DASHES, SERIES } from "../lib/colors";
-import { int, money, num, pct } from "../lib/format";
+import { day, int, money, num, pct } from "../lib/format";
 import { sortRows, useSort } from "../lib/sort";
+import { useLoad } from "../lib/useLoad";
 import { useRuns } from "../lib/useRun";
 
 /** Only backtests can be ticked for comparison, so the metrics here are a backtest's. */
@@ -44,8 +45,76 @@ function Picker({ ids, runs, onToggle }: { ids: string[]; runs: RunRow[]; onTogg
   );
 }
 
+function shade(v: number | null): string {
+  if (v == null) return "transparent";
+  const share = Math.round(Math.min(1, Math.abs(v)) * 60);
+  return `color-mix(in srgb, ${v >= 0 ? "var(--series-1)" : "var(--loss)"} ${share}%, var(--surface))`;
+}
+
+function Together({ data, names }: { data: CompareData; names: string[] }) {
+  const overlap = data.overlap;
+  if (!overlap) return null;
+  const rows = [...overlap.alone.map((s, i) => ({ name: names[i], slot: i, stats: s })), { name: "Together", slot: -1, stats: overlap.together }];
+  return (
+    <Panel title="How they move together" aside={`${day(overlap.start)} to ${day(overlap.end)}, the sessions all of them cover`}>
+      <div className="grid gap-x-8 gap-y-4 px-4 py-4 lg:grid-cols-[auto_minmax(0,1fr)]">
+        <table className="border-collapse text-[13px] tabular-nums">
+          <caption className="pb-2 text-left text-[13px] font-semibold text-ink">Correlation of weekly profit</caption>
+          <thead>
+            <tr>
+              <th />
+              {names.map((_, i) => (
+                <th key={i} className="px-2 pb-1 text-center font-medium text-ink-2">
+                  <span aria-hidden="true" className="mr-1 inline-block size-2 rounded-full" style={{ background: SERIES[i] }} />
+                  {String.fromCharCode(65 + i)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {overlap.correlation.map((row, i) => (
+              <tr key={i}>
+                <th scope="row" className="pr-2 text-left font-medium text-ink-2">
+                  <span aria-hidden="true" className="mr-1 inline-block size-2 rounded-full" style={{ background: SERIES[i] }} />
+                  {String.fromCharCode(65 + i)}
+                </th>
+                {row.map((v, j) => (
+                  <td key={j} className="h-9 w-14 border border-surface text-center" style={{ background: i === j ? "var(--raised)" : shade(v) }}>
+                    {i === j ? "" : v == null ? "–" : num(v, 2)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <DataTable
+          rows={rows}
+          rowKey={(r) => String(r.slot)}
+          columns={[
+            {
+              key: "name",
+              header: "Over the shared sessions",
+              align: "left",
+              strong: true,
+              render: (r) => (r.slot < 0 ? "Together, each at its own size" : `${String.fromCharCode(65 + r.slot)}  ${r.name}`),
+            },
+            { key: "total", header: "Net profit", signed: true, render: (r) => money(r.stats.total) },
+            { key: "sharpe", header: "Sharpe", signed: true, render: (r) => num(r.stats.sharpe, 2) },
+            { key: "dd", header: "Worst drawdown", signed: true, render: (r) => money(r.stats.worst_drawdown) },
+          ]}
+        />
+      </div>
+      <PanelNote>
+        {int(overlap.weeks)} weeks of five sessions. Runs that rarely lose in the same weeks (a correlation near zero or below) make a steadier book together than either alone; two variants of one
+        rule usually move as one.
+      </PanelNote>
+    </Panel>
+  );
+}
+
 export function Compare({ ids, runs, onToggle }: { ids: string[]; runs: RunRow[]; onToggle: (run: RunRow) => void }) {
   const details = useRuns(ids);
+  const { data: together } = useLoad(() => api.compare(ids), `compare-${ids.join(",")}`);
   if (!ids.length)
     return (
       <>
@@ -55,22 +124,27 @@ export function Compare({ ids, runs, onToggle }: { ids: string[]; runs: RunRow[]
     );
   if (!details) return <p className="text-ink-2">Loading the runs…</p>;
   const rows = details.map((d, i) => ({ detail: d, row: runs.find((r) => r.run_id === d.manifest.run_id), slot: i }));
-  const length = details[0].equity?.date.length ?? 0;
-  const same = details.every((d) => d.equity && d.equity.date.length === length && d.equity.date[0] === details[0].equity?.date[0]);
+  const names = rows.map(({ detail }) => `${detail.manifest.strategy}, ${detail.manifest.config}`);
+  const curves = together && together.runs.length === details.length ? together : null;
   return (
     <>
       <Panel title="Cumulative net profit at 1× slippage, dollars">
-        {same && details[0].equity ? (
+        {curves && curves.dates.length ? (
           <LineChart
             title="Cumulative net profit of the selected backtests"
-            labels={details[0].equity.date}
+            labels={curves.dates}
             format={(v) => money(v).replace("+", "")}
-            series={rows.map(({ detail, slot }) => ({ name: detail.manifest.config, values: detail.equity?.cum_net ?? [], color: SERIES[slot], dash: DASHES[slot] }))}
+            series={[
+              ...rows.map(({ detail, slot }) => ({ name: detail.manifest.config, values: curves.curves[slot], color: SERIES[slot], dash: DASHES[slot] })),
+              ...(rows.length > 1 && curves.together ? [{ name: "Together", short: "Together", values: curves.together, color: "var(--ink-2)", dash: "2 2" }] : []),
+            ]}
           />
         ) : (
-          <PanelNote>These runs cover different sessions, so their curves are not overlaid. The table still compares them.</PanelNote>
+          <p className="m-0 px-4 py-6 text-ink-2">Loading the curves…</p>
         )}
+        {rows.length > 1 && curves && !curves.overlap && <PanelNote>These runs share no sessions, so they are drawn on one calendar but not measured together.</PanelNote>}
       </Panel>
+      {curves?.overlap && rows.length > 1 && <Together data={curves} names={names} />}
       <Panel title="Side by side">
         <DataTable
           rows={rows}
