@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useWidth } from "../../lib/useWidth";
 import { niceTicks } from "../../lib/series";
 
 export interface PriceMarker {
@@ -61,7 +62,7 @@ interface PriceChartProps {
   priceText: (value: number) => string;
 }
 
-const W = 960;
+const WIDTH = 960;
 const H = 400;
 const PAD = { left: 8, right: 70, top: 10 };
 const PRICE_BOTTOM = 286;
@@ -101,6 +102,8 @@ function timeLabels(dates: string[], from: number, to: number, x: (i: number) =>
 export function PriceChart({ data, overlays = [], from, to, log, markers, results, filings, span, hover, onHover, onZoom, onReset, priceText }: PriceChartProps) {
   const svg = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<{ start: number; end: number } | null>(null);
+  const [box, measured] = useWidth<HTMLDivElement>();
+  const W = measured ?? WIDTH;
   const n = to - from + 1;
   if (n < 2) return <p className="m-0 py-10 text-center text-ink-2">Not enough prices in this range.</p>;
   const step = (W - PAD.left - PAD.right) / n;
@@ -183,97 +186,114 @@ export function PriceChart({ data, overlays = [], from, to, log, markers, result
   const barWidth = Math.max(1, step * 0.62);
 
   return (
-    <svg
-      ref={svg}
-      viewBox={`0 0 ${W} ${H}`}
-      role="img"
-      aria-label="Daily prices and volume"
-      className="block h-auto w-full touch-none text-[12px] select-none"
-      onMouseMove={(event) => {
-        const i = index(event.clientX);
-        onHover(i);
-        if (drag) setDrag({ ...drag, end: i });
-      }}
-      onMouseLeave={() => {
-        onHover(null);
-        setDrag(null);
-      }}
-      onMouseDown={(event) => {
-        if (event.button === 0) setDrag({ start: index(event.clientX), end: index(event.clientX) });
-      }}
-      onMouseUp={() => {
-        if (drag && Math.abs(drag.end - drag.start) >= 5) onZoom(Math.min(drag.start, drag.end), Math.max(drag.start, drag.end));
-        setDrag(null);
-      }}
-      onDoubleClick={onReset}
-    >
-      {ticks.map((v) => (
-        <g key={v}>
-          <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--chart-grid)" />
-          <text x={W - PAD.right + 8} y={y(v) + 4} fill="var(--ink-2)">
-            {tickText(v)}
-          </text>
-        </g>
-      ))}
-      <line x1={PAD.left} x2={W - PAD.right} y1={VOLUME_BOTTOM} y2={VOLUME_BOTTOM} stroke="var(--chart-axis)" />
-      {span && span[1] >= from && span[0] <= to && (
-        <rect x={x(Math.max(span[0], from)) - step / 2} y={PAD.top} width={Math.max(step, x(Math.min(span[1], to)) - x(Math.max(span[0], from)) + step)} height={VOLUME_BOTTOM - PAD.top} fill="var(--accent)" opacity="0.08" />
-      )}
-      {area && <path d={area} fill="var(--series-1)" opacity="0.07" />}
-      {!candles && <path d={line} fill="none" stroke="var(--series-1)" strokeWidth="1.5" strokeLinejoin="round" />}
-      {bodies.map((b) => {
-        const rising = b.c >= b.o;
-        const colour = rising ? "var(--gain)" : "var(--loss)";
-        const top = y(Math.max(b.o, b.c));
-        return (
-          <g key={b.i}>
-            <line x1={x(b.i)} x2={x(b.i)} y1={y(b.h)} y2={y(b.l)} stroke={colour} />
-            <rect x={x(b.i) - barWidth / 2} y={top} width={barWidth} height={Math.max(1, y(Math.min(b.o, b.c)) - top)} fill={rising ? "var(--surface)" : colour} stroke={colour} />
+    <div ref={box}>
+      <svg
+        ref={svg}
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label="Daily prices and volume"
+        className="block h-auto w-full touch-none text-[12px] select-none"
+        onMouseMove={(event) => {
+          const i = index(event.clientX);
+          onHover(i);
+          if (drag) setDrag({ ...drag, end: i });
+        }}
+        onMouseLeave={() => {
+          onHover(null);
+          setDrag(null);
+        }}
+        onMouseDown={(event) => {
+          if (event.button === 0) setDrag({ start: index(event.clientX), end: index(event.clientX) });
+        }}
+        onMouseUp={() => {
+          if (drag && Math.abs(drag.end - drag.start) >= 5) onZoom(Math.min(drag.start, drag.end), Math.max(drag.start, drag.end));
+          setDrag(null);
+        }}
+        onDoubleClick={onReset}
+      >
+        {ticks.map((v) => (
+          <g key={v}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--chart-grid)" />
+            <text x={W - PAD.right + 8} y={y(v) + 4} fill="var(--ink-2)">
+              {tickText(v)}
+            </text>
           </g>
-        );
-      })}
-      {overlayPaths.map((o) => (
-        <path key={o.name} d={o.d} fill="none" stroke={o.color} strokeWidth="1.4" strokeDasharray="6 3" opacity="0.9" />
-      ))}
-      <path d={up} stroke="var(--gain)" strokeWidth={barWidth} opacity="0.45" />
-      <path d={down} stroke="var(--loss)" strokeWidth={barWidth} opacity="0.45" />
-      {filings
-        .filter((i) => i >= from && i <= to)
-        .map((i) => (
-          <line key={`f${i}`} x1={x(i)} x2={x(i)} y1={PRICE_BOTTOM - 5} y2={PRICE_BOTTOM} stroke="var(--ink-3)" />
         ))}
-      {results
-        .filter((i) => i >= from && i <= to)
-        .map((i) => (
-          <path key={`r${i}`} d={`M${x(i)},${PRICE_BOTTOM - 11}l4,4l-4,4l-4,-4z`} fill="var(--series-4)" />
-        ))}
-      {markers
-        .filter((m) => m.i >= from && m.i <= to)
-        .map((m) => {
-          const colour = m.good == null ? "var(--ink)" : m.good ? "var(--gain)" : "var(--loss)";
-          const px = x(m.i);
-          const py = y(m.price);
-          const d = m.kind === "entry" ? `M${px},${py + 2}l5,9h-10z` : `M${px},${py - 2}l5,-9h-10z`;
-          return <path key={m.key} d={d} fill={colour} stroke="var(--surface)" strokeWidth="1" />;
+        <line x1={PAD.left} x2={W - PAD.right} y1={VOLUME_BOTTOM} y2={VOLUME_BOTTOM} stroke="var(--chart-axis)" />
+        {span && span[1] >= from && span[0] <= to && (
+          <rect
+            x={x(Math.max(span[0], from)) - step / 2}
+            y={PAD.top}
+            width={Math.max(step, x(Math.min(span[1], to)) - x(Math.max(span[0], from)) + step)}
+            height={VOLUME_BOTTOM - PAD.top}
+            fill="var(--accent)"
+            opacity="0.08"
+          />
+        )}
+        {area && <path d={area} fill="var(--series-1)" opacity="0.07" />}
+        {!candles && <path d={line} fill="none" stroke="var(--series-1)" strokeWidth="1.5" strokeLinejoin="round" />}
+        {bodies.map((b) => {
+          const rising = b.c >= b.o;
+          const colour = rising ? "var(--gain)" : "var(--loss)";
+          const top = y(Math.max(b.o, b.c));
+          return (
+            <g key={b.i}>
+              <line x1={x(b.i)} x2={x(b.i)} y1={y(b.h)} y2={y(b.l)} stroke={colour} />
+              <rect x={x(b.i) - barWidth / 2} y={top} width={barWidth} height={Math.max(1, y(Math.min(b.o, b.c)) - top)} fill={rising ? "var(--surface)" : colour} stroke={colour} />
+            </g>
+          );
         })}
-      {labels.map((l) => (
-        <text key={l.i} x={x(l.i)} y={H - 18} textAnchor="middle" fill="var(--ink-2)">
-          {l.text}
-        </text>
-      ))}
-      {shown != null && data.close[shown] != null && (
-        <g pointerEvents="none">
-          <line x1={x(shown)} x2={x(shown)} y1={PAD.top} y2={VOLUME_BOTTOM} stroke="var(--chart-axis)" strokeDasharray="3 3" />
-          <line x1={PAD.left} x2={W - PAD.right} y1={y(data.close[shown] as number)} y2={y(data.close[shown] as number)} stroke="var(--chart-axis)" strokeDasharray="3 3" />
-          <rect x={W - PAD.right + 2} y={y(data.close[shown] as number) - 10} width={PAD.right - 2} height={20} rx="3" fill="var(--ink)" />
-          <text x={W - PAD.right + 8} y={y(data.close[shown] as number) + 4} fill="var(--surface)" fontWeight="600">
-            {priceText(data.close[shown] as number)}
+        {overlayPaths.map((o) => (
+          <path key={o.name} d={o.d} fill="none" stroke={o.color} strokeWidth="1.4" strokeDasharray="6 3" opacity="0.9" />
+        ))}
+        <path d={up} stroke="var(--gain)" strokeWidth={barWidth} opacity="0.45" />
+        <path d={down} stroke="var(--loss)" strokeWidth={barWidth} opacity="0.45" />
+        {filings
+          .filter((i) => i >= from && i <= to)
+          .map((i) => (
+            <line key={`f${i}`} x1={x(i)} x2={x(i)} y1={PRICE_BOTTOM - 5} y2={PRICE_BOTTOM} stroke="var(--ink-3)" />
+          ))}
+        {results
+          .filter((i) => i >= from && i <= to)
+          .map((i) => (
+            <path key={`r${i}`} d={`M${x(i)},${PRICE_BOTTOM - 11}l4,4l-4,4l-4,-4z`} fill="var(--series-4)" />
+          ))}
+        {markers
+          .filter((m) => m.i >= from && m.i <= to)
+          .map((m) => {
+            const colour = m.good == null ? "var(--ink)" : m.good ? "var(--gain)" : "var(--loss)";
+            const px = x(m.i);
+            const py = y(m.price);
+            const d = m.kind === "entry" ? `M${px},${py + 2}l5,9h-10z` : `M${px},${py - 2}l5,-9h-10z`;
+            return <path key={m.key} d={d} fill={colour} stroke="var(--surface)" strokeWidth="1" />;
+          })}
+        {labels.map((l) => (
+          <text key={l.i} x={Math.min(W - PAD.right - 16, Math.max(PAD.left + 16, x(l.i)))} y={H - 18} textAnchor="middle" fill="var(--ink-2)">
+            {l.text}
           </text>
-        </g>
-      )}
-      {drag && Math.abs(drag.end - drag.start) >= 1 && (
-        <rect x={x(Math.min(drag.start, drag.end)) - step / 2} y={PAD.top} width={Math.abs(x(drag.end) - x(drag.start)) + step} height={VOLUME_BOTTOM - PAD.top} fill="var(--accent)" opacity="0.12" pointerEvents="none" />
-      )}
-    </svg>
+        ))}
+        {shown != null && data.close[shown] != null && (
+          <g pointerEvents="none">
+            <line x1={x(shown)} x2={x(shown)} y1={PAD.top} y2={VOLUME_BOTTOM} stroke="var(--chart-axis)" strokeDasharray="3 3" />
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(data.close[shown] as number)} y2={y(data.close[shown] as number)} stroke="var(--chart-axis)" strokeDasharray="3 3" />
+            <rect x={W - PAD.right + 2} y={y(data.close[shown] as number) - 10} width={PAD.right - 2} height={20} rx="3" fill="var(--ink)" />
+            <text x={W - PAD.right + 8} y={y(data.close[shown] as number) + 4} fill="var(--surface)" fontWeight="600">
+              {priceText(data.close[shown] as number)}
+            </text>
+          </g>
+        )}
+        {drag && Math.abs(drag.end - drag.start) >= 1 && (
+          <rect
+            x={x(Math.min(drag.start, drag.end)) - step / 2}
+            y={PAD.top}
+            width={Math.abs(x(drag.end) - x(drag.start)) + step}
+            height={VOLUME_BOTTOM - PAD.top}
+            fill="var(--accent)"
+            opacity="0.12"
+            pointerEvents="none"
+          />
+        )}
+      </svg>
+    </div>
   );
 }
