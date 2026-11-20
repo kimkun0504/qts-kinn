@@ -13,6 +13,7 @@ export const JUMPS: { key: string; page: Page; label: string }[] = [
   { key: "r", page: "runs", label: "Runs" },
   { key: "c", page: "compare", label: "Compare" },
   { key: "d", page: "data", label: "Data" },
+  { key: "x", page: "costs", label: "Trading costs" },
 ];
 
 const KEYS: [string[], string][] = [
@@ -20,6 +21,8 @@ const KEYS: [string[], string][] = [
   [["/"], "Search everything"],
   [["?"], "Show these shortcuts"],
   [["Esc"], "Close a dialog"],
+  [["↑", "↓"], "Move between the rows of a table"],
+  [["Enter"], "Open the row"],
 ];
 
 function Keys({ keys }: { keys: string[] }) {
