@@ -13,7 +13,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 
 | Page | Shows |
 |---|---|
-| Home | what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, the leads on paper, the latest Lab runs, and the first ideas tested with their verdicts (all of them on request) |
+| Home | what is new since the Workbench was last opened (runs by agent and kind, Lab runs finished), what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, the leads on paper, the latest Lab runs, and the first ideas tested with their verdicts (all of them on request) |
 | Strategies | how many ideas were tested, passed, are in test or closed, and the trials charged; every idea with its verdict; each opens a strategy page |
 | A strategy | Results (profit across its periods, the holdout marked, years, months, costs, weaknesses, the evidence in order), Trades, Paper book, Report (REPORT.md and HYPOTHESIS.md), Studies, Runs |
 | Markets | index, sector, bond, commodity, foreign and volatility funds on the last session with their day, week, month, three months, year to date, year and three years; any four of them charted together over a month to three years; how they moved together over the last year (correlation of daily changes); and how many US stocks rose and fell each day, with the running total |
