@@ -112,3 +112,7 @@ applies the holdout date guard and is tested against the synthetic build.
     SPY, profit by sector, and the trades against random picks (random stocks on the same days,
     the same stocks on random days; 500 draws, all held the same simple way) so a run shows
     whether it beats chance at picking stocks, moments, or neither. A Lab run prints as a report.
+17. **A screen tested in the Lab** (`apps/workbench/screen_lab.py`, POST `/api/lab/from-screen`):
+    the Screener's filters become a new algorithm's `signal`, built from the Lab's point-in-time
+    fields, so a screen picked today can be tested on every past session without the hindsight
+    of today's list. The Lab gains **Format** (ruff's formatter over the text, never running it).

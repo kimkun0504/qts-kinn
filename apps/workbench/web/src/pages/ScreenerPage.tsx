@@ -9,6 +9,7 @@ import { Panel } from "../components/ui/Panel";
 import { Segmented } from "../components/ui/Segmented";
 import { StatStrip } from "../components/ui/StatStrip";
 import { api, type ScreenAhead } from "../lib/api";
+import { lab } from "../lib/lab";
 import { compact, day, int, num, pct, plainPct, price } from "../lib/format";
 import { href, type Route } from "../lib/route";
 import { bounds, type Condition, decode, EMPTY, encode, FIELD, FIELDS, KINDS, matcher, median, NEXT, rowsOf, type Screen, type ScreenKey, type ScreenRow, STARTS } from "../lib/screen";
@@ -293,6 +294,7 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
   const { data, error } = useLoad(() => api.screen(on), on ?? "last");
   const all = useMemo(() => (data ? rowsOf(data) : []), [data]);
   const encoded = encode(screen);
+  const [labError, setLabError] = useState<string | null>(null);
 
   useEffect(() => {
     window.history.replaceState(null, "", href(screenerRoute(on, encoded)));
@@ -364,6 +366,15 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
       ],
     });
   const current = saved.find((s) => s.query === encoded);
+  const toLab = () => {
+    setLabError(null);
+    lab
+      .fromScreen(encoded, current?.name ?? "screen")
+      .then(({ name }) => {
+        window.location.hash = href({ page: "lab", name }).replace(/^#/, "");
+      })
+      .catch((e: Error) => setLabError(e.message));
+  };
   const start = (value: string) => {
     if (value.startsWith("start:")) setScreen(STARTS[Number(value.slice(6))].screen);
     if (value.startsWith("saved:")) setScreen(decode(saved[Number(value.slice(6))]?.query));
@@ -513,6 +524,17 @@ export function ScreenerPage({ on, query, onDate }: ScreenerPageProps) {
               </button>
             )}
             <div className="flex-1" />
+            {encoded && (
+              <button
+                type="button"
+                onClick={toLab}
+                title="Make a Lab algorithm that applies this screen on every session"
+                className="cursor-pointer text-[13px] font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                Test it in the Lab
+              </button>
+            )}
+            {labError && <span className="text-[13px] text-neg">{labError}</span>}
             {encoded && (
               <button
                 type="button"

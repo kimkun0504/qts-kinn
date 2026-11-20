@@ -17,6 +17,7 @@ from pathlib import Path
 
 import duckdb
 
+from apps.workbench import screen_lab
 from kinn.lab import data as lab_data
 from kinn.lab import store
 from kinn.lab.check import as_dicts, check
@@ -117,6 +118,20 @@ def format_code(body: dict) -> Response:
         reason = next((line for line in done.stderr.splitlines() if line.strip()), "")
         return _error(400, f"The code could not be formatted: {reason}")
     return 200, {"code": done.stdout}
+
+
+def from_screen(root: Path, body: dict) -> Response:
+    """Make a new algorithm from a Screener screen (its address query) and return its name."""
+    query, title = body.get("query"), str(body.get("title") or "screen")[:80]
+    if not isinstance(query, str) or len(query) > 4_000:
+        return _error(400, "Send the screen as its address query.")
+    try:
+        code = screen_lab.algorithm(query, title)
+        name = screen_lab.name_for(title, {a["name"] for a in store.algorithms(root)})
+        store.save_algorithm(root, name, code)
+    except (screen_lab.ScreenError, store.LabError) as error:
+        return _error(400, str(error))
+    return 201, {"name": name}
 
 
 def library(root: Path) -> Response:
@@ -411,6 +426,8 @@ def route(method: str, parts: list[str], query: dict, body: dict | None, root: P
         return delete_module(root, parts[1])
     elif method == "POST" and parts == ["check"]:
         return lint(root, body or {})
+    elif method == "POST" and parts == ["from-screen"]:
+        return from_screen(root, body or {})
     elif method == "POST" and parts == ["format"]:
         return format_code(body or {})
     elif method == "DELETE" and head == "algorithms" and len(parts) == 2:

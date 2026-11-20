@@ -105,6 +105,14 @@ found by its latest one. Comparisons against "the universe" then compare against
 stocks. A list chosen today already knows which companies lasted and grew, so the run page marks
 such a run *Hand-picked stocks*: it describes those stocks and is no evidence for the rule.
 
+**From a screen.** *Test it in the Lab* on the Screener page makes a new algorithm,
+`screen_<name>`, whose `signal` applies the screen's ranges, sector, industry and exchange on every
+session with the Lab's fields (returns from `adj_close`, valuations from the market value at the
+previous close over the trailing year filed before the session) and holds 21 sessions. Where the
+screener's figure and the Lab's differ (revenue growth over 252 sessions rather than against the
+filing a year earlier, volatility from simple returns), the code says what it computes. Its text
+search and kind of stock are left to the universe settings.
+
 ## The rules every algorithm is held to
 
 - **Entry:** the open of the session after the signal, if the stock is in the universe that

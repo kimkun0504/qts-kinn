@@ -11,6 +11,8 @@ import time
 import pandas as pd
 import pytest
 
+from apps.workbench import lab as lab_api
+from apps.workbench import screen_lab
 from kinn.lab import runner, store
 from tests.lab_fake import standard
 
@@ -499,3 +501,25 @@ def test_the_command_line_reads_a_sweep():
     assert sweep_from("exit.stop_loss=none,0.05") == {"field": "exit.stop_loss",
                                                        "values": [None, 0.05]}  # fmt: skip
     assert sweep_from(None) is None
+
+
+def test_a_screen_becomes_an_algorithm_that_runs(root, fake):
+    query = "sector=Technology&f=market_cap:1M:&f=ret_1m:-50:&f=ps:0:100000&f=close:1:"
+    code = screen_lab.algorithm(query, "Cheap tech")
+    assert 'passes &= data.sector == "Technology"' in code and "(ps <= 100000)" in code
+    run_dir = go(root, fake, name="screen_cheap_tech", code=code)
+    assert store.status(run_dir)["state"] == "complete", store.status(run_dir).get("error")
+    summary = store.result(run_dir, "summary")
+    assert summary["trades"] > 0 and summary["lookahead"]["passed"]
+
+    status, payload = lab_api.route(
+        "POST", ["from-screen"], {}, {"query": query, "title": "Cheap tech"}, root
+    )
+    assert status == 201 and payload["name"] == "screen_cheap_tech_2"
+    assert store.read_algorithm(root, payload["name"]) == code
+    status, payload = lab_api.route(
+        "POST", ["from-screen"], {}, {"query": "q=apple", "title": "x"}, root
+    )
+    assert status == 400 and "no filter" in payload["error"]
+    with pytest.raises(screen_lab.ScreenError, match="not a number"):
+        screen_lab.algorithm("f=pe:cheap:", "x")
