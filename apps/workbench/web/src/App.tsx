@@ -249,7 +249,7 @@ export default function App() {
       group: "Studies",
       label: s.name,
       hint: s.strategy_title,
-      keywords: `${s.strategy} ${s.result ?? ""}`,
+      keywords: s.strategy,
       href: `#/strategy/${encodeURIComponent(s.strategy)}/studies`,
     })),
     { id: "action-theme", group: "Actions", label: theme === "dark" ? "Light theme" : "Dark theme", run: () => toggleTheme() },
