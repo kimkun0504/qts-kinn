@@ -114,7 +114,7 @@ function Together({ data, names }: { data: CompareData; names: string[] }) {
 
 export function Compare({ ids, runs, onToggle }: { ids: string[]; runs: RunRow[]; onToggle: (run: RunRow) => void }) {
   const details = useRuns(ids);
-  const { data: together } = useLoad(() => api.compare(ids), `compare-${ids.join(",")}`);
+  const { data: together } = useLoad(() => (ids.length ? api.compare(ids) : Promise.resolve(null)), `compare-${ids.join(",")}`);
   if (!ids.length)
     return (
       <>
