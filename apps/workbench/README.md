@@ -84,13 +84,17 @@ worked out: [docs/LAB.md](../../docs/LAB.md).
     colours (`--series-1`, `--gain`, `--loss`) were checked for colour-blind separation in
     both themes; check any replacement the same way.
   - `src/components/ui/`: the building blocks (Card, Stat, Panel, StatStrip, DataTable, Badge,
-    VerdictBadge, Button, Segmented, EmptyState). **Styling lives in these components.** Pages
-    compose them and add layout only.
-  - `src/components/charts/`: ProfitChart, YearBars, MonthGrid, LineChart and Histogram, drawn
-    as SVG.
+    VerdictBadge, Button, Segmented, Tabs, Bars, EmptyState). **Styling lives in these
+    components.** Pages compose them and add layout only.
+  - `src/components/charts/`: ProfitChart, YearBars, MonthGrid, LineChart, BarChart,
+    PriceChart, DivergingBars, Correlation and Histogram, drawn as SVG. LineChart, BarChart and
+    PriceChart measure the width they are given (`lib/useWidth.ts`) and draw at it, so their text
+    is the same size on a phone and a wide screen.
   - `src/components/CodeEditor.tsx`: the Lab's Python editor (CodeMirror 6, coloured from the
     tokens). It loads with the Lab page only, in a chunk of its own.
   - `src/components/layout/AppShell.tsx`: the side rail and top bar.
   - `src/pages/`: one file per page. `src/lib/route.ts` maps the address (`#/strategy/<name>`)
     to a page, so pages can be linked and the back button works.
-  - `src/lib/`: API types, number formatting, data hooks.
+  - `src/lib/`: API types, number formatting, data hooks; `screen.ts` (the screener's fields,
+    filters and the screen in the address), `risk.ts` (beta, volatility, falls, months),
+    `watchlist.ts` (kept in the browser's storage).
