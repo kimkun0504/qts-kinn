@@ -55,6 +55,7 @@ interface PriceChartProps {
   results: number[];
   filings: number[];
   span: [number, number] | null;
+  pinned?: { i: number; label: string } | null;
   hover: number | null;
   onHover: (i: number | null) => void;
   onZoom: (from: number, to: number) => void;
@@ -99,7 +100,7 @@ function timeLabels(dates: string[], from: number, to: number, x: (i: number) =>
   return out;
 }
 
-export function PriceChart({ data, overlays = [], from, to, log, markers, results, filings, span, hover, onHover, onZoom, onReset, priceText }: PriceChartProps) {
+export function PriceChart({ data, overlays = [], from, to, log, markers, results, filings, span, pinned, hover, onHover, onZoom, onReset, priceText }: PriceChartProps) {
   const svg = useRef<SVGSVGElement>(null);
   const [drag, setDrag] = useState<{ start: number; end: number } | null>(null);
   const [box, measured] = useWidth<HTMLDivElement>();
@@ -220,6 +221,14 @@ export function PriceChart({ data, overlays = [], from, to, log, markers, result
           </g>
         ))}
         <line x1={PAD.left} x2={W - PAD.right} y1={VOLUME_BOTTOM} y2={VOLUME_BOTTOM} stroke="var(--chart-axis)" />
+        {pinned && pinned.i >= from && pinned.i <= to && (
+          <g>
+            <line x1={x(pinned.i)} x2={x(pinned.i)} y1={PAD.top} y2={VOLUME_BOTTOM} stroke="var(--ink-2)" strokeDasharray="5 4" />
+            <text x={x(pinned.i) + (x(pinned.i) > W / 2 ? -6 : 6)} y={PAD.top + 12} textAnchor={x(pinned.i) > W / 2 ? "end" : "start"} fill="var(--ink-2)">
+              {pinned.label}
+            </text>
+          </g>
+        )}
         {span && span[1] >= from && span[0] <= to && (
           <rect
             x={x(Math.max(span[0], from)) - step / 2}

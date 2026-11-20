@@ -259,7 +259,9 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
   const data = useMemo(() => adjust(page), [page]);
   const n = data.date.length;
   const [range, setRange] = useState<Range>("all");
-  const [view, setView] = useState<[number, number]>([0, Math.max(0, n - 1)]);
+  const found = on ? locate(data.date, on) : null;
+  const pinnedAt = found != null && found < n - 1 ? found : null;
+  const [view, setView] = useState<[number, number]>(pinnedAt != null && n > 504 ? [Math.max(0, pinnedAt - 252), Math.min(n - 1, pinnedAt + 252)] : [0, Math.max(0, n - 1)]);
   const [log, setLog] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
   const [source, setSource] = useState<Source>("all");
@@ -423,6 +425,7 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
           results={events ? resultsAt : []}
           filings={events ? filingsAt : []}
           span={span}
+          pinned={pinnedAt != null ? { i: pinnedAt, label: day(data.date[pinnedAt]) } : null}
           hover={hover}
           onHover={setHover}
           onZoom={(a, b) => {
