@@ -148,6 +148,72 @@ function NewModule({ taken, onCreate, onCancel }: { taken: string[]; onCreate: (
   );
 }
 
+export function queueRows(runs: RunListRow[]): RunListRow[] {
+  const live = runs.filter((r) => LIVE.includes(r.state));
+  return [...live].sort((a, b) => ((a.state === "waiting") === (b.state === "waiting") ? a.created_at.localeCompare(b.created_at) : a.state === "waiting" ? 1 : -1));
+}
+
+function RunQueue({ onOpen }: { onOpen: (name: string, runId?: string) => void }) {
+  const [runs, setRuns] = useState<RunListRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    let timer = 0;
+    const poll = () =>
+      lab
+        .runs()
+        .then((rows) => {
+          if (!live) return;
+          setRuns(rows);
+          timer = window.setTimeout(poll, rows.some((r) => LIVE.includes(r.state)) ? 2000 : 15000);
+        })
+        .catch(() => live && (timer = window.setTimeout(poll, 15000)));
+    poll();
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, []);
+  const rows = queueRows(runs);
+  if (!rows.length) return null;
+  const cancel = (run: RunListRow) =>
+    lab
+      .cancel(run.run_id)
+      .then(() => setRuns((current) => current.map((r) => (r.run_id === run.run_id ? { ...r, state: "cancelled" } : r))))
+      .catch((e: Error) => setError(e.message));
+  return (
+    <Panel title="Going and waiting" aside={error ?? undefined}>
+      <DataTable
+        rows={rows}
+        rowKey={(r) => r.run_id}
+        onRowClick={(r) => onOpen(r.algorithm, r.run_id)}
+        columns={[
+          { key: "place", header: "", render: (r) => (r.state === "waiting" ? `${rows.filter((x) => x.state === "waiting").indexOf(r) + 1}` : "now") },
+          { key: "algorithm", header: "Algorithm", align: "left", strong: true, render: (r) => r.algorithm },
+          { key: "stage", header: "Where it is", align: "left", muted: true, render: (r) => r.stage ?? r.state },
+          { key: "created", header: "Started", muted: true, render: (r) => when(r.created_at) },
+          {
+            key: "cancel",
+            header: "",
+            render: (r) => (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  cancel(r);
+                }}
+                className="cursor-pointer text-[13px] font-medium text-ink-2 hover:text-neg focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                Cancel
+              </button>
+            ),
+          },
+        ]}
+      />
+    </Panel>
+  );
+}
+
 function LabIndex({
   algorithms,
   templates,
@@ -160,7 +226,7 @@ function LabIndex({
   algorithms: AlgorithmRow[];
   templates: Template[];
   modules: ModuleRow[];
-  onOpen: (name: string) => void;
+  onOpen: (name: string, runId?: string) => void;
   onCreate: (name: string, code: string) => Promise<void>;
   onOpenModule: (name: string) => void;
   onCreateModule: (name: string) => Promise<void>;
@@ -176,6 +242,7 @@ function LabIndex({
   };
   return (
     <div className="flex flex-col gap-5">
+      <RunQueue onOpen={onOpen} />
       <Panel
         title="Your algorithms"
         aside={
@@ -803,7 +870,7 @@ export function Lab({ name, runId, onOpen }: LabProps) {
         algorithms={algorithms}
         templates={templates}
         modules={modules}
-        onOpen={(next) => onOpen(next, undefined)}
+        onOpen={(next, run) => onOpen(next, run)}
         onCreate={create}
         onOpenModule={(module) => onOpen("library", module)}
         onCreateModule={createModule}

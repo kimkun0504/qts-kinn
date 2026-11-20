@@ -22,29 +22,77 @@ const DEFAULTS: LabSettings = {
   book: { position_size: 2000, max_positions: 20 },
 };
 const RUN = "20261118T190102Z_two_up_1a2b3c4d";
-const CODE = 'def signal(data):\n    return data.returns > 0\n';
+const CODE = "def signal(data):\n    return data.returns > 0\n";
 const stock = (ticker: string, profit: number): StockRow => ({
-  ticker, name: `${ticker} Inc`, sector: "Energy", trades: 2, wins: profit > 0 ? 2 : 0, win_rate: profit > 0 ? 1 : 0, mean_net: profit / 4000,
-  total_net: profit / 2000, profit, book_trades: 2, book_profit: profit, mean_over: 0, best: 0.1, worst: -0.1, last_entry: "2015-06-01",
+  ticker,
+  name: `${ticker} Inc`,
+  sector: "Energy",
+  trades: 2,
+  wins: profit > 0 ? 2 : 0,
+  win_rate: profit > 0 ? 1 : 0,
+  mean_net: profit / 4000,
+  total_net: profit / 2000,
+  profit,
+  book_trades: 2,
+  book_profit: profit,
+  mean_over: 0,
+  best: 0.1,
+  worst: -0.1,
+  last_entry: "2015-06-01",
 });
 const detail: RunDetail = {
   run_id: RUN,
   status: { state: "complete", stage: "Done", progress: 1 },
   manifest: { algorithm: "two_up", description: "", created_at: "2026-11-18T19:01:02+00:00", code_sha256: "a".repeat(64), data_build_id: "b1" },
   summary: {
-    trades: 4, headline: "4 trades, +1.00% a trade after costs", lookahead: { passed: false, checked: ["2015-03-02"], detail: "signal(data) changed when the data was cut off" },
-    mean_net: 0.01, mean_net_2x: -0.002, fragile: true, win_rate: 0.5, stocks: 2, taken: 4, skipped: 0, book_profit: 80, capital: 40000, exits: { hold: 4 },
-    histogram: { edges: [-0.5, 0, 0.5], counts: [1, 3] }, settings: DEFAULTS, trial_number: 1,
+    trades: 4,
+    headline: "4 trades, +1.00% a trade after costs",
+    lookahead: { passed: false, checked: ["2015-03-02"], detail: "signal(data) changed when the data was cut off" },
+    mean_net: 0.01,
+    mean_net_2x: -0.002,
+    fragile: true,
+    win_rate: 0.5,
+    stocks: 2,
+    taken: 4,
+    skipped: 0,
+    book_profit: 80,
+    capital: 40000,
+    exits: { hold: 4 },
+    histogram: { edges: [-0.5, 0, 0.5], counts: [1, 3] },
+    settings: DEFAULTS,
+    trial_number: 1,
   },
 };
 const routes: Record<string, unknown> = {
-  "/api/lab/meta": { fields: [{ name: "close", description: "The close", known: "that day" }], periods: [{ name: "search", start: "2010-01-01", end: "2017-12-31", label: "2010–2017 (search years)" }], defaults: DEFAULTS, last_entry: "2023-10-13", max_hold: 250, max_code: 200000, active_run: null, folder: "/x/lab" },
+  "/api/lab/meta": {
+    fields: [{ name: "close", description: "The close", known: "that day" }],
+    periods: [{ name: "search", start: "2010-01-01", end: "2017-12-31", label: "2010–2017 (search years)" }],
+    defaults: DEFAULTS,
+    last_entry: "2023-10-13",
+    max_hold: 250,
+    max_code: 200000,
+    active_run: null,
+    folder: "/x/lab",
+  },
   "/api/lab/templates": [],
   "/api/lab/algorithms": [{ name: "two_up", description: "Two up days", updated: "2026-11-18T19:00:00Z", runs: 1, trials: 1, last_run: null }],
   "/api/lab/algorithms/two_up": { name: "two_up", code: CODE, description: "", settings_in_code: null },
   "/api/lab/algorithms/two_up/history": [{ version: "20261118T204100000000Z", saved_at: "2026-11-18T20:41:00+00:00", lines: 2, characters: 40, first_line: "def signal(data): # the old one" }],
   "/api/lab/algorithms/two_up/history/20261118T204100000000Z": { version: "20261118T204100000000Z", code: "def signal(data): # the old one\n    return data.close > 0\n" },
-  "/api/lab/runs?algorithm=two_up": [{ run_id: RUN, algorithm: "two_up", description: "", created_at: "2026-11-18T19:01:02+00:00", state: "complete", stage: "Done", error: null, trial: true, period: "2010–2017", headline: "4 trades" }],
+  "/api/lab/runs?algorithm=two_up": [
+    {
+      run_id: RUN,
+      algorithm: "two_up",
+      description: "",
+      created_at: "2026-11-18T19:01:02+00:00",
+      state: "complete",
+      stage: "Done",
+      error: null,
+      trial: true,
+      period: "2010–2017",
+      headline: "4 trades",
+    },
+  ],
   [`/api/lab/runs/${RUN}`]: detail,
   [`/api/lab/runs/${RUN}/stocks`]: [stock("WIN", 120), stock("LOSE", -40)],
   [`/api/lab/runs/${RUN}/equity`]: { dates: ["2015-01-02", "2015-01-05"], profit: [0, 80], drawdown: [0, 0], spy: [0, 10], positions: [1, 1], capital: 40000 },
@@ -56,16 +104,19 @@ beforeEach(() => {
   calls = [];
   findings = [];
   localStorage.clear();
-  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
-    calls.push({ url, init });
-    if (url === "/api/lab/check") return new Response(JSON.stringify({ findings }));
-    if (url === "/api/lab/library") return new Response(JSON.stringify([]));
-    if (url.includes("/trades?")) return new Response(JSON.stringify({ total: 1, offset: 0, limit: 100, rows: [] }));
-    if (url === "/api/lab/session") return new Response(JSON.stringify({ token: "tok" }));
-    if (init?.method === "POST") return new Response(JSON.stringify({ run_id: RUN, status: { state: "queued" } }), { status: 202 });
-    const found = routes[url];
-    return found === undefined ? new Response(JSON.stringify({ error: "no" }), { status: 404 }) : new Response(JSON.stringify(found));
-  }));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push({ url, init });
+      if (url === "/api/lab/check") return new Response(JSON.stringify({ findings }));
+      if (url === "/api/lab/library") return new Response(JSON.stringify([]));
+      if (url.includes("/trades?")) return new Response(JSON.stringify({ total: 1, offset: 0, limit: 100, rows: [] }));
+      if (url === "/api/lab/session") return new Response(JSON.stringify({ token: "tok" }));
+      if (init?.method === "POST") return new Response(JSON.stringify({ run_id: RUN, status: { state: "queued" } }), { status: 202 });
+      const found = routes[url];
+      return found === undefined ? new Response(JSON.stringify({ error: "no" }), { status: 404 }) : new Response(JSON.stringify(found));
+    }),
+  );
 });
 
 describe("the Lab", () => {
@@ -167,5 +218,15 @@ describe("the Lab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run" }));
     expect(await screen.findByText("Hold: from 1 to 250.")).toBeTruthy();
     expect(calls.some((c) => c.init?.method === "POST")).toBe(false);
+  });
+});
+
+describe("the run queue", () => {
+  it("lists the run going first, then the waiting runs oldest first", async () => {
+    const { queueRows } = await import("./Lab");
+    const row = (run_id: string, state: string, created_at: string) =>
+      ({ run_id, state, created_at, algorithm: "a", description: "", stage: null, error: null, trial: false, period: null, headline: null }) as never;
+    const rows = queueRows([row("w2", "waiting", "2026-11-19T03:00"), row("done", "complete", "2026-11-19T00:00"), row("w1", "waiting", "2026-11-19T02:00"), row("go", "running", "2026-11-19T01:00")]);
+    expect(rows.map((r) => r.run_id)).toEqual(["go", "w1", "w2"]);
   });
 });
