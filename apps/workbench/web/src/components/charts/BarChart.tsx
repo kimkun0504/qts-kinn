@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { niceTicks } from "../../lib/series";
+import { fitted, useWidth } from "../../lib/useWidth";
 
 interface BarChartProps {
   title: string;
@@ -15,8 +16,10 @@ interface BarChartProps {
 
 const PAD = { left: 64, right: 16, top: 14, bottom: 30 };
 
-export function BarChart({ title, labels, values, format, marked = [], height = 220, width: W = 780, labelEvery = 1, neutral = false }: BarChartProps) {
+export function BarChart({ title, labels, values, format, marked = [], height: designed = 220, width: reference = 780, labelEvery = 1, neutral = false }: BarChartProps) {
   const [hover, setHover] = useState<number | null>(null);
+  const [box, measured] = useWidth<HTMLDivElement>();
+  const { width: W, height } = fitted(measured, reference, designed);
   const finite = values.filter((v): v is number => v != null && Number.isFinite(v));
   if (!finite.length) return <p className="m-0 py-6 text-ink-2">Nothing to show.</p>;
   const low = Math.min(0, ...finite);
@@ -26,9 +29,11 @@ export function BarChart({ title, labels, values, format, marked = [], height = 
   const hi = Math.max(high, ticks[ticks.length - 1]);
   const y = (v: number) => PAD.top + (height - PAD.top - PAD.bottom) * (1 - (v - lo) / (hi - lo || 1));
   const step = (W - PAD.left - PAD.right) / values.length;
+  const longest = Math.max(1, ...labels.map((l) => l.length));
+  const every = Math.max(labelEvery, Math.ceil((longest * 7 + 10) / step));
   const width = Math.max(4, step * 0.64);
   return (
-    <div className="relative">
+    <div ref={box} className="relative">
       <svg viewBox={`0 0 ${W} ${height}`} role="img" aria-label={title} className="block h-auto w-full text-[12px]" onMouseLeave={() => setHover(null)}>
         {ticks.map((v) => (
           <g key={v}>
@@ -57,7 +62,7 @@ export function BarChart({ title, labels, values, format, marked = [], height = 
                 />
               )}
               <text x={x + width / 2} y={height - 10} textAnchor="middle" fill={marked.includes(i) ? "var(--ink)" : "var(--ink-2)"} fontWeight={marked.includes(i) ? 600 : 400}>
-                {(values.length - 1 - i) % labelEvery === 0 ? labels[i] : ""}
+                {(values.length - 1 - i) % every === 0 ? labels[i] : ""}
               </text>
             </g>
           );

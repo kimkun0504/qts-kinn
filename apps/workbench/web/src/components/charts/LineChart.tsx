@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { niceTicks } from "../../lib/series";
+import { fitted, useWidth } from "../../lib/useWidth";
 
 export interface Series {
   name: string;
@@ -28,16 +29,20 @@ interface LineChartProps {
 const BASE_PAD = { left: 74, right: 136, top: 12, bottom: 32 };
 
 /** Lines on one shared axis, with direct end labels, a legend and a hover readout. */
-export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, labelAt, tickText, marks = [], caption, width: W = 780 }: LineChartProps) {
+export function LineChart({ title, labels, series, format, band, height: designed = 260, everyLabel = false, labelAt, tickText, marks = [], caption, width: reference = 780 }: LineChartProps) {
   const [hover, setHover] = useState<number | null>(null);
+  const [box, measured] = useWidth<HTMLDivElement>();
+  const { width: W, height } = fitted(measured, reference, designed);
   const n = labels.length;
   if (n < 2) return <p className="m-0 px-4 py-6 text-ink-2">Not enough points for a chart.</p>;
   const longest = Math.max(0, ...series.map((s) => `${s.short ?? s.name} ${format(s.values[n - 1])}`.length));
-  const PAD = { ...BASE_PAD, right: Math.max(BASE_PAD.right, Math.round(longest * 7.6 + 14)) };
   const all = series.flatMap((s) => s.values).concat(band ? [...band.low, ...band.high] : [], [0]);
   const low = Math.min(...all);
   const high = Math.max(...all);
   const ticks = niceTicks(low, high);
+  const compact = W < 520;
+  const left = Math.max(compact ? 44 : BASE_PAD.left, Math.round(Math.max(...ticks.map((v) => format(v).length)) * 7.4 + 14));
+  const PAD = compact ? { ...BASE_PAD, left, right: 12 } : { ...BASE_PAD, left, right: Math.max(BASE_PAD.right, Math.round(longest * 7.6 + 14)) };
   const span = high - low || 1;
   const x = (i: number) => PAD.left + ((W - PAD.left - PAD.right) * i) / (n - 1);
   const y = (v: number) => PAD.top + (height - PAD.top - PAD.bottom) * (1 - (v - low) / span);
@@ -63,7 +68,13 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
     });
   }
 
-  const ends = series
+  const spaced: typeof xLabels = [];
+  for (const label of xLabels) {
+    const before = spaced[spaced.length - 1];
+    if (!before || x(label.i) - x(before.i) >= (before.text.length + label.text.length) * 3.6 + 14) spaced.push(label);
+  }
+
+  const ends = (compact ? [] : series)
     .map((s) => ({ y: y(s.values[n - 1]), text: `${s.short ?? s.name} ${format(s.values[n - 1])}` }))
     .sort((a, b) => a.y - b.y);
   let previous = -99;
@@ -84,7 +95,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
           </span>
         ))}
       </figcaption>
-      <div className="relative">
+      <div ref={box} className="relative">
         <svg
           viewBox={`0 0 ${W} ${height}`}
           role="img"
@@ -106,7 +117,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
             </g>
           ))}
           <line x1={PAD.left} x2={W - PAD.right} y1={y(0)} y2={y(0)} stroke="var(--chart-axis)" />
-          {xLabels.map(({ i, text }) => (
+          {spaced.map(({ i, text }) => (
             <text key={i} x={x(i)} y={height - 10} textAnchor="middle" fill="var(--ink-2)">
               {text}
             </text>
