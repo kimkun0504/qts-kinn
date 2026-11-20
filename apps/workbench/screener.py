@@ -41,8 +41,18 @@ class Store(Protocol):
     def daily(self, start: date, end: date, *, symbols: list[str]) -> pa.Table: ...
 
 
+_first: dict[str, date] = {}
+
+
+def first_session(store: Store) -> date:
+    if store.build_id not in _first:
+        days = store.sessions(FIRST, LAST)
+        _first[store.build_id] = days[0] if days else FIRST
+    return _first[store.build_id]
+
+
 def session_on(store: Store, on: date) -> tuple[date, list[date]]:
-    asked = min(max(on, FIRST), LAST)
+    asked = min(max(on, first_session(store)), LAST)
     days = store.sessions(asked - timedelta(days=420), asked)
     if not days:
         raise ValueError(f"no trading session on or before {asked.isoformat()}")
@@ -164,7 +174,7 @@ def screen(store: Store, on: date | None = None) -> dict:
         _screens[key] = {
             "schema": "screen-1",
             "on": day.isoformat(),
-            "first": FIRST.isoformat(),
+            "first": first_session(store).isoformat(),
             "last": LAST.isoformat(),
             "columns": list(COLUMNS),
             "rows": _rows(store, day, window),

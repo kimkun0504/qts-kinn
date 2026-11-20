@@ -134,8 +134,8 @@ def test_never_reads_past_the_seal_and_reuses_a_screen(store):
     assert max(store.asked) == screener.LAST
     first = screener.screen(store, date(2015, 12, 31))
     assert screener.screen(store, date(2016, 1, 3)) is first
-    with pytest.raises(ValueError):
-        screener.screen(store, date(1999, 1, 1))
+    earliest = screener.screen(store, date(1999, 1, 1))
+    assert earliest["on"] == earliest["first"] == "2013-11-01"
 
 
 def test_what_came_next_for_each_stock_and_spy(store):

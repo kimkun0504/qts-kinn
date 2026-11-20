@@ -47,7 +47,8 @@ scan of the panel's permaticker column); the catalog is worked out once per buil
 ## Additions (2026-11-19, evening)
 
 6. **A screener** (`apps/workbench/screener.py`, `#/screener[/<date>/<screen>]`): every stock
-   that traded on a chosen session from 2000 to the last session before the seal, with its size,
+   that traded on a chosen session from the first in the data (Sep 2003) to the last before the
+   seal, with its size,
    liquidity, returns (1 day to 1 year), distance from the 52-week high, volatility and
    valuations. Valuations take each company's latest trailing-year filing made **before** the
    session (`DataStore.fundamentals_as_of`, guarded like every read); a filing older than about
