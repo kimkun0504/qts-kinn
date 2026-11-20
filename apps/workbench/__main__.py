@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import yaml
 
-from apps.workbench import api, catalog, lab, ledgers, markets, record, screener, stocks
+from apps.workbench import api, catalog, costs, lab, ledgers, markets, record, screener, stocks
 from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
@@ -126,6 +126,18 @@ class Handler(SimpleHTTPRequestHandler):
         if path.startswith("/api/runs/"):
             detail = api.run_detail(self.runs_dir, path.rsplit("/", 1)[1])
             return self._json(detail, 200 if detail else 404)
+        if path == "/api/costs":
+            query = {k: v[0] for k, v in parse_qs(urlsplit(self.path).query).items()}
+            try:
+                return self._json(costs.estimate(query))
+            except costs.CostError as error:
+                return self._json({"error": str(error)}, 400)
+        if path.startswith("/api/costs/"):
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build to read prices from."}, 503)
+            found = costs.quote(store, path.rsplit("/", 1)[1])
+            return self._json(found or {"error": "No such stock."}, 200 if found else 404)
         if path == "/api/compare":
             wanted = parse_qs(urlsplit(self.path).query).get("ids", [""])[0].split(",")
             return self._json(api.compare(self.runs_dir, wanted))

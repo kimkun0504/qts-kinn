@@ -11,6 +11,7 @@ import { lab, type AlgorithmRow } from "./lib/lab";
 import { href, type Route, useRoute } from "./lib/route";
 import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
+import { CostsPage } from "./pages/CostsPage";
 import { DataPage } from "./pages/DataPage";
 import { GuidePage } from "./pages/GuidePage";
 import { MarketsPage } from "./pages/MarketsPage";
@@ -45,6 +46,7 @@ const TITLES = {
   parameters: "Parameters",
   trials: "Trials and overfitting",
   data: "Data",
+  costs: "Trading costs",
   guide: "Guide",
 };
 type Theme = "dark" | "light";
@@ -214,6 +216,7 @@ export default function App() {
     ["parameters", "Parameters"],
     ["trials", "Trials and overfitting"],
     ["data", "Data"],
+    ["costs", "Trading costs"],
     ["guide", "Guide"],
   ];
   const commands: Command[] = [
@@ -317,6 +320,8 @@ export default function App() {
           <GuidePage guide={route.name} onGuide={(name) => go({ page: "guide", name })} />
         ) : route.page === "data" ? (
           <DataPage key={version} />
+        ) : route.page === "costs" ? (
+          <CostsPage />
         ) : route.page === "parameters" ? (
           <Parameters runs={live} />
         ) : (

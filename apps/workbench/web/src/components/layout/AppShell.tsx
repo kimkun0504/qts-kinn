@@ -45,6 +45,12 @@ const ICONS: Record<NavPage, ReactNode> = {
       <path d="M13 3.5H9.5A1.5 1.5 0 0 0 8 5v8.5A1.5 1.5 0 0 1 9.5 12H13z" />
     </>
   ),
+  costs: (
+    <>
+      <circle cx="8" cy="8" r="5.5" />
+      <path d="M9.8 6.2c-.3-.6-1-1-1.8-1-1 0-1.8.6-1.8 1.4 0 1.9 3.6 1 3.6 2.9 0 .8-.8 1.4-1.8 1.4-.8 0-1.5-.4-1.8-1M8 4.2v7.6" />
+    </>
+  ),
   data: (
     <>
       <ellipse cx="8" cy="3.8" rx="5" ry="1.8" />
@@ -67,11 +73,12 @@ const LABELS: Record<NavPage, string> = {
   trials: "Trials",
   lab: "Lab",
   data: "Data",
+  costs: "Costs",
   guide: "Guide",
 };
 const GROUPS: NavPage[][] = [
   ["home", "strategies", "markets", "stock", "screener", "studies", "paper"],
-  ["lab", "runs", "compare", "parameters", "trials", "data", "guide"],
+  ["lab", "runs", "compare", "parameters", "trials", "data", "costs", "guide"],
 ];
 
 interface AppShellProps {

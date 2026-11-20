@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Page = "home" | "strategies" | "strategy" | "markets" | "stock" | "screener" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials" | "data" | "guide";
+export type Page = "home" | "strategies" | "strategy" | "markets" | "stock" | "screener" | "studies" | "lab" | "runs" | "paper" | "compare" | "parameters" | "trials" | "data" | "costs" | "guide";
 export interface Route {
   page: Page;
   /** The strategy on a strategy page; the algorithm in the Lab. */
@@ -9,7 +9,7 @@ export interface Route {
   tab?: string;
 }
 
-const PAGES: Page[] = ["home", "strategies", "strategy", "markets", "stock", "screener", "studies", "lab", "runs", "paper", "compare", "parameters", "trials", "data", "guide"];
+const PAGES: Page[] = ["home", "strategies", "strategy", "markets", "stock", "screener", "studies", "lab", "runs", "paper", "compare", "parameters", "trials", "data", "costs", "guide"];
 
 export function parse(hash: string): Route {
   const [page, name, tab] = hash.replace(/^#\/?/, "").split("/").map(decodeURIComponent);
@@ -26,7 +26,10 @@ export function parse(hash: string): Route {
 }
 
 export function href(route: Route): string {
-  return `#/${[route.page, route.name, route.tab].filter(Boolean).map((part) => encodeURIComponent(part as string)).join("/")}`;
+  return `#/${[route.page, route.name, route.tab]
+    .filter(Boolean)
+    .map((part) => encodeURIComponent(part as string))
+    .join("/")}`;
 }
 
 /** The page in the address bar's hash, so a reload or a shared link lands in the same place. */

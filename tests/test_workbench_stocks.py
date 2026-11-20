@@ -7,7 +7,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from apps.workbench import stocks
+from apps.workbench import costs, stocks
 from tests.lab_fake import FakeStore, Stock, business_days, walk
 
 BUILDS = itertools.count()
@@ -203,3 +203,11 @@ def test_market_value_moves_the_previous_figure_by_the_day_and_not_by_a_split():
     assert market_value({"marketcap_prev": 1000.0, "close": 11.0, "prev_close": 10.0}) == 1100.0
     assert market_value({"marketcap_prev": 1000.0, "close": 0.1, "prev_close": 10.0}) == 1000.0
     assert market_value({"marketcap_prev": None, "close": 11.0, "prev_close": 10.0}) is None
+
+
+def test_a_quote_for_the_cost_calculator_is_the_last_close_before_the_seal(store, tmp_path):
+    found = costs.quote(store, "splt")
+    page = stocks.stock(store, tmp_path / "runs", tmp_path / "lab", "SPLT")
+    assert found["ticker"] == "SPLT" and found["date"] == page["prices"]["date"][-1]
+    assert found["price"] == pytest.approx(page["prices"]["close"][-1])
+    assert costs.quote(store, "NOPE") is None

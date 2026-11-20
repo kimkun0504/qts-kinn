@@ -104,3 +104,7 @@ applies the holdout date guard and is tested against the synthetic build.
     close (the screener's figure) over the latest trailing year filed before that session, so
     the history uses only what was known on each day, beside its median and middle half. A
     period older than about 16 months, a loss or negative equity leaves a gap.
+15. **A trading-cost calculator** (`apps/workbench/costs.py`, `#/costs`): the cost model's
+    round trip for a price, position, liquidity, side and fill (auction or marketable), leg by
+    leg as the Lab's simulator charges it (a test holds the two together), by position size and
+    by share price; a stock's last close and 20-day dollar volume before the seal fill it in.

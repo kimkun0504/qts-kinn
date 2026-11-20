@@ -28,6 +28,7 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, any two runs compared, a factor report for ranking algorithms, sweeps of one setting, and a note on any run |
 | Guide | this README and the Lab's guide (`docs/LAB.md`) with their sections beside them, and the keyboard shortcuts |
 | Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
+| Trading costs | what a trade costs under the platform's cost model, as the Lab and the backtests charge it: price, position, liquidity, side and how each leg fills (or a stock's last close and volume), the round trip at 1× and 2× slippage, where it goes (commission, fees, slippage per leg), and the cost by position size and by share price (`/api/costs`) |
 
 Search everything (pages, stocks, the watchlist, screens, strategies, studies, paper ledgers,
 Lab algorithms, runs) with the box in the top bar, Cmd+K or `/`. `?` lists the keyboard

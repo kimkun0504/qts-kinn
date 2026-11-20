@@ -687,6 +687,46 @@ async function get<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+export interface CostLeg {
+  side: "buy" | "sell";
+  fill: "auction" | "marketable";
+  shares: number;
+  value: number;
+  commission: number;
+  fees: number;
+  slippage: number;
+}
+
+export interface CostEstimate {
+  legs: CostLeg[];
+  cost: number;
+  cost_2x: number;
+  bps: number;
+  bps_2x: number;
+  model: string;
+  price: number;
+  adv: number | null;
+  half_spread_bps: number;
+  auction_bps: number;
+  sizes: { value: number; bps: number; bps_2x: number }[];
+  prices: { price: number; bps: number; bps_2x: number }[];
+}
+
+export interface CostQuote {
+  ticker: string;
+  name: string | null;
+  date: string;
+  price: number;
+  adv: number | null;
+}
+
+async function answer<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error((body as { error?: string }).error ?? `${url} answered ${response.status}`);
+  return body as T;
+}
+
 export interface ClosesData {
   series: { symbol: string; name: string | null; date: string[]; close: (number | null)[] }[];
   missing: string[];
@@ -741,6 +781,8 @@ export const api = {
   strategies: () => get<StrategyInfo[]>("/api/strategies"),
   info: () => get<{ runs_dir: string }>("/api/info"),
   run: (id: string) => get<RunDetail>(`/api/runs/${encodeURIComponent(id)}`),
+  costs: (query: Record<string, string>) => answer<CostEstimate>(`/api/costs?${new URLSearchParams(query).toString()}`),
+  costQuote: (symbol: string) => answer<CostQuote>(`/api/costs/${encodeURIComponent(symbol)}`),
   compare: (ids: string[]) => get<CompareData>(`/api/compare?ids=${encodeURIComponent(ids.join(","))}`),
   board: () => get<Board>("/api/board"),
   studies: () => get<StudyRow[]>("/api/studies"),
