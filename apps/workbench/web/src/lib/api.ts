@@ -682,6 +682,7 @@ export interface MarketsData {
   first: string;
   last: string;
   groups: { title: string; rows: MarketRow[] }[];
+  correlation?: { symbols: string[]; matrix: (number | null)[][]; sessions: number };
   breadth: { date: string; advancing: number; declining: number; traded: number }[];
 }
 

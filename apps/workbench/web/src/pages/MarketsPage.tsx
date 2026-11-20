@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BarChart } from "../components/charts/BarChart";
 import { LineChart, type Series } from "../components/charts/LineChart";
+import { Correlation } from "../components/charts/Correlation";
 import { aligned, closesOf, rebase } from "../components/RelativeChart";
 import { Card, Note } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -256,6 +257,12 @@ export function MarketsPage() {
           ))}
         </table>
       </Panel>
+      {data.correlation && data.correlation.symbols.length > 1 && (
+        <Card title={`How the funds moved together, last ${data.correlation.sessions} sessions`}>
+          <Correlation symbols={data.correlation.symbols} matrix={data.correlation.matrix} names={Object.fromEntries(data.groups.flatMap((g) => g.rows.map((r) => [r.symbol, r.name])))} />
+          <Note>Correlation of daily changes: 1 moves together, 0 unrelated, −1 opposite. Blue is together, red opposite.</Note>
+        </Card>
+      )}
       <Breadth rows={data.breadth} />
     </div>
   );

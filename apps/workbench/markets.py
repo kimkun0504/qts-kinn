@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Protocol
 
+import pandas as pd
 import pyarrow as pa
 
 from apps.workbench.stocks import FIRST, LAST, continuous
@@ -29,6 +30,7 @@ GROUPS: list[tuple[str, list[tuple[str, str]]]] = [
 ]  # fmt: skip
 SPANS = {"day": 1, "week": 5, "month": 21, "quarter": 63, "year": 252, "three_years": 756}
 BREADTH_DAYS = 400
+CORRELATION_DAYS = 252
 
 
 class Store(Protocol):
@@ -47,6 +49,29 @@ def _change(values: list[float | None], back: int) -> float | None:
 
 def _round(value: float | None, digits: int = 6) -> float | None:
     return None if value is None else float(f"{value:.{digits}g}")
+
+
+def _correlation(by: dict[str, list[tuple[date, float | None]]], day: date) -> dict:
+    frame = {}
+    for symbol, series in by.items():
+        series = sorted(series)
+        if not series or series[-1][0] != day:
+            continue
+        values = continuous([c for _, c in series])
+        frame[symbol] = pd.Series(values, index=[d for d, _ in series], dtype="float64")
+    if not frame:
+        return {"symbols": [], "matrix": [], "sessions": 0}
+    prices = pd.DataFrame(frame).sort_index().iloc[-(CORRELATION_DAYS + 1) :]
+    moves = prices.pct_change(fill_method=None).iloc[1:]
+    order = [s for _, members in GROUPS for s, _ in members if s in moves.columns]
+    matrix = moves[order].corr(min_periods=CORRELATION_DAYS // 2)
+    return {
+        "symbols": order,
+        "matrix": [
+            [_round(v, 3) if pd.notna(v) else None for v in row] for row in matrix.to_numpy()
+        ],
+        "sessions": int(len(moves)),
+    }
 
 
 def markets(store: Store, on: date | None = None) -> dict:
@@ -81,12 +106,14 @@ def markets(store: Store, on: date | None = None) -> dict:
             })  # fmt: skip
         groups.append({"title": title, "rows": rows})
     breadth = store.breadth(day - timedelta(days=BREADTH_DAYS), day).to_pylist()
+    correlation = _correlation(by, day)
     return {
         "schema": "markets-1",
         "on": day.isoformat(),
         "first": FIRST.isoformat(),
         "last": LAST.isoformat(),
         "groups": groups,
+        "correlation": correlation,
         "breadth": [{"date": r["date"].isoformat(), "advancing": r["advancing"],
                      "declining": r["declining"], "traded": r["traded"]} for r in breadth],
     }  # fmt: skip

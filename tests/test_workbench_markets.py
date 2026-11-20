@@ -13,8 +13,13 @@ class MarketStore:
         self.days = business_days(date(2020, 1, 1), date(2022, 12, 30))
         self.asked: list[date] = []
         rows = []
+        wiggle = [0.001 + 0.004 * (1 if i % 3 else -1) for i in range(len(self.days))]
+        spy = qqq = 300.0
         for i, d in enumerate(self.days):
-            rows.append({"date": d, "symbol": "SPY", "close": 300.0 * 1.001**i})
+            spy *= 1 + (wiggle[i] if i else 0)
+            qqq *= 1 + (2 * wiggle[i] if i else 0)
+            rows.append({"date": d, "symbol": "SPY", "close": spy})
+            rows.append({"date": d, "symbol": "TLT", "close": qqq})
             rows.append({"date": d, "symbol": "USO", "close": 10.0 if i < 100 else 80.0})
         self.bars = pa.Table.from_pylist(rows)
 
@@ -50,8 +55,10 @@ def test_funds_with_their_returns_and_the_days_breadth():
     assert page["on"] == "2022-12-30" and max(store.asked) <= markets.LAST
     rows = {r["symbol"]: r for g in page["groups"] for r in g["rows"]}
     spy = rows["SPY"]
-    assert math.isclose(spy["day"], 0.001, rel_tol=1e-4)
-    assert math.isclose(spy["year"], 1.001**252 - 1, rel_tol=1e-4)
+    assert math.isclose(spy["day"], 0.005, rel_tol=1e-4)
+    together = page["correlation"]
+    assert together["symbols"] == ["SPY", "TLT", "USO"] and together["sessions"] == 252
+    assert together["matrix"][0][1] == 1.0 and together["matrix"][0][2] is None
     assert rows["USO"]["three_years"] == 0.0 and rows["USO"]["close"] == 80.0
     assert rows["QQQ"]["close"] is None
     assert page["breadth"][-1] == {
