@@ -116,7 +116,7 @@ function Header({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string
           <h1 className="m-0 text-[28px] leading-tight font-semibold tracking-tight">{page.ticker}</h1>
           <span className="text-lg text-ink-2">{page.name}</span>
           {page.delisted ? <Badge tone="muted">{`Delisted ${day(page.last)}`}</Badge> : <Badge tone="ok">Listed</Badge>}
-          <span className="self-center">
+          <span data-print="hide" className="self-center">
             <WatchButton page={page} />
           </span>
         </div>
@@ -142,7 +142,9 @@ function Header({ page, onOpen }: { page: StockPageData; onOpen: (symbol: string
           </div>
         )}
       </div>
-      <StockSearch onPick={(hit) => onOpen(hit.ticker ?? "", hit.permaticker)} placeholder="Another stock" />
+      <div data-print="hide" className="w-full max-w-[420px]">
+        <StockSearch onPick={(hit) => onOpen(hit.ticker ?? "", hit.permaticker)} placeholder="Another stock" />
+      </div>
     </header>
   );
 }
