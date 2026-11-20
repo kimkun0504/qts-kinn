@@ -61,6 +61,8 @@ worked out: [docs/LAB.md](../../docs/LAB.md).
 - The page polls the run's status, then reads its results files.
 - As the owner types, the page sends the code to `/api/lab/check`, which reads it with `ast`
   (`kinn.lab.check`) and never runs it; errors block Run, and the server refuses them too.
+  **Format** sends it to `/api/lab/format`, which runs ruff's formatter on the text (also never
+  running the code).
 - Helper modules live in `lab/library/` (`/api/lab/library`); a run copies them into its folder.
 - Changes (save, delete, run, cancel) need the session token the page reads from
   `/api/lab/session`, and come only from the Workbench's own page: the server checks the Host
