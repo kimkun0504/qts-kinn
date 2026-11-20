@@ -174,6 +174,19 @@ def test_a_universe_with_no_stocks_fails_plainly(root, fake):
     assert store.status(run_dir)["error"].startswith("No stock is in this universe")
 
 
+def test_a_short_run_finishes_with_the_book_and_spy_turned_round(root, fake):
+    short = go(root, fake, settings={**PERIOD, "entry": {"side": "short"}})
+    long = go(root, fake, settings=PERIOD)
+    for run_dir in (short, long):
+        assert store.status(run_dir)["state"] == "complete", store.status(run_dir).get("error")
+    assert store.result(short, "summary")["settings"]["entry"]["side"] == "short"
+    s, g = (pd.read_parquet(r / "trades.parquet") for r in (short, long))
+    assert len(s) == len(g)
+    assert s["gross"].to_numpy() == pytest.approx(-g["gross"].to_numpy(), rel=1e-6, abs=1e-9)
+    s_spy, g_spy = (store.result(r, "equity")["spy_matched"] for r in (short, long))
+    assert [x for x in s_spy if x] == pytest.approx([-x for x in g_spy if x], rel=1e-6)
+
+
 def test_a_universe_of_named_tickers_trades_only_them(root, fake):
     run_dir = go(root, fake, settings={**PERIOD, "universe": {"tickers": "upp, dwn, zzzz"}})
     state = store.status(run_dir)

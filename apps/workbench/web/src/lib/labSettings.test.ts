@@ -90,3 +90,19 @@ describe("named stocks", () => {
     expect(fromSettings(run, run).tickers).toBeUndefined();
   });
 });
+
+describe("shorts", () => {
+  it("sends the side and the borrow fee in its units", () => {
+    expect(toPatch({ side: "short", numbers: { "book.borrow_rate": "5" } }).patch).toEqual({ entry: { side: "short" }, book: { borrow_rate: 0.05 } });
+    expect(toPatch({ numbers: { "book.borrow_rate": "120" } }).errors).toEqual(["Borrow fee a year: from 0 to 100."]);
+    expect(changed({ side: "short", numbers: {} })).toBe(true);
+  });
+
+  it("brings a past short back and treats an old run as long", () => {
+    const short = { ...DEFAULTS, entry: { ...DEFAULTS.entry, side: "short" as const }, book: { ...DEFAULTS.book, borrow_rate: 0.03 } };
+    const draft = fromSettings(short, { ...DEFAULTS, book: { ...DEFAULTS.book, borrow_rate: 0.01 } });
+    expect(draft.side).toBe("short");
+    expect(draft.numbers["book.borrow_rate"]).toBe("3");
+    expect(fromSettings(DEFAULTS, { ...DEFAULTS, entry: { ...DEFAULTS.entry, side: "long" } }).side).toBeUndefined();
+  });
+});

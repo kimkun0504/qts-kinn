@@ -61,8 +61,8 @@ def run(m: Market, entries, *, exits=None, **settings):
     for key, value in settings.items():
         section = (
             "entry"
-            if key in ("mode", "top_n", "rank_order")
-            else ("book" if key in ("position_size", "max_positions") else "exit")
+            if key in ("mode", "top_n", "rank_order", "side")
+            else ("book" if key in ("position_size", "max_positions", "borrow_rate") else "exit")
         )
         sections[section][key] = value
     s = parse(sections)
@@ -232,6 +232,78 @@ def test_the_book_profit_adds_up_to_the_trades_it_took():
     expected = sum(t.value * t.net for t, k in zip(trades, taken, strict=True) if k)
     assert daily["pnl"].sum() == pytest.approx(expected, rel=1e-6)
     assert daily["positions"].max() == 1
+
+
+def test_a_short_gains_what_the_price_loses_and_pays_to_borrow():
+    close = np.linspace(20, 16, ROWS).astype(np.float32)
+    (trade,) = run(market(close), signal_at(5), hold_days=10, side="short", borrow_rate=0.05)
+    (long,) = run(market(close), signal_at(5), hold_days=10)
+    assert trade.short and (trade.entry_row, trade.exit_row) == (6, 15)
+    assert trade.gross == pytest.approx(-long.gross, rel=1e-6) and trade.gross > 0
+    assert trade.borrow == pytest.approx(trade.value * 0.05 * 10 / 252, rel=1e-9)
+    assert (trade.gross - trade.net) * trade.value == pytest.approx(
+        trade.cost_entry + trade.cost_exit, rel=1e-9
+    )
+    free = run(market(close), signal_at(5), hold_days=10, side="short", borrow_rate=0)[0]
+    assert free.net - trade.net == pytest.approx(trade.borrow / trade.value, rel=1e-6)
+
+
+def test_a_short_stop_is_above_the_entry_and_wins_over_the_target():
+    close, low, high = flat(), flat(), flat()
+    low[8], high[8] = 7.5, 11.5  # both touched on row 8
+    (trade,) = run(
+        market(close, low=low, high=high),
+        signal_at(5),
+        hold_days=10,
+        stop_loss=0.1,
+        take_profit=0.2,
+        side="short",
+    )
+    assert REASONS[trade.reason] == "stop" and trade.exit_row == 8
+    assert trade.exit_price == pytest.approx(11.0) and trade.gross == pytest.approx(-0.1, abs=1e-6)
+
+
+def test_a_short_target_is_below_the_entry():
+    low = flat()
+    low[9] = 7.5
+    (trade,) = run(
+        market(flat(), low=low), signal_at(5), hold_days=10, take_profit=0.2, side="short"
+    )
+    assert REASONS[trade.reason] == "target" and trade.exit_price == pytest.approx(8.0)
+    assert trade.gross == pytest.approx(0.2, abs=1e-6)
+
+
+def test_a_gap_up_through_a_short_stop_fills_at_the_open():
+    open_, high, close = flat(), flat(), flat()
+    open_[9], high[9], close[9] = 13.0, 13.0, 12.5
+    m = market(close, open_=open_, high=high)
+    (trade,) = run(m, signal_at(5), hold_days=10, stop_loss=0.1, side="short")
+    assert REASONS[trade.reason] == "stop" and trade.exit_row == 9
+    assert trade.gross == pytest.approx(-0.3, abs=1e-6)
+
+
+def test_a_short_against_a_rising_universe_beats_it_by_both():
+    ur = np.full(ROWS, 0.01, np.float32)
+    m = market(flat(), universe_return=ur)
+    (trade,) = run(m, signal_at(5), hold_days=3, side="short", borrow_rate=0)
+    (long,) = run(m, signal_at(5), hold_days=3)
+    assert trade.benchmark == pytest.approx(-long.benchmark, rel=1e-6) and trade.benchmark < 0
+
+
+def test_the_book_marks_a_short_and_adds_up_to_its_trades():
+    close = np.linspace(20, 14, ROWS).astype(np.float32).reshape(ROWS, 1).repeat(2, axis=1)
+    close[:, 1] = np.linspace(10, 13, ROWS)
+    m = market(close)
+    entries = np.zeros((ROWS, 2), bool)
+    entries[[3, 12, 25], 0] = True
+    entries[[4, 20], 1] = True
+    trades = run(m, entries, hold_days=6, side="short")
+    taken = book.select(trades, cap=2)
+    daily = book.daily(trades, taken, m)
+    expected = sum(t.value * t.net for t, k in zip(trades, taken, strict=True) if k)
+    assert daily["pnl"].sum() == pytest.approx(expected, rel=1e-6)
+    first = trades[0]
+    assert first.stock == 0 and daily["pnl"][first.entry_row + 1] > 0
 
 
 def test_the_factor_report_sorts_returns_by_score():

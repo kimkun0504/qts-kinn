@@ -25,9 +25,9 @@ export interface LabSettings {
     exclude_blank_checks: boolean;
     tickers?: string[];
   };
-  entry: { mode: "signal" | "rank"; top_n: number; rank_order: "highest" | "lowest" };
+  entry: { mode: "signal" | "rank"; top_n: number; rank_order: "highest" | "lowest"; side?: "long" | "short" };
   exit: { hold_days: number; stop_loss: number | null; take_profit: number | null };
-  book: { position_size: number; max_positions: number };
+  book: { position_size: number; max_positions: number; borrow_rate?: number };
 }
 
 /** What the page sends: only the settings the owner changed. */

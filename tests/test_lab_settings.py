@@ -12,6 +12,7 @@ def test_defaults():
     assert s.period == "search" and s.window() == PERIODS["search"][:2]
     assert (s.entry.mode, s.exit.hold_days, s.book.max_positions) == ("signal", 20, 20)
     assert s.exit.stop_loss is None and s.universe.min_market_cap == 50e6
+    assert (s.entry.side, s.book.borrow_rate, s.universe.tickers) == ("long", 0.01, ())
 
 
 def test_the_page_wins_over_the_algorithm_which_wins_over_the_lab():
@@ -35,6 +36,9 @@ def test_a_custom_period_ends_by_the_last_entry_day():
         ({"book": {"position_size": True}}, "book.position_size must be a number"),
         ({"entry": {"mode": "both"}}, "entry.mode must be"),
         ({"entry": {"rank_order": "middle"}}, "entry.rank_order must be"),
+        ({"entry": {"side": "both"}}, "entry.side must be 'long' or 'short'"),
+        ({"book": {"borrow_rate": 2}}, "book.borrow_rate must be between 0 and 1"),
+        ({"universe": {"tickers": ["no way"]}}, "universe.tickers: not a ticker"),
         ({"universe": {"max_market_cap": 10e6}}, "max_market_cap must be above"),
         ({"universe": {"exclude_blank_checks": "no"}}, "exclude_blank_checks must be true"),
         ({"universe": {"min_cap": 1}}, "unknown universe settings: min_cap"),

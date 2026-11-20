@@ -41,19 +41,21 @@ class Entry:
     mode: str = "signal"  # "signal": every True; "rank": the top N scores each day
     top_n: int = 10
     rank_order: str = "highest"  # "highest" or "lowest" scores first
+    side: str = "long"  # "long" buys; "short" sells short and buys back
 
 
 @dataclass
 class Exit:
     hold_days: int = 20
-    stop_loss: float | None = None  # 0.10: sell if the price falls 10% below the entry
-    take_profit: float | None = None  # 0.25: sell if the price rises 25% above the entry
+    stop_loss: float | None = None  # 0.10: get out 10% against the position (below a long's entry)
+    take_profit: float | None = None  # 0.25: get out 25% in its favour
 
 
 @dataclass
 class Book:
     position_size: float = 2_000.0
     max_positions: int = 20  # 0: no limit
+    borrow_rate: float = 0.01  # a year, on a short's value, for each session it is open
 
 
 @dataclass
@@ -188,10 +190,13 @@ def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
         raise SettingsError("entry.mode must be 'signal' or 'rank'")
     if e.get("rank_order", "highest") not in ("highest", "lowest"):
         raise SettingsError("entry.rank_order must be 'highest' or 'lowest'")
+    if e.get("side", "long") not in ("long", "short"):
+        raise SettingsError("entry.side must be 'long' or 'short'")
     entry = Entry(
         mode=e["mode"],
         top_n=_number(e, "entry", "top_n", low=1, high=500, integer=True),
         rank_order=e.get("rank_order", "highest"),
+        side=e.get("side", "long"),
     )
     exit_ = Exit(
         hold_days=_number(x, "exit", "hold_days", low=1, high=MAX_HOLD, integer=True),
@@ -201,6 +206,7 @@ def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
     book = Book(
         position_size=_number(b, "book", "position_size", low=100, high=10_000_000),
         max_positions=_number(b, "book", "max_positions", low=0, high=10_000, integer=True),
+        borrow_rate=_number(b, "book", "borrow_rate", low=0, high=1),
     )
     settings = Settings(period, start, end, universe, entry, exit_, book)
     if settings.window()[1] >= HOLDOUT_START:  # cannot happen; the seal is checked anyway
@@ -209,7 +215,7 @@ def parse(raw: dict | None, defaults: dict | None = None) -> Settings:
 
 
 SWEEPABLE = ("exit.hold_days", "exit.stop_loss", "exit.take_profit", "book.max_positions",
-             "entry.top_n")  # fmt: skip
+             "entry.top_n", "book.borrow_rate")  # fmt: skip
 MAX_SWEEP = 12
 
 

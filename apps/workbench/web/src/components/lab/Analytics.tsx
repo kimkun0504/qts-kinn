@@ -21,6 +21,7 @@ export function filled(values: (number | null | undefined)[]): number[] {
 export function BookPanel({ summary, equity }: { summary: Summary; equity: Equity | null }) {
   const [view, setView] = useState<BookView>("profit");
   const size = summary.settings?.book.position_size;
+  const short = summary.settings?.entry.side === "short";
   const aside = (
     <Segmented
       label="Book view"
@@ -52,7 +53,17 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
           labels={equity.dates}
           series={[
             { name: "The book", short: "Book", values: filled(equity.profit), color: "var(--series-1)" },
-            ...(matched ? [{ name: "SPY on the money the book had invested", short: "SPY matched", values: filled(matched), color: "var(--series-4)", dash: "2 3" }] : []),
+            ...(matched
+              ? [
+                  {
+                    name: short ? "SPY sold short with the money the book had at stake" : "SPY on the money the book had invested",
+                    short: short ? "SPY short" : "SPY matched",
+                    values: filled(matched),
+                    color: "var(--series-4)",
+                    dash: "2 3",
+                  },
+                ]
+              : []),
             { name: "SPY on all the capital", short: "SPY all-in", values: filled(equity.spy), color: "var(--series-2)", dash: "5 4" },
           ]}
           format={(v) => money(v)}
@@ -67,17 +78,14 @@ export function BookPanel({ summary, equity }: { summary: Summary; equity: Equit
         />
       )}
       {view === "positions" && (
-        <LineChart
-          title="Open positions"
-          labels={equity.dates}
-          series={[{ name: "Open positions", short: "Positions", values: equity.positions, color: "var(--series-1)" }]}
-          format={(v) => int(v)}
-        />
+        <LineChart title="Open positions" labels={equity.dates} series={[{ name: "Open positions", short: "Positions", values: equity.positions, color: "var(--series-1)" }]} format={(v) => int(v)} />
       )}
       <PanelNote>
         {view === "profit" &&
           (matched
-            ? `SPY on the same capital is fully invested every day; the book held ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line puts that money in SPY on the same days, so it is the fair comparison.`
+            ? short
+              ? `The book was short ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line sells that much SPY short on the same days, so it is the fair comparison; the dashed line holds SPY with all the capital.`
+              : `SPY on the same capital is fully invested every day; the book held ${dollars(average)} on average (${plainPct(average / equity.capital)} of ${dollars(equity.capital)}). The dotted line puts that money in SPY on the same days, so it is the fair comparison.`
             : "SPY is shown fully invested on the same capital. Run again to see it at the book's own exposure.")}
         {view === "drawdown" && `Worst ${money(summary.max_drawdown)} (${pct(summary.max_drawdown_pct ?? null, 1)} of the capital), measured on each session's close.`}
         {view === "positions" && `${num(summary.average_positions ?? null, 1)} open on average, at most ${int(Math.max(0, ...equity.positions))}.`}
@@ -164,7 +172,7 @@ export function MonthTable({ equity }: { equity: Equity }) {
   );
 }
 
-export function SignalPathPanel({ runId }: { runId: string }) {
+export function SignalPathPanel({ runId, short = false }: { runId: string; short?: boolean }) {
   const { data, error } = useLoad(() => lab.path(runId), `path-${runId}`);
   const [around, setAround] = useState(false);
   if (error || !data) return null;
@@ -204,7 +212,10 @@ export function SignalPathPanel({ runId }: { runId: string }) {
         height={280}
       />
       <PanelNote>
-        {int(data.trades)} trades{data.trades < data.of ? ` of ${int(data.of)}` : ""}, split-adjusted, measured in sessions from the close of the signal day, so the next open is not yet paid. Over the universe at the exit: {pct(at(data.excess, data.hold), 2)}; ten sessions later {pct(at(data.excess, data.hold + 10), 2)}. The band is 95% around the average. A line still rising at the exit says a longer hold had more to give; a line that peaks before it says the hold is too long.
+        {short ? "These are the stocks' own moves: a short gains as the lines fall. " : ""}
+        {int(data.trades)} trades{data.trades < data.of ? ` of ${int(data.of)}` : ""}, split-adjusted, measured in sessions from the close of the signal day, so the next open is not yet paid. Over the
+        universe at the exit: {pct(at(data.excess, data.hold), 2)}; ten sessions later {pct(at(data.excess, data.hold + 10), 2)}. The band is 95% around the average. A line still rising at the exit
+        says a longer hold had more to give; a line that peaks before it says the hold is too long.
       </PanelNote>
     </Panel>
   );
@@ -263,7 +274,12 @@ export function Compare({ detail, runs }: { detail: RunDetail; runs: CompareRun[
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="font-medium">{label(detail.run_id)}</span>
         <span className="text-ink-3">against</span>
-        <select aria-label="Run to compare with" value={other} onChange={(e) => setOther(e.target.value)} className="h-8 max-w-[360px] rounded-md border border-line bg-surface px-2 text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent">
+        <select
+          aria-label="Run to compare with"
+          value={other}
+          onChange={(e) => setOther(e.target.value)}
+          className="h-8 max-w-[360px] rounded-md border border-line bg-surface px-2 text-[13px] text-ink focus-visible:outline-2 focus-visible:outline-accent"
+        >
           {others.map((r) => (
             <option key={r.run_id} value={r.run_id}>
               {r.label}
@@ -281,9 +297,15 @@ export function Compare({ detail, runs }: { detail: RunDetail; runs: CompareRun[
                 <thead>
                   <tr className="text-[13px] text-ink-2">
                     <th scope="col" className="px-4 py-2 text-left font-medium" />
-                    <th scope="col" className="px-3 py-2 text-right font-medium">This run</th>
-                    <th scope="col" className="px-3 py-2 text-right font-medium">The other</th>
-                    <th scope="col" className="px-4 py-2 text-right font-medium">Difference</th>
+                    <th scope="col" className="px-3 py-2 text-right font-medium">
+                      This run
+                    </th>
+                    <th scope="col" className="px-3 py-2 text-right font-medium">
+                      The other
+                    </th>
+                    <th scope="col" className="px-4 py-2 text-right font-medium">
+                      Difference
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -293,7 +315,9 @@ export function Compare({ detail, runs }: { detail: RunDetail; runs: CompareRun[
                     const d = x != null && y != null ? m.diff(x, y) : "–";
                     return (
                       <tr key={m.label} className="border-t border-line-soft">
-                        <th scope="row" className="px-4 py-1.5 text-left font-normal text-ink-2">{m.label}</th>
+                        <th scope="row" className="px-4 py-1.5 text-left font-normal text-ink-2">
+                          {m.label}
+                        </th>
                         <td className="px-3 py-1.5 text-right font-semibold">{m.text(x)}</td>
                         <td className="px-3 py-1.5 text-right">{m.text(y)}</td>
                         <td className={`px-4 py-1.5 text-right ${d.startsWith("−") ? "text-neg" : "text-ink-2"}`}>{d}</td>
@@ -309,7 +333,9 @@ export function Compare({ detail, runs }: { detail: RunDetail; runs: CompareRun[
                   <tbody>
                     {settings.map((s) => (
                       <tr key={s.key} className="border-t border-line-soft first:border-t-0">
-                        <th scope="row" className="px-4 py-1.5 text-left font-mono text-[12.5px] font-normal text-ink-2">{s.key}</th>
+                        <th scope="row" className="px-4 py-1.5 text-left font-mono text-[12.5px] font-normal text-ink-2">
+                          {s.key}
+                        </th>
                         <td className="px-3 py-1.5 text-right font-semibold">{s.a}</td>
                         <td className="px-4 py-1.5 text-right text-ink-2">{s.b}</td>
                       </tr>
@@ -352,7 +378,10 @@ export function Compare({ detail, runs }: { detail: RunDetail; runs: CompareRun[
                       ⋯
                     </div>
                   ) : (
-                    <div key={k} className={`flex px-4 ${line.kind === "added" ? "bg-[color-mix(in_srgb,var(--gain)_14%,transparent)]" : line.kind === "removed" ? "bg-[color-mix(in_srgb,var(--loss)_14%,transparent)]" : ""}`}>
+                    <div
+                      key={k}
+                      className={`flex px-4 ${line.kind === "added" ? "bg-[color-mix(in_srgb,var(--gain)_14%,transparent)]" : line.kind === "removed" ? "bg-[color-mix(in_srgb,var(--loss)_14%,transparent)]" : ""}`}
+                    >
                       <span className="w-6 shrink-0 text-ink-3 select-none">{line.kind === "added" ? "+" : line.kind === "removed" ? "−" : ""}</span>
                       <span className="whitespace-pre">{line.text}</span>
                     </div>
@@ -399,7 +428,8 @@ export function FactorPanel({ runId }: { runId: string }) {
         <BarChart title="IC by year" labels={data.ic_by_year.map((y) => String(y.year))} values={data.ic_by_year.map((y) => y.mean)} format={(v) => num(v, 2)} width={480} height={240} />
       </div>
       <PanelNote>
-        Each day the stocks the book could have bought are split into tenths by score; the bold tenth is the end the book buys. A ranking that works rises steadily from one end to the other and keeps its IC above zero in most years. The IC t-stat uses days {data.hold} sessions apart so the returns do not overlap.
+        Each day the stocks the book could have taken are split into tenths by score; the bold tenth is the end the book takes. A ranking that works rises steadily from one end to the other and keeps
+        its IC above zero in most years. The IC t-stat uses days {data.hold} sessions apart so the returns do not overlap.
       </PanelNote>
     </Panel>
   );
@@ -436,7 +466,13 @@ export function SweepPanel({ runId }: { runId: string }) {
       aside={<Segmented label="Measure" value={metric} onChange={setMetric} options={SWEEP_METRICS.map(({ value, label: text }) => ({ value, label: text }))} />}
     >
       <div className="px-1">
-        <BarChart title={`${chosen.label} by ${spec?.label ?? data.field}`} labels={data.rows.map(label)} values={data.rows.map((r) => r[metric] ?? null)} format={chosen.format} marked={base >= 0 ? [base] : []} />
+        <BarChart
+          title={`${chosen.label} by ${spec?.label ?? data.field}`}
+          labels={data.rows.map(label)}
+          values={data.rows.map((r) => r[metric] ?? null)}
+          format={chosen.format}
+          marked={base >= 0 ? [base] : []}
+        />
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] border-collapse text-sm tabular-nums">
@@ -471,7 +507,8 @@ export function SweepPanel({ runId }: { runId: string }) {
         </table>
       </div>
       <PanelNote>
-        Every value ran on the same signals and the same costs; only {spec?.label.toLowerCase() ?? data.field} changed. Each counts as a trial, so the best of them is less trustworthy than any one alone: prefer a setting whose neighbours do nearly as well.
+        Every value ran on the same signals and the same costs; only {spec?.label.toLowerCase() ?? data.field} changed. Each counts as a trial, so the best of them is less trustworthy than any one
+        alone: prefer a setting whose neighbours do nearly as well.
       </PanelNote>
     </Panel>
   );

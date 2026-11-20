@@ -34,15 +34,15 @@ const stockColumns: Column<StockRow>[] = [
   { key: "last_entry", header: "Last entry", muted: true, sortable: true, render: (r) => day(r.last_entry) },
 ];
 
-const tradeColumns: Column<TradeRow>[] = [
+const tradeColumns = (short: boolean): Column<TradeRow>[] => [
   { key: "ticker", header: "Stock", align: "left", sortable: true, render: (r) => <StockLink symbol={r.ticker} on={r.entry_date} /> },
   { key: "signal_date", header: "Signal", muted: true, sortable: true, render: (r) => day(r.signal_date) },
-  { key: "entry_date", header: "Bought", sortable: true, render: (r) => day(r.entry_date) },
-  { key: "exit_date", header: "Sold", sortable: true, render: (r) => day(r.exit_date) },
+  { key: "entry_date", header: short ? "Shorted" : "Bought", sortable: true, render: (r) => day(r.entry_date) },
+  { key: "exit_date", header: short ? "Covered" : "Sold", sortable: true, render: (r) => day(r.exit_date) },
   { key: "sessions", header: "Sessions", sortable: true, render: (r) => int(r.sessions) },
   { key: "reason", header: "Exit", align: "left", muted: true, sortable: true, render: (r) => r.reason },
-  { key: "entry_price", header: "Buy price", render: (r) => num(r.entry_price) },
-  { key: "exit_price", header: "Sell price", render: (r) => num(r.exit_price) },
+  { key: "entry_price", header: short ? "Short price" : "Buy price", render: (r) => num(r.entry_price) },
+  { key: "exit_price", header: short ? "Cover price" : "Sell price", render: (r) => num(r.exit_price) },
   { key: "gross", header: "Before costs", signed: true, sortable: true, render: (r) => pct(r.gross) },
   { key: "net", header: "After costs", signed: true, strong: true, sortable: true, render: (r) => pct(r.net) },
   { key: "net_2x", header: "2× costs", signed: true, sortable: true, render: (r) => pct(r.net_2x) },
@@ -83,7 +83,7 @@ function Overview({ detail, stocks, onStock, onAllStocks }: { detail: RunDetail;
       <BookPanel summary={s} equity={equity} />
       {s.sweep && <SweepPanel runId={detail.run_id} />}
       {s.settings?.entry.mode === "rank" && <FactorPanel runId={detail.run_id} />}
-      <SignalPathPanel runId={detail.run_id} />
+      <SignalPathPanel runId={detail.run_id} short={s.settings?.entry.side === "short"} />
       <div className="grid gap-5 lg:grid-cols-2">
         <Panel title="Best stocks" aside={<LinkButton onClick={onAllStocks}>All {int(stocks?.length ?? 0)} stocks</LinkButton>}>
           <DataTable columns={small} rows={best} rowKey={(r) => r.ticker} onRowClick={(r) => onStock(r.ticker)} />
@@ -124,6 +124,7 @@ function Facts({ detail }: { detail: RunDetail }) {
   const rows: [string, string][] = [
     ["Period", s.period_label ?? "–"],
     ["First entry to last exit", `${day(s.first_entry)} to ${day(s.last_exit)}`],
+    ["Side", s.settings?.entry.side === "short" ? `Short, borrow at ${plainPct(s.settings.book.borrow_rate ?? 0)} a year` : "Long"],
     ["Stocks in the universe", int(s.universe_stocks)],
     ...(s.tickers_not_found?.length ? [["Named but not in it", s.tickers_not_found.join(", ")] as [string, string]] : []),
     [s.settings?.entry.mode === "rank" ? "Scores given" : "Signals", int(s.signals)],
@@ -212,7 +213,7 @@ function Stocks({ stocks, onStock }: { stocks: StockRow[]; onStock: (ticker: str
   );
 }
 
-function Trades({ runId, ticker, onTicker }: { runId: string; ticker: string; onTicker: (ticker: string) => void }) {
+function Trades({ runId, short, ticker, onTicker }: { runId: string; short: boolean; ticker: string; onTicker: (ticker: string) => void }) {
   const [book, setBook] = useState<"all" | "taken" | "skipped">("all");
   const [sort, setSort] = useState<Sort>({ key: "entry_date", dir: "asc" });
   const [offset, setOffset] = useState(0);
@@ -285,7 +286,7 @@ function Trades({ runId, ticker, onTicker }: { runId: string; ticker: string; on
         </p>
       ) : (
         <DataTable
-          columns={tradeColumns}
+          columns={tradeColumns(short)}
           rows={page?.rows ?? []}
           rowKey={(r) => `${r.ticker}-${r.entry_date}`}
           sort={sort}
@@ -571,7 +572,7 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
           <p className="text-ink-2">Loading…</p>
         )
       ) : active === "trades" ? (
-        <Trades runId={complete.run_id} ticker={ticker} onTicker={setTicker} />
+        <Trades runId={complete.run_id} short={complete.summary?.settings?.entry.side === "short"} ticker={ticker} onTicker={setTicker} />
       ) : (
         <Years runId={complete.run_id} />
       )}

@@ -114,7 +114,8 @@ def summary(table: pd.DataFrame, book: dict, dates: np.ndarray, first_row: int, 
     counts, _ = np.histogram(np.clip(net, -0.5 + 1e-9, 0.5 - 1e-9), bins=edges)
     out["histogram"] = {"edges": edges.tolist(), "counts": counts.tolist()}
     sign = "+" if out["mean_net"] >= 0 else ""
-    out["headline"] = f"{n:,} trades, {sign}{100 * out['mean_net']:.2f}% a trade after costs"
+    kind = "short trades" if settings.entry.side == "short" else "trades"
+    out["headline"] = f"{n:,} {kind}, {sign}{100 * out['mean_net']:.2f}% a trade after costs"
     return out
 
 
@@ -278,7 +279,7 @@ def factor_report(scores: np.ndarray, market, dates: np.ndarray, first_row: int,
 
 
 def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capital: float,
-           position_size: float | None = None) -> dict:  # fmt: skip
+           position_size: float | None = None, short: bool = False) -> dict:  # fmt: skip
     pnl, positions = book["pnl"], book["positions"]
     active = np.flatnonzero(positions > 0)
     last = int(active[-1]) if active.size else first_row
@@ -290,7 +291,7 @@ def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capit
     with np.errstate(divide="ignore", invalid="ignore"):
         spy_day = np.nan_to_num(spy[span][1:] / spy[span][:-1] - 1, nan=0.0, posinf=0.0, neginf=0.0)
     invested = np.minimum(positions[span][1:] * (position_size or 0.0), capital)
-    matched = np.concatenate([[0.0], np.cumsum(spy_day * invested)])
+    matched = np.concatenate([[0.0], np.cumsum(spy_day * invested * (-1 if short else 1))])
     step = max(1, len(cum) // 1200)  # at most about 1,200 points for the chart
     pick = np.arange(0, len(cum), step)
     if len(cum) and pick[-1] != len(cum) - 1:

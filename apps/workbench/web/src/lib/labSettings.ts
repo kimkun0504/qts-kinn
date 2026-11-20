@@ -25,6 +25,7 @@ export const NUMBERS: NumberSpec[] = [
   { path: "exit.take_profit", label: "Take profit", unit: "%", scale: 0.01, min: 0.1, max: 10000, optional: true },
   { path: "book.position_size", label: "Position size", unit: "$", scale: 1, min: 100, max: 10_000_000 },
   { path: "book.max_positions", label: "Max open positions", scale: 1, min: 0, max: 10_000, integer: true },
+  { path: "book.borrow_rate", label: "Borrow fee a year", unit: "%", scale: 0.01, min: 0, max: 100 },
 ];
 
 /** The form's state: what the owner typed (blank = keep the code's or the Lab's value). */
@@ -34,6 +35,7 @@ export interface Draft {
   end?: string;
   mode?: "signal" | "rank";
   rank_order?: "highest" | "lowest";
+  side?: "long" | "short";
   exclude_blank_checks?: boolean;
   tickers?: string;
   numbers: Record<string, string>;
@@ -41,7 +43,7 @@ export interface Draft {
   sweep_values?: string;
 }
 
-export const SWEEPABLE = ["exit.hold_days", "exit.stop_loss", "exit.take_profit", "book.max_positions", "entry.top_n"];
+export const SWEEPABLE = ["exit.hold_days", "exit.stop_loss", "exit.take_profit", "book.max_positions", "entry.top_n", "book.borrow_rate"];
 
 export function toSweep(draft: Draft): { sweep: SweepRequest | null; error: string | null } {
   if (!draft.sweep_field) return { sweep: null, error: null };
@@ -124,6 +126,7 @@ export function toPatch(draft: Draft): { patch: SettingsPatch; errors: string[] 
   };
   if (draft.mode) put("entry", "mode", draft.mode);
   if (draft.rank_order) put("entry", "rank_order", draft.rank_order);
+  if (draft.side) put("entry", "side", draft.side);
   if (draft.exclude_blank_checks !== undefined) put("universe", "exclude_blank_checks", draft.exclude_blank_checks);
   if (draft.tickers !== undefined && draft.tickers.trim()) {
     const { tickers, bad } = readTickers(draft.tickers);
@@ -167,6 +170,7 @@ export function fromSettings(settings: LabSettings, against: LabSettings): Draft
   }
   if (settings.entry.mode !== against.entry.mode) draft.mode = settings.entry.mode;
   if (settings.entry.rank_order !== against.entry.rank_order) draft.rank_order = settings.entry.rank_order;
+  if ((settings.entry.side ?? "long") !== (against.entry.side ?? "long")) draft.side = settings.entry.side ?? "long";
   if (settings.universe.exclude_blank_checks !== against.universe.exclude_blank_checks) draft.exclude_blank_checks = settings.universe.exclude_blank_checks;
   const named = (settings.universe.tickers ?? []).join(", ");
   if (named !== (against.universe.tickers ?? []).join(", ")) draft.tickers = named || "all";
@@ -180,6 +184,13 @@ export function fromSettings(settings: LabSettings, against: LabSettings): Draft
 
 export function changed(draft: Draft): boolean {
   return Boolean(
-    draft.period || draft.mode || draft.rank_order || draft.exclude_blank_checks !== undefined || draft.tickers?.trim() || draft.sweep_field || Object.values(draft.numbers).some((v) => v.trim()),
+    draft.period ||
+    draft.mode ||
+    draft.rank_order ||
+    draft.side ||
+    draft.exclude_blank_checks !== undefined ||
+    draft.tickers?.trim() ||
+    draft.sweep_field ||
+    Object.values(draft.numbers).some((v) => v.trim()),
   );
 }

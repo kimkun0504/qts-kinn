@@ -121,6 +121,15 @@ such a run *Hand-picked stocks*: it describes those stocks and is no evidence fo
   traded stocks (signal mode) and lists the rest as skipped.
 - **Over the average:** each trade is also measured against the equal-weight average of the
   universe over the same sessions, the figure the research reports.
+- **Shorts** (*Side: Short*, `"entry": {"side": "short"}`): every signal sells short at the
+  next open and buys back by the same rules mirrored, so the stop is above the entry and the
+  target below. A trade gains what the price loses and pays the borrow fee (`book.borrow_rate`,
+  1% a year unless set) on its value for each session it is open, with the costs of a sale to
+  open and a purchase to close. Against the average it is measured as a short of the universe,
+  and the book's SPY line sells SPY short with the money at stake. The Lab assumes every stock
+  could be borrowed at that fee and ignores the short-sale price test and recalls: in small
+  companies the fee is often far higher and some cannot be borrowed at all, so sweep
+  `book.borrow_rate` before trusting a short.
 
 ## Checks while you type
 

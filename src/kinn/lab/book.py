@@ -48,7 +48,8 @@ def daily(trades: list[Trade], taken: np.ndarray, market: Market) -> dict[str, n
             valid[0] = True
         idx = np.where(valid, np.arange(len(closes)), 0)
         np.maximum.accumulate(idx, out=idx)
-        value = trade.value * closes[idx] / entry
+        ratio = closes[idx] / entry
+        value = trade.value * (2 - ratio if trade.short else ratio)
         pnl[e] += value[0] - trade.value - trade.cost_entry
         if len(value) > 1:
             pnl[e + 1 : x] += np.diff(value)

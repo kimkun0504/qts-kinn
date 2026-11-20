@@ -101,6 +101,7 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
   const period = draft.period ?? base.period;
   const mode = draft.mode ?? base.entry.mode;
   const order = draft.rank_order ?? base.entry.rank_order;
+  const side = draft.side ?? base.entry.side ?? "long";
   const exclude = draft.exclude_blank_checks ?? base.universe.exclude_blank_checks;
   const watched = watchlist().map((w) => w.ticker);
   const spec = (path: string) => NUMBERS.find((s) => s.path === path) as NumberSpec;
@@ -187,7 +188,18 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
         </div>
       </Group>
       <Group title="Entry">
-        <Row label="Buy">
+        <Row label="Side">
+          <Pair
+            label="Side"
+            value={side}
+            options={[
+              ["long", "Long"],
+              ["short", "Short"],
+            ]}
+            onChange={(value) => onChange({ ...draft, side: value === (base.entry.side ?? "long") ? undefined : value })}
+          />
+        </Row>
+        <Row label="Enter on">
           <Pair
             label="Entry mode"
             value={mode}
@@ -223,14 +235,15 @@ function Settings({ meta, base, draft, onChange }: Pick<InspectorProps, "meta" |
       <Group title="Book">
         {number("book.position_size")}
         {number("book.max_positions")}
+        {side === "short" && number("book.borrow_rate")}
       </Group>
-      <Sweep meta={meta} mode={mode} draft={draft} onChange={onChange} />
+      <Sweep meta={meta} mode={mode} side={side} draft={draft} onChange={onChange} />
     </>
   );
 }
 
-function Sweep({ meta, mode, draft, onChange }: { meta: Meta; mode: string; draft: Draft; onChange: (draft: Draft) => void }) {
-  const allowed = (meta.sweepable ?? SWEEPABLE).filter((path) => path !== "entry.top_n" || mode === "rank");
+function Sweep({ meta, mode, side, draft, onChange }: { meta: Meta; mode: string; side: string; draft: Draft; onChange: (draft: Draft) => void }) {
+  const allowed = (meta.sweepable ?? SWEEPABLE).filter((path) => (path !== "entry.top_n" || mode === "rank") && (path !== "book.borrow_rate" || side === "short"));
   const spec = NUMBERS.find((s) => s.path === draft.sweep_field);
   const { sweep, error } = toSweep(draft);
   const unit = spec?.unit === "sessions" ? "days" : spec?.unit;

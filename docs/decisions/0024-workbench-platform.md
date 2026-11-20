@@ -88,3 +88,9 @@ applies the holdout date guard and is tested against the synthetic build.
     The run records any named ticker it did not find, and its page marks it *Hand-picked
     stocks*: a list chosen today knows which companies lasted, so the result describes those
     stocks and is no evidence for the rule.
+12. **Short positions in the Lab** (`entry.side`, `book.borrow_rate`). A short is worked out as a
+    long on negated prices, so the exit rules are the same code; it pays the borrow fee for
+    each session it is open (1% a year by default, the figure decision 0016 assumes for the
+    daily engine) and the costs of a sale to open and a purchase to close. Hard-to-borrow fees,
+    locates, recalls and the short-sale price test are not modelled; the guide says so and the
+    fee can be swept.
