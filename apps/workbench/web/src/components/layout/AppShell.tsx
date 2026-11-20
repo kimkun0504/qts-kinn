@@ -94,7 +94,7 @@ export function AppShell(props: AppShellProps) {
   const current: NavPage = page === "strategy" ? "strategies" : page;
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      <aside className="flex shrink-0 flex-col gap-1 border-b border-line bg-rail px-3 py-2 md:sticky md:top-0 md:h-screen md:w-[224px] md:border-r md:border-b-0 md:py-4">
+      <aside data-print="hide" className="flex shrink-0 flex-col gap-1 border-b border-line bg-rail px-3 py-2 md:sticky md:top-0 md:h-screen md:w-[224px] md:border-r md:border-b-0 md:py-4">
         <div className="flex items-center gap-2.5 px-3 pt-0.5 pb-1 md:pb-4">
           <span aria-hidden="true" className="inline-flex size-[26px] items-center justify-center rounded-[7px] bg-ink font-bold text-rail">
             K
@@ -114,7 +114,18 @@ export function AppShell(props: AppShellProps) {
                     current === key ? "bg-raised text-ink" : "text-ink-2 hover:text-ink"
                   }`}
                 >
-                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                  <svg
+                    aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="shrink-0"
+                  >
                     {ICONS[key]}
                   </svg>
                   <span className="flex-1">{LABELS[key]}</span>
@@ -136,26 +147,36 @@ export function AppShell(props: AppShellProps) {
           <div className="flex min-h-10 flex-wrap items-center gap-3">
             {props.title && <h1 className="m-0 text-[26px] font-semibold tracking-tight">{props.title}</h1>}
             <div className="flex-1" />
-            {props.status}
-            <button
-              type="button"
-              onClick={props.onSearch}
-              aria-label="Search the Workbench"
-              className="flex min-h-9 w-[240px] cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 text-left text-sm text-ink-3 hover:border-ink-3 focus-visible:outline-2 focus-visible:outline-accent"
-            >
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="7" cy="7" r="4.5" />
-                <path d="M10.5 10.5L14 14" strokeLinecap="round" />
-              </svg>
-              <span className="flex-1">Search</span>
-              <kbd className="rounded border border-line px-1.5 font-sans text-[11px]">⌘K</kbd>
-            </button>
-            <button type="button" onClick={props.onToggleTheme} className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
-              {props.theme === "dark" ? "Light theme" : "Dark theme"}
-            </button>
-            <button type="button" onClick={props.onReload} className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent">
-              Reload
-            </button>
+            <div data-print="hide" className="flex flex-wrap items-center gap-3">
+              {props.status}
+              <button
+                type="button"
+                onClick={props.onSearch}
+                aria-label="Search the Workbench"
+                className="flex min-h-9 w-[240px] cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 text-left text-sm text-ink-3 hover:border-ink-3 focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="7" cy="7" r="4.5" />
+                  <path d="M10.5 10.5L14 14" strokeLinecap="round" />
+                </svg>
+                <span className="flex-1">Search</span>
+                <kbd className="rounded border border-line px-1.5 font-sans text-[11px]">⌘K</kbd>
+              </button>
+              <button
+                type="button"
+                onClick={props.onToggleTheme}
+                className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                {props.theme === "dark" ? "Light theme" : "Dark theme"}
+              </button>
+              <button
+                type="button"
+                onClick={props.onReload}
+                className="min-h-9 cursor-pointer rounded-md border border-line bg-surface px-3 text-sm font-medium hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                Reload
+              </button>
+            </div>
           </div>
           {props.children}
         </main>
