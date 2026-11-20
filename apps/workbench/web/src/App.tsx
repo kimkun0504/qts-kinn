@@ -290,7 +290,7 @@ export default function App() {
         ) : !board ? (
           <p className="text-ink-2">Loading…</p>
         ) : route.page === "home" ? (
-          <Home key={version} board={board} onOpen={openStrategy} />
+          <Home key={version} board={board} runs={live} onOpen={openStrategy} />
         ) : route.page === "strategies" ? (
           <Strategies board={board} onOpen={openStrategy} />
         ) : route.page === "strategy" && route.name ? (

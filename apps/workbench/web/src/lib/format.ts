@@ -83,3 +83,12 @@ export function priceTick(value: number): string {
   const digits = size >= 100 ? 0 : size >= 1 ? 2 : Math.min(6, 1 - Math.floor(Math.log10(size)));
   return "$" + value.toFixed(digits);
 }
+
+/** "18 Nov 14:22" in the viewer's time. */
+export function when(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso.slice(0, 16).replace("T", " ");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getDate()} ${months[date.getMonth()]} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

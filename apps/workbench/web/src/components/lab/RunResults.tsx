@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { isLive, lab, type RunDetail, type RunListRow, type RunState, type StockRow, type TradePage, type TradeRow, type YearRow } from "../../lib/lab";
-import { day, dollars, int, money, num, pct, plainPct } from "../../lib/format";
+import { day, dollars, int, money, num, pct, plainPct, when } from "../../lib/format";
 import { useLoad } from "../../lib/useLoad";
 import { Histogram } from "../charts/Histogram";
 import { YearBars } from "../charts/YearBars";
@@ -399,14 +399,7 @@ export const STATE_LABEL: Record<RunState, string> = {
   interrupted: "Stopped",
 };
 
-/** "18 Nov 14:22" in the viewer's time. */
-export function when(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso.slice(0, 16).replace("T", " ");
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getDate()} ${months[date.getMonth()]} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
+export { when };
 
 function runLabel(run: RunRow): string {
   const count = Math.max(1, run.trials ?? 1);

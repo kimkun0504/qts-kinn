@@ -6,24 +6,48 @@ import { bookName, bookTotal, Orders, Positions } from "../components/PaperPanel
 import { Card, Note, Stat } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { VerdictBadge } from "../components/ui/VerdictBadge";
-import { api, type Board, type BoardRow } from "../lib/api";
-import { day, dollars, int, money, num, pct, plainPct } from "../lib/format";
+import { api, type Board, type BoardRow, type RunRow } from "../lib/api";
+import { lab } from "../lib/lab";
+import { lastVisit, sinceLast } from "../lib/visits";
+import { day, dollars, int, money, num, pct, plainPct, when } from "../lib/format";
 import { timeline } from "../lib/series";
 import { useLoad } from "../lib/useLoad";
 
 interface HomeProps {
   board: Board;
+  runs: RunRow[];
   onOpen: (strategy: string, tab?: string) => void;
 }
 
+function SinceLastVisit({ runs }: { runs: RunRow[] }) {
+  const since = lastVisit();
+  const { data: labRuns } = useLoad(() => lab.runs().catch(() => []), "since-lab-runs");
+  const items = sinceLast(since, runs, labRuns ?? []);
+  if (!since || !items.length) return null;
+  return (
+    <Card title={`Since you were last here, ${when(since)}`}>
+      <ul className="m-0 flex list-none flex-wrap gap-x-6 gap-y-1.5 p-0 text-sm">
+        {items.map((item) => (
+          <li key={item.label}>
+            <a href={item.href} className="text-ink no-underline hover:underline">
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
 /** What works, what is being tested, what is waiting on the owner, and everything tested. */
-export function Home({ board, onOpen }: HomeProps) {
+export function Home({ board, runs, onOpen }: HomeProps) {
   const works = board.rows.find((row) => row.group === "works" && !row.variant) ?? null;
   const testing = board.rows.filter((row) => row.group === "testing");
   const lead = testing.find((row) => row.variant) ?? testing[0] ?? null;
   const ledger = board.rows.find((row) => row.paper) ?? null;
   return (
     <>
+      <SinceLastVisit runs={runs} />
       {works ? <Works row={works} onOpen={onOpen} /> : <EmptyState title="Nothing has passed its holdout yet">Ideas being tested and everything tried so far are below.</EmptyState>}
       <div className="grid gap-5 lg:grid-cols-2">
         <Card title="Being tested forward" aside={lead && <VerdictBadge group="testing" label={lead.label} />}>
@@ -71,7 +95,11 @@ function Works({ row, onOpen }: { row: BoardRow; onOpen: HomeProps["onOpen"] }) 
               <Stat label="Net a trade" value={pct(stats.net)} note={`${int(stats.trades)} trades`} />
               <Stat label="Profit" value={dollars(stats.total)} note={period.equity ? `on ${dollars(period.equity)}` : undefined} />
               <Stat label="Sharpe" value={num(stats.sharpe)} note={`${num(stats.sharpe_2x)} at double cost`} />
-              <Stat label="Worst drawdown" value={dollars(Math.abs(stats.drawdown ?? 0))} note={period.equity && stats.drawdown != null ? `${plainPct(-stats.drawdown / period.equity)} of account` : undefined} />
+              <Stat
+                label="Worst drawdown"
+                value={dollars(Math.abs(stats.drawdown ?? 0))}
+                note={period.equity && stats.drawdown != null ? `${plainPct(-stats.drawdown / period.equity)} of account` : undefined}
+              />
             </div>
             <Note>
               {period.label}, {day(period.start)} to {day(period.end)}.
@@ -106,7 +134,11 @@ function Testing({ lead, rest, onOpen }: { lead: BoardRow; rest: BoardRow[]; onO
   return (
     <>
       <div>
-        <button type="button" onClick={() => onOpen(lead.strategy)} className="cursor-pointer text-left text-[19px] font-semibold hover:text-accent focus-visible:outline-2 focus-visible:outline-accent">
+        <button
+          type="button"
+          onClick={() => onOpen(lead.strategy)}
+          className="cursor-pointer text-left text-[19px] font-semibold hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+        >
           {lead.title}
         </button>
         {lead.summary && <p className="mt-1.5 mb-0 text-ink-2">{lead.summary}</p>}
@@ -170,7 +202,11 @@ function PaperCard({ row, onOpen }: { row: BoardRow; onOpen: HomeProps["onOpen"]
             <Note>
               {Math.min(8, paper.positions.length)} of {paper.positions.length} shown, nearest their exit first.{idle ? ` ${idle} more books are waiting for their first signal.` : ""}
             </Note>
-            <button type="button" onClick={() => onOpen(row.strategy, "paper")} className="cursor-pointer text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+            <button
+              type="button"
+              onClick={() => onOpen(row.strategy, "paper")}
+              className="cursor-pointer text-sm font-semibold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+            >
               Open the ledger
             </button>
           </div>
