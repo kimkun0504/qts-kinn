@@ -5,7 +5,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { RunningRuns } from "./components/RunningRuns";
 import { JUMPS, Shortcuts } from "./components/Shortcuts";
 import { EmptyState } from "./components/ui/EmptyState";
-import { api, type Board, type Family, type LedgerHead, type RunRow } from "./lib/api";
+import { api, type Board, type Family, type LedgerHead, type RunRow, type StudyRow } from "./lib/api";
 import { shortTime } from "./lib/format";
 import { lab, type AlgorithmRow } from "./lib/lab";
 import { href, type Route, useRoute } from "./lib/route";
@@ -97,6 +97,7 @@ export default function App() {
   const [heads, setHeads] = useState<LedgerHead[]>([]);
   const [palette, setPalette] = useState(false);
   const [algorithms, setAlgorithms] = useState<AlgorithmRow[]>([]);
+  const [studies, setStudies] = useState<StudyRow[]>([]);
   const [shortcuts, setShortcuts] = useState(false);
   const pending = useRef(0);
   const closeShortcuts = useCallback(() => setShortcuts(false), []);
@@ -166,11 +167,15 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   useEffect(() => {
-    if (palette)
-      lab
-        .algorithms()
-        .then(setAlgorithms)
-        .catch(() => setAlgorithms([]));
+    if (!palette) return;
+    lab
+      .algorithms()
+      .then(setAlgorithms)
+      .catch(() => setAlgorithms([]));
+    api
+      .studies()
+      .then(setStudies)
+      .catch(() => setStudies([]));
   }, [palette]);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -228,19 +233,25 @@ export default function App() {
       .map((row) => ({ id: `ledger-${row.strategy}`, group: "Paper ledgers", label: row.title, hint: "paper ledger", href: `#/paper/${encodeURIComponent(row.strategy)}` })),
     ...heads.map((h) => ({ id: `ledger-${h.name}`, group: "Paper ledgers", label: h.title, hint: "paper ledger", keywords: h.name, href: `#/paper/${encodeURIComponent(h.name)}` })),
     ...algorithms.map((a) => ({ id: `algo-${a.name}`, group: "Lab algorithms", label: a.name, hint: a.description, href: `#/lab/${encodeURIComponent(a.name)}` })),
-    ...live
-      .slice(0, 400)
-      .map((run) => ({
-        id: `run-${run.run_id}`,
-        group: "Runs",
-        label: run.strategy,
-        hint: `${run.config}  ${shortTime(run.started_at)}`,
-        keywords: `${run.config} ${run.run_id} ${run.agent}`,
-        href: `#/runs/${encodeURIComponent(run.run_id)}`,
-      })),
+    ...live.slice(0, 400).map((run) => ({
+      id: `run-${run.run_id}`,
+      group: "Runs",
+      label: run.strategy,
+      hint: `${run.config}  ${shortTime(run.started_at)}`,
+      keywords: `${run.config} ${run.run_id} ${run.agent}`,
+      href: `#/runs/${encodeURIComponent(run.run_id)}`,
+    })),
     ...watchlist().map((w) => ({ id: `watch-${w.permaticker}`, group: "Watchlist", label: w.ticker, hint: w.name ?? "", href: `#/stock/${encodeURIComponent(w.ticker)}/${w.permaticker}` })),
     ...readSaved().map((s) => ({ id: `screen-${s.name}`, group: "Screens", label: s.name, hint: "saved screen", href: href(screenerRoute(undefined, s.query)) })),
     ...STARTS.map((s) => ({ id: `start-${s.name}`, group: "Screens", label: s.name, hint: "screen", href: href(screenerRoute(undefined, encode(s.screen))) })),
+    ...studies.map((s, i) => ({
+      id: `study-${i}`,
+      group: "Studies",
+      label: s.name,
+      hint: s.strategy_title,
+      keywords: `${s.strategy} ${s.result ?? ""}`,
+      href: `#/strategy/${encodeURIComponent(s.strategy)}/studies`,
+    })),
     { id: "action-theme", group: "Actions", label: theme === "dark" ? "Light theme" : "Dark theme", run: () => toggleTheme() },
     { id: "action-reload", group: "Actions", label: "Reload the run store", run: () => load() },
     { id: "action-shortcuts", group: "Actions", label: "Keyboard shortcuts", hint: "?", run: () => setShortcuts(true) },

@@ -11,9 +11,9 @@ export interface Command {
   run?: () => void;
 }
 
-const GROUP_LIMIT: Record<string, number> = { Pages: 14, Watchlist: 6, Screens: 6, Strategies: 6, "Paper ledgers": 4, "Lab algorithms": 6, Runs: 6, Stocks: 8, Actions: 4 };
+const GROUP_LIMIT: Record<string, number> = { Pages: 14, Watchlist: 6, Screens: 6, Strategies: 6, Studies: 5, "Paper ledgers": 4, "Lab algorithms": 6, Runs: 6, Stocks: 8, Actions: 4 };
 const EMPTY_LIMIT: Record<string, number> = { Pages: 20, Watchlist: 6, Actions: 20 };
-const ORDER = ["Pages", "Stocks", "Watchlist", "Screens", "Strategies", "Lab algorithms", "Paper ledgers", "Runs", "Actions"];
+const ORDER = ["Pages", "Stocks", "Watchlist", "Screens", "Strategies", "Studies", "Lab algorithms", "Paper ledgers", "Runs", "Actions"];
 
 export function score(text: string, query: string): number | null {
   const t = text.toLowerCase();
