@@ -14,26 +14,27 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 | Page | Shows |
 |---|---|
 | Home | what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, the leads on paper, the latest Lab runs, and the first ideas tested with their verdicts (all of them on request) |
-| Strategies | every idea with its verdict; each opens a strategy page |
+| Strategies | how many ideas were tested, passed, are in test or closed, and the trials charged; every idea with its verdict; each opens a strategy page |
 | A strategy | Results (profit across its periods, the holdout marked, years, months, costs, weaknesses, the evidence in order), Trades, Paper book, Report (REPORT.md and HYPOTHESIS.md), Studies, Runs |
 | Markets | index, sector, bond, commodity, foreign and volatility funds on the last session with their day, week, month, three months, year to date, year and three years; any four of them charted together over a month to three years; how they moved together over the last year (correlation of daily changes); and how many US stocks rose and fell each day, with the running total |
 | Stocks | a watchlist with each stock's last session (day, month, year, distance from the high, market value, P/E), the largest rises and falls among US stocks above $2B that day, and each sector's median month; any company by ticker, old ticker or name: daily prices to the seal (split-adjusted, line or candles, volume, log scale, drag to zoom, 50- and 200-day averages), its 8-K days, its change beside SPY, QQQ, IWM or other stocks over the chart's range, and, in tabs, its financials by quarter and trailing year (as filed before the seal, any line charted), how it moved on each results 8-K and the 20 sessions after (beside SPY), its industry's largest companies side by side with the industry's medians, its beta to SPY, volatility, deepest falls and average month, every trade a strategy run, a Lab run or a paper ledger made in it (marked on the chart), its insiders' open-market purchases and sales from Form 4, and its 8-K filings |
-| Screener | every stock that traded on a session from September 2003 up to the seal, filtered by kind, sector, industry, exchange and any range of market value, dollar volume, price, returns (1, 3, 6 and 12 months), distance from the 52-week high, volatility, P/E, P/S, P/B, free cash flow yield, revenue, revenue growth and net income; ready starting points, screens saved by name, the screen in the address, CSV, a breakdown by sector, picked stocks added to the watchlist or charted together, and, for a past day, what came next: each stock's change over the next month to year (up to the seal) and the medians of the stocks that pass against every stock and SPY. Valuations use only filings made before the session |
-| Studies | every search and test, including those done by research scripts, with its trial count and verdict; a search box, outcome filters and ordering |
+| Screener | every stock that traded on a session from September 2003 up to the seal, filtered by kind, sector, industry, exchange and any range of market value, dollar volume, price, returns (1 day, 1, 3, 6 and 12 months), distance from the 52-week high, volatility, P/E, P/S, P/B, free cash flow yield, revenue, revenue growth and net income; ready starting points, screens saved by name, the screen in the address, CSV, a breakdown by sector, picked stocks added to the watchlist or charted together, and, for a past day, what came next: each stock's change over the next month to year (up to the seal) and the medians of the stocks that pass against every stock and SPY. Valuations use only filings made before the session |
+| Studies | every search and test, including those done by research scripts, with its trial count and verdict; a search box, outcome filters and ordering; the first 25 that match, the rest on request |
 | Paper trading | every paper ledger: the earnings drift's books (tonight's orders, positions, the books side by side) and the big prints and after-hours short ledgers (signals, results, the alternative exit, the benchmark or borrow, the evenings read) |
 | Runs | every run with a search box, filters (kind, period, strategy) and sortable columns; the selected run (in the address, `#/runs/<run id>`) with its tearsheet, event study, tick study or book |
 | Compare | up to four backtests overlaid, with a side-by-side table, picked on the page or in the runs table; the choice is kept and in the address (`#/compare/<id>,<id>`) |
 | Parameters | a map of any result across one or two settings that differ between runs |
 | Trials | every family in a sortable table (trials charged, counted runs, best and deflated Sharpe, probability of backtest overfitting), one family's detail at a time, and the Lab algorithms' trial counts |
-| Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, and any two runs compared |
+| Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, any two runs compared, a factor report for ranking algorithms, sweeps of one setting, and a note on any run |
 | Guide | this README and the Lab's guide (`docs/LAB.md`) with their sections beside them, and the keyboard shortcuts |
 | Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
 
-Search everything (pages, stocks, the watchlist, screens, strategies, paper ledgers, Lab
-algorithms, runs) with the box
-in the top bar, Cmd+K or `/`. `?` lists the keyboard shortcuts; G then a letter jumps to a page
-(G S stocks, G F screener, G L Lab, G R runs). A Lab run going shows in the top bar from any
-page, and a note appears when it ends. A page that fails shows its error in place of the page.
+Search everything (pages, stocks, the watchlist, screens, strategies, studies, paper ledgers,
+Lab algorithms, runs) with the box in the top bar, Cmd+K or `/`. `?` lists the keyboard
+shortcuts; G then a letter jumps to a page (G M markets, G S stocks, G F screener, G L Lab, G R
+runs). A Lab run going shows in the top bar from any page, and a note appears when it ends. A
+page that fails shows its error in place of the page. A page prints without the side rail and
+the top bar.
 
 ## Where the record comes from
 
