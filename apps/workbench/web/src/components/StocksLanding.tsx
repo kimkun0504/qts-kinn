@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "./ui/Button";
 import { api } from "../lib/api";
 import { compact, day, num, pct, price } from "../lib/format";
 import { href } from "../lib/route";
@@ -77,17 +78,87 @@ function Watchlist({ list, rows, on }: { list: Watched[]; rows: Map<number, Scre
     },
   ];
   return (
-    <Panel title={`Watchlist on ${day(on)}`}>
-      <DataTable
-        columns={columns}
-        rows={list}
-        rowKey={(w) => String(w.permaticker)}
-        onRowClick={(w) => {
-          window.location.hash = href({ page: "stock", name: w.ticker, tab: String(w.permaticker) });
-        }}
-        minWidth={900}
-      />
+    <Panel title={list.length ? `Watchlist on ${day(on)}` : "Watchlist"} aside={<AddTickers />}>
+      {list.length ? (
+        <DataTable
+          columns={columns}
+          rows={list}
+          rowKey={(w) => String(w.permaticker)}
+          onRowClick={(w) => {
+            window.location.hash = href({ page: "stock", name: w.ticker, tab: String(w.permaticker) });
+          }}
+          minWidth={900}
+        />
+      ) : (
+        <p className="m-0 px-4 py-5 text-ink-2">Add tickers here, or with “Add to the watchlist” on a stock’s page or picked stocks in the screener.</p>
+      )}
     </Panel>
+  );
+}
+
+export function tickersIn(text: string): string[] {
+  return [
+    ...new Set(
+      text
+        .toUpperCase()
+        .split(/[\s,;]+/)
+        .filter((t) => /^[A-Z][A-Z0-9.\-]{0,9}$/.test(t)),
+    ),
+  ];
+}
+
+function AddTickers() {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const add = async () => {
+    const tickers = tickersIn(text);
+    if (!tickers.length) return;
+    setBusy(true);
+    const have = new Set(watchlist().map((w) => w.permaticker));
+    const missing: string[] = [];
+    let added = 0;
+    for (const ticker of tickers) {
+      const hits = await api.stocks(ticker).catch(() => []);
+      const hit = hits.find((h) => (h.ticker ?? "").toUpperCase() === ticker);
+      if (!hit) missing.push(ticker);
+      else if (!have.has(hit.permaticker)) {
+        toggleWatch({ ticker: hit.ticker ?? ticker, name: hit.name, permaticker: hit.permaticker });
+        have.add(hit.permaticker);
+        added += 1;
+      }
+    }
+    setBusy(false);
+    setText("");
+    setNote(`${added} added${missing.length ? `; not found: ${missing.join(", ")}` : ""}`);
+  };
+  return (
+    <form
+      className="flex items-center gap-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void add();
+      }}
+    >
+      {note && (
+        <span role="status" className="text-[13px] text-ink-3">
+          {note}
+        </span>
+      )}
+      <input
+        aria-label="Tickers to add"
+        placeholder="AAPL, MSFT, NVDA"
+        value={text}
+        onChange={(event) => {
+          setText(event.target.value);
+          setNote(null);
+        }}
+        className="min-h-8 w-48 rounded-md border border-line bg-surface px-2.5 text-[13px] text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none"
+      />
+      <Button type="submit" disabled={busy || !tickersIn(text).length}>
+        {busy ? "Adding…" : "Add"}
+      </Button>
+    </form>
   );
 }
 
@@ -100,7 +171,7 @@ export function StocksLanding() {
   if (!data) return list.length ? <p className="text-ink-2">Loading the watchlist…</p> : null;
   return (
     <>
-      {list.length > 0 && <Watchlist list={list} rows={byPerm} on={data.on} />}
+      <Watchlist list={list} rows={byPerm} on={data.on} />
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel title={`Largest rises on ${day(data.on)}`}>
           <DataTable columns={moveColumns(data.on)} rows={movers(rows, "up")} rowKey={(r) => String(r.permaticker)} empty="No US stock above $2B rose that day." />

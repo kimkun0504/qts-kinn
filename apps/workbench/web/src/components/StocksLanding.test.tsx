@@ -1,8 +1,8 @@
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScreenData } from "../lib/api";
 import { rowsOf } from "../lib/screen";
-import { movers, sectorMonths, StocksLanding } from "./StocksLanding";
+import { movers, sectorMonths, StocksLanding, tickersIn } from "./StocksLanding";
 
 afterEach(cleanup);
 
@@ -68,5 +68,27 @@ describe("the stocks landing", () => {
     const table = within(screen.getAllByRole("table")[0]);
     expect(table.getByText("−6.0%")).toBeTruthy();
     expect(table.getByText("$3.0B")).toBeTruthy();
+  });
+
+  it("reads tickers from what is pasted", () => {
+    expect(tickersIn("aapl, msft;NVDA  brk.b 123 aapl")).toEqual(["AAPL", "MSFT", "NVDA", "BRK.B"]);
+  });
+
+  it("adds pasted tickers it can find to the watchlist", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.startsWith("/api/stocks?q=")) {
+          const q = decodeURIComponent(url.split("q=")[1]);
+          return new Response(JSON.stringify(q === "UPPP" ? [{ permaticker: 1, ticker: "UPPP", name: "UPPP Inc" }] : []));
+        }
+        return new Response(JSON.stringify(data));
+      }),
+    );
+    render(<StocksLanding />);
+    fireEvent.change(await screen.findByLabelText("Tickers to add"), { target: { value: "uppp, NOPE" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe("1 added; not found: NOPE"));
+    expect(JSON.parse(localStorage.getItem("kinn-watchlist") ?? "[]")).toEqual([{ ticker: "UPPP", name: "UPPP Inc", permaticker: 1 }]);
   });
 });
