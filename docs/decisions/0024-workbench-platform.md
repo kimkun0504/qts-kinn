@@ -47,14 +47,15 @@ scan of the panel's permaticker column); the catalog is worked out once per buil
 ## Additions (2026-11-19, evening)
 
 6. **A screener** (`apps/workbench/screener.py`, `#/screener[/<date>/<screen>]`): every stock
-   that traded on a chosen session from the data's first (September 2003) to the last before
-   the seal, with its size, liquidity, returns (1 day to 1 year), distance from the 52-week high, volatility and
-   valuations. Valuations take each company's latest trailing-year filing made **before** the
-   session (`DataStore.fundamentals_as_of`, guarded like every read); a filing older than about
-   16 months is left out. Free cash flow yield and margins are left out for foreign filers
-   (categories other than Domestic): their profit and cash-flow lines are in their own currency.
-   For a past session, `/api/screen/ahead` gives each stock's change over the next month to year,
-   but never past the seal; it is labelled as research on the same years the strategies use.
+   that traded on a chosen session from the data's first (September 2003) to the last before the
+   seal, with its size, liquidity, returns (1 day to 1 year), distance from the 52-week high,
+   volatility and valuations. Valuations take each company's latest trailing-year filing made
+   **before** the session (`DataStore.fundamentals_as_of`, guarded like every read); a filing
+   older than about 16 months is left out. Free cash flow yield and margins are left out for
+   foreign filers (categories other than Domestic): their profit and cash-flow lines are in
+   their own currency. For a past session, `/api/screen/ahead` gives each stock's change over
+   the next month to year, but never past the seal; it is labelled as research on the same years
+   the strategies use.
 7. **A Markets page** (`apps/workbench/markets.py`): index, sector, bond, commodity, foreign
    and volatility funds from the vendor's daily bars, with a one-day move beyond ×1.8 or ÷1.8
    taken out as a split, and the daily count of US common stocks that rose and fell
