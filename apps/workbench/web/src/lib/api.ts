@@ -663,6 +663,28 @@ export interface ClosesData {
   sealed_from: string;
 }
 
+export interface MarketRow {
+  symbol: string;
+  name: string;
+  close: number | null;
+  day?: number | null;
+  week?: number | null;
+  month?: number | null;
+  quarter?: number | null;
+  year_to_date?: number | null;
+  year?: number | null;
+  three_years?: number | null;
+}
+
+export interface MarketsData {
+  schema: string;
+  on: string;
+  first: string;
+  last: string;
+  groups: { title: string; rows: MarketRow[] }[];
+  breadth: { date: string; advancing: number; declining: number; traded: number }[];
+}
+
 export interface ScreenAhead {
   schema: string;
   on: string;
@@ -701,6 +723,7 @@ export const api = {
     get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
   ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
   closes: (symbols: string[]) => get<ClosesData>(`/api/closes?symbols=${encodeURIComponent(symbols.join(","))}`),
+  markets: () => get<MarketsData>("/api/markets"),
   guide: (name: string) => get<{ name: string; text: string }>(`/api/guide/${encodeURIComponent(name)}`),
   screenAhead: (on: string) => get<ScreenAhead>(`/api/screen/ahead?on=${encodeURIComponent(on)}`),
   screen: (on?: string) => get<ScreenData>(`/api/screen${on ? `?on=${encodeURIComponent(on)}` : ""}`),

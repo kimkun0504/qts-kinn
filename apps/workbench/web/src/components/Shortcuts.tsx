@@ -4,6 +4,7 @@ import type { Page } from "../lib/route";
 export const JUMPS: { key: string; page: Page; label: string }[] = [
   { key: "h", page: "home", label: "Home" },
   { key: "t", page: "strategies", label: "Strategies" },
+  { key: "m", page: "markets", label: "Markets" },
   { key: "s", page: "stock", label: "Stocks" },
   { key: "f", page: "screener", label: "Screener" },
   { key: "u", page: "studies", label: "Studies" },

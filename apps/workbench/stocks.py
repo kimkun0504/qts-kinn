@@ -308,6 +308,28 @@ def financials(store: Store, perm: int, category: str | None) -> dict:
 
 
 MAX_CLOSES = 4
+JUMP = 0.55
+
+
+def continuous(closes: list[float | None]) -> list[float | None]:
+    out: list[float | None] = []
+    scale = 1.0
+    previous = None
+    for close in closes:
+        if close is None or close <= 0:
+            out.append(None)
+            continue
+        if previous is not None and abs(math.log(close / previous)) > -math.log(JUMP):
+            scale *= previous / close
+        out.append(close * scale)
+        previous = close
+    last = next((v for v in reversed(out) if v is not None), None)
+    if not last:
+        return out
+    factor = closes[[i for i, v in enumerate(out) if v is not None][-1]] / last
+    return [None if v is None else v * factor for v in out]
+
+
 MAX_INSIDERS = 600
 
 
@@ -363,9 +385,10 @@ def closes(store: Store, symbols: list[str]) -> dict:
         if not rows:
             missing.append(symbol)
             continue
+        closes = continuous([r["close"] for r in rows])
         found.append({"symbol": symbol, "name": symbol,
                       "date": [r["date"].isoformat() for r in rows],
-                      "close": [_number(r["close"]) for r in rows]})  # fmt: skip
+                      "close": [_number(c) for c in closes]})  # fmt: skip
     return {"series": found, "missing": missing, "sealed_from": HOLDOUT_START.isoformat()}
 
 

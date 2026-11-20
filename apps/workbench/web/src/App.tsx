@@ -13,6 +13,7 @@ import { clearRunCache } from "./lib/useRun";
 import { Compare } from "./pages/Compare";
 import { DataPage } from "./pages/DataPage";
 import { GuidePage } from "./pages/GuidePage";
+import { MarketsPage } from "./pages/MarketsPage";
 import { readSaved, ScreenerPage, screenerRoute } from "./pages/ScreenerPage";
 import { encode, STARTS } from "./lib/screen";
 import { watchlist } from "./lib/watchlist";
@@ -33,6 +34,7 @@ const TITLES = {
   home: "Home",
   strategies: "Strategies",
   strategy: null,
+  markets: "Markets",
   stock: null,
   screener: "Screener",
   studies: "Studies",
@@ -196,6 +198,7 @@ export default function App() {
   const pages: [string, string][] = [
     ["home", "Home"],
     ["strategies", "Strategies"],
+    ["markets", "Markets"],
     ["stock", "Stocks"],
     ["screener", "Screener"],
     ["studies", "Studies"],
@@ -287,6 +290,8 @@ export default function App() {
           />
         ) : route.page === "stock" ? (
           <StockPage symbol={route.name} permaticker={route.tab} onOpen={(symbol, permaticker) => go({ page: "stock", name: symbol, tab: permaticker ? String(permaticker) : undefined })} />
+        ) : route.page === "markets" ? (
+          <MarketsPage />
         ) : route.page === "screener" ? (
           <ScreenerPage on={route.name} query={route.tab} onDate={(on, query) => go(screenerRoute(on, query), { scroll: false })} />
         ) : route.page === "studies" ? (

@@ -73,3 +73,12 @@ def test_one_companys_fundamentals_stop_at_the_seal(built):
     rows = store.fundamentals_of(perm, fields=("equityusd",), dimension="ART").to_pylist()
     assert [r["equityusd"] for r in rows] == [400.0, 500.0]
     assert store.fundamentals_of(perm, fields=("equityusd",), dimension="ARQ").num_rows == 0
+
+
+def test_breadth_counts_rising_and_falling_common_stocks_and_stops_at_the_seal(built):
+    store = DataStore(built)
+    rows = store.breadth(FIRST, LAST_OPEN).to_pylist()
+    assert rows and all(r["advancing"] + r["declining"] <= r["traded"] for r in rows)
+    assert max(r["date"] for r in rows) <= LAST_OPEN
+    with pytest.raises(seal.HoldoutError):
+        store.breadth(FIRST, date(2023, 11, 9))

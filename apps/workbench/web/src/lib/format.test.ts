@@ -4,6 +4,7 @@ describe("format", () => {
   it("writes signed percentages with a real minus sign", () => {
     expect(pct(0.0052)).toBe("+0.52%");
     expect(pct(-0.0009)).toBe("−0.09%");
+    expect(pct(-0.00004, 1)).toBe("+0.0%");
     expect(pct(null)).toBe("–");
     expect(isNegative(pct(-0.01))).toBe(true);
     expect(isNegative(pct(0.01))).toBe(false);

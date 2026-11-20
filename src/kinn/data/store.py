@@ -336,6 +336,20 @@ class DataStore:
             [start, end, permatickers],
         )
 
+    def breadth(self, start: date, end: date) -> pa.Table:
+        self._check(start, end, "panel")
+        return self._query(
+            f"""select date,
+                       count(*) filter (where close > prev_close) as advancing,
+                       count(*) filter (where close < prev_close) as declining,
+                       count(*) as traded
+                from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()}
+                  and prev_close > 0 and close > 0 and category like 'Domestic Common Stock%'
+                group by date order by date""",
+            [start, end],
+        )
+
     def dividends(self, start: date, end: date) -> pa.Table:
         """Cash per share by company and ex-date: dividends and the cash value of spinoffs."""
         self._check(start, end, "dividends")

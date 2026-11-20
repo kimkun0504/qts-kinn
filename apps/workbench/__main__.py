@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 
 import yaml
 
-from apps.workbench import api, catalog, lab, ledgers, record, screener, stocks
+from apps.workbench import api, catalog, lab, ledgers, markets, record, screener, stocks
 from kinn import swing_paper, swing_run
 from kinn.core.settings import load_settings
 from kinn.data.store import DataStore
@@ -168,6 +168,18 @@ class Handler(SimpleHTTPRequestHandler):
             if found is None or not found.exists():
                 return self._json({"error": "No such guide."}, 404)
             return self._json({"name": found.name, "text": found.read_text()})
+        if path == "/api/markets":
+            store = self._store()
+            if store is None:
+                return self._json({"error": "No data build to read prices from."}, 503)
+            try:
+                on = date.fromisoformat(parse_qs(urlsplit(self.path).query).get("on", [""])[0])
+            except ValueError:
+                on = None
+            try:
+                return self._json(markets.markets(store, on))
+            except ValueError as error:
+                return self._json({"error": str(error)}, 404)
         if path == "/api/closes":
             store = self._store()
             if store is None:
