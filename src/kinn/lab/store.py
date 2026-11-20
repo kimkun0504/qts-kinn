@@ -446,11 +446,15 @@ def waiting_runs(root: Path) -> list[Path]:
 
 
 def dispatch(root: Path, launch) -> Path | None:
-    """Start the first run in the queue when no run is going. The caller holds the lock that
-    makes the Workbench the only one starting runs."""
+    """Start the first run in the queue when no run is going. A run is claimed with a file
+    made only if it is not there, so two Workbenches never start the same run."""
     if active_run(root):
         return None
     for run_dir in waiting_runs(root):
+        try:
+            os.close(os.open(run_dir / "claimed", os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+        except FileExistsError:
+            continue
         set_status(run_dir, "queued", stage="Waiting to start")
         try:
             launch(run_dir)

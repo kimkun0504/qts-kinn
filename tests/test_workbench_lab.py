@@ -182,6 +182,14 @@ def test_the_same_run_is_not_queued_twice(root):
     assert status == 409 and busy.name in payload["error"]
 
 
+def test_a_run_another_workbench_claimed_is_not_started_again(root):
+    busy = _busy(root)
+    waiting = _post(root)[1]["run_id"]
+    store.set_status(busy, "complete")
+    (store.run_dir_of(root, waiting) / "claimed").touch()
+    assert store.dispatch(root, _never) is None
+
+
 def test_a_waiting_run_can_be_cancelled_and_is_skipped(root):
     busy = _busy(root)
     waiting = _post(root)[1]["run_id"]
