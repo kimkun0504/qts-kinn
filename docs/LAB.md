@@ -101,7 +101,8 @@ one of those, up to 1,000. The other filters still apply, so a named stock below
 price is not eligible on those days. Each name is matched against a company's latest ticker,
 the one the Stocks pages show, so a company that traded under another symbol in the period is
 found by its latest one. Comparisons against "the universe" then compare against the named
-stocks.
+stocks. A list chosen today already knows which companies lasted and grew, so the run page marks
+such a run *Hand-picked stocks*: it describes those stocks and is no evidence for the rule.
 
 ## The rules every algorithm is held to
 

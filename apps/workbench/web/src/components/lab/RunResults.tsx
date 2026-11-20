@@ -520,6 +520,15 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
           <p className="m-0 mt-1 max-w-[100ch] text-sm text-ink-2">{s?.lookahead.detail}</p>
         </div>
       )}
+      {complete && (s?.settings?.universe.tickers?.length ?? 0) > 0 && active !== "runs" && (
+        <div className="rounded-lg border border-warn bg-surface px-4 py-3">
+          <Badge tone="warn">Hand-picked stocks</Badge>
+          <p className="m-0 mt-1 max-w-[100ch] text-sm text-ink-2">
+            A list chosen today already knows which companies lasted and grew, so this result describes these {int(s?.universe_stocks)} stocks; it is not evidence that the rule works on stocks picked
+            in advance.
+          </p>
+        </div>
+      )}
       {complete && s?.fragile && active !== "runs" && (
         <div className="rounded-lg border border-warn bg-surface px-4 py-3">
           <Badge tone="warn">Fragile</Badge>
