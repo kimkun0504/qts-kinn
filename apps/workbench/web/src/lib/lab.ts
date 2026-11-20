@@ -427,6 +427,7 @@ export const lab = {
   },
   csvUrl: (runId: string) => `${BASE}/runs/${id(runId)}/trades.csv`,
   check: (code: string, module = false) => write<{ findings: Finding[] }>("POST", "/check", { code, module }),
+  format: (code: string) => write<{ code: string }>("POST", "/format", { code }),
   library: () => read<ModuleRow[]>("/library"),
   module: (name: string) => read<ModuleFile>(`/library/${id(name)}`),
   saveModule: (name: string, code: string) => write<{ name: string; description: string }>("PUT", `/library/${id(name)}`, { code }),

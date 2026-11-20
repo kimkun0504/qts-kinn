@@ -9,6 +9,8 @@ from __future__ import annotations
 import ast
 import csv
 import io
+import subprocess
+import sys
 import threading
 from collections.abc import Callable
 from pathlib import Path
@@ -95,6 +97,26 @@ def lint(root: Path, body: dict) -> Response:
         return _error(400, "Send the code as text, at most 200,000 characters.")
     library = set(store.library_code(root))
     return 200, {"findings": as_dicts(check(code, library, module=bool(body.get("module"))))}
+
+
+def format_code(body: dict) -> Response:
+    """The code laid out by ruff's formatter (it reads the code; it never runs it)."""
+    code = body.get("code")
+    if not isinstance(code, str) or len(code) > store.MAX_CODE:
+        return _error(400, "Send the code as text, at most 200,000 characters.")
+    command = [sys.executable, "-m", "ruff", "format", "--isolated", "--line-length", "100",
+               "--stdin-filename", "algorithm.py", "-"]  # fmt: skip
+    try:
+        done = subprocess.run(command, input=code, capture_output=True, text=True, timeout=15,
+                              check=False)  # fmt: skip
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return _error(501, f"The formatter could not run: {error}")
+    if done.returncode != 0:
+        if "No module named ruff" in done.stderr:
+            return _error(501, "Formatting needs ruff (uv sync installs it).")
+        reason = next((line for line in done.stderr.splitlines() if line.strip()), "")
+        return _error(400, f"The code could not be formatted: {reason}")
+    return 200, {"code": done.stdout}
 
 
 def library(root: Path) -> Response:
@@ -389,6 +411,8 @@ def route(method: str, parts: list[str], query: dict, body: dict | None, root: P
         return delete_module(root, parts[1])
     elif method == "POST" and parts == ["check"]:
         return lint(root, body or {})
+    elif method == "POST" and parts == ["format"]:
+        return format_code(body or {})
     elif method == "DELETE" and head == "algorithms" and len(parts) == 2:
         return delete(root, parts[1])
     elif method == "POST" and parts == ["runs"]:

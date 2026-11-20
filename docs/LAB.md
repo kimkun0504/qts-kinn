@@ -2,7 +2,8 @@
 
 Open the Workbench (`uv run python -m apps.workbench`, then http://127.0.0.1:8321) and choose
 **Lab** in the side rail. Write an algorithm, set the period and the rules, press **Run**
-(⌘↵; ⌘S saves). The run goes through every stock in the universe you chose and shows what the
+(⌘↵; ⌘S saves; **Format** lays the code out with ruff's formatter, which reads the code and
+never runs it). The run goes through every stock in the universe you chose and shows what the
 algorithm made, year by year and stock by stock. Why it is built this way: [decision 0023](decisions/0023-research-lab.md).
 
 ## An algorithm

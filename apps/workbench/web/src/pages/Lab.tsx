@@ -409,6 +409,16 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
     [],
   );
 
+  const tidy = async () => {
+    try {
+      const { code: laid } = await lab.format(code);
+      if (laid !== code) setCode(laid);
+      setNote(laid === code ? "The code is already laid out." : "Formatted. Save to keep it.");
+    } catch (e) {
+      setMessage((e as Error).message);
+    }
+  };
+
   const cancel = async () => {
     if (!shown) return;
     try {
@@ -516,6 +526,15 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
               Delete
             </button>
           )}
+          <button
+            type="button"
+            onClick={tidy}
+            disabled={!file}
+            title="Lay out the code the standard way"
+            className="cursor-pointer px-1 text-[13px] font-medium text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default disabled:opacity-50"
+          >
+            Format
+          </button>
           <Button onClick={save} disabled={!dirty} title="Save (⌘S)">
             Save
           </Button>

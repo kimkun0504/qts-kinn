@@ -467,3 +467,13 @@ def test_the_guides_are_served_read_only(server):
     assert call(server, "GET", "/api/guide/workbench")[1]["name"] == "README.md"
     assert call(server, "GET", "/api/guide/secrets")[0] == 404
     assert call(server, "GET", "/api/guide/..%2F..%2F.env")[0] == 404
+
+
+def test_code_is_laid_out_by_the_formatter_without_running_it(root):
+    status, payload = lab.route(
+        "POST", ["format"], {}, {"code": "def signal( data ):\n  return data.close>1\n"}, root
+    )
+    assert status == 200 and payload["code"] == "def signal(data):\n    return data.close > 1\n"
+    status, payload = lab.route("POST", ["format"], {}, {"code": "def signal(:\n"}, root)
+    assert status == 400 and "could not be formatted" in payload["error"]
+    assert lab.route("POST", ["format"], {}, {"code": 3}, root)[0] == 400
