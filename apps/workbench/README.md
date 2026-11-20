@@ -66,16 +66,17 @@ worked out: [docs/LAB.md](../../docs/LAB.md).
 
 ## How it is built
 
-- `api.py`, `record.py`, `lab.py`, `ledgers.py`, `stocks.py`, `screener.py`, `catalog.py`,
-  `__main__.py`: a small standard-library server (large answers are sent gzipped). `api.py`
-  reads runs; `record.py` reads the records, the documents and the earnings drift's paper
-  ledger; `ledgers.py` reads the event ledgers (big prints, the after-hours short) into one
-  shape (`paper-ledger-1`); `stocks.py` is the stock page and search (prices through the
-  sealed `DataStore`, trades from the run store, the Lab and the ledgers); `markets.py` is the
-  Markets page (fund bars as traded, split-sized jumps taken out, and the daily breadth);
-  `screener.py` is the screener (one session's cross-section through the sealed `DataStore`, and what came
-  after it up to the seal, cached per build and session); `catalog.py` is the Data page (file metadata and the sealed calendar only);
-  `lab.py` is the Lab. Restart the server after changing any of them.
+- `api.py`, `record.py`, `lab.py`, `ledgers.py`, `stocks.py`, `markets.py`, `screener.py`,
+  `catalog.py`, `__main__.py`: a small standard-library server (large answers are sent
+  gzipped). `api.py` reads runs; `record.py` reads the records, the documents and the earnings
+  drift's paper ledger; `ledgers.py` reads the event ledgers (big prints, the after-hours
+  short) into one shape (`paper-ledger-1`); `stocks.py` is the stock page and search (prices
+  through the sealed `DataStore`, trades from the run store, the Lab and the ledgers);
+  `markets.py` is the Markets page (fund bars as traded, split-sized jumps taken out, and the
+  daily breadth); `screener.py` is the screener (one session's cross-section through the
+  sealed `DataStore`, and what came after it up to the seal, cached per build and session);
+  `catalog.py` is the Data page (file metadata and the sealed calendar only); `lab.py` is the
+  Lab. Restart the server after changing any of them.
 - `web/`: React, TypeScript, Tailwind and Vite (decision 0013).
   - `src/index.css`: the design tokens. Light is the default theme; dark is
     `data-theme="dark"`. Components use the token names, never raw colour values. The chart
