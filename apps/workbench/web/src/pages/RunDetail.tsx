@@ -13,6 +13,16 @@ import { useRun } from "../lib/useRun";
 import { BookView } from "./BookView";
 import { FillCheckView } from "./FillCheckView";
 
+export function concentration(years: { year: string; net_1x: number }[]): string | null {
+  const total = years.reduce((a, y) => a + y.net_1x, 0);
+  if (years.length < 3 || total <= 0) return null;
+  const best = years.reduce((a, y) => (y.net_1x > a.net_1x ? y : a), years[0]);
+  const share = best.net_1x / total;
+  if (share < 0.4) return null;
+  const without = total - best.net_1x;
+  return `${best.year} made ${Math.round(100 * share)}% of the net profit; without it the other years made ${money(without)}. A result that rests on one year is weaker than its total suggests.`;
+}
+
 export function RunDetail({ runId }: { runId: string | null }) {
   const { detail, error } = useRun(runId);
   if (!runId) return <EmptyState title="Pick a run">Choose a row in the runs table to see its results.</EmptyState>;
@@ -93,7 +103,11 @@ function RunHeader({ manifest, phase }: { manifest: Manifest; phase: Phase | nul
           <Badge tone={manifest.scratch || manifest.status === "abandoned" ? "muted" : "info"}>
             {manifest.scratch ? "Scratch, not counted" : manifest.status === "abandoned" ? "Abandoned, not counted" : "Counted trial"}
           </Badge>
-          {phase && <Badge tone={phase === "validation" || phase === "holdout" ? "info" : "muted"}>{phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : phase === "holdout" ? "Holdout: the one clean test" : PHASE[phase]}</Badge>}
+          {phase && (
+            <Badge tone={phase === "validation" || phase === "holdout" ? "info" : "muted"}>
+              {phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : phase === "holdout" ? "Holdout: the one clean test" : PHASE[phase]}
+            </Badge>
+          )}
           {manifest.git.dirty && <Badge tone="warn">Uncommitted code</Badge>}
         </div>
         <div className="text-[13px] text-ink-3">{manifest.run_id}</div>
@@ -181,6 +195,7 @@ function BacktestView({ detail, metrics: m }: { detail: Detail; metrics: Metrics
               { key: "net", header: "Net $, 1×", signed: true, render: (r) => money(r.net_1x) },
             ]}
           />
+          {concentration(years) && <PanelNote>{concentration(years)}</PanelNote>}
         </Panel>
         <div className="flex flex-col gap-4">
           <Panel title="Round-trip costs, bps of entry notional">
