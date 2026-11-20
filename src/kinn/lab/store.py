@@ -461,9 +461,10 @@ def waiting_runs(root: Path) -> list[Path]:
 def dispatch(root: Path, launch) -> Path | None:
     """Start the first run in the queue when no run is going. A run is claimed with a file
     made only if it is not there, so two Workbenches never start the same run."""
-    if active_run(root):
+    waiting = waiting_runs(root)
+    if not waiting or active_run(root):
         return None
-    for run_dir in waiting_runs(root):
+    for run_dir in waiting:
         try:
             os.close(os.open(run_dir / "claimed", os.O_CREAT | os.O_EXCL | os.O_WRONLY))
         except FileExistsError:
