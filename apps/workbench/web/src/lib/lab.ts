@@ -93,6 +93,11 @@ export const LIVE: RunState[] = ["waiting", "queued", "running"];
 export const isLive = (state: RunState | undefined) => state != null && LIVE.includes(state);
 
 export interface RunListRow {
+  trades?: number | null;
+  mean_net?: number | null;
+  t_weekly?: number | null;
+  sharpe?: number | null;
+  book_profit?: number | null;
   run_id: string;
   algorithm: string;
   description: string;

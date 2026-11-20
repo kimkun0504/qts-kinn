@@ -420,6 +420,9 @@ def list_runs(root: Path, algorithm: str | None = None) -> list[dict]:
             "trials": int(state.get("trials") or (1 if state.get("signals_computed") else 0)),
             "period": summary.get("period_label"),
             "headline": summary.get("headline"),
+            "trades": summary.get("trades"), "mean_net": summary.get("mean_net"),
+            "t_weekly": summary.get("t_weekly"), "sharpe": summary.get("sharpe"),
+            "book_profit": summary.get("book_profit"),
             "note": note(run_dir).strip(),
         })  # fmt: skip
     out.sort(key=lambda r: (r["created_at"], r["run_id"]), reverse=True)  # newest first

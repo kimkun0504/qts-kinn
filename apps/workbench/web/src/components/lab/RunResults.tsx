@@ -428,7 +428,12 @@ const runColumns: Column<RunRow>[] = [
   { key: "created", header: "Started", align: "left", muted: true, render: (r) => when(r.created_at) },
   { key: "period", header: "Period", align: "left", muted: true, render: (r) => r.period ?? "–" },
   { key: "state", header: "State", align: "left", render: (r) => <Badge tone={STATE_TONE[r.state]}>{STATE_LABEL[r.state]}</Badge> },
-  { key: "headline", header: "Result", align: "left", max: 420, render: (r) => r.headline ?? (r.error ? lastLine(r.error) : (r.stage ?? "–")) },
+  { key: "trades", header: "Trades", render: (r) => (r.trades != null ? int(r.trades) : "–") },
+  { key: "mean_net", header: "A trade", signed: true, render: (r) => (r.mean_net != null ? pct(r.mean_net) : "–") },
+  { key: "t_weekly", header: "Weekly t", signed: true, render: (r) => (r.t_weekly != null ? num(r.t_weekly) : "–") },
+  { key: "sharpe", header: "Sharpe", signed: true, render: (r) => (r.sharpe != null ? num(r.sharpe) : "–") },
+  { key: "book_profit", header: "Book profit", signed: true, strong: true, render: (r) => (r.book_profit != null ? money(r.book_profit) : "–") },
+  { key: "headline", header: "Why it stopped", align: "left", muted: true, max: 320, render: (r) => (r.state === "complete" ? "–" : r.error ? lastLine(r.error) : (r.stage ?? "–")) },
   { key: "note", header: "Note", align: "left", muted: true, max: 280, render: (r) => r.note || "–" },
 ];
 
