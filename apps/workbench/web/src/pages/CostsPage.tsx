@@ -211,11 +211,11 @@ export function CostsPage() {
                     <tr className="text-[13px] text-ink-2">
                       <th className="pb-2 text-left font-medium" />
                       {legs.map((leg, i) => (
-                        <th key={i} className="pb-2 text-right font-medium">
+                        <th key={i} className="pb-2 pl-3 text-right font-medium">
                           {legLabel(leg, short, i === 0)}
                         </th>
                       ))}
-                      <th className="pb-2 text-right font-medium">Both</th>
+                      <th className="pb-2 pl-3 text-right font-medium">Both</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -223,21 +223,21 @@ export function CostsPage() {
                       <tr key={label} className="border-t border-line-soft">
                         <td className="py-2 pr-3 text-ink-2">{label}</td>
                         {legs.map((leg, i) => (
-                          <td key={i} className="py-2 text-right">
+                          <td key={i} className="py-2 pl-3 text-right">
                             {dollars(value(leg))}
                           </td>
                         ))}
-                        <td className="py-2 text-right font-medium">{dollars(legs.reduce((a, leg) => a + value(leg), 0))}</td>
+                        <td className="py-2 pl-3 text-right font-medium">{dollars(legs.reduce((a, leg) => a + value(leg), 0))}</td>
                       </tr>
                     ))}
                     <tr className="border-t border-line">
                       <td className="py-2 pr-3 font-semibold">Total</td>
                       {legs.map((leg, i) => (
-                        <td key={i} className="py-2 text-right font-semibold">
+                        <td key={i} className="py-2 pl-3 text-right font-semibold">
                           {dollars(leg.commission + leg.fees + leg.slippage)}
                         </td>
                       ))}
-                      <td className="py-2 text-right font-semibold">{dollars(estimate.cost)}</td>
+                      <td className="py-2 pl-3 text-right font-semibold">{dollars(estimate.cost)}</td>
                     </tr>
                   </tbody>
                 </table>
