@@ -460,7 +460,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
       {message && <Message text={message} onClose={() => setMessage(null)} />}
       {note && <Message tone="note" text={note} onClose={() => setNote(null)} />}
 
-      <section aria-label="Workspace" className="overflow-hidden rounded-lg border border-line bg-surface">
+      <section aria-label="Workspace" data-print="hide" className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="relative flex min-h-12 flex-wrap items-center gap-3 border-b border-line px-4 py-2">
           <span className="text-[13px] text-ink-2" aria-live="polite">
             {waiting

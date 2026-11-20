@@ -491,7 +491,8 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
   const current = runs.find((r) => r.run_id === selected);
   return (
     <section aria-label="Results" className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-line">
+      {current && <p className="m-0 hidden text-sm text-ink-2 print:block">{runLabel(current)}</p>}
+      <div data-print="hide" className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-line">
         <div role="tablist" aria-label="Run results" className="flex flex-wrap gap-6">
           {tabs.map((t) => (
             <button

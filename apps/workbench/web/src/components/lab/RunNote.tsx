@@ -31,12 +31,12 @@ export function RunNote({ runId, note, onSaved }: { runId: string; note: string;
     return text ? (
       <div className="flex items-start gap-4 rounded-lg border border-line bg-surface px-4 py-3">
         <p className="m-0 max-w-[100ch] flex-1 text-sm whitespace-pre-wrap text-ink">{text}</p>
-        <button type="button" onClick={() => setDraft(text)} className={`${link} shrink-0 text-ink-2 hover:text-ink`}>
+        <button type="button" data-print="hide" onClick={() => setDraft(text)} className={`${link} shrink-0 text-ink-2 hover:text-ink`}>
           Edit the note
         </button>
       </div>
     ) : (
-      <button type="button" onClick={() => setDraft("")} className={`${link} self-start text-accent hover:underline`}>
+      <button type="button" data-print="hide" onClick={() => setDraft("")} className={`${link} self-start text-accent hover:underline`}>
         Add a note to this run
       </button>
     );

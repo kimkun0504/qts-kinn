@@ -34,7 +34,7 @@ Lab algorithms, runs) with the box in the top bar, Cmd+K or `/`. `?` lists the k
 shortcuts; G then a letter jumps to a page (G M markets, G S stocks, G F screener, G L Lab, G R
 runs). A Lab run going shows in the top bar from any page, and a note appears when it ends. A
 page that fails shows its error in place of the page. A page prints without the side rail and
-the top bar.
+the top bar; a Lab run prints as a report, without the editor and settings.
 
 ## Where the record comes from
 
