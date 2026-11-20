@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { lab, type RunDetail, type RunListRow, type RunState, type StockRow, type TradePage, type TradeRow, type YearRow } from "../../lib/lab";
+import { isLive, lab, type RunDetail, type RunListRow, type RunState, type StockRow, type TradePage, type TradeRow, type YearRow } from "../../lib/lab";
 import { day, dollars, int, money, num, pct, plainPct } from "../../lib/format";
 import { useLoad } from "../../lib/useLoad";
 import { Histogram } from "../charts/Histogram";
@@ -366,6 +366,7 @@ export interface RunRow extends RunListRow {
 }
 
 const STATE_TONE: Record<RunState, Tone> = {
+  waiting: "muted",
   queued: "info",
   running: "info",
   complete: "ok",
@@ -374,6 +375,7 @@ const STATE_TONE: Record<RunState, Tone> = {
   interrupted: "warn",
 };
 export const STATE_LABEL: Record<RunState, string> = {
+  waiting: "In the queue",
   queued: "Starting",
   running: "Running",
   complete: "Done",
@@ -555,7 +557,7 @@ export function RunResults({ detail, runs, selected, onSelect, onRestoreCode, on
       ) : !detail ? (
         <p className="m-0 text-ink-2">Loading the run…</p>
       ) : !complete ? (
-        detail.status.state === "queued" || detail.status.state === "running" ? (
+        isLive(detail.status.state) ? (
           <p className="m-0 text-ink-2">The results appear here when the run ends.</p>
         ) : (
           <Failure detail={detail} />

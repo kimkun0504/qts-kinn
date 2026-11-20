@@ -86,7 +86,11 @@ export interface Template {
   code: string;
 }
 
-export type RunState = "queued" | "running" | "complete" | "failed" | "cancelled" | "interrupted";
+export type RunState = "waiting" | "queued" | "running" | "complete" | "failed" | "cancelled" | "interrupted";
+
+export const LIVE: RunState[] = ["waiting", "queued", "running"];
+
+export const isLive = (state: RunState | undefined) => state != null && LIVE.includes(state);
 
 export interface RunListRow {
   run_id: string;
@@ -128,6 +132,7 @@ export interface Status {
   trial_number?: number;
   seconds?: number;
   updated_at?: string;
+  ahead?: number;
 }
 
 export interface Lookahead {

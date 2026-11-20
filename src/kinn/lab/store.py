@@ -35,7 +35,9 @@ MAX_CODE = 200_000  # characters
 KEEP_VERSIONS = 200  # earlier versions kept a file; the oldest go first
 VERSION = re.compile(r"^\d{8}T\d{12}Z$")
 TEMPLATES = Path(__file__).parent / "templates"
-STATES = ("queued", "running", "complete", "failed", "cancelled", "interrupted")
+STATES = ("waiting", "queued", "running", "complete", "failed", "cancelled", "interrupted")
+LIVE = ("waiting", "queued", "running")
+MAX_WAITING = 20
 FINAL = ("complete", "failed", "cancelled", "interrupted")
 START_GRACE = 120  # seconds a queued run may wait for its worker before it counts as lost
 NOTE_MAX = 2_000
@@ -250,12 +252,35 @@ def code_hash(code: str, settings: dict, library: dict[str, str] | None = None) 
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def new_run(root: Path, name: str, code: str, settings: dict, sweep: dict | None = None) -> Path:
+def run_hash(root: Path, code: str, settings: dict, sweep: dict | None = None) -> str:
+    """What makes two runs the same: the code, the settings asked for, and the library."""
+    return code_hash(code, {**settings, "sweep": sweep} if sweep else settings, library_code(root))
+
+
+def live_twin(root: Path, name: str, digest: str) -> str | None:
+    """A run of the same code and settings that is still going or waiting."""
+    for run in list_runs(root, name):
+        if run["state"] in LIVE:
+            manifest = _read(run_dir_of(root, run["run_id"]) / "manifest.json") or {}
+            if manifest.get("code_sha256") == digest:
+                return run["run_id"]
+    return None
+
+
+def new_run(
+    root: Path,
+    name: str,
+    code: str,
+    settings: dict,
+    sweep: dict | None = None,
+    *,
+    wait: bool = False,
+) -> Path:
     """Create the run's folder with its request and a copy of the library as it is now; the
-    worker does the rest."""
+    worker does the rest. A run made to wait stays in the queue until ``dispatch`` starts it."""
     check_name(name)
+    digest = run_hash(root, code, settings, sweep)
     library = library_code(root)
-    digest = code_hash(code, {**settings, "sweep": sweep} if sweep else settings, library)
     (root / "runs").mkdir(parents=True, exist_ok=True)
     while True:  # two runs of the same code in the same second: the second waits a second
         now = datetime.now(UTC)
@@ -279,7 +304,10 @@ def new_run(root: Path, name: str, code: str, settings: dict, sweep: dict | None
         "library": {m: hashlib.sha256(t.encode()).hexdigest()[:12] for m, t in library.items()},
         "requested_settings": settings, "requested_sweep": sweep, "created_at": now.isoformat(),
     })  # fmt: skip
-    set_status(run_dir, "queued", stage="Waiting to start", progress=0.0)
+    if wait:
+        set_status(run_dir, "waiting", stage="In the queue", progress=0.0)
+    else:
+        set_status(run_dir, "queued", stage="Waiting to start", progress=0.0)
     return run_dir
 
 
@@ -289,7 +317,7 @@ def set_status(run_dir: Path, state: str, **fields) -> dict:
     if state not in STATES:
         raise ValueError(f"unknown run state {state!r}")
     status = _read(run_dir / "status.json") or {}
-    if status.get("state") in FINAL and state in ("queued", "running"):
+    if status.get("state") in FINAL and state in LIVE:
         return status
     status.update(fields, state=state, updated_at=datetime.now(UTC).isoformat())
     _write(run_dir / "status.json", status)
@@ -297,9 +325,9 @@ def set_status(run_dir: Path, state: str, **fields) -> dict:
 
 
 def _age(run_dir: Path) -> float:
-    """Seconds since the run's folder was made."""
+    """Seconds since the run's state last changed."""
     try:
-        return time.time() - (run_dir / "request.json").stat().st_mtime
+        return time.time() - (run_dir / "status.json").stat().st_mtime
     except OSError:
         return 0.0
 
@@ -405,6 +433,35 @@ def active_run(root: Path) -> str | None:
     return None
 
 
+def _created(run_dir: Path) -> str:
+    return (_read(run_dir / "manifest.json") or {}).get("created_at", "")
+
+
+def waiting_runs(root: Path) -> list[Path]:
+    """The runs in the queue, the first to start first."""
+    folder = root / "runs"
+    found = [run_dir for run_dir in (folder.iterdir() if folder.exists() else [])
+             if (_read(run_dir / "status.json") or {}).get("state") == "waiting"]  # fmt: skip
+    return sorted(found, key=lambda run_dir: (_created(run_dir), run_dir.name))
+
+
+def dispatch(root: Path, launch) -> Path | None:
+    """Start the first run in the queue when no run is going. The caller holds the lock that
+    makes the Workbench the only one starting runs."""
+    if active_run(root):
+        return None
+    for run_dir in waiting_runs(root):
+        set_status(run_dir, "queued", stage="Waiting to start")
+        try:
+            launch(run_dir)
+        except OSError as error:
+            set_status(run_dir, "failed", stage="Stopped",
+                       error=f"The worker process could not start: {error}")  # fmt: skip
+            continue
+        return run_dir
+    return None
+
+
 def launch(run_dir: Path, settings: Settings | None = None) -> subprocess.Popen:
     """Start the worker in its own process group (so a cancel stops everything it started)."""
     env = dict(os.environ)
@@ -426,7 +483,7 @@ def launch(run_dir: Path, settings: Settings | None = None) -> subprocess.Popen:
 
 def cancel(run_dir: Path) -> dict:
     found = status(run_dir)
-    if found.get("state") not in ("queued", "running"):
+    if found.get("state") not in LIVE:
         raise LabError("This run is not running.")
     pid = pid_of(run_dir)
     if pid and alive(pid):

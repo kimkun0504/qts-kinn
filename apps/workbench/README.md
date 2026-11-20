@@ -54,7 +54,9 @@ store) and runs them. How to write an algorithm, what data it gets and how the r
 worked out: [docs/LAB.md](../../docs/LAB.md).
 
 - Run saves the code, writes `lab/runs/<run_id>/` and starts `python -m kinn.lab.worker` in its
-  own process. The server never imports or runs the owner's code. One run at a time.
+  own process. The server never imports or runs the owner's code. One run goes at a time;
+  Run while one goes queues the new run (up to 20), and the server's queue thread starts the
+  next when the last ends.
 - The page polls the run's status, then reads its results files.
 - As the owner types, the page sends the code to `/api/lab/check`, which reads it with `ast`
   (`kinn.lab.check`) and never runs it; errors block Run, and the server refuses them too.

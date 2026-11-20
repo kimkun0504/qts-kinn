@@ -5,7 +5,15 @@ import { Card } from "./ui/Card";
 import { type Column, DataTable } from "./ui/DataTable";
 
 const SHOWN = 6;
-const STATE: Record<RunListRow["state"], string> = { queued: "Waiting", running: "Running", complete: "", failed: "Failed", cancelled: "Cancelled", interrupted: "Interrupted" };
+const STATE: Record<RunListRow["state"], string> = {
+  waiting: "In the queue",
+  queued: "Starting",
+  running: "Running",
+  complete: "",
+  failed: "Failed",
+  cancelled: "Cancelled",
+  interrupted: "Interrupted",
+};
 
 function started(iso: string): string {
   const date = new Date(iso);

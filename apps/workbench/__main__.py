@@ -7,6 +7,7 @@ import gzip
 import hmac
 import json
 import secrets
+import threading
 from datetime import date
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -291,6 +292,8 @@ def main() -> None:
     print(f"Workbench on http://{args.host}:{args.port}  (runs: {Handler.runs_dir})")
     if Handler.lab_enabled:
         print(f"Lab folder: {Handler.lab_dir}")
+        threading.Thread(target=lab.keep_dispatching, args=(Handler.lab_dir,), daemon=True,
+                         name="lab-queue").start()  # fmt: skip
     else:
         print("The Lab is off: it runs code, so it serves only on 127.0.0.1 or localhost.")
     server.serve_forever()

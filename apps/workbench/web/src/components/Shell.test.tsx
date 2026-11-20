@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RunListRow } from "../lib/lab";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { finished } from "./RunningRuns";
+import { finished, queueOf } from "./RunningRuns";
 import { Shortcuts } from "./Shortcuts";
 
 afterEach(cleanup);
@@ -25,6 +25,13 @@ describe("the shell", () => {
     const before = [run("a", "running"), run("b", "queued"), run("c", "complete")];
     const now = [run("a", "complete"), run("b", "running"), run("c", "complete"), run("d", "failed")];
     expect(finished(before, now).map((r) => r.run_id)).toEqual(["a"]);
+  });
+
+  it("counts a waiting run as going and names the queue", () => {
+    expect(finished([run("a", "waiting")], [run("a", "cancelled")]).map((r) => r.run_id)).toEqual(["a"]);
+    expect(queueOf([run("c", "waiting"), run("b", "waiting"), run("a", "running")])).toMatchObject({ run: { run_id: "a" }, label: "Running mine", behind: 2 });
+    expect(queueOf([run("c", "waiting"), run("b", "waiting"), run("a", "complete")])).toMatchObject({ run: { run_id: "b" }, label: "2 Lab runs waiting", behind: 0 });
+    expect(queueOf([run("a", "complete")])).toBeNull();
   });
 
   it("lists the shortcuts and closes on Escape", () => {

@@ -73,3 +73,18 @@ scan of the panel's permaticker column); the catalog is worked out once per buil
 
 Each of the new store reads (`fundamentals_as_of`, `fundamentals_of`, `form4_of`, `breadth`)
 applies the holdout date guard and is tested against the synthetic build.
+
+## Additions (2026-11-19, night)
+
+10. **A Lab run queue.** Run while another run goes puts the new run in the queue
+    (`waiting`); the server starts the oldest waiting run when none is going, from a thread
+    that checks every two seconds. Runs still go one at a time: two at once would need twice
+    the memory, and a trial's number is taken when its signals are computed, so runs one after
+    another keep the count in order. At most 20 wait. A run of the same code with the same
+    settings is refused while one is going or waiting, so a double ⌘↵ cannot charge a trial
+    twice. A waiting run can be cancelled; it never counts as a trial.
+11. **A universe of named stocks** (`universe.tickers`, up to 1,000, matched on each company's
+    latest ticker), filled in by hand or from the watchlist. The other filters still apply.
+    The run records any named ticker it did not find, and its page marks it *Hand-picked
+    stocks*: a list chosen today knows which companies lasted, so the result describes those
+    stocks and is no evidence for the rule.

@@ -211,7 +211,10 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
   same years make the best of them less trustworthy; hold the 2018–2022 test years back until
   the idea is settled.
 
-One run goes at a time; **Cancel** stops it. The toolbar shows how the last run ended, and
+One run goes at a time; **Cancel** stops it. **Run** while a run is going puts the new one in
+the queue (up to 20; the top bar shows how many wait), and it starts by itself when the runs
+before it end. The same code with the same settings is not queued twice. A run cancelled while
+it waits is not a trial. The toolbar shows how the last run ended, and
 when a run you started ends the page moves to its results. A run that stops on an error shows
 it with the line of your code where it happened. A run stops by itself after 30 minutes
 (`KINN_LAB_TIME_LIMIT`, in minutes, before starting the Workbench; 0 for no limit); a `try` in

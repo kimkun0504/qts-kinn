@@ -154,7 +154,8 @@ def delete(root: Path, name: str) -> Response:
 
 
 def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launch) -> Response:
-    """Save the code, write the run folder and start the worker. 409 while another runs."""
+    """Save the code, write the run folder and start the worker, or queue the run behind the
+    one going. 409 when the queue is full."""
     name, code, settings = body.get("algorithm"), body.get("code"), body.get("settings") or {}
     sweep = body.get("sweep") or None
     if not isinstance(settings, dict):
@@ -175,17 +176,43 @@ def start(root: Path, body: dict, launch: Callable[[Path], object] = store.launc
     except (store.LabError, SettingsError) as error:
         return _error(400, str(error))
     with _START:
-        active = store.active_run(root)
-        if active:
-            return _error(409, f"Run {active} is still going. Wait for it or cancel it.")
-        run_dir = store.new_run(root, name, code, settings, sweep)
+        twin = store.live_twin(root, name, store.run_hash(root, code, settings, sweep))
+        if twin:
+            return _error(409, f"The same code with the same settings is already in run {twin}.")
+        if len(store.waiting_runs(root)) >= store.MAX_WAITING:
+            return _error(409, f"{store.MAX_WAITING} runs are waiting already. Let some finish "
+                               "or cancel some first.")  # fmt: skip
+        run_dir = store.new_run(root, name, code, settings, sweep, wait=True)
+        store.dispatch(root, launch)
+    found = store.status(run_dir)
+    if found.get("state") == "failed":
+        return _error(500, found.get("error") or "The worker process could not start.")
+    return 202, {"run_id": run_dir.name, "status": _placed(root, run_dir, found)}
+
+
+def _placed(root: Path, run_dir: Path, found: dict) -> dict:
+    """A waiting run's status says how many runs are ahead of it."""
+    if found.get("state") != "waiting":
+        return found
+    queue = [r.name for r in store.waiting_runs(root)]
+    ahead = queue.index(run_dir.name) if run_dir.name in queue else len(queue)
+    return {**found, "ahead": ahead + (1 if store.active_run(root) else 0)}
+
+
+def keep_dispatching(
+    root: Path,
+    launch: Callable[[Path], object] = store.launch,
+    every: float = 2.0,
+    stop: threading.Event | None = None,
+) -> None:
+    """Start the next queued run whenever none is going, for as long as the Workbench runs."""
+    stop = stop or threading.Event()
+    while not stop.wait(every):
         try:
-            launch(run_dir)
-        except OSError as error:
-            store.set_status(run_dir, "failed", stage="Stopped",
-                             error=f"The worker process could not start: {error}")  # fmt: skip
-            return _error(500, f"The worker process could not start: {error}")
-    return 202, {"run_id": run_dir.name, "status": store.status(run_dir)}
+            with _START:
+                store.dispatch(root, launch)
+        except OSError:
+            continue
 
 
 def _run(root: Path, run_id: str) -> Path:
@@ -208,7 +235,7 @@ def run_detail(root: Path, run_id: str) -> Response:
         return _error(404, str(error))
     return 200, {
         "run_id": run_id,
-        "status": store.status(run_dir),
+        "status": _placed(root, run_dir, store.status(run_dir)),
         "manifest": store._read(run_dir / "manifest.json"),
         "summary": store.result(run_dir, "summary"),
         "note": store.note(run_dir).strip(),
@@ -230,7 +257,7 @@ def run_part(root: Path, run_id: str, part: str) -> Response:
     try:
         run_dir = _run(root, run_id)
         if part == "status":
-            return 200, store.status(run_dir)
+            return 200, _placed(root, run_dir, store.status(run_dir))
         if part == "code":
             return 200, {"code": (run_dir / "algorithm.py").read_text()}
         if part == "log":

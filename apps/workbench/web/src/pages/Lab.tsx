@@ -21,7 +21,7 @@ import {
   NAME,
   type RunDetail,
   type RunListRow,
-  type RunState,
+  LIVE,
   type Status,
   type Template,
 } from "../lib/lab";
@@ -53,7 +53,6 @@ def zscore(table, window):
     return (table - mean) / spread
 `;
 
-const LIVE: RunState[] = ["queued", "running"];
 const field = "h-8 rounded-md border border-line bg-surface px-2.5 text-sm text-ink placeholder:text-ink-3 focus-visible:outline-2 focus-visible:outline-accent";
 
 function loadDraft(name: string): Draft {
@@ -90,15 +89,7 @@ function NewAlgorithm({ templates, taken, onCreate, onCancel }: { templates: Tem
   const [text, setText] = useState("");
   const [from, setFrom] = useState("");
   const name = cleanName(text);
-  const problem = !name
-    ? null
-    : !NAME.test(name)
-      ? "Use letters, digits, - and _."
-      : name === "library"
-        ? "That word is kept for the library."
-        : taken.includes(name)
-          ? "That name is taken."
-          : null;
+  const problem = !name ? null : !NAME.test(name) ? "Use letters, digits, - and _." : name === "library" ? "That word is kept for the library." : taken.includes(name) ? "That name is taken." : null;
   return (
     <form
       aria-label="New algorithm"
@@ -185,7 +176,16 @@ function LabIndex({
   };
   return (
     <div className="flex flex-col gap-5">
-      <Panel title="Your algorithms" aside={creating ? undefined : <Button variant="primary" onClick={() => setCreating(true)}>New algorithm</Button>}>
+      <Panel
+        title="Your algorithms"
+        aside={
+          creating ? undefined : (
+            <Button variant="primary" onClick={() => setCreating(true)}>
+              New algorithm
+            </Button>
+          )
+        }
+      >
         {creating && <NewAlgorithm templates={templates} taken={taken} onCreate={onCreate} onCancel={() => setCreating(false)} />}
         <DataTable columns={algorithmColumns} rows={sorted} rowKey={(a) => a.name} onRowClick={(a) => onOpen(a.name)} empty="None yet. Name one above, or copy a template below." />
       </Panel>
@@ -356,12 +356,13 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
   }, [name, code, dirty, onChanged]);
 
   const running = status != null && LIVE.includes(status.state);
+  const waiting = status?.state === "waiting";
 
   const errors = findings.filter((f) => f.severity === "error");
   const warnings = findings.filter((f) => f.severity === "warning");
 
   const run = useCallback(async () => {
-    if (busy || running) return;
+    if (busy) return;
     const blocking = findings.find((f) => f.severity === "error");
     if (blocking) {
       setMessage(`Fix line ${blocking.line} first: ${blocking.message}`);
@@ -394,7 +395,7 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
     } finally {
       setBusy(false);
     }
-  }, [busy, running, findings, draft, name, code, refreshRuns, onChanged, onOpen]);
+  }, [busy, findings, draft, name, code, refreshRuns, onChanged, onOpen]);
 
   const checkCode = useCallback(
     (text: string) =>
@@ -462,7 +463,15 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
       <section aria-label="Workspace" className="overflow-hidden rounded-lg border border-line bg-surface">
         <div className="relative flex min-h-12 flex-wrap items-center gap-3 border-b border-line px-4 py-2">
           <span className="text-[13px] text-ink-2" aria-live="polite">
-            {running ? `${status?.stage ?? "Starting"} (${share}%)` : dirty ? "Unsaved changes" : file ? "Saved" : "Opening"}
+            {waiting
+              ? `In the queue${status?.ahead ? `, ${status.ahead} ${status.ahead === 1 ? "run" : "runs"} ahead` : ""}`
+              : running
+                ? `${status?.stage ?? "Starting"} (${share}%)`
+                : dirty
+                  ? "Unsaved changes"
+                  : file
+                    ? "Saved"
+                    : "Opening"}
           </span>
           {(errors.length > 0 || warnings.length > 0) && (
             <button
@@ -499,23 +508,22 @@ function Workspace({ name, runId, meta, onOpen, onChanged }: { name: string; run
               <Button onClick={() => setConfirmDelete(false)}>Keep</Button>
             </span>
           ) : (
-            <button type="button" onClick={() => setConfirmDelete(true)} className="cursor-pointer px-1 text-[13px] font-medium text-ink-3 hover:text-neg focus-visible:outline-2 focus-visible:outline-accent">
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="cursor-pointer px-1 text-[13px] font-medium text-ink-3 hover:text-neg focus-visible:outline-2 focus-visible:outline-accent"
+            >
               Delete
             </button>
           )}
           <Button onClick={save} disabled={!dirty} title="Save (⌘S)">
             Save
           </Button>
-          {running ? (
-            <Button onClick={cancel} className="min-w-[84px]">
-              Cancel
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={run} disabled={busy || !file} title="Run over every stock (⌘↵)" className="min-w-[84px]">
-              {sweepCount ? `Run ${sweepCount}` : "Run"}
-            </Button>
-          )}
-          {running && (
+          {running && <Button onClick={cancel}>Cancel</Button>}
+          <Button variant="primary" onClick={run} disabled={busy || !file} title={running ? "Queue another run (⌘↵)" : "Run over every stock (⌘↵)"} className="min-w-[84px]">
+            {sweepCount ? `Run ${sweepCount}` : "Run"}
+          </Button>
+          {running && !waiting && (
             <div aria-hidden="true" className="absolute inset-x-0 -bottom-px h-0.5 bg-raised">
               <div className="h-full bg-accent transition-[width] duration-500" style={{ width: `${Math.max(share, 2)}%` }} />
             </div>
@@ -670,7 +678,11 @@ function ModuleWorkspace({ module, meta, onOpen, onChanged }: { module: string; 
               <Button onClick={() => setConfirmDelete(false)}>Keep</Button>
             </span>
           ) : (
-            <button type="button" onClick={() => setConfirmDelete(true)} className="cursor-pointer px-1 text-[13px] font-medium text-ink-3 hover:text-neg focus-visible:outline-2 focus-visible:outline-accent">
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="cursor-pointer px-1 text-[13px] font-medium text-ink-3 hover:text-neg focus-visible:outline-2 focus-visible:outline-accent"
+            >
               Delete
             </button>
           )}
@@ -717,8 +729,14 @@ export function Lab({ name, runId, onOpen }: LabProps) {
   const [message, setMessage] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
-    lab.algorithms().then(setAlgorithms).catch(() => undefined);
-    lab.library().then(setModules).catch(() => setModules([]));
+    lab
+      .algorithms()
+      .then(setAlgorithms)
+      .catch(() => undefined);
+    lab
+      .library()
+      .then(setModules)
+      .catch(() => setModules([]));
   }, []);
 
   useEffect(() => {
@@ -729,7 +747,10 @@ export function Lab({ name, runId, onOpen }: LabProps) {
         setAlgorithms(a);
       })
       .catch((e: Error) => setMessage(`${e.message} Restart the Workbench server after updating.`));
-    lab.library().then(setModules).catch(() => setModules([])); // a server from before the library
+    lab
+      .library()
+      .then(setModules)
+      .catch(() => setModules([])); // a server from before the library
   }, []);
 
   const create = async (newName: string, code: string) => {

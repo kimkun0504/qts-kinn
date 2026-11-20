@@ -1,16 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { lab, type RunListRow } from "../lib/lab";
+import { isLive, lab, type RunListRow } from "../lib/lab";
 import { href } from "../lib/route";
 
 const BUSY = 4_000;
 const IDLE = 20_000;
 const SHOWN = 12_000;
 
-const live = (r: RunListRow) => r.state === "queued" || r.state === "running";
+const live = (r: RunListRow) => isLive(r.state);
 
 export function finished(before: RunListRow[], now: RunListRow[]): RunListRow[] {
   const was = new Set(before.filter(live).map((r) => r.run_id));
   return now.filter((r) => was.has(r.run_id) && !live(r));
+}
+
+export function queueOf(rows: RunListRow[]): { run: RunListRow; label: string; behind: number } | null {
+  const going = rows.filter(live);
+  if (!going.length) return null;
+  const waiting = going.filter((r) => r.state === "waiting").length;
+  const run = going.find((r) => r.state !== "waiting");
+  if (run) return { run, label: `Running ${run.algorithm}`, behind: waiting };
+  return { run: going[going.length - 1], label: `${waiting} Lab ${waiting === 1 ? "run" : "runs"} waiting`, behind: 0 };
 }
 
 export function RunningRuns() {
@@ -48,16 +57,17 @@ export function RunningRuns() {
     const timer = window.setTimeout(() => setDone([]), SHOWN);
     return () => window.clearTimeout(timer);
   }, [done]);
-  const running = runs.filter(live);
+  const queue = queueOf(runs);
   return (
     <>
-      {running.length > 0 && (
+      {queue && (
         <a
-          href={href({ page: "lab", name: running[0].algorithm, tab: running[0].run_id })}
+          href={href({ page: "lab", name: queue.run.algorithm, tab: queue.run.run_id })}
           className="inline-flex min-h-9 items-center gap-2 rounded-md border border-line bg-surface px-3 text-sm font-medium text-ink no-underline hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent"
         >
           <span aria-hidden="true" className="size-2 animate-pulse rounded-full bg-accent" />
-          {running.length === 1 ? `Running ${running[0].algorithm}` : `${running.length} Lab runs going`}
+          {queue.label}
+          {queue.behind > 0 && <span className="text-ink-2">{queue.behind} waiting</span>}
         </a>
       )}
       {done.length > 0 && (

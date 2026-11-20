@@ -137,19 +137,83 @@ def test_trades_are_paged_sorted_and_filtered(root, finished):
     assert status == 200 and text.startswith("ticker,") and text.count("\n") == total + 1
 
 
-def test_one_run_at_a_time(root, fake):
+def _busy(root):
     busy = store.new_run(root, "busy", CODE, {})
     store.set_status(busy, "running", stage="Loading")
-    (busy / "pid").write_text(str(os.getpid()))  # a live process
-    status, payload = lab.route(
-        "POST",
-        ["runs"],
-        {},
-        {"algorithm": "x", "code": CODE},
-        root,
-        launch=lambda run_dir: pytest.fail("must not start"),
-    )
+    (busy / "pid").write_text(str(os.getpid()))
+    return busy
+
+
+def _never(run_dir):
+    pytest.fail(f"must not start {run_dir.name}")
+
+
+def _post(root, launch=_never, name="x"):
+    return lab.route("POST", ["runs"], {}, {"algorithm": name, "code": CODE}, root, launch=launch)
+
+
+def test_a_run_started_while_another_goes_waits_its_turn(root):
+    busy = _busy(root)
+    started = []
+    status, payload = _post(root, started.append)
+    assert status == 202 and not started
+    assert payload["status"]["state"] == "waiting" and payload["status"]["ahead"] == 1
+    second = _post(root, started.append, "y")[1]
+    assert second["status"]["ahead"] == 2
+    assert get(root, "runs", second["run_id"], "status")[1]["ahead"] == 2
+
+    store.set_status(busy, "complete")
+    first = store.dispatch(root, started.append)
+    assert first is not None and first.name == payload["run_id"] and started == [first]
+    assert store.status(first)["state"] == "queued"
+    assert store.dispatch(root, started.append) is None
+    assert get(root, "runs", second["run_id"], "status")[1]["ahead"] == 1
+
+
+def test_the_same_run_is_not_queued_twice(root):
+    busy = _busy(root)
+    first = _post(root)
+    assert first[0] == 202
+    status, payload = _post(root)
+    assert status == 409 and first[1]["run_id"] in payload["error"]
+    changed = {"algorithm": "x", "code": CODE + "\n"}
+    assert lab.route("POST", ["runs"], {}, changed, root, launch=_never)[0] == 202
+    status, payload = _post(root, name="busy")
     assert status == 409 and busy.name in payload["error"]
+
+
+def test_a_waiting_run_can_be_cancelled_and_is_skipped(root):
+    busy = _busy(root)
+    waiting = _post(root)[1]["run_id"]
+    assert lab.route("POST", ["runs", waiting, "cancel"], {}, None, root)[1]["state"] == "cancelled"
+    store.set_status(busy, "complete")
+    assert store.dispatch(root, _never) is None
+
+
+def test_the_queue_has_a_limit(root, monkeypatch):
+    _busy(root)
+    monkeypatch.setattr(store, "MAX_WAITING", 2)
+    assert _post(root, name="a")[0] == 202
+    assert _post(root, name="b")[0] == 202
+    status, payload = _post(root, name="c")
+    assert status == 409 and "waiting already" in payload["error"]
+
+
+def test_the_queue_moves_on_by_itself(root):
+    busy = _busy(root)
+    waiting = _post(root)[1]["run_id"]
+    store.set_status(busy, "complete")
+    stop = threading.Event()
+    started = []
+
+    def launch(run_dir):
+        started.append(run_dir.name)
+        stop.set()
+
+    worker = threading.Thread(target=lab.keep_dispatching, args=(root, launch, 0.01, stop))
+    worker.start()
+    worker.join(5)
+    assert started == [waiting]
 
 
 def test_a_worker_that_cannot_start_fails_the_run_and_frees_the_lab(root):
@@ -166,8 +230,8 @@ def test_a_worker_that_cannot_start_fails_the_run_and_frees_the_lab(root):
 
 def test_a_queued_run_whose_worker_never_started_is_let_go(root):
     run_dir = store.new_run(root, "x", CODE, {})
-    old = os.stat(run_dir / "request.json").st_mtime - 3600
-    os.utime(run_dir / "request.json", (old, old))
+    old = os.stat(run_dir / "status.json").st_mtime - 3600
+    os.utime(run_dir / "status.json", (old, old))
     assert store.status(run_dir)["state"] == "interrupted"
     assert store.active_run(root) is None
 
