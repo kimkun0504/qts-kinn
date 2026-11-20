@@ -5,6 +5,7 @@ import { Financials } from "../components/Financials";
 import { Insiders } from "../components/Insiders";
 import { Peers } from "../components/Peers";
 import { Reactions } from "../components/Reactions";
+import { RiskTab } from "../components/RiskTab";
 import { RelativeChart } from "../components/RelativeChart";
 import { StocksLanding, useWatchlist } from "../components/StocksLanding";
 import { recentStocks, rememberStock, StockSearch, years } from "../components/StockSearch";
@@ -25,7 +26,7 @@ import { toggleWatch } from "../lib/watchlist";
 
 type Range = "3m" | "1y" | "3y" | "5y" | "all";
 type Source = "all" | StockTrade["source"];
-type Section = "financials" | "reactions" | "peers" | "trades" | "insiders" | "filings";
+type Section = "financials" | "reactions" | "peers" | "risk" | "trades" | "insiders" | "filings";
 
 const RANGES: { value: Range; label: string; sessions: number }[] = [
   { value: "3m", label: "3M", sessions: 63 },
@@ -284,6 +285,7 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
     ...(page.financials && (page.financials.quarterly.length || page.financials.trailing.length) ? [{ key: "financials" as const, label: "Financials" }] : []),
     ...(resultDays.length ? [{ key: "reactions" as const, label: `Results reactions ${resultDays.length}` }] : []),
     ...(page.industry ? [{ key: "peers" as const, label: "Peers" }] : []),
+    { key: "risk", label: "Risk and seasons" },
     { key: "trades", label: `Trades ${page.trades.length}` },
     ...(page.insiders ? [{ key: "insiders" as const, label: `Insider trades ${page.insiders.count}` }] : []),
     { key: "filings", label: `8-K filings ${page.events.length}` },
@@ -458,6 +460,18 @@ function Stock({ page, on, onOpen }: { page: StockPageData; on?: string; onOpen:
         />
       )}
       {section === "peers" && <Peers permaticker={page.permaticker} symbol={page.ticker ?? page.query} industry={page.industry} on={on} />}
+      {section === "risk" && (
+        <RiskTab
+          symbol={page.ticker ?? page.query}
+          dates={data.date}
+          close={data.close}
+          onPick={(from, to) => {
+            const a = locate(data.date, from);
+            const b = locate(data.date, to);
+            if (a != null && b != null) around(a, b, 20);
+          }}
+        />
+      )}
       {section === "trades" && (
         <Card
           title="Trades in this stock"
