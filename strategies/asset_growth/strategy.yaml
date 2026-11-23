@@ -1,0 +1,17 @@
+name: asset_growth
+kind: forecast            # a monthly ranking of stocks; research script first
+status: hypothesis        # 4 cells planned 2026-11-23; see HYPOTHESIS.md
+family: asset_growth
+prior_trials: 4
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Slow asset growth
+  idea: Slow asset growers beat fast ones
+  horizon: 1 month
+  verdict: planned
+  result: "Planned: 4 cells on 2010 to 2017"
+  summary: Each month buy the large or mid-sized companies whose total assets grew least over the past year.
+  studies:
+    - {name: Asset growth, lowest tenth, when: 2026-11-23, trials: 4, result: planned, verdict: planned}
