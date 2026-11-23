@@ -73,7 +73,7 @@ To ask for a change in a lane you don't own, add a note under `docs/requests/`.
 | `strategies/bad_items` | claude | 2026-11-17 | shorts after 8-Ks with quiet bad news |
 | `strategies/annual_timing` | claude | 2026-11-18 | 10-Ks filed much earlier than last year |
 | `strategies/big_prints` | claude | 2026-11-18 | quiet up days traded in unusually large pieces |
-| `strategies/seasonality` | claude | 2026-11-23 | stocks repeating their own calendar months (large and mid-sized) |
+| `strategies/seasonality` | claude | 2026-11-23 | closed: same-month seasonality, 4 cells, none passes (−0.29% to +0.03% a month) |
 | `strategies/<new>` | whoever claims it | | one owner per strategy |
 | `research/claude` | claude | | sandbox |
 | `research/gpt`, `research/external` | gpt | | sandbox; Astra's delivery lands in `external/` |

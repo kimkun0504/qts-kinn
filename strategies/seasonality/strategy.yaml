@@ -1,6 +1,6 @@
 name: seasonality
 kind: forecast            # a monthly ranking of stocks; research script first
-status: hypothesis        # 4 cells planned 2026-11-23; see HYPOTHESIS.md
+status: parked            # 4 cells, none passes where chosen (-0.29% to +0.03% a month); closed 2026-11-23; see REPORT.md
 family: seasonality
 prior_trials: 4
 cost_calibration: ibkr_pro_tiered
@@ -10,8 +10,12 @@ record:
   title: Calendar-month seasonality
   idea: Stocks repeat their own calendar months
   horizon: 1 month
-  verdict: planned
-  result: "Planned: 4 cells on 2010 to 2017"
+  verdict: closed
+  result: "-0.29% to +0.03% a month after costs, 2010 to 2017"
   summary: Each month buy the large or mid-sized stocks whose returns in the same month of the last five years were highest.
   studies:
-    - {name: Same-month returns, top tenth, when: 2026-11-23, trials: 4, result: planned, verdict: planned}
+    - {name: Same-month returns, top tenth, when: 2026-11-23, trials: 4, result: "-0.29% to +0.03% a month", verdict: failed}
+  weaknesses:
+    - The ranking is unrelated to the next month's return in large stocks (rank correlation -0.0002).
+  evidence:
+    - {when: 2026-11-23, title: Four cells on 2010 to 2017, kind: failed, text: "None reaches +0.40% a month; the large-stock top tenth trails by 0.17% a month."}
