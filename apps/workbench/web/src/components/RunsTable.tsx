@@ -1,6 +1,6 @@
 import type { RunRow } from "../lib/api";
 import { int, num, pct, shortTime } from "../lib/format";
-import { type Column, DataTable } from "./ui/DataTable";
+import { type Column, DataTable, type Sort } from "./ui/DataTable";
 import { PHASE, ResultBadge } from "./Verdict";
 
 const KIND: Record<string, string> = { backtest: "Backtest", event_study: "Event study", tick_study: "Tick study", book: "Book", fill_check: "Fill check", swing: "Swing" };
@@ -28,10 +28,20 @@ interface RunsTableProps {
   compare?: string[];
   onToggleCompare?: (run: RunRow) => void;
   compact?: boolean;
+  sort?: Sort;
+  onSort?: (key: string) => void;
+}
+
+export function runValue(run: RunRow, key: string): string | number | null {
+  const values: Record<string, string | number | null> = {
+    started: run.started_at, strategy: run.strategy, config: run.config, kind: run.kind, phase: run.phase,
+    agent: run.agent, trades: run.trades, net1: run.net_1x, net2: run.net_2x, gross: run.gross, t2: run.t_stat_2x,
+  };
+  return values[key] ?? null;
 }
 
 /** The runs list used on the overview (compact) and on the runs page (full). */
-export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, compact = false }: RunsTableProps) {
+export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, compact = false, sort, onSort }: RunsTableProps) {
   const columns: Column<RunRow>[] = [];
   if (onToggleCompare) {
     columns.push({
@@ -71,14 +81,17 @@ export function RunsTable({ runs, onOpen, selected, compare, onToggleCompare, co
       { key: "notes", header: "Notes", align: "left", muted: true, render: notes },
     );
   }
+  const sortable = new Set(["started", "strategy", "config", "kind", "phase", "agent", "trades", "net1", "net2", "gross", "t2"]);
   return (
     <DataTable
-      columns={columns}
+      columns={onSort ? columns.map((c) => ({ ...c, sortable: sortable.has(c.key) })) : columns}
       rows={runs}
       rowKey={(run) => run.run_id}
       onRowClick={onOpen}
       selectedKey={selected}
       minWidth={compact ? 800 : 1080}
+      sort={sort}
+      onSort={onSort}
       empty="No runs yet. Start one with: uv run kinn run <strategy> --config <name>"
     />
   );

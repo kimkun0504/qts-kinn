@@ -4,6 +4,8 @@ describe("format", () => {
   it("writes signed percentages with a real minus sign", () => {
     expect(pct(0.0052)).toBe("+0.52%");
     expect(pct(-0.0009)).toBe("−0.09%");
+    expect(pct(-0.00004, 1)).toBe("+0.0%");
+    expect(pct(460.764, 1)).toBe("+46,076%");
     expect(pct(null)).toBe("–");
     expect(isNegative(pct(-0.01))).toBe(true);
     expect(isNegative(pct(0.01))).toBe(false);
@@ -20,5 +22,23 @@ describe("format", () => {
     expect(interval({ n: 10, mean: 0.0056, low: -0.0015, high: 0.0129 })).toBe("+0.56% (−0.15% to +1.29%)");
     expect(interval({ n: 1, mean: 0.01, low: null, high: null })).toBe("+1.00%");
     expect(interval({ n: 0, mean: null, low: null, high: null })).toBe("–");
+  });
+});
+
+describe("compact numbers and price ticks", () => {
+  it("shortens large numbers", async () => {
+    const { compact } = await import("./format");
+    expect(compact(1_234_567, "$")).toBe("$1.2M");
+    expect(compact(699e6, "$")).toBe("$699M");
+    expect(compact(-2500)).toBe("−2.5K");
+    expect(compact(null)).toBe("–");
+  });
+
+  it("writes axis prices with the digits their size needs", async () => {
+    const { priceTick } = await import("./format");
+    expect(priceTick(0)).toBe("$0");
+    expect(priceTick(150)).toBe("$150");
+    expect(priceTick(12.5)).toBe("$12.50");
+    expect(priceTick(0.05)).toBe("$0.050");
   });
 });

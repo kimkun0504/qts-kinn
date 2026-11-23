@@ -6,6 +6,7 @@
    --pos / --neg are the same meanings as text, with the contrast text needs. */
 :root {
   color-scheme: light;
+  --code-font: "Source Code Pro", "SF Mono", Menlo, Consolas, monospace;
   --ground: #f4f6f8;
   --rail: #ffffff;
   --surface: #ffffff;
@@ -59,6 +60,7 @@
 
 @theme inline {
   --font-sans: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: var(--code-font);
   --color-ground: var(--ground);
   --color-rail: var(--rail);
   --color-surface: var(--surface);
@@ -87,4 +89,27 @@ body {
   font-size: 15px;
   line-height: 1.45;
   font-variant-numeric: tabular-nums;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
+@media print {
+  [data-print="hide"] {
+    display: none !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  body {
+    background: var(--surface);
+  }
+  section,
+  table,
+  svg {
+    break-inside: avoid;
+  }
 }

@@ -1,7 +1,8 @@
 # Workbench
 
-The research UI. It reads only the run store (`KINN_RUNS_DIR`), through the run schemas, and
-never imports strategy code or touches market data.
+The research UI. It reads the run store (`KINN_RUNS_DIR`) through the run schemas and never
+imports strategy code. The one thing it starts is a Lab run: the owner's own algorithm, run in a
+worker process of its own (decision 0023, [docs/LAB.md](../../docs/LAB.md)).
 
 ```bash
 cd apps/workbench/web && npm install && npm run build   # once, and after UI changes
@@ -12,15 +13,29 @@ For UI work, run `npm run dev` in `web/` beside the Python server; Vite proxies 
 
 | Page | Shows |
 |---|---|
-| Home | what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, and every idea tested with its verdict |
-| Strategies | every idea with its verdict; each opens a strategy page |
+| Home | what is new since the Workbench was last opened (runs by agent and kind, Lab runs finished), what passed its holdout with its profit curve, what is being tested forward, what waits on the owner, tonight's paper orders, the leads on paper, the latest Lab runs, and the first ideas tested with their verdicts (all of them on request) |
+| Strategies | how many ideas were tested, passed, are in test or closed, and the trials charged; every idea with its verdict; each opens a strategy page |
 | A strategy | Results (profit across its periods, the holdout marked, years, months, costs, weaknesses, the evidence in order), Trades, Paper book, Report (REPORT.md and HYPOTHESIS.md), Studies, Runs |
-| Studies | every search and test, including those done by research scripts, with its trial count and verdict |
-| Paper trading | each paper ledger: tonight's orders, positions, the books side by side |
-| Runs | every run with filters (kind, period, strategy); the selected run's tearsheet, event study, tick study or book |
-| Compare | up to four backtests overlaid, with a side-by-side table |
+| Markets | index, sector, bond, commodity, foreign and volatility funds on the last session with their day, week, month, three months, year to date, year and three years; any four of them charted together over a month to three years; how they moved together over the last year (correlation of daily changes); and how many US stocks rose and fell each day, with the running total |
+| Stocks | a watchlist with each stock's last session (day, month, year, distance from the high, market value, P/E), the largest rises and falls among US stocks above $2B that day, and each sector's median month; any company by ticker, old ticker or name: daily prices to the seal (split-adjusted, line or candles, volume, log scale, drag to zoom, 50- and 200-day averages), its 8-K days, its change beside SPY, QQQ, IWM or other stocks over the chart's range, and, in tabs, its financials by quarter and trailing year (as filed before the seal, any line charted), its P/E, P/S, P/B and free cash flow yield on every session against their own median and middle half, how it moved on each results 8-K and the 20 sessions after (beside SPY), its industry's largest companies side by side with the industry's medians, its beta to SPY, volatility, deepest falls and average month, every trade a strategy run, a Lab run or a paper ledger made in it (marked on the chart), its insiders' open-market purchases and sales from Form 4, and its 8-K filings |
+| Screener | every stock that traded on a session from September 2003 up to the seal, filtered by kind, sector, industry, exchange and any range of market value, dollar volume, price, returns (1 day, 1, 3, 6 and 12 months), distance from the 52-week high, volatility, P/E, P/S, P/B, free cash flow yield, revenue, revenue growth and net income; ready starting points, screens saved by name, the screen in the address, CSV, a breakdown by sector, picked stocks added to the watchlist or charted together, and, for a past day, what came next: each stock's change over the next month to year (up to the seal) and the medians of the stocks that pass against every stock and SPY. Valuations use only filings made before the session; *Test it in the Lab* turns the screen into a Lab algorithm that applies it on every session |
+| Studies | every search and test, including those done by research scripts, with its trial count and verdict; a search box, outcome filters and ordering; the first 25 that match, the rest on request |
+| Paper trading | every paper ledger: the earnings drift's books (tonight's orders, positions, the books side by side) and the big prints and after-hours short ledgers (signals, results, the alternative exit, the benchmark or borrow, the evenings read) |
+| Runs | every run with a search box, filters (kind, period, strategy) and sortable columns; the selected run (in the address, `#/runs/<run id>`) with its tearsheet, event study, tick study or book |
+| Compare | up to four backtests on one calendar with their sum, how their weekly profit correlates and what they make together over the sessions all of them cover (`/api/compare`), a side-by-side table; picked on the page or in the runs table; the choice is kept and in the address (`#/compare/<id>,<id>`) |
 | Parameters | a map of any result across one or two settings that differ between runs |
-| Trials | trial counts by agent, Deflated Sharpe, probability of backtest overfitting |
+| Trials | every family in a sortable table (trials charged, counted runs, best and deflated Sharpe, probability of backtest overfitting), one family's detail at a time, and the Lab algorithms' trial counts |
+| Lab | the owner's algorithms in an editor; Run tests one over every stock in the universe and shows the book (beside SPY at the book's own exposure), the path after the signal, the best and worst stocks, months, every trade, the years, the lookahead check, the trial count, any two runs compared, a factor report for ranking algorithms, sweeps of one setting, and a note on any run |
+| Guide | this README and the Lab's guide (`docs/LAB.md`) with their sections beside them, and the keyboard shortcuts |
+| Data | what the research data holds: the build, its tables with rows and size, price bars by year, the versioned inputs, companies by kind and sector, every build kept, and the seal |
+| Trading costs | what a trade costs under the platform's cost model, as the Lab and the backtests charge it: price, position, liquidity, side and how each leg fills (or a stock's last close and volume), the round trip at 1× and 2× slippage, where it goes (commission, fees, slippage per leg), and the cost by position size and by share price (`/api/costs`) |
+
+Search everything (pages, stocks, the watchlist, screens, strategies, studies, paper ledgers,
+Lab algorithms, runs) with the box in the top bar, Cmd+K or `/`. `?` lists the keyboard
+shortcuts; G then a letter jumps to a page (G M markets, G S stocks, G F screener, G L Lab, G R
+runs). A Lab run going shows in the top bar from any page, and a note appears when it ends. A
+page that fails shows its error in place of the page. A page prints without the side rail and
+the top bar; a Lab run prints as a report, without the editor and settings.
 
 ## Where the record comes from
 
@@ -33,22 +48,58 @@ strategy page come from the runs the record names (`periods`), never from the te
 A strategy with no `record:` block still appears, under its owner, with its runs. Update the
 block in the same commit as the REPORT.md verdict it summarises.
 
+## The Lab
+
+The Lab page edits Python files in the Lab folder (`KINN_LAB_DIR`, or `lab/` beside the run
+store) and runs them. How to write an algorithm, what data it gets and how the results are
+worked out: [docs/LAB.md](../../docs/LAB.md).
+
+- Run saves the code, writes `lab/runs/<run_id>/` and starts `python -m kinn.lab.worker` in its
+  own process. The server never imports or runs the owner's code. One run goes at a time;
+  Run while one goes queues the new run (up to 20), and the server's queue thread starts the
+  next when the last ends.
+- The page polls the run's status, then reads its results files.
+- As the owner types, the page sends the code to `/api/lab/check`, which reads it with `ast`
+  (`kinn.lab.check`) and never runs it; errors block Run, and the server refuses them too.
+  **Format** sends it to `/api/lab/format`, which runs ruff's formatter on the text (also never
+  running the code).
+- Helper modules live in `lab/library/` (`/api/lab/library`); a run copies them into its folder.
+- Changes (save, delete, run, cancel) need the session token the page reads from
+  `/api/lab/session`, and come only from the Workbench's own page: the server checks the Host
+  and Origin headers and the token. The Lab is off when the server listens beyond this machine
+  (`--host 0.0.0.0`).
+- `lab.py` holds the endpoints as plain functions; `__main__.py` does the checks and routing.
+
 ## How it is built
 
-- `api.py`, `record.py`, `__main__.py`: a small standard-library server with read-only JSON
-  endpoints. `api.py` reads runs; `record.py` reads the records, the documents and the paper
-  ledger. Restart the server after changing either.
+- `api.py`, `record.py`, `lab.py`, `ledgers.py`, `stocks.py`, `markets.py`, `screener.py`,
+  `catalog.py`, `__main__.py`: a small standard-library server (large answers are sent
+  gzipped). `api.py` reads runs; `record.py` reads the records, the documents and the earnings
+  drift's paper ledger; `ledgers.py` reads the event ledgers (big prints, the after-hours
+  short) into one shape (`paper-ledger-1`); `stocks.py` is the stock page and search (prices
+  through the sealed `DataStore`, trades from the run store, the Lab and the ledgers);
+  `markets.py` is the Markets page (fund bars as traded, split-sized jumps taken out, and the
+  daily breadth); `screener.py` is the screener (one session's cross-section through the
+  sealed `DataStore`, and what came after it up to the seal, cached per build and session);
+  `catalog.py` is the Data page (file metadata and the sealed calendar only); `lab.py` is the
+  Lab. Restart the server after changing any of them.
 - `web/`: React, TypeScript, Tailwind and Vite (decision 0013).
   - `src/index.css`: the design tokens. Light is the default theme; dark is
     `data-theme="dark"`. Components use the token names, never raw colour values. The chart
     colours (`--series-1`, `--gain`, `--loss`) were checked for colour-blind separation in
     both themes; check any replacement the same way.
   - `src/components/ui/`: the building blocks (Card, Stat, Panel, StatStrip, DataTable, Badge,
-    VerdictBadge, Button, Segmented, EmptyState). **Styling lives in these components.** Pages
-    compose them and add layout only.
-  - `src/components/charts/`: ProfitChart, YearBars, MonthGrid, LineChart and Histogram, drawn
-    as SVG.
+    VerdictBadge, Button, Segmented, Tabs, Bars, EmptyState). **Styling lives in these
+    components.** Pages compose them and add layout only.
+  - `src/components/charts/`: ProfitChart, YearBars, MonthGrid, LineChart, BarChart,
+    PriceChart, DivergingBars, Correlation and Histogram, drawn as SVG. LineChart, BarChart and
+    PriceChart measure the width they are given (`lib/useWidth.ts`) and draw at it, so their text
+    is the same size on a phone and a wide screen.
+  - `src/components/CodeEditor.tsx`: the Lab's Python editor (CodeMirror 6, coloured from the
+    tokens). It loads with the Lab page only, in a chunk of its own.
   - `src/components/layout/AppShell.tsx`: the side rail and top bar.
   - `src/pages/`: one file per page. `src/lib/route.ts` maps the address (`#/strategy/<name>`)
     to a page, so pages can be linked and the back button works.
-  - `src/lib/`: API types, number formatting, data hooks.
+  - `src/lib/`: API types, number formatting, data hooks; `screen.ts` (the screener's fields,
+    filters and the screen in the address), `risk.ts` (beta, volatility, falls, months),
+    `watchlist.ts` (kept in the browser's storage).

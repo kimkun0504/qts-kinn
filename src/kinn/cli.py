@@ -414,6 +414,33 @@ def _holdout_rehearse(args: argparse.Namespace) -> int:
     return 1
 
 
+def _lab_list(_args: argparse.Namespace) -> int:
+    from kinn.lab import commands, store
+
+    return commands.list_algorithms(store.lab_dir())
+
+
+def _lab_run(args: argparse.Namespace) -> int:
+    from kinn.lab import commands, store, worker
+
+    try:
+        settings = commands.settings_from(args)
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"--settings is not JSON: {error}") from error
+    try:
+        sweep = commands.sweep_from(args.sweep)
+    except ValueError as error:
+        raise SystemExit(f"--sweep wants FIELD=V1,V2,...: {error}") from error
+    return commands.run_algorithm(store.lab_dir(), args.algorithm, settings,
+                                  time_limit=worker.time_limit(), sweep=sweep)  # fmt: skip
+
+
+def _lab_selfcheck(_args: argparse.Namespace) -> int:
+    from kinn.lab import commands
+
+    return commands.selfcheck()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="kinn", description=__doc__)
     parser.add_argument("--version", action="version", version=f"kinn {version('kinn')}")
@@ -541,6 +568,29 @@ def main(argv: list[str] | None = None) -> int:
     h_try.add_argument("--config", required=True)
     h_try.add_argument("--workers", type=int, default=4)
     h_try.set_defaults(func=_holdout_rehearse)
+
+    lab = sub.add_parser("lab", help="the owner's Lab: run algorithms from the terminal")
+    lab_sub = lab.add_subparsers(dest="lab_command", required=True)
+    lab_sub.add_parser("list", help="the Lab's algorithms with their trials").set_defaults(
+        func=_lab_list
+    )
+    lab_run = lab_sub.add_parser(
+        "run", help="run an algorithm (a name in the Lab, or a .py file) over every stock"
+    )
+    lab_run.add_argument("algorithm", help="an algorithm's name, or the path of a .py file")
+    lab_run.add_argument("--period", choices=["search", "early", "late", "check", "all"])
+    lab_run.add_argument("--start", help="first signal day of a custom period, 2015-01-02")
+    lab_run.add_argument("--end", help="last entry day of a custom period")
+    lab_run.add_argument("--settings", help='more settings as JSON: \'{"exit": {"hold_days": 5}}\'')
+    lab_run.add_argument(
+        "--sweep", help="try several values of one setting on the same signals: "
+        "exit.hold_days=5,10,20 (also exit.stop_loss, exit.take_profit, book.max_positions, "
+        "entry.top_n)",
+    )  # fmt: skip
+    lab_run.set_defaults(func=_lab_run)
+    lab_sub.add_parser(
+        "selfcheck", help="run every template on 2015 in a scratch folder and report"
+    ).set_defaults(func=_lab_selfcheck)
 
     data = sub.add_parser("data", help="build and audit processed data").add_subparsers(
         dest="data_command", required=True

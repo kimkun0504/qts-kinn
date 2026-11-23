@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { niceTicks } from "../../lib/series";
+import { fitted, useWidth } from "../../lib/useWidth";
 
 export interface Series {
   name: string;
   short?: string;
-  values: number[];
+  values: (number | null)[];
   color: string;
   dash?: string;
 }
@@ -18,28 +19,46 @@ interface LineChartProps {
   height?: number;
   /** Show every x label (few points) instead of one per year (dates). */
   everyLabel?: boolean;
+  labelAt?: (i: number) => boolean;
+  tickText?: (i: number) => string;
+  width?: number;
+  marks?: { i: number; label: string }[];
   caption?: string;
 }
 
-const W = 780;
-const PAD = { left: 74, right: 136, top: 12, bottom: 32 };
+const BASE_PAD = { left: 74, right: 136, top: 12, bottom: 32 };
 
 /** Lines on one shared axis, with direct end labels, a legend and a hover readout. */
-export function LineChart({ title, labels, series, format, band, height = 260, everyLabel = false, caption }: LineChartProps) {
+export function LineChart({ title, labels, series, format, band, height: designed = 260, everyLabel = false, labelAt, tickText, marks = [], caption, width: reference = 780 }: LineChartProps) {
   const [hover, setHover] = useState<number | null>(null);
+  const [box, measured] = useWidth<HTMLDivElement>();
+  const { width: W, height } = fitted(measured, reference, designed);
   const n = labels.length;
   if (n < 2) return <p className="m-0 px-4 py-6 text-ink-2">Not enough points for a chart.</p>;
-  const all = series.flatMap((s) => s.values).concat(band ? [...band.low, ...band.high] : [], [0]);
+  const show = (v: number | null | undefined) => (v == null ? "–" : format(v));
+  const longest = Math.max(0, ...series.map((s) => `${s.short ?? s.name} ${show(s.values[n - 1])}`.length));
+  const all = series
+    .flatMap((s) => s.values)
+    .filter((v): v is number => v != null && Number.isFinite(v))
+    .concat(band ? [...band.low, ...band.high] : [], [0]);
   const low = Math.min(...all);
   const high = Math.max(...all);
   const ticks = niceTicks(low, high);
+  const compact = W < 520;
+  const left = Math.max(compact ? 44 : BASE_PAD.left, Math.round(Math.max(...ticks.map((v) => format(v).length)) * 7.4 + 14));
+  const PAD = compact ? { ...BASE_PAD, left, right: 12 } : { ...BASE_PAD, left, right: Math.max(BASE_PAD.right, Math.round(longest * 7.6 + 14)) };
   const span = high - low || 1;
   const x = (i: number) => PAD.left + ((W - PAD.left - PAD.right) * i) / (n - 1);
   const y = (v: number) => PAD.top + (height - PAD.top - PAD.bottom) * (1 - (v - low) / span);
-  const path = (values: number[]) => values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const path = (values: (number | null)[]) =>
+    values
+      .map((v, i) => (v == null || !Number.isFinite(v) ? "" : `${i && values[i - 1] != null ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`))
+      .filter(Boolean)
+      .join(" ");
 
   const xLabels: { i: number; text: string }[] = [];
-  if (everyLabel) labels.forEach((text, i) => xLabels.push({ i, text }));
+  if (labelAt) labels.forEach((text, i) => labelAt(i) && xLabels.push({ i, text: tickText ? tickText(i) : text }));
+  else if (everyLabel) labels.forEach((text, i) => xLabels.push({ i, text }));
   else {
     const years = new Set(labels.map((l) => l.slice(0, 4)));
     const every = years.size <= 12 ? 1 : 2;
@@ -57,8 +76,15 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
     });
   }
 
-  const ends = series
-    .map((s) => ({ y: y(s.values[n - 1]), text: `${s.short ?? s.name} ${format(s.values[n - 1])}` }))
+  const spaced: typeof xLabels = [];
+  for (const label of xLabels) {
+    const before = spaced[spaced.length - 1];
+    if (!before || x(label.i) - x(before.i) >= (before.text.length + label.text.length) * 3.6 + 14) spaced.push(label);
+  }
+
+  const ends = (compact ? [] : series)
+    .filter((s) => s.values[n - 1] != null)
+    .map((s) => ({ y: y(s.values[n - 1] as number), text: `${s.short ?? s.name} ${format(s.values[n - 1] as number)}` }))
     .sort((a, b) => a.y - b.y);
   let previous = -99;
   for (const end of ends) {
@@ -78,7 +104,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
           </span>
         ))}
       </figcaption>
-      <div className="relative">
+      <div ref={box} className="relative">
         <svg
           viewBox={`0 0 ${W} ${height}`}
           role="img"
@@ -100,18 +126,12 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
             </g>
           ))}
           <line x1={PAD.left} x2={W - PAD.right} y1={y(0)} y2={y(0)} stroke="var(--chart-axis)" />
-          {xLabels.map(({ i, text }) => (
+          {spaced.map(({ i, text }) => (
             <text key={i} x={x(i)} y={height - 10} textAnchor="middle" fill="var(--ink-2)">
               {text}
             </text>
           ))}
-          {band && (
-            <polygon
-              points={[...band.high.map((v, i) => `${x(i)},${y(v)}`), ...band.low.map((v, i) => `${x(i)},${y(v)}`).reverse()].join(" ")}
-              fill={band.color}
-              opacity="0.16"
-            />
-          )}
+          {band && <polygon points={[...band.high.map((v, i) => `${x(i)},${y(v)}`), ...band.low.map((v, i) => `${x(i)},${y(v)}`).reverse()].join(" ")} fill={band.color} opacity="0.16" />}
           {series.map((s) => (
             <path key={s.name} d={path(s.values)} fill="none" stroke={s.color} strokeWidth="2" strokeDasharray={s.dash} strokeLinecap="round" />
           ))}
@@ -120,6 +140,14 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
               {end.text}
             </text>
           ))}
+          {marks.map((m) => (
+            <g key={`${m.i}-${m.label}`}>
+              <line x1={x(m.i)} x2={x(m.i)} y1={PAD.top} y2={height - PAD.bottom} stroke="var(--ink-3)" strokeDasharray="4 4" />
+              <text x={x(m.i) + 5} y={PAD.top + 12} fill="var(--ink-2)">
+                {m.label}
+              </text>
+            </g>
+          ))}
           {hover != null && <line x1={x(hover)} x2={x(hover)} y1={PAD.top} y2={height - PAD.bottom} stroke="var(--chart-axis)" />}
         </svg>
         {hover != null && (
@@ -127,7 +155,7 @@ export function LineChart({ title, labels, series, format, band, height = 260, e
             <div className="font-semibold">{labels[hover]}</div>
             {series.map((s) => (
               <div key={s.name}>
-                {s.name}: {format(s.values[hover])}
+                {s.name}: {show(s.values[hover])}
               </div>
             ))}
             {band && (

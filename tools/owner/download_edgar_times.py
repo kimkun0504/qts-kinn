@@ -4,7 +4,7 @@ filing of a few other kinds.
 Run it yourself on the Mac. It writes to the raw data folder, which agents must not touch
 (AGENTS.md). The file is free and needs no key; the SEC asks who is calling:
 
-    export SEC_USER_AGENT="Your Name your@email"
+    export SEC_USER_AGENT="Your Name you@example.com"
     uv run python tools/owner/download_edgar_times.py                 # 8-K
     uv run python tools/owner/download_edgar_times.py --what other    # stakes, tender offers...
 
@@ -118,7 +118,7 @@ def main() -> None:
     file_name, manifest_name, forms = KINDS[parser.parse_args().what]
     agent = os.environ.get("SEC_USER_AGENT", "").strip()
     if "@" not in agent:
-        raise SystemExit('set SEC_USER_AGENT="Your Name your@email" (the SEC requires it)')
+        raise SystemExit('set SEC_USER_AGENT="Your Name you@example.com" (the SEC requires it)')
     out = load_settings().raw_dir / "sec" / "filing_times"
     try:
         out.mkdir(parents=True, exist_ok=True)

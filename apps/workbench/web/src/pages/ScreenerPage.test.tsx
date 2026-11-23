@@ -1,0 +1,161 @@
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ScreenData } from "../lib/api";
+import { ScreenerPage } from "./ScreenerPage";
+
+afterEach(cleanup);
+
+const columns = [
+  "symbol",
+  "permaticker",
+  "name",
+  "sector",
+  "industry",
+  "category",
+  "exchange",
+  "close",
+  "market_cap",
+  "adv20",
+  "ret_1d",
+  "ret_1m",
+  "ret_3m",
+  "ret_6m",
+  "ret_1y",
+  "from_high",
+  "vol_60",
+  "pe",
+  "ps",
+  "pb",
+  "fcf_yield",
+  "revenue",
+  "revenue_growth",
+  "net_income",
+  "filed",
+];
+const stock = (symbol: string, sector: string, cap: number, ret: number, pe: number | null, category = "Domestic Common Stock") => {
+  const row: Record<string, string | number | null> = {
+    symbol,
+    permaticker: cap,
+    name: `${symbol} Corp`,
+    sector,
+    industry: "Things",
+    category,
+    exchange: "NYSE",
+    close: 10,
+    market_cap: cap,
+    adv20: 1e7,
+    ret_1d: 0.01,
+    ret_1m: 0,
+    ret_3m: 0,
+    ret_6m: 0,
+    ret_1y: ret,
+    from_high: -0.1,
+    vol_60: 0.3,
+    pe,
+    ps: 2,
+    pb: 3,
+    fcf_yield: 0.04,
+    revenue: 1e9,
+    revenue_growth: 0.1,
+    net_income: 1e8,
+    filed: "2023-10-30",
+  };
+  return columns.map((c) => row[c]);
+};
+const data: ScreenData = {
+  schema: "screen-1",
+  on: "2023-11-08",
+  first: "2000-01-01",
+  last: "2023-11-08",
+  columns,
+  rows: [stock("BIG", "Technology", 5e10, 0.4, 30), stock("MID", "Energy", 3e9, -0.2, 8), stock("TINY", "Energy", 2e8, -0.5, null), stock("FORN", "Technology", 4e9, 0.1, 12, "ADR Common Stock")],
+};
+
+beforeEach(() => {
+  localStorage.clear();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({ ok: true, status: 200, json: async () => data }) as unknown as Response),
+  );
+});
+
+describe("the screener", () => {
+  it("lists US common stock by market value and narrows with a filter", async () => {
+    render(<ScreenerPage onDate={() => undefined} />);
+    await waitFor(() => expect(screen.getByText("3 stocks on 8 Nov 2023")).toBeTruthy());
+    const symbols = () => screen.getAllByRole("link").map((a) => a.textContent);
+    expect(symbols()).toEqual(["BIG", "MID", "TINY"]);
+    fireEvent.click(screen.getByRole("button", { name: "Add a filter" }));
+    fireEvent.change(screen.getByLabelText("Market value, at least"), { target: { value: "1B" } });
+    expect(symbols()).toEqual(["BIG", "MID"]);
+    fireEvent.change(screen.getByLabelText("Market value, at most"), { target: { value: "10B" } });
+    expect(symbols()).toEqual(["MID"]);
+    expect(window.location.hash).toContain("screener/latest/");
+  });
+
+  it("starts from a ready screen and saves it under a name", async () => {
+    render(<ScreenerPage onDate={() => undefined} />);
+    await waitFor(() => expect(screen.getByText("3 stocks on 8 Nov 2023")).toBeTruthy());
+    fireEvent.change(screen.getByLabelText("Start from a screen"), { target: { value: "start:4" } });
+    expect(screen.getByText("1 stock on 8 Nov 2023")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Save screen" }));
+    fireEvent.change(screen.getByLabelText("Name of the screen"), { target: { value: "Value" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(JSON.parse(localStorage.getItem("kinn-screens") ?? "[]")[0].name).toBe("Value");
+    expect(screen.getByRole("button", { name: "Delete “Value”" })).toBeTruthy();
+  });
+
+  it("picks a sector from the breakdown", async () => {
+    render(<ScreenerPage onDate={() => undefined} />);
+    await waitFor(() => expect(screen.getByText("3 stocks on 8 Nov 2023")).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: /^Energy/ }));
+    expect(screen.getByText("2 stocks on 8 Nov 2023")).toBeTruthy();
+    expect(screen.getByText("Industries in Energy")).toBeTruthy();
+  });
+
+  it("adds the picked stocks to the watchlist and charts them together", async () => {
+    render(<ScreenerPage onDate={() => undefined} />);
+    await waitFor(() => expect(screen.getByText("3 stocks on 8 Nov 2023")).toBeTruthy());
+    fireEvent.click(screen.getByLabelText("Pick BIG"));
+    fireEvent.click(screen.getByLabelText("Pick MID"));
+    expect(screen.getByText("BIG, MID")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add to the watchlist" }));
+    expect(JSON.parse(localStorage.getItem("kinn-watchlist") ?? "[]").map((w: { ticker: string }) => w.ticker)).toEqual(["BIG", "MID"]);
+    expect(screen.getByRole("status").textContent).toContain("2 added to the watchlist");
+    fireEvent.click(screen.getByLabelText("Pick MID"));
+    fireEvent.click(screen.getByLabelText("Pick TINY"));
+    fireEvent.click(screen.getByRole("button", { name: "Chart them together" }));
+    expect(window.location.hash).toBe("#/stock/MID/3000000000");
+    expect(JSON.parse(localStorage.getItem("kinn-compare-with") ?? "[]")).toEqual([{ symbol: "TINY", slot: 0 }]);
+  });
+
+  it("shows what came next for a screen on a past day", async () => {
+    const past = { ...data, on: "2022-11-08" };
+    const ahead = {
+      schema: "screen-ahead-1",
+      on: "2022-11-08",
+      through: "2023-11-08",
+      known: { next_1m: true, next_3m: true, next_6m: true, next_1y: false },
+      spy: { next_1m: 0.03, next_3m: 0.05, next_6m: 0.07 },
+      columns: ["permaticker", "next_1m", "next_3m", "next_6m", "next_1y", "stopped"],
+      rows: [
+        [5e10, 0.1, 0.2, 0.3, null, null],
+        [3e9, -0.1, -0.2, -0.3, null, "2023-03-01"],
+        [2e8, 0, 0.01, 0.02, null, null],
+      ],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => new Response(JSON.stringify(url.startsWith("/api/screen/ahead") ? ahead : past))),
+    );
+    render(<ScreenerPage on="2022-11-08" onDate={() => undefined} />);
+    fireEvent.click(await screen.findByRole("button", { name: "What came next" }));
+    expect(await screen.findByText("Median of the stocks that pass")).toBeTruthy();
+    expect(screen.queryByText("Next year")).toBeNull();
+    expect(screen.getAllByText("+20.0%").length).toBeGreaterThan(0);
+    expect(screen.getByText("1 Mar 2023")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Add a filter" }));
+    fireEvent.change(screen.getByLabelText("Market value, at least"), { target: { value: "1B" } });
+    expect(screen.getAllByText("+0.0%").length).toBeGreaterThanOrEqual(3);
+  });
+});

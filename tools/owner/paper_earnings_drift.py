@@ -8,7 +8,7 @@ For each signal it also fetches a year of the stock's daily bars (Massive) and t
 reported balance sheet (the SEC's company facts), for the quality test that two of the books
 apply:
 
-    export SEC_USER_AGENT="Your Name your@email"     # the SEC asks who is calling
+    export SEC_USER_AGENT="Your Name you@example.com"     # the SEC asks who is calling
     uv run python tools/owner/paper_earnings_drift.py            # the latest finished session
     uv run python tools/owner/paper_earnings_drift.py --backfill 16   # first run only
 
@@ -44,6 +44,10 @@ WINDOW, MAX_CATCH_UP = 45, 20
 class FetchError(Exception):
     """A request failed (the message never contains the key or the URL)."""
 
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
 
 def api_key() -> str:
     key = os.environ.get("MASSIVE_API_KEY", "")
@@ -75,7 +79,7 @@ def get_json(url: str, host: str, headers: dict) -> dict:
             if error.code in (429, 500, 502, 503, 504) and attempt < 5:
                 time.sleep(2**attempt)
                 continue
-            raise FetchError(f"HTTP {error.code} from {host}") from None
+            raise FetchError(f"HTTP {error.code} from {host}", error.code) from None
         except (urllib.error.URLError, TimeoutError, ConnectionError):
             if attempt == 5:
                 raise FetchError(f"could not reach {host}") from None
@@ -188,7 +192,7 @@ def main() -> None:
     args = parser.parse_args()
     agent = os.environ.get("SEC_USER_AGENT", "").strip()
     if "@" not in agent:
-        raise SystemExit('set SEC_USER_AGENT="Your Name your@email" (the SEC requires it)')
+        raise SystemExit('set SEC_USER_AGENT="Your Name you@example.com" (the SEC requires it)')
     settings, key = load_settings(), api_key()
     meta, cfg = swing_run.load_config(STRATEGY, CONFIG)
     rule = swing_run.Rule.from_config(cfg["rule"])

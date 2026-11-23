@@ -1,0 +1,118 @@
+# 0024 — The Workbench as a research platform: stocks, every ledger, data, search
+
+**Status:** owner's instruction, 2026-11-19 ("it still falls short of becoming a truly
+professional research platform in terms of functionality … keep fixing it through the night
+until it feels like a proper company-made platform").
+
+**Context.** The Workbench showed strategies, studies, runs and the Lab. It could not show a
+single company, it showed one of the three paper ledgers the owner runs each day, the Lab's
+results stopped at a profit line beside SPY fully invested, nothing could be found without
+knowing where it was, and nothing said what the data holds.
+
+**Decision.**
+
+1. **A stock page** (`#/stock/<ticker>[/<permaticker or date>]`, `apps/workbench/stocks.py`).
+   - Prices are read through the sealed `DataStore` (`panel_of`, and the new `events_of` and
+     `symbol_history`), so they end the session before the holdout start. Nothing post-seal is
+     drawn; trades after the seal (the paper ledgers) are listed without a chart point.
+   - Prices are split-adjusted back from the last close, for a chart only: the factor uses
+     later rows, which is right for looking and wrong for a signal. The Lab and the engine keep
+     their own forward-only adjustment.
+   - A ticker can belong to several companies over time. Without a hint the current holder is
+     shown, then the most recent; `?on=<date>` picks the company that held it that day (what a
+     Lab trade links to), `?pt=<permaticker>` picks one exactly.
+   - Every trade in the company is listed and marked: strategy runs (by permaticker, abandoned
+     runs left out, net divided by the trade's own money), Lab runs (by the ticker held on the
+     trade date), and the paper ledgers (by symbol).
+2. **Every paper ledger** on the Paper page, the big prints and after-hours ledgers read from the
+   owner tools' state files into one shape (`paper-ledger-1`, `apps/workbench/ledgers.py`), never
+   written. Home lists them; their strategy pages get a Paper book tab.
+3. **Lab results a researcher can act on.** Each run writes `path.json` (the average move from
+   the signal day's close, 20 sessions before to past the exit, against the universe, with a 95%
+   band; at most 20,000 trades sampled with a fixed seed) and `spy_matched` in `equity.json`
+   (SPY on the money the book actually had invested each day). The page adds drawdown and
+   positions views, profit by month, and a comparison of any two runs (metrics, settings that
+   differ, both curves, a diff of the code). Runs from before this change show neither.
+4. **A Data page** (`apps/workbench/catalog.py`): the build, its tables (row counts from Parquet
+   metadata), bars by year, the versioned inputs, companies by kind and sector, every build, and
+   the seal with the number of owner reads in the unseal log (not the token fingerprint).
+5. **One search** (Cmd+K, `/`, or the top bar) over pages, strategies, ledgers, Lab
+   algorithms, runs and stocks; runs have their own address (`#/runs/<run id>`).
+
+**Consequences.** The server gains `/api/stock/<symbol>`, `/api/stocks?q=`, `/api/ledgers`,
+`/api/ledgers/<name>`, `/api/data` and the Lab's `path` part; it needs a restart to serve them,
+and the page shows a plain message until it has one. The stock page costs about a second (a
+scan of the panel's permaticker column); the catalog is worked out once per build.
+
+## Additions (2026-11-19, evening)
+
+6. **A screener** (`apps/workbench/screener.py`, `#/screener[/<date>/<screen>]`): every stock
+   that traded on a chosen session from the data's first (September 2003) to the last before the
+   seal, with its size, liquidity, returns (1 day to 1 year), distance from the 52-week high,
+   volatility and valuations. Valuations take each company's latest trailing-year filing made
+   **before** the session (`DataStore.fundamentals_as_of`, guarded like every read); a filing
+   older than about 16 months is left out. Free cash flow yield and margins are left out for
+   foreign filers (categories other than Domestic): their profit and cash-flow lines are in
+   their own currency. For a past session, `/api/screen/ahead` gives each stock's change over
+   the next month to year, but never past the seal; it is labelled as research on the same years
+   the strategies use.
+7. **A Markets page** (`apps/workbench/markets.py`): index, sector, bond, commodity, foreign
+   and volatility funds from the vendor's daily bars, with a one-day move beyond ×1.8 or ÷1.8
+   taken out as a split, and the daily count of US common stocks that rose and fell
+   (`DataStore.breadth`).
+8. **The stock page** adds 50- and 200-day averages, the change beside SPY, QQQ, IWM or other
+   stocks, financials by quarter and trailing year (`fundamentals_of`, latest filing per period
+   before the seal), the move on each results 8-K, the industry's peers, insiders' open-market
+   trades (`form4_of`, from the versioned Form 4 input, which ends 29 Sep 2023), and a
+   watchlist kept in the browser.
+9. **Smaller pieces:** a note on any Lab run (`note.txt`, not part of the run's result or its
+   trial count); Compare picks backtests on its own page; Trials is one sortable table with one
+   family open; a Guide page serves `docs/LAB.md` and the Workbench README read-only; keyboard
+   shortcuts; Lab runs in progress shown from any page; an error boundary per page; the browser
+   tab names the page; answers over 32 KB are gzipped.
+
+Each of the new store reads (`fundamentals_as_of`, `fundamentals_of`, `form4_of`, `breadth`)
+applies the holdout date guard and is tested against the synthetic build.
+
+## Additions (2026-11-19, night)
+
+10. **A Lab run queue.** Run while another run goes puts the new run in the queue
+    (`waiting`); the server starts the oldest waiting run when none is going, from a thread
+    that checks every two seconds. Runs still go one at a time: two at once would need twice
+    the memory, and a trial's number is taken when its signals are computed, so runs one after
+    another keep the count in order. At most 20 wait. A run of the same code with the same
+    settings is refused while one is going or waiting, so a double ⌘↵ cannot charge a trial
+    twice. A waiting run can be cancelled; it never counts as a trial.
+11. **A universe of named stocks** (`universe.tickers`, up to 1,000, matched on each company's
+    latest ticker), filled in by hand or from the watchlist. The other filters still apply.
+    The run records any named ticker it did not find, and its page marks it *Hand-picked
+    stocks*: a list chosen today knows which companies lasted, so the result describes those
+    stocks and is no evidence for the rule.
+12. **Short positions in the Lab** (`entry.side`, `book.borrow_rate`). A short is worked out as a
+    long on negated prices, so the exit rules are the same code; it pays the borrow fee for
+    each session it is open (1% a year by default, the figure decision 0016 assumes for the
+    daily engine) and the costs of a sale to open and a purchase to close. Hard-to-borrow fees,
+    locates, recalls and the short-sale price test are not modelled; the guide says so and the
+    fee can be swept. In ranking mode `side: both` buys one end and shorts the other, with the
+    position cap on each side and SPY matched at the net exposure.
+13. **Compare measures runs together** (`api.compare`): each picked backtest's daily net profit
+    on one calendar (zero outside its period), their sum, and over the sessions all of them
+    cover the correlation of weekly profit and each one's and the sum's net profit, Sharpe and
+    worst drawdown, at each run's own size. It reads the runs' `equity.parquet` (or a book's
+    `daily.parquet`) only.
+14. **A stock's valuation through time** (the Valuation tab): each session's market value at the
+    close (the screener's figure) over the latest trailing year filed before that session, so
+    the history uses only what was known on each day, beside its median and middle half. A
+    period older than about 16 months, a loss or negative equity leaves a gap.
+15. **A trading-cost calculator** (`apps/workbench/costs.py`, `#/costs`): the cost model's
+    round trip for a price, position, liquidity, side and fill (auction or marketable), leg by
+    leg as the Lab's simulator charges it (a test holds the two together), by position size and
+    by share price; a stock's last close and 20-day dollar volume before the seal fill it in.
+16. **Lab results a skeptic would ask for:** a rolling one-year Sharpe, beta and correlation to
+    SPY, profit by sector, and the trades against random picks (random stocks on the same days,
+    the same stocks on random days; 500 draws, all held the same simple way) so a run shows
+    whether it beats chance at picking stocks, moments, or neither. A Lab run prints as a report.
+17. **A screen tested in the Lab** (`apps/workbench/screen_lab.py`, POST `/api/lab/from-screen`):
+    the Screener's filters become a new algorithm's `signal`, built from the Lab's point-in-time
+    fields, so a screen picked today can be tested on every past session without the hindsight
+    of today's list. The Lab gains **Format** (ruff's formatter over the text, never running it).

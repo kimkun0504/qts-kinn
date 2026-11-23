@@ -7,6 +7,7 @@ dependencies = [
     "cvxpy>=1.6",
     "duckdb>=2.0.0",
     "numpy>=2.5.4",
+    "pandas>=2.2",
     "pyarrow>=26.0.1",
     "pyyaml>=6.0.3",
 ]
@@ -94,7 +95,7 @@ type = "layers"
 layers = [
     "kinn.cli",
     "kinn.tick_study | kinn.swing_paper",
-    "kinn.run | kinn.book_run | kinn.swing_run",
+    "kinn.run | kinn.book_run | kinn.swing_run | kinn.lab",
     "kinn.reporting | kinn.registry | kinn.validation",
     "kinn.engine",
     "kinn.portfolio | kinn.execution",

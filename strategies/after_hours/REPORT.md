@@ -206,12 +206,26 @@ lead (+6.7% a trade on 44 trades in 2023, read once; see `strategies/leads_2023`
 morning after an evening of results (after 09:35, so the next open exists):
 
 ```
-export SEC_USER_AGENT="Your Name your@email"
+export SEC_USER_AGENT="Your Name you@example.com"
 uv run python tools/owner/paper_after_hours.py                   # the last evening
 uv run python tools/owner/paper_after_hours.py --day 2026-11-18  # a given evening
 uv run python tools/owner/paper_after_hours.py --since 2026-11-09   # catch up: every evening since
+uv run python tools/owner/paper_after_hours.py --since 2026-11-09 --redo   # read them again
 uv run python tools/owner/paper_after_hours.py --borrow "ABCD=yes, 0.4%"   # what IBKR showed
 ```
+
+SEC_USER_AGENT must be your name and a real email address: the SEC refuses a request that does
+not say who is calling (HTTP 403), and the tool then stops and says so. Until 2026-11-19 an
+index that could not be read counted as an evening with no 8-Ks, and eight evenings
+(2026-11-09 to 11-18) were recorded empty; the next run reads them again. The next day's index is
+published late in its evening, so a morning run reads the evening in part (filings accepted
+before 17:30) and a later run reads the rest; an evening with no index yet is not recorded,
+and a filer that could not be read is read on the next run. An evening takes about 700 requests
+to the SEC (one per 8-K filer); the tool sends at most four a second and reads each company
+once a run. The SEC answers HTTP 403, not 404, for the index of a day it was closed (seen for
+2026-11-11, Veterans Day, twice at the same request), so after a 403 the tool asks for a page
+that always exists: if that is answered the file is missing; if not, the address is paused and
+the tool waits eleven minutes and carries on.
 
 It reads every 8-K in the SEC's daily index for the evening (and the next day, where filings
 accepted after 17:30 are dated), keeps the results 8-Ks accepted between 16:00 and 18:30, and

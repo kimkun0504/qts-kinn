@@ -5,6 +5,7 @@ import { ReturnBars, TradeDots } from "../components/charts/TradeCharts";
 import { YearBars } from "../components/charts/YearBars";
 import { Markdown } from "../components/Markdown";
 import { Books, Orders, Positions } from "../components/PaperPanel";
+import { LedgerView } from "../components/LedgerView";
 import { RunsTable } from "../components/RunsTable";
 import { Card, Note, Stat } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
@@ -25,6 +26,8 @@ interface StrategyPageProps {
 
 export function StrategyPage({ name, tab, runs, onTab, onBack }: StrategyPageProps) {
   const { data, error } = useLoad(() => api.strategy(name), name);
+  const { data: heads } = useLoad(() => api.ledgers().catch(() => []), "strategy-ledgers");
+  const ledger = heads?.find((h) => h.strategy === name) ?? null;
   if (error) return <EmptyState title="No such strategy">There is no strategy folder called {name} on this branch.</EmptyState>;
   if (!data) return <p className="text-ink-2">Loading the strategy…</p>;
   const record = data.record;
@@ -32,7 +35,7 @@ export function StrategyPage({ name, tab, runs, onTab, onBack }: StrategyPagePro
   const tabs = [
     { key: "results", label: "Results" },
     ...(data.periods.some((p) => p.run_id) ? [{ key: "trades", label: "Trades" }] : []),
-    ...(record.paper ? [{ key: "paper", label: "Paper book" }] : []),
+    ...(record.paper || ledger ? [{ key: "paper", label: "Paper book" }] : []),
     ...(data.has_report || data.has_hypothesis ? [{ key: "report", label: "Report" }] : []),
     { key: "studies", label: `Studies ${data.studies.length}` },
     { key: "runs", label: `Runs ${mine.length}` },
@@ -50,7 +53,7 @@ export function StrategyPage({ name, tab, runs, onTab, onBack }: StrategyPagePro
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="m-0 text-3xl leading-tight font-semibold tracking-tight">{record.title ?? name}</h1>
           <VerdictBadge group={data.group} label={data.label} />
-          {record.paper && <VerdictBadge group="testing" label="In paper trading" />}
+          {(record.paper || ledger) && <VerdictBadge group="testing" label="In paper trading" />}
         </div>
         {record.summary && <p className="m-0 max-w-[78ch] text-ink-2">{record.summary}</p>}
         <div role="tablist" aria-label="Strategy sections" className="mt-1.5 flex flex-wrap gap-6 border-b border-line">
@@ -72,7 +75,7 @@ export function StrategyPage({ name, tab, runs, onTab, onBack }: StrategyPagePro
       </header>
       {active === "results" && <Results data={data} />}
       {active === "trades" && <Trades periods={data.periods.filter((p) => p.run_id)} />}
-      {active === "paper" && <Paper name={name} />}
+      {active === "paper" && (record.paper ? <Paper name={name} /> : ledger ? <LedgerView name={ledger.name} /> : null)}
       {active === "report" && <Documents name={name} />}
       {active === "studies" && <StudiesCard studies={data.studies} trials={data.trials} />}
       {active === "runs" && <StrategyRuns runs={mine} />}

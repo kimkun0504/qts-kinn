@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { isNegative } from "../../lib/format";
 
 export interface Column<Row> {
@@ -12,6 +12,13 @@ export interface Column<Row> {
   strong?: boolean;
   /** Cut text longer than this many pixels with an ellipsis; the full text shows on hover. */
   max?: number;
+  /** The header sorts by this column (the table's owner does the sorting). */
+  sortable?: boolean;
+}
+
+export interface Sort {
+  key: string;
+  dir: "asc" | "desc";
 }
 
 interface DataTableProps<Row> {
@@ -22,26 +29,52 @@ interface DataTableProps<Row> {
   selectedKey?: string | null;
   empty?: string;
   minWidth?: number;
+  sort?: Sort;
+  onSort?: (key: string) => void;
 }
 
 /** The one table component: dense rows, right-aligned numbers, optional row selection. */
-export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey, empty, minWidth }: DataTableProps<Row>) {
+export function onRowKey(event: KeyboardEvent<HTMLElement>, open: () => void) {
+  if (event.key === "Enter") return open();
+  const next = event.key === "ArrowDown" ? event.currentTarget.nextElementSibling : event.key === "ArrowUp" ? event.currentTarget.previousElementSibling : null;
+  if (next instanceof HTMLElement) {
+    event.preventDefault();
+    next.focus();
+  }
+}
+
+export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey, empty, minWidth, sort, onSort }: DataTableProps<Row>) {
   if (!rows.length) return <p className="m-0 px-4 py-6 text-ink-2">{empty ?? "Nothing to show yet."}</p>;
   return (
     <table className="w-full border-collapse" style={minWidth ? { minWidth } : undefined}>
       <thead>
         <tr>
-          {columns.map((column) => (
-            <th
-              key={column.key}
-              scope="col"
-              className={`sticky top-0 z-[1] border-b border-line bg-surface px-3 py-2 text-[13px] font-medium whitespace-nowrap text-ink-2 ${
-                column.align === "left" ? "text-left" : "text-right"
-              }`}
-            >
-              {column.header}
-            </th>
-          ))}
+          {columns.map((column) => {
+            const sorted = sort?.key === column.key ? sort.dir : null;
+            return (
+              <th
+                key={column.key}
+                scope="col"
+                aria-sort={sorted ? (sorted === "asc" ? "ascending" : "descending") : undefined}
+                className={`sticky top-0 z-[1] border-b border-line bg-surface px-3 py-2 text-[13px] font-medium whitespace-nowrap text-ink-2 ${column.align === "left" ? "text-left" : "text-right"}`}
+              >
+                {column.sortable && onSort ? (
+                  <button
+                    type="button"
+                    onClick={() => onSort(column.key)}
+                    className={`inline-flex cursor-pointer items-center gap-1 font-medium hover:text-ink focus-visible:outline-2 focus-visible:outline-accent ${sorted ? "text-ink" : ""}`}
+                  >
+                    {column.header}
+                    <span aria-hidden="true" className={`text-[10px] ${sorted ? "" : "opacity-0"}`}>
+                      {sorted === "asc" ? "▲" : "▼"}
+                    </span>
+                  </button>
+                ) : (
+                  column.header
+                )}
+              </th>
+            );
+          })}
         </tr>
       </thead>
       <tbody>
@@ -54,10 +87,8 @@ export function DataTable<Row>({ columns, rows, rowKey, onRowClick, selectedKey,
               tabIndex={onRowClick ? 0 : undefined}
               aria-selected={onRowClick ? selected : undefined}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
-              onKeyDown={onRowClick ? (event) => event.key === "Enter" && onRowClick(row) : undefined}
-              className={`${onRowClick ? "cursor-pointer hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent" : ""} ${
-                selected ? "bg-raised shadow-[inset_2px_0_0_var(--accent)]" : ""
-              }`}
+              onKeyDown={onRowClick ? (event) => onRowKey(event, () => onRowClick(row)) : undefined}
+              className={`${onRowClick ? "cursor-pointer hover:bg-raised focus-visible:outline-2 focus-visible:outline-accent" : ""} ${selected ? "bg-raised font-medium" : ""}`}
             >
               {columns.map((column) => {
                 const content = column.render(row);

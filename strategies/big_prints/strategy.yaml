@@ -4,7 +4,7 @@ status: event-study       # small-company cell passed both tests 2026-11-18; a l
 engine: daily
 universe: common stock $300M+ on a quiet up day traded in unusually large pieces
 family: big_prints
-prior_trials: 49
+prior_trials: 51
 cost_calibration: ibkr_pro_tiered
 owner: claude
 
@@ -24,7 +24,7 @@ record:
     - Much of the mean is a few large winners; capped at ±30% a trade, 2018–2022 has a t of 2.05.
     - Thin stocks (median $400,000 a day) with fat losing tails; about 28 positions open at once.
   waiting:
-    - "Big prints: run tools/owner/paper_big_prints.py --since 2026-10-20 once, then each evening after 16:30 (paper only, no borrow)."
+    - "Big prints (on paper since 2026-10-20): run tools/owner/paper_big_prints.py each evening after 16:30."
   evidence:
     - {when: 2026-11-18, title: First 4 cells on 2010 to 2017, kind: failed, text: "$300M–$2B +0.54% over 20 sessions in 8 of 8 years (t 3.78); $2B+ nothing."}
     - {when: 2026-11-18, title: Small companies in the tests, kind: passed, text: "Trade size 3x: +1.85% (2005–09, t 4.21) and +1.77% (2018–22, t 3.09); 2x failed 2018–22."}
@@ -52,4 +52,5 @@ record:
     - {name: Large pieces before an A50 jump, when: 2026-11-18, trials: 1, result: "Worse in 2010–2017 and 2023; not a filter", verdict: failed}
     - {name: A report due by last year's calendar, when: 2026-11-18, trials: 1, result: "+1.9%, +4.7% since 2010 (twice the cell), worse in 2005–2009; not used; first to test with a calendar", verdict: note}
     - {name: The next size up ($300M–$600M), when: 2026-11-18, trials: 1, result: "+0.1% to +0.5%; the effect stops at about $300M", verdict: failed}
+    - {name: "After the first paper run: blank checks and skipped sessions", when: 2026-11-18, trials: 2, result: "Blank checks stay (+3.4% since 2018); the skip helped before 2018, not since", verdict: note}
     - {name: Checks on the passed cell, when: 2026-11-18, trials: 5, result: "Control flat; 2023 +2.1%; search 0.94% with delistings; tail-heavy", verdict: note}

@@ -3,7 +3,7 @@
 Run it yourself on the Mac. It writes to the raw data folder, which agents must not touch
 (AGENTS.md). The files are free and need no key; the SEC asks who is calling:
 
-    export SEC_USER_AGENT="Your Name your@email"
+    export SEC_USER_AGENT="Your Name you@example.com"
     uv run python tools/owner/download_insiders.py
 
 One zip a quarter from 2006 Q1 lands in $KINN_RAW_DIR/sec/insiders/. It stops at 2023 Q3:
@@ -59,7 +59,7 @@ def fetch(url: str, agent: str) -> bytes:
 def main() -> None:
     agent = os.environ.get("SEC_USER_AGENT", "").strip()
     if "@" not in agent:
-        raise SystemExit('set SEC_USER_AGENT="Your Name your@email" (the SEC requires it)')
+        raise SystemExit('set SEC_USER_AGENT="Your Name you@example.com" (the SEC requires it)')
     out = load_settings().raw_dir / "sec" / "insiders"
     try:
         out.mkdir(parents=True, exist_ok=True)

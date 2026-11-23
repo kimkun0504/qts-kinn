@@ -101,12 +101,12 @@ def table() -> None:
             from ok join daily d on d.date = ok.date and d.size = ok.size
             where (ok.fp >= 2 or ok.fp < 1.2) and ok.dv >= 1.5 * ok.adv
               and (ok.close / ok.prev_close - 1 between -0.04 and 0.04 or ok.close / ok.prev_close - 1 <= -0.05)
-              and d.share < 0.05
+              and (d.share < 0.05 or ok.fp >= 3)
               and (ok.fp >= 3 or not exists (select 1 from filed f where f.permaticker = ok.permaticker
                               and f.day between ok.date - 4 and ok.date))
-        ) to '{folder()}/events_v10.parquet' (format parquet)"""
+        ) to '{folder()}/events_v11.parquet' (format parquet)"""
     )
-    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v10.parquet' group by 1, 2").fetchall())
+    print(con.sql(f"select size, fp >= 2, count(*), sum(stopped::int) from '{folder()}/events_v11.parquet' group by 1, 2").fetchall())
 
 
 def news(period) -> None:
@@ -157,6 +157,24 @@ def repeat() -> None:
             pos = sum(over[years == y].mean() > 0 for y in set(years))
             print(f"{period:7} {label:12} {len(over):>5} trades  over the average {100 * over.mean():>6.2f}%  "
                   f"t {tt:>5.2f}  yrs {pos} of {len(set(years))}")
+
+
+def skipped() -> None:
+    """Follow-up 17 (c): the passed cell's signals on sessions the share rule skips."""
+    for period in ("search", "early", "late", "check"):
+        t = duckdb.sql(
+            f"""select *, year(signal_day) as yr, (date_diff('day', DATE '2003-12-29', signal_day) // 7) as week
+                from '{folder()}/events_v11.parquet' where ret >= 0 and size = 'small' and fp >= 3 and quiet"""
+        ).to_arrow_table()
+        d = {n: t.column(n).to_numpy(zero_copy_only=False) for n in t.column_names}
+        first, last = PERIODS[period]
+        base = (d["yr"] >= first) & (d["yr"] <= last)
+        out = []
+        for label, keep in (("kept", base & (d["share"] < 0.05)), ("skipped days", base & (d["share"] >= 0.05))):
+            over = d["g20"][keep] - d["all20"][keep]
+            _, tt, _ = weekly(over, d["week"][keep])
+            out.append(f"{label} {keep.sum()} {100 * over.mean():+.2f}% (t {tt:.2f})")
+        print(f"{period}: " + "; ".join(out))
 
 
 def next_size() -> None:
@@ -289,6 +307,8 @@ if __name__ == "__main__":
         table()
     elif sys.argv[1] == "search":
         run("search", [(s, h, 2) for s in ("mid", "large") for h in (10, 20)], "events")
+    elif sys.argv[1] == "skipped":
+        skipped()
     elif sys.argv[1] == "next_size":
         next_size()
     elif sys.argv[1] == "falls":

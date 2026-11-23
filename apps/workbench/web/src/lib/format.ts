@@ -2,7 +2,9 @@ const MINUS = "−";
 
 export function pct(value: number | null | undefined, digits = 2): string {
   if (value == null) return "–";
-  return (value >= 0 ? "+" : MINUS) + Math.abs(100 * value).toFixed(digits) + "%";
+  const size = Math.abs(100 * value);
+  const text = size >= 1000 ? Math.round(size).toLocaleString("en-US") : size.toFixed(digits);
+  return (value >= 0 || Number(text.replace(/,/g, "")) === 0 ? "+" : MINUS) + text + "%";
 }
 
 export function plainPct(value: number | null | undefined, digits = 0): string {
@@ -60,4 +62,33 @@ export interface Stat {
   mean: number | null;
   low: number | null;
   high: number | null;
+}
+
+export function compact(value: number | null | undefined, prefix = ""): string {
+  if (value == null) return "–";
+  const size = Math.abs(value);
+  const [scale, unit] = size >= 1e12 ? [1e12, "T"] : size >= 1e9 ? [1e9, "B"] : size >= 1e6 ? [1e6, "M"] : size >= 1e3 ? [1e3, "K"] : [1, ""];
+  const digits = size / scale >= 100 || !unit ? 0 : 1;
+  return (value < 0 ? MINUS : "") + prefix + (size / scale).toFixed(digits) + unit;
+}
+
+export function price(value: number | null | undefined): string {
+  if (value == null) return "–";
+  return "$" + value.toFixed(Math.abs(value) < 1 ? 4 : 2);
+}
+
+export function priceTick(value: number): string {
+  if (value === 0) return "$0";
+  const size = Math.abs(value);
+  const digits = size >= 100 ? 0 : size >= 1 ? 2 : Math.min(6, 1 - Math.floor(Math.log10(size)));
+  return "$" + value.toFixed(digits);
+}
+
+/** "18 Nov 14:22" in the viewer's time. */
+export function when(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso.slice(0, 16).replace("T", " ");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getDate()} ${months[date.getMonth()]} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }

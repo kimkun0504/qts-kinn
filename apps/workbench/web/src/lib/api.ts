@@ -261,6 +261,28 @@ export interface RunDetail {
   histogram?: { counts: number[]; edges: number[] };
 }
 
+export interface CompareStats {
+  total: number;
+  sharpe: number | null;
+  worst_drawdown: number;
+}
+
+export interface CompareData {
+  runs: { run_id: string; start: string; end: string }[];
+  dates: string[];
+  curves: number[][];
+  together: number[] | null;
+  overlap: {
+    start: string;
+    end: string;
+    sessions: number;
+    weeks: number;
+    correlation: (number | null)[][];
+    alone: CompareStats[];
+    together: CompareStats;
+  } | null;
+}
+
 export interface Overfitting {
   backtests: number;
   best_run: string;
@@ -466,10 +488,291 @@ export interface PaperSnapshot {
   };
 }
 
+export interface LedgerSummary {
+  signals: number;
+  closed: number;
+  open: number;
+  waiting: number;
+  mean: number | null;
+  winners: number;
+  profit: number;
+  alternative: number | null;
+  alternative_count: number;
+  over_benchmark: number | null;
+  set_aside: number;
+  set_aside_closed: number;
+  set_aside_mean: number | null;
+  borrow_recorded: number;
+}
+
+export interface LedgerHead {
+  schema: "paper-ledger-1";
+  name: string;
+  title: string;
+  strategy: string;
+  side: "long" | "short";
+  rule: string;
+  alternative: string;
+  benchmark: string | null;
+  stake: number;
+  command: string;
+  schedule: string;
+  updated: string;
+  evenings: number;
+  last_evening: string | null;
+  summary: LedgerSummary;
+}
+
+export interface LedgerRow {
+  day: string;
+  symbol: string;
+  market_cap: number | null;
+  entry_day: string | null;
+  entry: number | null;
+  exit_day: string | null;
+  exit: number | null;
+  gross: number | null;
+  net: number | null;
+  alternative: number | null;
+  benchmark: number | null;
+  status: "open" | "closed" | "waiting";
+  set_aside: boolean;
+  move: number | null;
+  accepted?: string | null;
+  thin?: boolean;
+  borrow?: string | null;
+  footprint?: number | null;
+  volume_ratio?: number | null;
+  stopped?: boolean;
+}
+
+export interface LedgerEvening {
+  day: string;
+  filers: number | null;
+  looked_at: number;
+  signals: number;
+  share?: number | null;
+  note: string | null;
+}
+
+export interface LedgerPage extends LedgerHead {
+  rows: LedgerRow[];
+  curve: { day: string; symbol: string; total: number }[];
+  evening_rows: LedgerEvening[];
+}
+
+export interface StockHit {
+  permaticker: number;
+  ticker: string | null;
+  name: string | null;
+  exchange: string | null;
+  category: string | null;
+  sector: string | null;
+  industry: string | null;
+  first: string | null;
+  last: string | null;
+  delisted: boolean;
+  matched?: string;
+}
+
+export interface StockTrade {
+  source: "run" | "lab" | "paper";
+  id: string;
+  label: string;
+  detail: string | null;
+  kind: string | null;
+  symbol: string;
+  signal_day: string | null;
+  entry_day: string | null;
+  entry: number | null;
+  exit_day: string | null;
+  exit: number | null;
+  net: number | null;
+  note: string | null;
+  side: "long" | "short";
+}
+
+export interface StockPageData extends StockHit {
+  schema: "stock-1";
+  query: string;
+  location: string | null;
+  siccode: string | null;
+  symbols: { symbol: string; from: string | null; to: string | null }[];
+  others: StockHit[];
+  sealed_from: string;
+  prices: {
+    date: string[];
+    open: (number | null)[];
+    high: (number | null)[];
+    low: (number | null)[];
+    close: (number | null)[];
+    factor: (number | null)[];
+    volume: (number | null)[];
+    market_cap: (number | null)[];
+    market_value?: (number | null)[];
+    adv20: (number | null)[];
+    symbol: string[];
+  };
+  events: { date: string; codes: string; results: boolean }[];
+  trades: StockTrade[];
+  financials?: Financials;
+  insiders?: Insiders | null;
+}
+
+export interface InsiderTrade {
+  filed: string;
+  symbol: string;
+  side: "buy" | "sell";
+  shares: number | null;
+  amount: number | null;
+  traded_from: string | null;
+  traded_to: string | null;
+  insider: string | null;
+  role: string;
+  accession: string;
+}
+
+export interface Insiders {
+  first: string | null;
+  last: string | null;
+  count: number;
+  rows: InsiderTrade[];
+}
+
+export interface FinancialPeriod {
+  period: string;
+  filed: string | null;
+  revenueusd: number | null;
+  gp: number | null;
+  opinc: number | null;
+  netinccmnusd: number | null;
+  epsusd: number | null;
+  ncfo: number | null;
+  capex: number | null;
+  fcf: number | null;
+  cashnequsd: number | null;
+  debtusd: number | null;
+  equityusd: number | null;
+  sharesbas: number | null;
+}
+
+export interface Financials {
+  currency: string;
+  quarterly: FinancialPeriod[];
+  trailing: FinancialPeriod[];
+}
+
+export interface DataCatalog {
+  schema: "data-catalog-1";
+  build: {
+    id: string;
+    created_at: string | null;
+    data_version: string | null;
+    bars_id: string | null;
+    sharadar_snapshot: string | null;
+    panel: { daily_rows?: number; panel_rows?: number; years?: number[]; splits?: Record<string, number> };
+  };
+  builds: { id: string; created_at: string | null; data_version: string | null; bars_id: string | null; current: boolean }[];
+  calendar: { first: string | null; last: string | null; sessions: number };
+  companies: { total: number; delisted: number; categories: [string, number][]; sectors: [string, number][] };
+  tables: { name: string; path: string; files: number; rows: number | null; bytes: number; note: string }[];
+  bars: { name: string; path: string; files: number; years: string[] }[];
+  inputs: { name: string; built: boolean; input_id?: string; version?: string; rows?: number; first?: string; last?: string; built_at?: string; basis?: string }[];
+  seal: { holdout_start: string; reads: number; last: string | null };
+}
+
 async function get<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url} answered ${response.status}`);
   return (await response.json()) as T;
+}
+
+export interface CostLeg {
+  side: "buy" | "sell";
+  fill: "auction" | "marketable";
+  shares: number;
+  value: number;
+  commission: number;
+  fees: number;
+  slippage: number;
+}
+
+export interface CostEstimate {
+  legs: CostLeg[];
+  cost: number;
+  cost_2x: number;
+  bps: number;
+  bps_2x: number;
+  model: string;
+  price: number;
+  adv: number | null;
+  half_spread_bps: number;
+  auction_bps: number;
+  sizes: { value: number; bps: number; bps_2x: number }[];
+  prices: { price: number; bps: number; bps_2x: number }[];
+}
+
+export interface CostQuote {
+  ticker: string;
+  name: string | null;
+  date: string;
+  price: number;
+  adv: number | null;
+}
+
+async function answer<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error((body as { error?: string }).error ?? `${url} answered ${response.status}`);
+  return body as T;
+}
+
+export interface ClosesData {
+  series: { symbol: string; name: string | null; date: string[]; close: (number | null)[] }[];
+  missing: string[];
+  sealed_from: string;
+}
+
+export interface MarketRow {
+  symbol: string;
+  name: string;
+  close: number | null;
+  day?: number | null;
+  week?: number | null;
+  month?: number | null;
+  quarter?: number | null;
+  year_to_date?: number | null;
+  year?: number | null;
+  three_years?: number | null;
+}
+
+export interface MarketsData {
+  schema: string;
+  on: string;
+  first: string;
+  last: string;
+  groups: { title: string; rows: MarketRow[] }[];
+  correlation?: { symbols: string[]; matrix: (number | null)[][]; sessions: number };
+  breadth: { date: string; advancing: number; declining: number; traded: number }[];
+}
+
+export interface ScreenAhead {
+  schema: string;
+  on: string;
+  through: string;
+  known: Record<string, boolean>;
+  spy: Record<string, number>;
+  columns: string[];
+  rows: (string | number | null)[][];
+}
+
+export interface ScreenData {
+  schema: string;
+  on: string;
+  first: string;
+  last: string;
+  columns: string[];
+  rows: (string | number | null)[][];
 }
 
 export const api = {
@@ -478,10 +781,23 @@ export const api = {
   strategies: () => get<StrategyInfo[]>("/api/strategies"),
   info: () => get<{ runs_dir: string }>("/api/info"),
   run: (id: string) => get<RunDetail>(`/api/runs/${encodeURIComponent(id)}`),
+  costs: (query: Record<string, string>) => answer<CostEstimate>(`/api/costs?${new URLSearchParams(query).toString()}`),
+  costQuote: (symbol: string) => answer<CostQuote>(`/api/costs/${encodeURIComponent(symbol)}`),
+  compare: (ids: string[]) => get<CompareData>(`/api/compare?ids=${encodeURIComponent(ids.join(","))}`),
   board: () => get<Board>("/api/board"),
   studies: () => get<StudyRow[]>("/api/studies"),
   strategy: (name: string) => get<StrategyPageData>(`/api/strategy/${encodeURIComponent(name)}`),
   documents: (name: string) => get<{ report: string | null; hypothesis: string | null }>(`/api/strategy/${encodeURIComponent(name)}/documents`),
   paper: (name: string) => get<PaperSnapshot>(`/api/strategy/${encodeURIComponent(name)}/paper`),
   trades: (runId: string) => get<{ count: number; rows: Trade[] }>(`/api/trades/${encodeURIComponent(runId)}`),
+  ledgers: () => get<LedgerHead[]>("/api/ledgers"),
+  data: () => get<DataCatalog>("/api/data"),
+  stocks: (query: string) => get<StockHit[]>(`/api/stocks?q=${encodeURIComponent(query)}`),
+  stock: (symbol: string, hint?: string) => get<StockPageData>(`/api/stock/${encodeURIComponent(symbol)}${hint ? (/^\d+$/.test(hint) ? `?pt=${hint}` : `?on=${encodeURIComponent(hint)}`) : ""}`),
+  ledger: (name: string) => get<LedgerPage>(`/api/ledgers/${encodeURIComponent(name)}`),
+  closes: (symbols: string[]) => get<ClosesData>(`/api/closes?symbols=${encodeURIComponent(symbols.join(","))}`),
+  markets: () => get<MarketsData>("/api/markets"),
+  guide: (name: string) => get<{ name: string; text: string }>(`/api/guide/${encodeURIComponent(name)}`),
+  screenAhead: (on: string) => get<ScreenAhead>(`/api/screen/ahead?on=${encodeURIComponent(on)}`),
+  screen: (on?: string) => get<ScreenData>(`/api/screen${on ? `?on=${encodeURIComponent(on)}` : ""}`),
 };

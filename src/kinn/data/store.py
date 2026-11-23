@@ -117,6 +117,29 @@ class DataStore:
             [start, end],
         )
 
+    def universe_members(self, start: date, end: date, universe: Universe) -> list[int]:
+        """Every company in ``universe`` on at least one session from ``start`` to ``end``."""
+        self._check(start, end, "panel")
+        table = self._query(
+            f"""select distinct permaticker from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()} and {universe.where()}
+                order by 1""",
+            [start, end],
+        )
+        return table["permaticker"].to_pylist()
+
+    def panel_of(
+        self, start: date, end: date, *, permatickers: list[int], columns: str
+    ) -> pa.Table:
+        """The panel's rows for the given companies only (what the Lab loads)."""
+        self._check(start, end, "panel")
+        return self._query(
+            f"""select {columns} from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()}
+                  and permaticker in (select unnest(?)) order by date, permaticker""",
+            [start, end, permatickers],
+        )
+
     def events(self, start: date, end: date) -> pa.Table:
         """Sharadar EVENTS (8-K event codes) by company and filing date."""
         self._check(start, end, "events")
@@ -128,6 +151,23 @@ class DataStore:
                 order by e.date, s.permaticker""",
             [start, end],
         )
+
+    def events_of(self, start: date, end: date, *, permatickers: list[int]) -> pa.Table:
+        """Sharadar EVENTS for the given companies only (what the Workbench's stock page reads)."""
+        self._check(start, end, "events")
+        return self._query(
+            f"""select s.permaticker, e.date, e.eventcodes
+                from '{self.root}/sharadar/events.parquet' e
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where e.date between ? and ? and {self._date_guard("e.date")}
+                  and s.permaticker in (select unnest(?))
+                order by e.date, s.permaticker""",
+            [start, end, permatickers],
+        )
+
+    def symbol_history(self) -> pa.Table:
+        """Every symbol each company traded under, with the dates it held it."""
+        return self._query(f"select * from '{self.table_path('symbol_history')}'")
 
     def input_id(self, name: str) -> str:
         """The version of a versioned input this store reads."""
@@ -207,6 +247,24 @@ class DataStore:
             [first, day],
         )
 
+    def form4_of(
+        self, symbols: list[str], *, codes: tuple[str, ...] = ("P", "S")
+    ) -> tuple[pa.Table, dict]:
+        input_id = self.input_id("form4")
+        meta = inputs_module.info(self._settings, "form4", input_id)
+        path = inputs_module.root(self._settings, "form4") / input_id / "transactions.parquet"
+        table = self._query(
+            f"""select filed, symbol, transaction_code, acquired, shares, amount, first_traded,
+                       last_traded, owner_name, officer, director, ten_percent_owner, title,
+                       accession
+                from '{path}'
+                where symbol in (select unnest(?)) and transaction_code in (select unnest(?))
+                  and {self._date_guard("filed")}
+                order by filed, accession""",
+            [symbols, list(codes)],
+        )
+        return table, meta
+
     def minute(
         self, day: date, *, symbols: list[str] | None = None, columns: str = "*"
     ) -> pa.Table:
@@ -278,6 +336,20 @@ class DataStore:
             [start, end, permatickers],
         )
 
+    def breadth(self, start: date, end: date) -> pa.Table:
+        self._check(start, end, "panel")
+        return self._query(
+            f"""select date,
+                       count(*) filter (where close > prev_close) as advancing,
+                       count(*) filter (where close < prev_close) as declining,
+                       count(*) as traded
+                from read_parquet('{self.root}/panel/*.parquet')
+                where date between ? and ? and {self._date_guard()}
+                  and prev_close > 0 and close > 0 and category like 'Domestic Common Stock%'
+                group by date order by date""",
+            [start, end],
+        )
+
     def dividends(self, start: date, end: date) -> pa.Table:
         """Cash per share by company and ex-date: dividends and the cash value of spinoffs."""
         self._check(start, end, "dividends")
@@ -300,6 +372,51 @@ class DataStore:
             [start, end, permatickers],
         )
         return dict(zip(table["permaticker"].to_pylist(), table["symbol"].to_pylist(), strict=True))
+
+    def fundamentals_as_of(
+        self, day: date, *, fields: tuple[str, ...], dimension: str = "ART"
+    ) -> pa.Table:
+        self._check(day, day, "fundamentals")
+        unknown = set(fields) - set(SF1_FIELDS)
+        if unknown or dimension not in SF1_DIMENSIONS:
+            raise KeyError(f"unknown fundamentals: {sorted(unknown)} / {dimension}")
+        columns = ", ".join(f"f.{name}" for name in fields)
+        latest = ", ".join(f"l.{name}" for name in fields)
+        earlier = ", ".join(f"y.{name} as {name}_year_ago" for name in fields)
+        return self._query(
+            f"""with f as (
+                    select s.permaticker, f.datekey, f.calendardate, {columns}
+                    from '{self.root}/sharadar/sf1.parquet' f
+                    join '{self.root}/master/security_master.parquet' s using (ticker)
+                    where f.dimension = ? and f.datekey < ? and {self._date_guard("f.datekey")}
+                    qualify row_number() over (
+                        partition by s.permaticker, f.calendardate order by f.datekey desc) = 1),
+                latest as (
+                    select * from f qualify row_number() over (
+                        partition by permaticker order by calendardate desc) = 1)
+                select l.permaticker, l.datekey, l.calendardate, {latest}, {earlier}
+                from latest l left join f y on y.permaticker = l.permaticker
+                    and y.calendardate = l.calendardate - interval 1 year""",
+            [dimension, day],
+        )
+
+    def fundamentals_of(
+        self, permaticker: int, *, fields: tuple[str, ...], dimension: str = "ARQ"
+    ) -> pa.Table:
+        unknown = set(fields) - set(SF1_FIELDS)
+        if unknown or dimension not in SF1_DIMENSIONS:
+            raise KeyError(f"unknown fundamentals: {sorted(unknown)} / {dimension}")
+        columns = ", ".join(f"f.{name}" for name in fields)
+        return self._query(
+            f"""select f.calendardate, f.datekey, {columns}
+                from '{self.root}/sharadar/sf1.parquet' f
+                join '{self.root}/master/security_master.parquet' s using (ticker)
+                where s.permaticker = ? and f.dimension = ? and {self._date_guard("f.datekey")}
+                qualify row_number() over (
+                    partition by f.calendardate order by f.datekey desc) = 1
+                order by f.calendardate""",
+            [permaticker, dimension],
+        )
 
     def fundamentals(
         self, end: date, *, fields: tuple[str, ...], dimension: str = "ART"

@@ -26,6 +26,14 @@ describe("DataTable", () => {
     fireEvent.click(screen.getByText("deep"));
     expect(clicked).toEqual(["b"]);
     expect(screen.getByText("base").closest("tr")?.getAttribute("aria-selected")).toBe("true");
+    const first = screen.getByText("base").closest("tr") as HTMLElement;
+    first.focus();
+    fireEvent.keyDown(first, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(screen.getByText("deep").closest("tr"));
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "Enter" });
+    expect(clicked).toEqual(["b", "b"]);
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(first);
   });
   it("says so when there is nothing to show", () => {
     render(<DataTable rows={[]} rowKey={() => "x"} columns={[]} empty="No runs yet." />);

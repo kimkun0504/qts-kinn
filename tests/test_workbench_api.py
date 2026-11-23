@@ -4,6 +4,9 @@ import json
 import shutil
 from pathlib import Path
 
+import numpy as np
+import pyarrow as pa
+import pyarrow.parquet as pq
 import pytest
 
 from apps.workbench import api
@@ -168,3 +171,31 @@ def test_strategies_report_status_candidate_and_readiness(runs_dir, tmp_path):
     assert first["ready_for_paper"] is False  # random entries meet no target, fills unchecked
     assert found["idle"]["state"] == "parked" and found["idle"]["candidate_run"] is None
     assert [s["strategy"] for s in api.strategies(runs_dir, folder)][0] == "random_entry"
+
+
+def _equity(runs, run_id, days, net):
+    folder = runs / run_id
+    folder.mkdir(parents=True)
+    pq.write_table(pa.table({"date": days, "net": net}), folder / "equity.parquet")
+
+
+def test_compare_puts_runs_on_one_calendar_and_measures_them_together(tmp_path):
+    days = [f"2020-{m:02d}-{d:02d}" for m in range(1, 7) for d in range(1, 21)]
+    rng = np.random.default_rng(3)
+    a = rng.normal(10, 50, len(days))
+    _equity(tmp_path, "a", days, a.tolist())
+    _equity(tmp_path, "b", days, (-a).tolist())
+    _equity(tmp_path, "late", days[60:], rng.normal(0, 50, len(days) - 60).tolist())
+
+    out = api.compare(tmp_path, ["a", "b", "../a", "missing", ""])
+    assert [r["run_id"] for r in out["runs"]] == ["a", "b"]
+    assert out["overlap"]["correlation"][0][1] == pytest.approx(-1.0)
+    assert out["overlap"]["together"]["total"] == pytest.approx(0.0, abs=1e-6)
+    assert out["overlap"]["alone"][0]["total"] == pytest.approx(a.sum())
+    assert out["together"][-1] == pytest.approx(0.0, abs=0.01)
+
+    out = api.compare(tmp_path, ["a", "late"])
+    assert out["overlap"]["start"] == days[60] and out["overlap"]["sessions"] == len(days) - 60
+    assert len(out["curves"][1]) == len(out["dates"]) == len(days)
+    assert out["curves"][1][59] == 0.0
+    assert api.compare(tmp_path, ["a"])["overlap"] is None

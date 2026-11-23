@@ -10,6 +10,7 @@ import type { BookMetrics, Manifest, Metrics, Phase, RunDetail as Detail, Study,
 import { DASHES, SERIES } from "../lib/colors";
 import { int, interval, money, num, pct, plainPct } from "../lib/format";
 import { useRun } from "../lib/useRun";
+import { concentration } from "../lib/years";
 import { BookView } from "./BookView";
 import { FillCheckView } from "./FillCheckView";
 
@@ -93,7 +94,11 @@ function RunHeader({ manifest, phase }: { manifest: Manifest; phase: Phase | nul
           <Badge tone={manifest.scratch || manifest.status === "abandoned" ? "muted" : "info"}>
             {manifest.scratch ? "Scratch, not counted" : manifest.status === "abandoned" ? "Abandoned, not counted" : "Counted trial"}
           </Badge>
-          {phase && <Badge tone={phase === "validation" || phase === "holdout" ? "info" : "muted"}>{phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : phase === "holdout" ? "Holdout: the one clean test" : PHASE[phase]}</Badge>}
+          {phase && (
+            <Badge tone={phase === "validation" || phase === "holdout" ? "info" : "muted"}>
+              {phase === "development" ? "Development: a search result" : phase === "validation" ? "Validation: out of sample" : phase === "holdout" ? "Holdout: the one clean test" : PHASE[phase]}
+            </Badge>
+          )}
           {manifest.git.dirty && <Badge tone="warn">Uncommitted code</Badge>}
         </div>
         <div className="text-[13px] text-ink-3">{manifest.run_id}</div>
@@ -181,6 +186,7 @@ function BacktestView({ detail, metrics: m }: { detail: Detail; metrics: Metrics
               { key: "net", header: "Net $, 1×", signed: true, render: (r) => money(r.net_1x) },
             ]}
           />
+          {concentration(years) && <PanelNote>{concentration(years)}</PanelNote>}
         </Panel>
         <div className="flex flex-col gap-4">
           <Panel title="Round-trip costs, bps of entry notional">

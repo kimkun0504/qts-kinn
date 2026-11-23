@@ -244,3 +244,20 @@ quiet up day, 1.5x volume, $1M a day and $5 or more as for mid-sized stocks), in
 **$300M to $600M**, 20 sessions, against the average $300M–$2B stock, in all three periods and
 2023. **1 cell**, judged by the test bars in all three periods (0.5%, t 2.5, four of five years
 in the tests; six of eight in 2010–2017). 1 trial.
+
+## Follow-up 17: blank-check companies, and how often a day is skipped (written 2026-11-18 12:03 ET)
+
+Prompted by the first paper run (2026-11-18): many of its signals are blank-check companies
+(SPACs, shares backed by cash in a trust near $10) that funds trade in large blocks without
+moving the price. (a) **1 cell:** the passed cell without blank-check companies (Sharadar SIC
+code 6770), judged as a filter: better per trade in all three periods, 2023 a check; the
+blank-check signals printed beside. (b) A count, not a trial: the share of sessions the research
+skipped as index days (5% or more of small stocks with a footprint of 2+), by year, against the
+paper run's 8 of 21. 1 trial.
+
+(c), written 2026-11-18 12:04 ET after (b) showed the research skipped 2–4% of sessions a year until
+2020 but 16% in 2022 and 15% in 2023 (the share of large-trade small stocks has drifted up
+toward the 5% line), and the paper run skipped 8 of 21: **the signals on skipped sessions**, by
+period. If they beat the average small stock in all three periods, the skip can be dropped
+without harm (keeping the rule simpler and the paper ledger's count of days complete); if not,
+it stays. 1 trial.
