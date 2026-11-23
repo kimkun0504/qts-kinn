@@ -1,0 +1,17 @@
+name: seasonality
+kind: forecast            # a monthly ranking of stocks; research script first
+status: hypothesis        # 4 cells planned 2026-11-23; see HYPOTHESIS.md
+family: seasonality
+prior_trials: 4
+cost_calibration: ibkr_pro_tiered
+owner: claude
+
+record:
+  title: Calendar-month seasonality
+  idea: Stocks repeat their own calendar months
+  horizon: 1 month
+  verdict: planned
+  result: "Planned: 4 cells on 2010 to 2017"
+  summary: Each month buy the large or mid-sized stocks whose returns in the same month of the last five years were highest.
+  studies:
+    - {name: Same-month returns, top tenth, when: 2026-11-23, trials: 4, result: planned, verdict: planned}
