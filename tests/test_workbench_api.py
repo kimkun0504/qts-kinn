@@ -199,3 +199,39 @@ def test_compare_puts_runs_on_one_calendar_and_measures_them_together(tmp_path):
     assert len(out["curves"][1]) == len(out["dates"]) == len(days)
     assert out["curves"][1][59] == 0.0
     assert api.compare(tmp_path, ["a"])["overlap"] is None
+
+
+def _lab_run(lab, run_id, days, pnl, *, daily=True):
+    folder = lab / "runs" / run_id
+    folder.mkdir(parents=True)
+    (folder / "manifest.json").write_text(json.dumps({"algorithm": "two_up", "run_id": run_id}))
+    (folder / "summary.json").write_text(json.dumps({"period_label": "2020"}))
+    if daily:
+        pq.write_table(pa.table({"date": days, "pnl": pnl}), folder / "book.parquet")
+    else:
+        cum = np.cumsum(pnl)[::2].tolist()
+        (folder / "equity.json").write_text(json.dumps({"dates": days[::2], "profit": cum}))
+
+
+def test_compare_puts_lab_runs_beside_backtests(tmp_path):
+    days = [f"2020-{m:02d}-{d:02d}" for m in range(1, 7) for d in range(1, 21)]
+    rng = np.random.default_rng(5)
+    a = rng.normal(10, 50, len(days))
+    _equity(tmp_path / "runs", "a", days, a.tolist())
+    lab = tmp_path / "lab"
+    full = "20260101T000000Z_two_up_0123abcd"
+    drawn = "20260102T000000Z_two_up_89abcdef"
+    _lab_run(lab, full, days, (2 * a).tolist())
+    _lab_run(lab, drawn, days, a.tolist(), daily=False)
+
+    out = api.compare(tmp_path / "runs", ["a", f"lab:{full}", f"lab:{drawn}", "lab:../x"], lab)
+    assert [r["run_id"] for r in out["runs"]] == ["a", f"lab:{full}", f"lab:{drawn}"]
+    assert out["runs"][0]["lab"] is None
+    assert out["runs"][1]["lab"] == {"algorithm": "two_up", "period": "2020", "daily": True}
+    assert out["runs"][2]["lab"]["daily"] is False
+    assert out["overlap"]["correlation"][0][1] == pytest.approx(1.0)
+    alone = out["overlap"]["alone"]
+    assert alone[1]["total"] == pytest.approx(2 * alone[0]["total"])
+    assert out["overlap"]["end"] == days[-2]
+    assert out["curves"][2][-1] == pytest.approx(np.cumsum(a)[::2][-1], abs=0.01)
+    assert api.compare(tmp_path / "runs", [f"lab:{full}"])["runs"] == []

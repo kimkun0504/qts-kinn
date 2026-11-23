@@ -221,6 +221,8 @@ def _run(run_dir: Path, request: dict, code: str, open_store, progress: _Stages)
     curve = metrics.equity(daily, data.sessions, spy, data.first_row, capital,
                            settings.book.position_size)  # fmt: skip
     (run_dir / "equity.json").write_text(json.dumps(curve))
+    metrics.book_table(daily, data.sessions, data.first_row).to_parquet(run_dir / "book.parquet",
+                                                                        index=False)  # fmt: skip
     path = metrics.signal_path(trades, market.adj_close, market.universe_cum,
                                settings.exit.hold_days)  # fmt: skip
     if path:

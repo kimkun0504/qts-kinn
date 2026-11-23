@@ -14,6 +14,7 @@ import numpy as np
 import pyarrow.parquet as pq
 import yaml
 
+from kinn.lab import store as lab_store
 from kinn.registry import runs as registry
 from kinn.validation import stats, targets
 
@@ -255,6 +256,35 @@ def _daily_net(run_dir: Path) -> tuple[list, np.ndarray] | None:
     return None
 
 
+LAB_PREFIX = "lab:"
+
+
+def _lab_daily(lab_dir: Path, run_id: str) -> tuple[list, np.ndarray] | None:
+    """A Lab run's book profit by session: its full daily file, or the drawn curve of a run
+    made before it wrote one."""
+    try:
+        run_dir = lab_store.run_dir_of(lab_dir, run_id)
+    except lab_store.LabError:
+        return None
+    if (run_dir / "book.parquet").exists():
+        table = pq.read_table(run_dir / "book.parquet", columns=["date", "pnl"]).to_pydict()
+        return table["date"], np.array(table["pnl"], dtype=float)
+    curve = _load(run_dir / "equity.json")
+    if not curve or not curve.get("dates"):
+        return None
+    profit = np.array([v if v is not None else np.nan for v in curve["profit"]], dtype=float)
+    profit = np.nan_to_num(profit, nan=0.0)
+    return curve["dates"], np.diff(np.concatenate([[0.0], profit]))
+
+
+def _lab_label(lab_dir: Path, run_id: str) -> dict:
+    run_dir = lab_store.run_dir_of(lab_dir, run_id)
+    manifest = _load(run_dir / "manifest.json") or {}
+    summary = _load(run_dir / "summary.json") or {}
+    return {"algorithm": manifest.get("algorithm"), "period": summary.get("period_label"),
+            "daily": (run_dir / "book.parquet").exists()}  # fmt: skip
+
+
 MAX_COMPARED = 4
 WEEK = 5  # sessions
 
@@ -270,16 +300,23 @@ def _stats(pnl: np.ndarray) -> dict:
     }
 
 
-def compare(runs_dir: Path, ids: list[str]) -> dict:
-    """Backtests side by side on one calendar: each run's cumulative net profit over every
-    session any of them covers, how their weekly profit moves together over the sessions all
-    of them cover, and what they make together at their own sizes."""
+def compare(runs_dir: Path, ids: list[str], lab_dir: Path | None = None) -> dict:
+    """Backtests and Lab runs (``lab:<run id>``) side by side on one calendar: each run's
+    cumulative net profit over every session any of them covers, how their weekly profit moves
+    together over the sessions all of them cover, and what they make together at their own
+    sizes."""
     found: list[tuple[str, dict[str, float]]] = []
+    labels: dict[str, dict] = {}
     for run_id in ids[:MAX_COMPARED]:
-        run_dir = runs_dir / run_id
-        if not run_id or run_dir.resolve().parent != runs_dir.resolve():
-            continue
-        daily = _daily_net(run_dir)
+        if run_id.startswith(LAB_PREFIX):
+            daily = _lab_daily(lab_dir, run_id[len(LAB_PREFIX) :]) if lab_dir else None
+            if daily:
+                labels[run_id] = _lab_label(lab_dir, run_id[len(LAB_PREFIX) :])
+        else:
+            run_dir = runs_dir / run_id
+            if not run_id or run_dir.resolve().parent != runs_dir.resolve():
+                continue
+            daily = _daily_net(run_dir)
         if daily:
             dates, net = daily
             found.append((run_id, {str(d)[:10]: float(v) for d, v in zip(dates, net, strict=True)}))
@@ -290,7 +327,10 @@ def compare(runs_dir: Path, ids: list[str]) -> dict:
     index = _thin(len(dates))
     curves = np.cumsum(pnl, axis=1)
     out: dict = {
-        "runs": [{"run_id": run_id, "start": min(by), "end": max(by)} for run_id, by in found],
+        "runs": [
+            {"run_id": run_id, "start": min(by), "end": max(by), "lab": labels.get(run_id)}
+            for run_id, by in found
+        ],  # fmt: skip
         "dates": [dates[i] for i in index],
         "curves": [[round(float(v), 2) for v in curve[index]] for curve in curves],
         "together": [round(float(v), 2) for v in curves.sum(axis=0)[index]],

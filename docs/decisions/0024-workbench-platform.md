@@ -116,3 +116,11 @@ applies the holdout date guard and is tested against the synthetic build.
     the Screener's filters become a new algorithm's `signal`, built from the Lab's point-in-time
     fields, so a screen picked today can be tested on every past session without the hindsight
     of today's list. The Lab gains **Format** (ruff's formatter over the text, never running it).
+
+## Additions (2026-11-23)
+
+18. **Lab runs in Compare.** Each Lab run now writes `book.parquet` (its book's profit, open
+    positions and shorts on every session of the period, unthinned), and `/api/compare` takes
+    `lab:<run id>` beside backtest ids, so the owner's algorithms and the agents' backtests are
+    drawn on one calendar and their weekly profit correlated. A Lab run from before keeps only
+    its drawn curve (at most about 1,200 points); the page says its weeks are approximate.

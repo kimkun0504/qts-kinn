@@ -383,6 +383,20 @@ def factor_report(scores: np.ndarray, market, dates: np.ndarray, first_row: int,
     }  # fmt: skip
 
 
+def book_table(book: dict, dates: np.ndarray, first_row: int) -> pd.DataFrame:
+    """The book by session, unthinned, from the first session of the period to its last open
+    position: profit at 1x costs, open positions and the shorts among them."""
+    positions = book["positions"]
+    active = np.flatnonzero(positions > 0)
+    last = int(active[-1]) if active.size else first_row
+    span = slice(first_row, last + 1)
+    shorts = book.get("shorts", np.zeros_like(positions))
+    return pd.DataFrame({
+        "date": dates[span].astype("datetime64[D]"), "pnl": book["pnl"][span],
+        "positions": positions[span], "shorts": shorts[span],
+    })  # fmt: skip
+
+
 def equity(book: dict, dates: np.ndarray, spy: np.ndarray, first_row: int, capital: float,
            position_size: float | None = None) -> dict:  # fmt: skip
     """The book's profit beside SPY on all the capital and SPY at the book's net exposure."""

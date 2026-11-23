@@ -225,7 +225,7 @@ The periods are the research's: 2010–2017 to search, 2005–2009 and 2018–20
   taken each day, with a t-stat on days a hold apart so returns do not overlap, and by year.
   Before costs. A ranking that works rises steadily across the tenths and keeps a positive IC in
   most years (`factor.json`).
-- **Compare** (two finished runs or more): the summary side by side with the difference, the
+- **Compare** (two finished runs or more; the Workbench's Compare page also puts Lab runs beside backtests, from `book.parquet`, the book's profit on every session): the summary side by side with the difference, the
   settings that differ, both profit curves, and what changed in the code.
 - **Stocks:** every stock that traded, best to worst or worst to best, with a search and a
   sector filter; every column sorts. *Profit* counts every trade at the position size (what

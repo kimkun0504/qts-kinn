@@ -140,7 +140,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(found or {"error": "No such stock."}, 200 if found else 404)
         if path == "/api/compare":
             wanted = parse_qs(urlsplit(self.path).query).get("ids", [""])[0].split(",")
-            return self._json(api.compare(self.runs_dir, wanted))
+            return self._json(api.compare(self.runs_dir, wanted, self.lab_dir))
         if path == "/api/board":
             return self._json(record.board(self.runs_dir, strategies_dir()))
         if path == "/api/studies":
