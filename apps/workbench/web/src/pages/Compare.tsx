@@ -248,7 +248,7 @@ export function Compare({ ids, runs, onToggle }: { ids: string[]; runs: RunRow[]
             format={(v) => money(v).replace("+", "")}
             series={[
               ...rows.map((row) => ({ name: legend(row), values: curves.curves[slot(row.id)], color: SERIES[slot(row.id)], dash: DASHES[slot(row.id)] })),
-              ...(rows.length > 1 && curves.together ? [{ name: "Together", short: "Together", values: curves.together, color: "var(--ink-2)", dash: "2 2" }] : []),
+              ...(rows.length > 1 && curves.together ? [{ name: "Together", short: "Together", values: curves.together, color: "var(--ink)", dash: "1 3" }] : []),
             ]}
           />
         ) : (
