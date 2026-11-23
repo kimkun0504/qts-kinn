@@ -1,6 +1,6 @@
 name: asset_growth
 kind: forecast            # a monthly ranking of stocks; research script first
-status: hypothesis        # 4 cells planned 2026-11-23; see HYPOTHESIS.md
+status: parked            # 4 cells, all lose after costs where chosen (-0.27% to -0.09% a month); closed 2026-11-23; see REPORT.md
 family: asset_growth
 prior_trials: 4
 cost_calibration: ibkr_pro_tiered
@@ -10,8 +10,12 @@ record:
   title: Slow asset growth
   idea: Slow asset growers beat fast ones
   horizon: 1 month
-  verdict: planned
-  result: "Planned: 4 cells on 2010 to 2017"
+  verdict: closed
+  result: "-0.27% to -0.09% a month after costs, 2010 to 2017"
   summary: Each month buy the large or mid-sized companies whose total assets grew least over the past year.
   studies:
-    - {name: Asset growth, lowest tenth, when: 2026-11-23, trials: 4, result: planned, verdict: planned}
+    - {name: Asset growth, lowest tenth, when: 2026-11-23, trials: 4, result: "-0.27% to -0.09% a month", verdict: failed}
+  weaknesses:
+    - The slowest growers do no better than the average; only the fastest growers trail, before costs.
+  evidence:
+    - {when: 2026-11-23, title: Four cells on 2010 to 2017, kind: failed, text: "All four lose after costs; the best, mid-sized long-short, -0.09% a month."}
