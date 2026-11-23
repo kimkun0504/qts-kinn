@@ -268,7 +268,7 @@ export interface CompareStats {
 }
 
 export interface CompareData {
-  runs: { run_id: string; start: string; end: string }[];
+  runs: { run_id: string; start: string; end: string; lab?: { algorithm: string | null; period: string | null; daily: boolean } | null }[];
   dates: string[];
   curves: number[][];
   together: number[] | null;

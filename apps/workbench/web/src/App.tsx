@@ -200,7 +200,8 @@ export default function App() {
   const open = (run: RunRow) => go({ page: "runs", name: run.run_id }, { scroll: route.page !== "runs" });
   const openStrategy = (name: string, tab = "results") => go({ page: "strategy", name, tab });
   const openLab = useCallback((name?: string, runId?: string) => go({ page: "lab", name, tab: runId }, { scroll: false }), [go]);
-  const toggleCompare = (run: RunRow) => setCompare((current) => (current.includes(run.run_id) ? current.filter((id) => id !== run.run_id) : current.length < 4 ? [...current, run.run_id] : current));
+  const toggleCompareId = (runId: string) => setCompare((current) => (current.includes(runId) ? current.filter((id) => id !== runId) : current.length < 4 ? [...current, runId] : current));
+  const toggleCompare = (run: RunRow) => toggleCompareId(run.run_id);
   const ledgers = (board?.rows.filter((row) => row.paper).length ?? 0) + heads.length;
   const pages: [string, string][] = [
     ["home", "Home"],
@@ -315,7 +316,7 @@ export default function App() {
         ) : route.page === "runs" ? (
           <Runs runs={live} selected={route.page === "runs" ? (route.name ?? null) : null} onOpen={open} compare={compare} onToggleCompare={toggleCompare} kind={kind} onKind={setKind} />
         ) : route.page === "compare" ? (
-          <Compare ids={compare} runs={runs} onToggle={toggleCompare} />
+          <Compare ids={compare} runs={runs} onToggle={toggleCompareId} />
         ) : route.page === "guide" ? (
           <GuidePage guide={route.name} onGuide={(name) => go({ page: "guide", name })} />
         ) : route.page === "data" ? (
